@@ -38,6 +38,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@verein.local}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
     ports:
       - "3001:3001"
     volumes:
@@ -50,6 +51,7 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
         VITE_WS_URL: ${VITE_WS_URL:-http://localhost:3001}
+        VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-}
     container_name: vereins-frontend
     restart: unless-stopped
     depends_on:

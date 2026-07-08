@@ -127,6 +127,14 @@ Bei Docker mit eigenem Domainnamen müssen diese URLs auf die öffentlich erreic
 docker compose up --build -d frontend
 ```
 
+**Turnstile (Bot-Schutz):** Wenn beide Turnstile-Variablen gesetzt sind, erscheint auf der Bestellseite das Cloudflare-Widget. Nach dem Eintragen in `.env`:
+
+```bash
+docker compose up --build -d
+```
+
+(`VITE_TURNSTILE_SITE_KEY` wird beim Frontend-Build eingebettet, `TURNSTILE_SECRET_KEY` wird vom Backend zur Laufzeit gelesen.)
+
 ### E-Mail (optional)
 
 ```env
