@@ -183,6 +183,7 @@ async function main() {
     {
       name: '01-bestellseite',
       url: '/',
+      viewport: { width: 1280, height: 900 },
       prepare: async (page) => {
         await page.getByLabel('Vorname *').fill('Max');
         await page.getByLabel('Nachname *').fill('Mustermann');
@@ -205,7 +206,7 @@ async function main() {
     },
     { name: '04-abholboard-monitor', url: '/abholboard', viewport: { width: 1920, height: 1080 }, fullPage: false },
     { name: '05-mitarbeiter-login', url: '/mitarbeiter/login' },
-    { name: '06-dashboard', url: '/mitarbeiter', auth: true },
+    { name: '06-dashboard', url: '/mitarbeiter', auth: true, viewport: { width: 1280, height: 800 } },
     { name: '07-kuechenansicht-tablet', url: '/mitarbeiter/kueche', viewport: { width: 1024, height: 768 }, auth: true },
     {
       name: '08-abholung',
@@ -242,13 +243,14 @@ async function main() {
     await setupPage(page, spec.auth);
 
     await page.goto(`http://localhost:${PORT}${spec.url}`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(800);
     if (spec.prepare) await spec.prepare(page);
-    await page.waitForTimeout(500);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(400);
 
     await page.screenshot({
       path: join(OUT_DIR, `${spec.name}.png`),
-      fullPage: spec.fullPage !== false,
+      fullPage: spec.fullPage === true,
     });
     console.log(`✓ ${spec.name}.png`);
     await context.close();

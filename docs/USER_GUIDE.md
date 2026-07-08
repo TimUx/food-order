@@ -41,7 +41,7 @@ Nach der Anmeldung sehen Sie das **Dashboard** mit aktuellen Zahlen:
 
 | Menüpunkt | Für wen | Aufgabe |
 |-----------|---------|---------|
-| Dashboard | Alle | Übersicht & Statistiken |
+| Dashboard | Alle | Übersicht, Statistiken, Schnellzugriff Abholung/Bestellung |
 | Bestellungen | Alle | Alle Bestellungen einsehen |
 | Küche | Küchenteam | Bestellungen bearbeiten |
 | Abholung | Ausgabe | Abholung per Nummer bestätigen |

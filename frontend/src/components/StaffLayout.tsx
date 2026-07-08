@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -13,8 +13,10 @@ import {
   Container,
   useMediaQuery,
   useTheme,
+  Avatar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import KitchenIcon from '@mui/icons-material/Kitchen';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -28,10 +30,17 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useClub } from '@/contexts/ClubContext';
 import { getImageUrl } from '@/services/api';
-import { Avatar } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+
+const DRAWER_WIDTH = 260;
+
+const FOCUS_MODE_PATHS = [
+  '/mitarbeiter/kueche',
+  '/mitarbeiter/abholung',
+  '/mitarbeiter/bestellung',
+];
 
 const navItems = [
   { path: '/mitarbeiter', label: 'Dashboard', icon: <DashboardIcon />, roles: ['ADMIN', 'STAFF'] },
@@ -44,6 +53,10 @@ const navItems = [
   { path: '/mitarbeiter/verein', label: 'Verein', icon: <SettingsIcon />, roles: ['ADMIN'] },
 ];
 
+function isFocusModePath(pathname: string): boolean {
+  return FOCUS_MODE_PATHS.includes(pathname);
+}
+
 interface StaffLayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -51,7 +64,8 @@ interface StaffLayoutProps {
 }
 
 export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutProps) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(true);
   const { user, logout, isAdmin } = useAuth();
   const { mode, toggleMode } = useThemeMode();
   const location = useLocation();
@@ -61,12 +75,17 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
   const { club } = useClub();
   const logoUrl = getImageUrl(club.logoUrl || undefined);
 
+  useEffect(() => {
+    setMenuOpen(!isFocusModePath(location.pathname));
+    setMobileDrawerOpen(false);
+  }, [location.pathname]);
+
   const filteredNav = navItems.filter(
-    (item) => item.roles.includes('ADMIN') && isAdmin || item.roles.includes('STAFF')
+    (item) => (item.roles.includes('ADMIN') && isAdmin) || item.roles.includes('STAFF')
   );
 
-  const drawer = (
-    <Box sx={{ width: 260, pt: 2 }}>
+  const drawerContent = (
+    <Box sx={{ width: DRAWER_WIDTH, pt: 2 }}>
       <Typography variant="h6" sx={{ px: 2, mb: 2, fontWeight: 700 }}>
         Mitarbeiterbereich
       </Typography>
@@ -77,7 +96,7 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
             component={Link}
             to={item.path}
             selected={location.pathname === item.path}
-            onClick={() => setDrawerOpen(false)}
+            onClick={() => setMobileDrawerOpen(false)}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.label} />
@@ -91,28 +110,52 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
     </Box>
   );
 
+  const showDesktopDrawer = !isMobile && menuOpen;
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {!isMobile && (
-        <Drawer variant="permanent" sx={{ width: 260, '& .MuiDrawer-paper': { width: 260, boxSizing: 'border-box' } }}>
-          {drawer}
+      {showDesktopDrawer && (
+        <Drawer
+          variant="permanent"
+          sx={{
+            width: DRAWER_WIDTH,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
+          }}
+        >
+          {drawerContent}
         </Drawer>
       )}
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <AppBar position="sticky" color="default" elevation={1}>
           <Toolbar>
-            {isMobile && (
-              <IconButton edge="start" onClick={() => setDrawerOpen(true)} sx={{ mr: 1 }}>
-                <MenuIcon />
-              </IconButton>
-            )}
-            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-              {logoUrl ? (
-                <Avatar src={logoUrl} alt="" sx={{ width: 28, height: 28 }} />
-              ) : null}
-              {title || club.clubName}
+            <IconButton
+              edge="start"
+              onClick={() => {
+                if (isMobile) {
+                  setMobileDrawerOpen(true);
+                } else {
+                  setMenuOpen((prev) => !prev);
+                }
+              }}
+              sx={{ mr: 1 }}
+              aria-label={menuOpen ? 'Menü ausblenden' : 'Menü einblenden'}
+            >
+              {isMobile || !menuOpen ? <MenuIcon /> : <MenuOpenIcon />}
+            </IconButton>
+            <Typography
+              variant="h6"
+              sx={{ flexGrow: 1, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}
+            >
+              {logoUrl && (
+                <Avatar src={logoUrl} alt="" sx={{ width: 28, height: 28, flexShrink: 0 }} />
+              )}
+              <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {title || club.clubName}
+              </Box>
             </Typography>
-            <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
+            <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' }, flexShrink: 0 }}>
               {user?.firstName} {user?.lastName}
             </Typography>
             <IconButton onClick={toggleMode} aria-label="Design wechseln">
@@ -120,15 +163,22 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
             </IconButton>
           </Toolbar>
         </AppBar>
-        <Container maxWidth={fullWidth ? false : 'lg'} sx={{ flexGrow: 1, py: 3 }}>
+
+        <Container
+          maxWidth={fullWidth ? false : 'lg'}
+          sx={{ flexGrow: 1, py: 3, px: { xs: 2, sm: 3 } }}
+        >
           {children}
         </Container>
       </Box>
-      {isMobile && (
-        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-          {drawer}
-        </Drawer>
-      )}
+
+      <Drawer
+        open={isMobile && mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        variant="temporary"
+      >
+        {drawerContent}
+      </Drawer>
     </Box>
   );
 }

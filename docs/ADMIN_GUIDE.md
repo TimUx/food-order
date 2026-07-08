@@ -126,8 +126,8 @@ Klicken Sie beim Gericht auf das Kamera-Symbol und wählen Sie ein Bild (JPEG, P
 Zeigt live:
 - Anzahl Bestellungen (gesamt, offen, fertig, abgeholt)
 - Umsatz
-- Beliebteste Gerichte
 - Durchschnittliche Bearbeitungszeit
+- Schnellzugriff auf Abholung und Bestellung
 
 ### Bestellübersicht
 

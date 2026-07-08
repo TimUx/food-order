@@ -17,19 +17,17 @@ import { getImageUrl } from '@/services/api';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
-  title?: string;
   fullWidth?: boolean;
 }
 
-export function PublicLayout({ children, title, fullWidth = false }: PublicLayoutProps) {
+export function PublicLayout({ children, fullWidth = false }: PublicLayoutProps) {
   const { mode, toggleMode } = useThemeMode();
   const { club } = useClub();
   const logoUrl = getImageUrl(club.logoUrl || undefined);
-  const displayName = title || club.clubName;
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="sticky" elevation={1}>
+      <AppBar position="fixed" elevation={1}>
         <Toolbar>
           {logoUrl ? (
             <Avatar src={logoUrl} alt={club.clubName} sx={{ width: 36, height: 36, mr: 1.5 }} />
@@ -42,13 +40,14 @@ export function PublicLayout({ children, title, fullWidth = false }: PublicLayou
             to="/"
             sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit', fontWeight: 700 }}
           >
-            {displayName}
+            {club.clubName}
           </Typography>
           <IconButton onClick={toggleMode} color="inherit" aria-label="Design wechseln">
             {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
         </Toolbar>
       </AppBar>
+      <Toolbar />
       <Container
         maxWidth={fullWidth ? false : 'md'}
         sx={{ flexGrow: 1, py: 3, px: { xs: 2, sm: 3 } }}

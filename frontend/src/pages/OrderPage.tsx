@@ -108,11 +108,11 @@ export function OrderPage() {
   }
 
   return (
-    <PublicLayout title={eventName || 'Bestellung'}>
+    <PublicLayout>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
         <Box>
           <Typography variant="h4" fontWeight={800} gutterBottom>
-            Essen bestellen
+            {eventName || 'Essen bestellen'}
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Wählen Sie Ihre Gerichte und geben Sie Ihre Daten ein.
@@ -162,7 +162,7 @@ export function OrderPage() {
       <Typography variant="h6" gutterBottom fontWeight={600}>
         Gerichte
       </Typography>
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid container spacing={2} sx={{ mb: 10 }}>
         {items.map((item) => (
           <Grid key={item.id} size={{ xs: 12, sm: 6 }}>
             <FoodItemCard
@@ -176,14 +176,17 @@ export function OrderPage() {
 
       <Paper
         sx={{
-          p: 3,
-          position: 'sticky',
-          bottom: 16,
-          zIndex: 10,
-          border: 2,
+          p: 2,
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1100,
+          borderRadius: 0,
+          borderTop: 2,
           borderColor: 'primary.main',
         }}
-        elevation={4}
+        elevation={8}
       >
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
           <Box>

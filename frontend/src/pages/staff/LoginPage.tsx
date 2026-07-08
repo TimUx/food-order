@@ -36,7 +36,7 @@ export function LoginPage() {
   };
 
   return (
-    <PublicLayout title="Mitarbeiter-Login">
+    <PublicLayout>
       <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
         <Typography variant="h4" fontWeight={800} gutterBottom align="center">
           Mitarbeiter-Login

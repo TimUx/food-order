@@ -88,7 +88,7 @@ export function OrderStatusPage() {
 
   if (lookupMode) {
     return (
-      <PublicLayout title="Bestellstatus">
+      <PublicLayout>
         <Typography variant="h4" fontWeight={800} gutterBottom>
           Bestellstatus abfragen
         </Typography>
@@ -148,7 +148,7 @@ export function OrderStatusPage() {
   }
 
   return (
-    <PublicLayout title="Bestellstatus">
+    <PublicLayout>
       {showReadyAlert && order.status === 'READY' && (
         <Alert
           severity="success"

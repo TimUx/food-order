@@ -24,7 +24,7 @@ export function ContactPage() {
   const logoUrl = getImageUrl(club.logoUrl || undefined);
 
   return (
-    <PublicLayout title="Kontakt">
+    <PublicLayout>
       <Typography variant="h4" fontWeight={800} gutterBottom>
         Kontakt
       </Typography>

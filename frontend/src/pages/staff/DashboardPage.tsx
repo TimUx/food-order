@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import {
   Typography,
-  Grid,
   Card,
   CardContent,
   Box,
   CircularProgress,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
+  Button,
+  Stack,
 } from '@mui/material';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -17,28 +15,37 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import EuroIcon from '@mui/icons-material/Euro';
 import TimerIcon from '@mui/icons-material/Timer';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import { Link } from 'react-router-dom';
 import { StaffLayout } from '@/components/StaffLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
 import { DashboardStats } from '@/types';
 import { joinEvent, onOrderCreated, onOrderUpdated } from '@/services/socket';
 
-function StatCard({ title, value, icon, color }: {
+interface StatCardProps {
   title: string;
   value: string | number;
   icon: React.ReactNode;
   color: string;
-}) {
+}
+
+function StatCard({ title, value, icon, color }: StatCardProps) {
   return (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ color, fontSize: 40 }}>{icon}</Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">{title}</Typography>
-            <Typography variant="h4" fontWeight={800}>{value}</Typography>
-          </Box>
+    <Card sx={{ height: '100%' }}>
+      <CardContent sx={{ height: '100%', display: 'flex', alignItems: 'center', gap: 2, p: 2.5 }}>
+        <Box sx={{ color, fontSize: 36, flexShrink: 0, display: 'flex' }}>{icon}</Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="body2" color="text.secondary" noWrap>
+            {title}
+          </Typography>
+          <Typography
+            variant="h5"
+            fontWeight={800}
+            sx={{ wordBreak: 'break-word', lineHeight: 1.2 }}
+          >
+            {value}
+          </Typography>
         </Box>
       </CardContent>
     </Card>
@@ -93,53 +100,58 @@ export function DashboardPage() {
     );
   }
 
+  const statItems: StatCardProps[] = [
+    { title: 'Bestellungen', value: stats?.totalOrders ?? 0, icon: <ReceiptIcon fontSize="inherit" />, color: 'primary.main' },
+    { title: 'Offen', value: stats?.openOrders ?? 0, icon: <HourglassEmptyIcon fontSize="inherit" />, color: 'warning.main' },
+    { title: 'Fertig', value: stats?.readyOrders ?? 0, icon: <CheckCircleIcon fontSize="inherit" />, color: 'success.main' },
+    { title: 'Abgeholt', value: stats?.pickedUpOrders ?? 0, icon: <DoneAllIcon fontSize="inherit" />, color: 'info.main' },
+    { title: 'Umsatz', value: formatPrice(stats?.revenue ?? 0), icon: <EuroIcon fontSize="inherit" />, color: 'secondary.main' },
+    { title: 'Ø Bearbeitung', value: `${stats?.avgProcessingMinutes ?? 0} Min.`, icon: <TimerIcon fontSize="inherit" />, color: 'text.secondary' },
+  ];
+
   return (
     <StaffLayout title="Dashboard">
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Bestellungen" value={stats?.totalOrders ?? 0} icon={<ReceiptIcon fontSize="inherit" />} color="primary.main" />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Offen" value={stats?.openOrders ?? 0} icon={<HourglassEmptyIcon fontSize="inherit" />} color="warning.main" />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Fertig" value={stats?.readyOrders ?? 0} icon={<CheckCircleIcon fontSize="inherit" />} color="success.main" />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Abgeholt" value={stats?.pickedUpOrders ?? 0} icon={<DoneAllIcon fontSize="inherit" />} color="info.main" />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Umsatz" value={formatPrice(stats?.revenue ?? 0)} icon={<EuroIcon fontSize="inherit" />} color="secondary.main" />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <StatCard title="Ø Bearbeitung" value={`${stats?.avgProcessingMinutes ?? 0} Min.`} icon={<TimerIcon fontSize="inherit" />} color="text.secondary" />
-        </Grid>
-      </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+          gap: 2,
+          mb: 4,
+        }}
+      >
+        {statItems.map((item) => (
+          <StatCard key={item.title} {...item} />
+        ))}
+      </Box>
 
-      <Card>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <TrendingUpIcon color="primary" />
-            <Typography variant="h6" fontWeight={600}>Beliebteste Gerichte</Typography>
-          </Box>
-          {stats?.popularDishes.length === 0 ? (
-            <Typography color="text.secondary">Noch keine Daten</Typography>
-          ) : (
-            <List dense>
-              {stats?.popularDishes.map((dish, i) => (
-                <ListItem key={dish.name}>
-                  <ListItemText
-                    primary={`${i + 1}. ${dish.name}`}
-                    secondary={`${dish.count}× bestellt`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </CardContent>
-      </Card>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <Button
+          component={Link}
+          to="/mitarbeiter/abholung"
+          variant="contained"
+          color="success"
+          size="large"
+          startIcon={<DoneAllIcon />}
+          fullWidth
+          sx={{ minHeight: 72, fontSize: '1.25rem', fontWeight: 700 }}
+        >
+          Abholung
+        </Button>
+        <Button
+          component={Link}
+          to="/mitarbeiter/bestellung"
+          variant="contained"
+          color="primary"
+          size="large"
+          startIcon={<AddShoppingCartIcon />}
+          fullWidth
+          sx={{ minHeight: 72, fontSize: '1.25rem', fontWeight: 700 }}
+        >
+          Bestellung
+        </Button>
+      </Stack>
     </StaffLayout>
   );
 }
