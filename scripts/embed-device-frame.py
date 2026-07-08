@@ -28,13 +28,14 @@ def _rounded_mask(size: tuple[int, int], radius: int) -> Image.Image:
 
 
 def _gradient_bg() -> Image.Image:
+    """Heller, neutraler Hintergrund für Device-Mockups."""
     img = Image.new("RGB", (CANVAS_W, CANVAS_H))
     draw = ImageDraw.Draw(img)
     for y in range(CANVAS_H):
         t = y / CANVAS_H
-        r = int(30 + 18 * t)
-        g = int(34 + 20 * t)
-        b = int(42 + 24 * t)
+        r = int(248 - 8 * t)
+        g = int(249 - 8 * t)
+        b = int(252 - 6 * t)
         draw.line([(0, y), (CANVAS_W, y)], fill=(r, g, b))
     return img
 
@@ -61,7 +62,7 @@ def _draw_shadow(base: Image.Image, box: tuple[int, int, int, int], radius: int,
     draw.rounded_rectangle(
         (spread, spread, w - spread - 1, h - spread - 1),
         radius=radius,
-        fill=(0, 0, 0, 90),
+        fill=(0, 0, 0, 45),
     )
     shadow = shadow.filter(ImageFilter.GaussianBlur(radius=18))
     base.paste(shadow, (x0 - spread, y0 - spread), shadow)

@@ -180,7 +180,7 @@ export function OrderPage() {
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-          <Paper sx={{ p: 3, mb: 2 }}>
+          <Paper sx={{ p: 3, mb: 2 }} data-testid="order-customer-form">
             <Typography variant="h5" gutterBottom fontWeight={700}>
               Ihre Daten
             </Typography>

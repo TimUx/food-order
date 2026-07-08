@@ -189,7 +189,21 @@ async function prepareOrderPage(page: Page) {
   await increaseButtons.first().click({ force: true });
   await increaseButtons.first().click({ force: true });
   await increaseButtons.nth(1).click({ force: true });
+  await increaseButtons.nth(2).click({ force: true });
   await dishesScroll.evaluate((el) => { el.scrollTop = 0; });
+}
+
+async function prepareOrderPageForDevice(page: Page, device: keyof typeof DEVICE_CAPTURES) {
+  await prepareOrderPage(page);
+
+  if (device === 'monitor') {
+    // Im 720px-Monitor-Viewport: Formular ausblenden, damit Gerichte sichtbar sind
+    await page.getByTestId('order-customer-form').evaluate((el) => {
+      (el as HTMLElement).style.display = 'none';
+    });
+    await page.getByRole('heading', { name: 'Gerichte', exact: true }).scrollIntoViewIfNeeded();
+    await page.getByTestId('order-dishes-scroll').evaluate((el) => { el.scrollTop = 0; });
+  }
 }
 
 interface PageSpec {
@@ -253,7 +267,7 @@ async function captureOrderPageDevices(browser: Awaited<ReturnType<typeof chromi
 
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(800);
-    await prepareOrderPage(page);
+    await prepareOrderPageForDevice(page, device);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(400);
 
