@@ -169,3 +169,20 @@ model ClubSettings {
   emailCustomText             String?
   updatedAt                   DateTime @updatedAt
 }
+
+/// Zentrale Modulverwaltung – Status und Konfiguration offizieller Module
+model InstalledModule {
+  moduleId         String    @id @map("module_id")
+  moduleVersion    String    @default("0.0.0") @map("module_version")
+  installed        Boolean   @default(false)
+  enabled          Boolean   @default(false)
+  installedAt      DateTime? @map("installed_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  configJson       Json      @default("{}") @map("config_json")
+  lastHealthStatus String?   @map("last_health_status")
+  lastHealthCheck  DateTime? @map("last_health_check")
+  everInstalled    Boolean   @default(false) @map("ever_installed")
+  everActivated    Boolean   @default(false) @map("ever_activated")
+
+  @@map("modules")
+}

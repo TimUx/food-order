@@ -47,12 +47,17 @@ Technische Dokumentation für Entwickler, die an der Vereinsbestellplattform mit
 ```
 food-order/
 ├── backend/
+│   ├── modules/          # Offizielle Feature-Module (payment, inventory, …)
+│   ├── plugins/          # Community-Plugins (Zukunft)
 │   ├── prisma/           # Schema, Migrationen, Seed
 │   └── src/
+│       ├── module-system/    # ModuleManager, Discovery, Extension Points
+│       └── core/payable/     # PayableResource-Adapter (z. B. Bestellungen)
 ├── frontend/
 │   └── src/
 │       ├── components/   # Wiederverwendbare UI
 │       ├── contexts/     # Auth, Theme
+│       ├── module-system/    # useModules, Modul-Menüs
 │       ├── pages/        # Routen/Seiten
 │       ├── services/     # API-Client, Socket
 │       └── types/
@@ -60,6 +65,7 @@ food-order/
 │   ├── screenshots/      # UI-Screenshots
 │   ├── DEVELOPER_GUIDE.md
 │   ├── ADMIN_GUIDE.md
+│   ├── MODULE_ARCHITECTURE.md
 │   └── USER_GUIDE.md
 ├── scripts/
 │   └── capture-screenshots.ts
@@ -120,6 +126,9 @@ docker compose exec backend npm run seed
 - **Order** – Bestellung mit `orderNumber`, `orderDate`, `status`
 - **DailyOrderCounter** – Atomarer Zähler für Tages-Bestellnummern
 - **OrderStatus** – Status-Historie (Audit-Trail)
+- **InstalledModule** – Modulstatus (`installed`, `enabled`, `config_json`, Health)
+
+Modul-spezifische Tabellen (z. B. `payment_sessions`) werden ausschließlich in Modul-Migrationen verwaltet – nicht im Core-Schema.
 
 ### Datenbankschema
 
@@ -159,6 +168,23 @@ Basis-URL: `/api`
 | GET | `/public/orders/:id` | Bestellung per ID (inkl. Storno-Infos) |
 | POST | `/public/orders/:id/cancel` | Online-Bestellung stornieren (Nachname) |
 | GET | `/public/pickup-board` | Fertige Bestellungen |
+| GET | `/public/payment/status` | Onlinezahlung verfügbar? |
+| GET | `/public/modules/menu` | Menüeinträge aktiver Module |
+
+### Modul- & Payment-Endpunkte
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| GET | `/admin/modules` | Alle Module (Status, Version, Health) |
+| POST | `/admin/modules/:id/install` | Modul installieren |
+| POST | `/admin/modules/:id/activate` | Modul aktivieren |
+| POST | `/admin/modules/:id/deactivate` | Modul deaktivieren |
+| GET/PUT | `/admin/modules/:id/config` | Modul-Konfiguration |
+| GET | `/modules/features/payment/status` | Payment verfügbar (Modul aktiv) |
+| POST | `/modules/features/payment/webhooks/:providerId` | Webhook-Eingang |
+| GET/PUT | `/modules/features/payment/admin/config` | Stripe-Keys, Provider |
+
+Vollständige Modul-API: siehe [MODULE_ARCHITECTURE.md](./MODULE_ARCHITECTURE.md#api-endpunkte).
 
 ### Mitarbeiter-Endpunkte (JWT)
 
@@ -224,6 +250,8 @@ Implementierung in `backend/src/utils/helpers.ts`:
 
 Küche und Abholung sehen am Veranstaltungstag alle Bestellungen – auch solche, die Wochen vorher aufgegeben wurden.
 
+Bei aktivem **Payment-Modul** erscheinen Online-Bestellungen erst in der Küche, nachdem die Zahlung abgeschlossen wurde. Unbezahlte Bestellungen werden per `paymentServiceRegistry.filterReleasedIds()` ausgefiltert.
+
 ---
 
 ## Authentifizierung
@@ -262,7 +290,7 @@ docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.61.1-ja
   bash -c "apt-get update -qq && apt-get install -y -qq python3-pil && cd frontend && npm install && npm run build && cd .. && npm install && npm run screenshots"
 ```
 
-Neue Screenshots (u. a. `18-bestell-einstellungen.png`) werden automatisch mit erzeugt.
+Neue Screenshots (u. a. `20-modulverwaltung.png`, `21-payment-einstellungen.png`) werden automatisch mit erzeugt.
 
 ---
 
@@ -275,6 +303,8 @@ Neue Screenshots (u. a. `18-bestell-einstellungen.png`) werden automatisch mit e
 | `DATABASE_URL` | PostgreSQL-Verbindung |
 | `JWT_SECRET` | Langer zufälliger String |
 | `CORS_ORIGIN` | Frontend-URL (CORS, Socket.IO und Links in E-Mails) |
+| `PAYMENT_ENCRYPTION_KEY` | Optional: Verschlüsselung von Payment-API-Keys |
+| `MODULES_DIR` | Optional: Pfad zu Modulen (Docker: `/app/modules`) |
 
 ### Docker Compose
 
@@ -318,23 +348,46 @@ Optionale Repository-Variablen für den Frontend-Build:
 |---------|--------|-----------|
 | Öffentlich | `/` | Bestellseite, `/kontakt`, `/abholboard` |
 | Mitarbeiter | `/mitarbeiter` | Küche, Abholung, Bestellungen |
-| Administration | `/admin` | Verein, Benutzer, Veranstaltungen, Speisen, Bestell-Einstellungen |
-| API Admin | `/api/admin` | `/users`, `/club` |
+| Administration | `/admin` | Verein, Benutzer, Veranstaltungen, Module, Payment |
+| API Admin | `/api/admin` | `/users`, `/club`, `/modules` |
+| API Module | `/api/modules/features/{id}` | Modul-Routen (nur wenn aktiviert) |
 
 ---
 
 ## Erweiterungspunkte
 
-Die Architektur ist vorbereitet für:
+Die Architektur nutzt ein **Feature-Modulsystem**. Vollständige Dokumentation:
 
-| Feature | Ansatz |
-|---------|--------|
-| QR-Codes | Neuer Service + Route, QR mit `orderId` oder `displayNumber` |
-| Bondruck | Service-Interface `PrintService`, Implementierung pro Drucker |
-| Zahlungen | Payment-Provider als Plugin in `services/payment/` |
-| Mehrere Küchen | `kitchenId` an Order/FoodItem |
-| Push-Benachrichtigungen | Web Push API + Service Worker |
-| CSV-Export | Neuer Endpoint in `orderController` |
-| Mehrsprachigkeit | i18n (z. B. react-i18next) |
+→ **[MODULE_ARCHITECTURE.md](./MODULE_ARCHITECTURE.md)**
 
-Neue Features sollten der Schichtenarchitektur folgen: Route → Controller → Service → Repository.
+| Feature | Modul |
+|---------|-------|
+| Online-Zahlung | `modules/payment/` ✅ |
+| Lagerverwaltung | `modules/inventory/` |
+| Bondruck | `modules/printer/` |
+| Gutscheine | `modules/voucher/` |
+| Rabatte | `modules/discount/` |
+| QR-Einlass | `modules/checkin/` |
+| Benachrichtigungen | `modules/notifications/` |
+| Auswertungen | `modules/analytics/` |
+| Treueprogramm | `modules/loyalty/` |
+| Kassenanbindung | `modules/cash-register/` |
+
+Neue Feature-Module implementieren das `Module`-Interface. Core-Änderungen nur über Hooks.
+
+### Payment & PayableResource
+
+Das Payment-Modul arbeitet ausschließlich mit `PayableResource` – es kennt keine Bestellungen. Der Core registriert Bestellungen als zahlbare Ressource:
+
+- `backend/src/core/payable/orderPayableAdapter.ts` – Adapter für `type: 'order'`
+- `backend/src/core/payable/registerPayables.ts` – Registrierung beim App-Start
+
+**Neue zahlbare Ressource hinzufügen:**
+
+1. `PayableResourceAdapter` implementieren (`toPayableResource`, `onPaymentCompleted`, `onPaymentFailed`)
+2. In `registerPayables()` oder im eigenen Modul bei `enable()` registrieren
+3. Im Domänen-Service `paymentServiceRegistry.isAvailable()` prüfen und ggf. `createCheckout()` aufrufen
+
+**Neuen Payment-Provider hinzufügen:** siehe [Payment-Modul in MODULE_ARCHITECTURE.md](./MODULE_ARCHITECTURE.md#payment-modul).
+
+**Umgebungsvariable:** `PAYMENT_ENCRYPTION_KEY` (min. 32 Zeichen empfohlen) für verschlüsselte API-Keys.

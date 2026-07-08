@@ -1,0 +1,15 @@
+{
+  "id": "notifications",
+  "name": "Benachrichtigungen",
+  "description": "E-Mail, Push und ntfy Benachrichtigungen",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": { "required": [], "optional": [] },
+  "permissions": [
+    { "key": "notifications.settings", "description": "Benachrichtigungseinstellungen verwalten" },
+    { "key": "notifications.send", "description": "Benachrichtigungen senden" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

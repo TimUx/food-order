@@ -72,6 +72,12 @@ export interface Order {
     phone?: string;
   } | null;
   items: OrderItem[];
+  payment?: {
+    required: boolean;
+    checkoutUrl: string;
+    sessionId: string;
+    providerId: string;
+  };
 }
 
 export interface DashboardStats {

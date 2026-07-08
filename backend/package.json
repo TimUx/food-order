@@ -2,11 +2,11 @@
   "name": "vereinsbestellung-backend",
   "version": "1.0.0",
   "description": "Backend für Vereinsveranstaltungs-Bestellplattform",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
@@ -25,7 +25,8 @@
     "nodemailer": "^7.0.3",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
-    "zod": "^3.25.67"
+    "zod": "^3.25.67",
+    "stripe": "^17.7.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

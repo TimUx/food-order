@@ -1,0 +1,15 @@
+{
+  "id": "inventory",
+  "name": "Lagerverwaltung",
+  "description": "Bestandsführung und Lagerbestände für Speisen und Getränke",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": { "required": [], "optional": [] },
+  "permissions": [
+    { "key": "inventory.view", "description": "Lagerbestände einsehen" },
+    { "key": "inventory.edit", "description": "Lagerbestände bearbeiten" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

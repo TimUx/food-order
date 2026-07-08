@@ -154,6 +154,17 @@ Kunden können **Wochen vorher** online bestellen. Am Veranstaltungstag:
 4. Bei Abfrage mit **Abholnummer + Nachname** finden Kunden ihre Bestellung wieder
 5. Innerhalb der Stornierungsfrist können Kunden auf der Statusseite selbst stornieren (Nachname zur Bestätigung)
 
+### Onlinezahlung (optional)
+
+Wenn Ihr Verein das **Payment-Modul** aktiviert hat, läuft der Ablauf etwas anders:
+
+1. Kunde bestellt online und wird zur Zahlungsseite (Stripe) weitergeleitet
+2. Die Bestellung erscheint in der Küche **erst nach erfolgreicher Zahlung**
+3. Unbezahlte oder abgebrochene Bestellungen sind in der Küche **nicht sichtbar**
+4. Die Abholung und Barzahlung an der Kasse funktionieren wie gewohnt
+
+> **Hinweis:** Wenn Onlinezahlung **nicht** aktiviert ist, gehen Bestellungen wie bisher sofort an die Küche. Die Zahlung erfolgt an der Kasse beim Abholen.
+
 ![Kundenstatus](screenshots/02-kundenstatus.png)
 
 Die Statusseite zeigt bei stornierbaren Bestellungen einen **Stornieren**-Button und die Stornierungsfrist an.

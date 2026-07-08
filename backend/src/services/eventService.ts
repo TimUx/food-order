@@ -1,6 +1,7 @@
 import { eventRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
 import { emitEventUpdate } from '../socket';
+import { featureHooks, CORE_HOOKS } from '../module-system';
 
 export const eventService = {
   async getAll() {
@@ -29,7 +30,7 @@ export const eventService = {
     cashierActive?: boolean;
     ordersClosed?: boolean;
   }) {
-    return eventRepository.create({
+    const event = await eventRepository.create({
       name: data.name,
       description: data.description,
       date: new Date(data.date),
@@ -39,6 +40,8 @@ export const eventService = {
       cashierActive: data.cashierActive ?? true,
       ordersClosed: data.ordersClosed ?? false,
     });
+    featureHooks.emitAsync(CORE_HOOKS.EVENT_CREATED, event);
+    return event;
   },
 
   async update(id: string, data: Partial<{
@@ -56,6 +59,7 @@ export const eventService = {
     if (data.date) updateData.date = new Date(data.date);
     const event = await eventRepository.update(id, updateData);
     emitEventUpdate(event);
+    featureHooks.emitAsync(CORE_HOOKS.EVENT_UPDATED, event);
     return event;
   },
 

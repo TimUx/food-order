@@ -25,20 +25,23 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import ExtensionIcon from '@mui/icons-material/Extension';
 import { useClub } from '@/contexts/ClubContext';
 import { getImageUrl } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useModuleMenuItems } from '@/module-system';
 
 const DRAWER_WIDTH = 260;
 
-const navItems = [
+const coreNavItems = [
   { path: '/admin', label: 'Übersicht', icon: <DashboardIcon /> },
   { path: '/admin/verein', label: 'Verein & Kontakt', icon: <SettingsIcon /> },
   { path: '/admin/benutzer', label: 'Benutzer', icon: <PeopleIcon /> },
   { path: '/admin/veranstaltungen', label: 'Veranstaltungen', icon: <EventIcon /> },
   { path: '/admin/speisen', label: 'Speisen', icon: <RestaurantMenuIcon /> },
+  { path: '/admin/module', label: 'Module', icon: <ExtensionIcon /> },
 ];
 
 interface AdminLayoutProps {
@@ -57,6 +60,16 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { club } = useClub();
   const logoUrl = getImageUrl(club.logoUrl || undefined);
+  const moduleMenuItems = useModuleMenuItems();
+
+  const navItems = [
+    ...coreNavItems,
+    ...moduleMenuItems.map((item) => ({
+      path: item.path,
+      label: item.label,
+      icon: <ExtensionIcon />,
+    })),
+  ];
 
   const drawerContent = (
     <Box sx={{ width: DRAWER_WIDTH, pt: 2 }}>

@@ -1,0 +1,20 @@
+{
+  "id": "payment",
+  "name": "Online-Zahlung",
+  "description": "Online-Zahlungen über Stripe, PayPal, VR Payment, S-Payment, Payone und SumUp",
+  "version": "1.0.0",
+  "author": "Vereinsbestellung",
+  "homepage": "https://github.com/TimUx/food-order",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": {
+    "required": [],
+    "optional": []
+  },
+  "permissions": [
+    { "key": "payment.view", "description": "Zahlungsstatus einsehen" },
+    { "key": "payment.settings", "description": "Zahlungseinstellungen verwalten" },
+    { "key": "payment.refund", "description": "Rückerstattungen durchführen" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

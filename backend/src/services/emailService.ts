@@ -47,7 +47,7 @@ function createTransporter(smtp: Awaited<ReturnType<typeof getSmtpConfig>>): Tra
 }
 
 export const emailService = {
-  async getSmtpConfig,
+  getSmtpConfig,
 
   async sendOrderConfirmation(
     email: string,

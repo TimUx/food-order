@@ -157,6 +157,39 @@ export const api = {
     role?: UserRole;
     active?: boolean;
   }) => request<User>(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
+
+  getModules: (token: string) =>
+    request<import('@/module-system').ModuleInfo[]>('/admin/modules', {}, token),
+  installModule: (token: string, id: string) =>
+    request<import('@/module-system').ModuleInfo>(`/admin/modules/${id}/install`, { method: 'POST' }, token),
+  uninstallModule: (token: string, id: string) =>
+    request<import('@/module-system').ModuleInfo>(`/admin/modules/${id}/uninstall`, { method: 'POST' }, token),
+  activateModule: (token: string, id: string) =>
+    request<import('@/module-system').ModuleInfo>(`/admin/modules/${id}/activate`, { method: 'POST' }, token),
+  deactivateModule: (token: string, id: string) =>
+    request<import('@/module-system').ModuleInfo>(`/admin/modules/${id}/deactivate`, { method: 'POST' }, token),
+  reinitializeModule: (token: string, id: string) =>
+    request<import('@/module-system').ModuleInfo>(`/admin/modules/${id}/reinitialize`, { method: 'POST' }, token),
+  runModuleHealthCheck: (token: string, id: string) =>
+    request<import('@/module-system').ModuleHealthResult>(`/admin/modules/${id}/health`, {}, token),
+  enableModule: (token: string, id: string) =>
+    request<import('@/module-system').ModuleInfo>(`/admin/modules/${id}/enable`, { method: 'POST' }, token),
+  disableModule: (token: string, id: string) =>
+    request<import('@/module-system').ModuleInfo>(`/admin/modules/${id}/disable`, { method: 'POST' }, token),
+  getModuleConfig: (token: string, id: string) =>
+    request<Record<string, unknown>>(`/admin/modules/${id}/config`, {}, token),
+  updateModuleConfig: (token: string, id: string, config: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/admin/modules/${id}/config`, { method: 'PUT', body: JSON.stringify(config) }, token),
+  getPublicModuleMenu: () =>
+    request<import('@/module-system').ModuleMenuItem[]>('/public/modules/menu'),
+  getPaymentStatus: () =>
+    request<{ available: boolean }>('/public/payment/status'),
+  getPaymentConfig: (token: string) =>
+    request<Record<string, unknown>>('/modules/features/payment/admin/config', {}, token),
+  updatePaymentConfig: (token: string, config: Record<string, unknown>) =>
+    request<Record<string, unknown>>('/modules/features/payment/admin/config', { method: 'PUT', body: JSON.stringify(config) }, token),
+  testPaymentProvider: (token: string, providerId: string) =>
+    request<{ ok: boolean; message?: string }>(`/modules/features/payment/admin/providers/${providerId}/test`, { method: 'POST' }, token),
 };
 
 import type { Event, FoodItem, Order, User, UserRole, DashboardStats, PickupBoardOrder, OrderStatus } from '@/types';
