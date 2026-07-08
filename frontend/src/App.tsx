@@ -21,6 +21,8 @@ import { EventsPage } from '@/pages/admin/EventsPage';
 import { FoodItemsPage } from '@/pages/admin/FoodItemsPage';
 import { OrderSettingsPage } from '@/pages/admin/OrderSettingsPage';
 import { MailSettingsPage } from '@/pages/admin/MailSettingsPage';
+import { FeatureModulesPage } from '@/pages/admin/FeatureModulesPage';
+import { PaymentSettingsPage } from '@/pages/admin/PaymentSettingsPage';
 
 export default function App() {
   return (
@@ -50,6 +52,9 @@ export default function App() {
               <Route path="/admin/speisen" element={<AdminRoute><FoodItemsPage /></AdminRoute>} />
               <Route path="/admin/bestellung" element={<AdminRoute><OrderSettingsPage /></AdminRoute>} />
               <Route path="/admin/email" element={<AdminRoute><MailSettingsPage /></AdminRoute>} />
+              <Route path="/admin/module" element={<AdminRoute><FeatureModulesPage /></AdminRoute>} />
+              <Route path="/admin/module/payment" element={<AdminRoute><PaymentSettingsPage /></AdminRoute>} />
+              <Route path="/admin/module/:moduleId" element={<AdminRoute><FeatureModulesPage /></AdminRoute>} />
 
               {/* Alte Routen weiterleiten */}
               <Route path="/mitarbeiter/kasse" element={<Navigate to="/mitarbeiter/abholung" replace />} />

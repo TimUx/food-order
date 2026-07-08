@@ -15,11 +15,13 @@ Anleitung für Administratoren der Vereinsbestellplattform mit Vollzugriff auf a
 9. [Bestellungen überwachen](#bestellungen-überwachen)
 10. [Mitarbeiter & Rollen](#mitarbeiter--rollen)
 11. [Schalter & Einstellungen](#schalter--einstellungen)
-12. [Abholboard einrichten](#abholboard-einrichten)
-13. [E-Mail-Benachrichtigungen](#e-mail-benachrichtigungen)
-14. [Checkliste am Veranstaltungstag](#checkliste-am-veranstaltungstag)
-15. [FAQ](#faq)
-16. [Troubleshooting](#troubleshooting)
+12. [Modulverwaltung](#modulverwaltung)
+13. [Online-Zahlung (Payment)](#online-zahlung-payment)
+14. [Abholboard einrichten](#abholboard-einrichten)
+15. [E-Mail-Benachrichtigungen](#e-mail-benachrichtigungen)
+16. [Checkliste am Veranstaltungstag](#checkliste-am-veranstaltungstag)
+17. [FAQ](#faq)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -168,6 +170,20 @@ TURNSTILE_SECRET_KEY=ihr-secret-key
 
 Cloudflare Turnstile schützt die öffentliche Bestellseite vor automatisierten Bestellungen. Ohne diese Keys greifen weiterhin Honeypot und Zeitprüfung.
 
+### Modulsystem & Online-Zahlung (optional)
+
+```env
+# MODULES_DIR=/app/modules          # Docker: Standard /app/modules
+# PAYMENT_ENCRYPTION_KEY=...        # Verschlüsselung von Payment-API-Keys
+```
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `MODULES_DIR` | Pfad zu offiziellen Modulen (Docker-Image) |
+| `PAYMENT_ENCRYPTION_KEY` | AES-Schlüssel für verschlüsselte Stripe-Keys in der DB |
+
+Ohne `PAYMENT_ENCRYPTION_KEY` wird ein Fallback aus `JWT_SECRET` verwendet – in Produktion einen eigenen Schlüssel setzen.
+
 ### Übersicht: Was muss vor dem Live-Betrieb geändert werden?
 
 | Einstellung | Pflicht? |
@@ -178,6 +194,8 @@ Cloudflare Turnstile schützt die öffentliche Bestellseite vor automatisierten 
 | Admin-Passwort (nach Seed) | ✅ Ja |
 | SMTP (unter `/admin/email`) | Optional |
 | Turnstile | Optional |
+| Payment-Modul | Optional (nur bei Onlinezahlung) |
+| `PAYMENT_ENCRYPTION_KEY` | Optional (empfohlen bei Payment) |
 
 ---
 
@@ -507,6 +525,8 @@ Der **Administrationsbereich** (`/admin`) ist vom Mitarbeiterbereich getrennt un
 | `/admin/speisen` | Speisekarte pflegen |
 | `/admin/bestellung` | Pflichtfelder & Stornierungsfrist |
 | `/admin/email` | SMTP / E-Mail-Versand |
+| `/admin/module` | Modulverwaltung (installieren, aktivieren) |
+| `/admin/module/payment` | Payment-Einstellungen (nur wenn Modul aktiviert) |
 
 Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: Dashboard, Küche, Abholung, Bestellung, Bestellübersicht.
 
@@ -520,6 +540,8 @@ Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: 
 | Benutzerverwaltung | ![Benutzer](screenshots/17-benutzerverwaltung.png) |
 | Veranstaltungen | ![Veranstaltungen](screenshots/12-veranstaltungen.png) |
 | Speisen | ![Speisen](screenshots/11-speisenverwaltung.png) |
+| Modulverwaltung | ![Module](screenshots/20-modulverwaltung.png) |
+| Payment | ![Payment](screenshots/21-payment-einstellungen.png) |
 
 ---
 
@@ -704,6 +726,124 @@ Pro Veranstaltung drei Schalter:
 
 ---
 
+## Modulverwaltung
+
+Unter **Module** (`/admin/module`) verwalten Sie optionale Erweiterungen der Plattform. Module werden **mit dem Docker-Image ausgeliefert** – es gibt keine separaten Downloads.
+
+![Modulverwaltung](screenshots/20-modulverwaltung.png)
+
+### Verfügbare Module
+
+| Modul | Status | Beschreibung |
+|-------|--------|--------------|
+| **Online-Zahlung** (`payment`) | Vollständig | Stripe-Checkout, Webhooks, Rückerstattungen |
+| Lagerverwaltung (`inventory`) | Geplant | Bestandsführung für Speisen |
+| Bondruck (`printer`) | Geplant | Automatischer Küchen- und Kassenbondruck |
+| Gutscheine (`voucher`) | Geplant | Gutscheinverwaltung (benötigt Payment) |
+| Rabatte (`discount`) | Geplant | Rabattaktionen und Sonderpreise |
+| Benachrichtigungen (`notifications`) | Geplant | E-Mail, Push, ntfy |
+| Auswertungen (`analytics`) | Geplant | Statistiken und Berichte |
+| Treueprogramm (`loyalty`) | Geplant | Punkte und Belohnungen |
+| QR-Code Einlass (`checkin`) | Geplant | Einlasskontrolle per QR-Code |
+| Kassenanbindung (`cash-register`) | Geplant | Anbindung an Kassensysteme und TSE |
+
+### Lifecycle
+
+| Status | Bedeutung |
+|--------|-----------|
+| **Verfügbar** | Im Image enthalten, noch nicht installiert |
+| **Installiert** | Datenbank initialisiert, noch nicht aktiv |
+| **Aktiviert** | Modul läuft, Menüs und Funktionen sichtbar |
+| **Deaktiviert** | Installiert, aber ausgeschaltet |
+| **Deinstalliert** | Zurückgesetzt, kann erneut installiert werden |
+
+### Aktionen
+
+| Aktion | Wirkung |
+|--------|---------|
+| **Installieren** | Führt Modul-Migrationen aus, speichert Standard-Konfiguration |
+| **Aktivieren** | Registriert Menüs, API-Routen und Extension Points |
+| **Deaktivieren** | Schaltet Modul ab, entfernt Menüs und aktive Funktionen |
+| **Deinstallieren** | Setzt Installationsstatus zurück (nur wenn deaktiviert) |
+| **Health Check** | Prüft Konfiguration und externe Verbindungen |
+
+> **Wichtig für Vereine mit reiner Barzahlung:** Kein Modul muss installiert oder aktiviert werden. Ohne aktiviertes Payment-Modul verhält sich die Plattform exakt wie zuvor – Bestellungen gehen direkt an die Küche, Zahlung erfolgt an der Kasse.
+
+### Abhängigkeiten
+
+Manche Module benötigen andere Module. Beispiel: **Gutscheine** erfordert **Online-Zahlung**. Die Aktivierung schlägt fehl, wenn Abhängigkeiten nicht erfüllt sind.
+
+---
+
+## Online-Zahlung (Payment)
+
+Das Payment-Modul ermöglicht **Onlinezahlungen** bei Vorbestellungen. Es muss zuerst unter **Module** installiert und aktiviert werden. Anschließend erscheint der Menüpunkt **Payment** (`/admin/module/payment`).
+
+![Payment-Einstellungen](screenshots/21-payment-einstellungen.png)
+
+### Voraussetzungen
+
+1. Modul **Online-Zahlung** installieren und aktivieren
+2. Stripe-Konto (Test oder Live) einrichten
+3. In `.env` optional `PAYMENT_ENCRYPTION_KEY` setzen (verschlüsselte Speicherung der API-Keys)
+
+### Provider
+
+| Provider | Status |
+|----------|--------|
+| **Stripe** | Vollständig implementiert |
+| PayPal, VR Payment, S-Payment, PAYONE, SumUp | Platzhalter (kommende Versionen) |
+
+### Stripe einrichten
+
+1. Öffnen Sie **Administration → Module → Payment**
+2. Schalten Sie **Stripe** auf **Aktiv**
+3. Tragen Sie ein:
+   - **Publishable Key** (`pk_test_…` oder `pk_live_…`)
+   - **Secret Key** (`sk_test_…` oder `sk_live_…`)
+   - **Webhook Secret** (`whsec_…`)
+4. **Sandbox / Testmodus** für Tests aktiv lassen, für Live-Betrieb deaktivieren
+5. Klicken Sie auf **Testen**, um die Verbindung zu prüfen
+6. Speichern
+
+### Webhook in Stripe
+
+Tragen Sie im Stripe-Dashboard unter **Webhooks** die angezeigte URL ein:
+
+```
+https://ihre-domain.de/api/modules/features/payment/webhooks/stripe
+```
+
+Ereignis: `checkout.session.completed`
+
+### Ablauf mit Onlinezahlung
+
+1. Kunde bestellt auf der öffentlichen Bestellseite
+2. Nach dem Absenden wird er zur Stripe-Checkout-Seite weitergeleitet
+3. Nach erfolgreicher Zahlung erscheint die Bestellung in der Küche
+4. Unbezahlte Online-Bestellungen werden **nicht** an die Küche übergeben
+
+### Ablauf ohne Onlinezahlung (Standard)
+
+Wenn das Payment-Modul **nicht aktiviert** ist oder kein Provider konfiguriert wurde:
+
+- Keine Weiterleitung zur Zahlung
+- Bestellungen gehen sofort an die Küche
+- Zahlung erfolgt an der Kasse beim Abholen
+
+### FAQ Payment
+
+**Muss ich Onlinezahlung nutzen?**  
+Nein. Für Vereine mit ausschließlich Barzahlung an der Kasse ist keine Konfiguration nötig.
+
+**Kann ich Onlinezahlung später aktivieren?**  
+Ja. Modul installieren, Stripe konfigurieren, aktivieren – bestehende Bestellungen sind nicht betroffen.
+
+**Was passiert bei Zahlungsabbruch?**  
+Die Bestellung bleibt in der Datenbank, erreicht aber nicht die Küche, bis die Zahlung abgeschlossen ist.
+
+---
+
 ## Abholboard einrichten
 
 Das Abholboard (`/abholboard`) ist für Fernseher oder Monitore gedacht.
@@ -753,6 +893,7 @@ SMTP-Zugangsdaten konfigurieren Sie unter `/admin/email` – siehe Abschnitt [E-
 - [ ] Abholboard auf Monitor: `/abholboard`
 - [ ] Alle Vorbestellungen sind in der Küchenansicht sichtbar
 - [ ] Testbestellung durchgeführt
+- [ ] Bei Onlinezahlung: Payment-Modul aktiviert, Stripe-Webhook eingerichtet, Testzahlung erfolgreich
 
 ---
 
@@ -796,7 +937,17 @@ Bilder liegen im Docker-Volume `uploads_data` und bleiben bei Updates erhalten, 
 
 ### Funktioniert die Plattform ohne Internet?
 
-Für den lokalen Betrieb im Vereinsnetz reicht das interne Netzwerk. Für E-Mail-Benachrichtigungen und optionalen Turnstile-Schutz wird Internet benötigt.
+Für den lokalen Betrieb im Vereinsnetz reicht das interne Netzwerk. Für E-Mail-Benachrichtigungen, optionalen Turnstile-Schutz und Onlinezahlung (Stripe) wird Internet benötigt.
+
+### Muss ich Module installieren?
+
+Nein. Module sind optional. Vereine mit reiner Barzahlung können alle Module deaktiviert lassen – die Plattform funktioniert dann wie gewohnt.
+
+### Wie aktiviere ich Onlinezahlung?
+
+1. **Administration → Module** → Online-Zahlung installieren und aktivieren
+2. **Administration → Module → Payment** → Stripe konfigurieren
+3. Webhook in Stripe einrichten (siehe [Online-Zahlung](#online-zahlung-payment))
 
 ---
 
@@ -887,4 +1038,5 @@ docker compose exec backend npm run seed
 
 - [Benutzerhandbuch (Mitarbeiter)](USER_GUIDE.md)
 - [Entwicklerhandbuch](DEVELOPER_GUIDE.md)
+- [Modul-Architektur](MODULE_ARCHITECTURE.md)
 - [README](../README.md)

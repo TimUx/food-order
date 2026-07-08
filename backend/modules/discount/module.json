@@ -1,0 +1,15 @@
+{
+  "id": "discount",
+  "name": "Rabatte",
+  "description": "Rabattaktionen und Sonderpreise",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": { "required": [], "optional": [] },
+  "permissions": [
+    { "key": "discount.manage", "description": "Rabatte verwalten" },
+    { "key": "discount.apply", "description": "Rabatte anwenden" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

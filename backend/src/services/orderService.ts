@@ -21,6 +21,7 @@ import {
 } from '../utils/helpers';
 import { emitOrderCreated, emitOrderUpdate } from '../socket';
 import { emailService } from './emailService';
+import { featureHooks, CORE_HOOKS, paymentServiceRegistry } from '../module-system';
 
 type OrderWithRelations = Order & {
   customer?: { firstName: string; lastName: string; email?: string | null; phone?: string | null } | null;
@@ -143,7 +144,10 @@ export const orderService = {
     const orders = await orderRepository.findByEvent(eventId, {
       status: statusFilter,
     });
-    return orders.map((o) => mapOrder(o as OrderWithRelations));
+    const ids = orders.map((o) => o.id);
+    const releasedIds = new Set(await paymentServiceRegistry.filterReleasedIds('order', ids));
+    const filtered = orders.filter((o) => releasedIds.has(o.id));
+    return filtered.map((o) => mapOrder(o as OrderWithRelations));
   },
 
   async getById(id: string) {
@@ -214,7 +218,81 @@ export const orderService = {
 
     validateOrderFields(customerData, orderSettings.fields);
 
-    return this._createOrder(event, 'ONLINE', data.items, customerData);
+    const paymentAvailable = await paymentServiceRegistry.isAvailable();
+    const mapped = await this._createOrder(event, 'ONLINE', data.items, customerData, {
+      skipKitchenNotify: paymentAvailable,
+    });
+
+    if (paymentAvailable) {
+      const { config } = await import('../config');
+      const { payableResourceRegistry } = await import('../module-system/extension-points');
+      const resource = await payableResourceRegistry.toPayableResource(
+        'order',
+        mapped.id,
+        config.corsOrigin
+      );
+      if (resource) {
+        const checkout = await paymentServiceRegistry.createCheckout(resource);
+        if (checkout) {
+          return {
+            ...mapped,
+            payment: {
+              required: true,
+              checkoutUrl: checkout.checkoutUrl,
+              sessionId: checkout.sessionId,
+              providerId: checkout.providerId,
+            },
+          };
+        }
+      }
+      await orderService._releaseOrderToKitchen(event, mapped, customerData);
+    }
+
+    return mapped;
+  },
+
+  async _releaseOrderToKitchen(
+    event: { id: string; date: Date; startTime: string },
+    mapped: Awaited<ReturnType<typeof mapOrderWithCancellation>>,
+    customerData?: { email?: string }
+  ) {
+    emitOrderCreated(event.id, mapped);
+    featureHooks.emitAsync(CORE_HOOKS.ORDER_CREATED, mapped);
+
+    if (customerData?.email) {
+      const club = await clubService.getPublic();
+      const settings = await clubService.getSettings();
+      const deadline = getCancellationDeadline(
+        event.date,
+        event.startTime,
+        settings.cancellationDeadlineHours
+      );
+
+      emailService
+        .sendOrderConfirmation(
+          customerData.email,
+          {
+            id: mapped.id,
+            displayNumber: mapped.displayNumber,
+            totalPrice: mapped.totalPrice,
+            eventDateLabel: mapped.eventDateLabel,
+            items: mapped.items.map((i) => ({
+              name: i.name!,
+              quantity: i.quantity,
+              lineTotal: i.lineTotal!,
+            })),
+            cancellationDeadlineLabel: formatDateTimeDE(deadline),
+          },
+          {
+            clubName: club.clubName,
+            contactName: club.contactName,
+            email: club.email,
+            phone: club.phone,
+            address: club.address,
+          }
+        )
+        .catch(() => {});
+    }
   },
 
   async createCashierOrder(items: { foodItemId: string; quantity: number }[]) {
@@ -265,7 +343,8 @@ export const orderService = {
       lastName: string;
       email?: string;
       phone?: string;
-    }
+    },
+    options?: { skipKitchenNotify?: boolean }
   ) {
     const eventId = event.id;
     const orderDate = getEventOrderDate(event.date);
@@ -328,41 +407,9 @@ export const orderService = {
 
     const orderWithEvent = { ...order, event: { date: event.date, startTime: event.startTime } };
     const mapped = await mapOrderWithCancellation(orderWithEvent as OrderWithRelations);
-    emitOrderCreated(eventId, mapped);
 
-    if (customerData?.email) {
-      const club = await clubService.getPublic();
-      const settings = await clubService.getSettings();
-      const deadline = getCancellationDeadline(
-        event.date,
-        event.startTime,
-        settings.cancellationDeadlineHours
-      );
-
-      emailService
-        .sendOrderConfirmation(
-          customerData.email,
-          {
-            id: mapped.id,
-            displayNumber: mapped.displayNumber,
-            totalPrice: mapped.totalPrice,
-            eventDateLabel: mapped.eventDateLabel,
-            items: mapped.items.map((i) => ({
-              name: i.name!,
-              quantity: i.quantity,
-              lineTotal: i.lineTotal!,
-            })),
-            cancellationDeadlineLabel: formatDateTimeDE(deadline),
-          },
-          {
-            clubName: club.clubName,
-            contactName: club.contactName,
-            email: club.email,
-            phone: club.phone,
-            address: club.address,
-          }
-        )
-        .catch(() => {});
+    if (!options?.skipKitchenNotify) {
+      await orderService._releaseOrderToKitchen(event, mapped, customerData);
     }
 
     return mapped;
@@ -387,6 +434,14 @@ export const orderService = {
     const updated = await orderRepository.updateStatus(id, status, changedBy, extra);
     const mapped = await mapOrderWithCancellation(updated as OrderWithRelations);
     emitOrderUpdate(order.eventId, mapped);
+    featureHooks.emitAsync(CORE_HOOKS.ORDER_STATUS_CHANGED, mapped);
+
+    if (status === 'CANCELLED') {
+      featureHooks.emitAsync(CORE_HOOKS.ORDER_CANCELLED, mapped);
+    }
+    if (status === 'READY') {
+      featureHooks.emitAsync(CORE_HOOKS.KITCHEN_COMPLETED, mapped);
+    }
 
     if (status === 'CANCELLED' && order.source === 'ONLINE' && order.customer?.email) {
       const club = await clubService.getPublic();

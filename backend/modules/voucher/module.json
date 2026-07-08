@@ -1,0 +1,18 @@
+{
+  "id": "voucher",
+  "name": "Gutscheine",
+  "description": "Gutscheinverwaltung und Einlösung",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": {
+    "required": ["payment"],
+    "optional": ["inventory"]
+  },
+  "permissions": [
+    { "key": "voucher.manage", "description": "Gutscheine verwalten" },
+    { "key": "voucher.redeem", "description": "Gutscheine einlösen" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

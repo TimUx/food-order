@@ -1,0 +1,15 @@
+{
+  "id": "cash-register",
+  "name": "Kassenanbindung",
+  "description": "Anbindung an Kassensysteme und TSE",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": { "required": [], "optional": ["payment"] },
+  "permissions": [
+    { "key": "cash-register.settings", "description": "Kassenanbindung konfigurieren" },
+    { "key": "cash-register.sync", "description": "Kassendaten synchronisieren" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

@@ -20,6 +20,8 @@ Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstalt
 | **E-Mail-Einstellungen** | SMTP-Server für Bestätigungsmails (Admin) |
 | **Speisenverwaltung** | CRUD mit Bild-Upload (Admin) |
 | **Veranstaltungsverwaltung** | Mehrere Events, eine aktiv (Admin) |
+| **Modulverwaltung** | Optionale Erweiterungen installieren & aktivieren (Admin) |
+| **Online-Zahlung** | Stripe-Checkout für Vorbestellungen (optional, Modul) |
 
 ## Vorausbestellungen
 
@@ -34,6 +36,19 @@ Administratoren können unter **Verein** (`/admin/verein`) konfigurieren:
 - Kontaktseite unter `/kontakt` mit Link von der Bestellseite
 
 Ohne Konfiguration werden sinnvolle Standardwerte verwendet.
+
+## Modulsystem & Online-Zahlung
+
+Die Plattform unterstützt **optionale Module**, die mit dem Docker-Image ausgeliefert werden:
+
+| Modul | Status | Beschreibung |
+|-------|--------|--------------|
+| **Online-Zahlung** | ✅ Vollständig | Stripe-Checkout, Webhooks, Rückerstattungen |
+| Lagerverwaltung, Bondruck, Gutscheine, … | 🔜 Geplant | Vorbereitet, noch nicht aktiv |
+
+**Wichtig:** Vereine mit ausschließlich Barzahlung an der Kasse müssen **kein Modul aktivieren**. Ohne aktiviertes Payment-Modul verhält sich die Plattform exakt wie zuvor.
+
+Technische Details: [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) · Admin-Anleitung: [Modulverwaltung](docs/ADMIN_GUIDE.md#modulverwaltung)
 
 ## Screenshots
 
@@ -72,6 +87,10 @@ Ohne Konfiguration werden sinnvolle Standardwerte verwendet.
 | Benutzerverwaltung | Veranstaltungen | Speisenverwaltung |
 |:---:|:---:|:---:|
 | ![Benutzer](docs/screenshots/17-benutzerverwaltung.png) | ![Veranstaltungen](docs/screenshots/12-veranstaltungen.png) | ![Speisen](docs/screenshots/11-speisenverwaltung.png) |
+
+| Modulverwaltung | Payment-Einstellungen |
+|:---:|:---:|
+| ![Module](docs/screenshots/20-modulverwaltung.png) | ![Payment](docs/screenshots/21-payment-einstellungen.png) |
 
 ## Schnellstart
 
@@ -134,6 +153,8 @@ Das Backend synchronisiert das Datenbankschema automatisch per `prisma db push` 
 | `/admin/speisen` | Speisenverwaltung | ADMIN |
 | `/admin/bestellung` | Pflichtfelder & Stornierungsfrist | ADMIN |
 | `/admin/email` | SMTP / E-Mail-Versand | ADMIN |
+| `/admin/module` | Modulverwaltung | ADMIN |
+| `/admin/module/payment` | Payment-Einstellungen (wenn Modul aktiv) | ADMIN |
 
 > Alte Routen `/mitarbeiter/kasse`, `/mitarbeiter/lokale-kasse`, `/mitarbeiter/verein`, `/mitarbeiter/speisen` und `/mitarbeiter/veranstaltungen` leiten automatisch weiter.
 
@@ -142,12 +163,13 @@ Das Backend synchronisiert das Datenbankschema automatisch per `prisma db push` 
 | Handbuch | Zielgruppe |
 |----------|-----------|
 | [Developer Guide](docs/DEVELOPER_GUIDE.md) | Entwickler |
+| [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) | Entwickler (Module, Payment, PayableResource) |
 | [Admin Guide](docs/ADMIN_GUIDE.md) | Administratoren |
 | [User Guide](docs/USER_GUIDE.md) | Mitarbeiter (Küche, Abholung) |
 
 ## Technologie-Stack
 
-React · TypeScript · Vite · Material UI · Node.js · Express · Prisma · PostgreSQL · Socket.IO · Docker · PWA
+React · TypeScript · Vite · Material UI · Node.js · Express · Prisma · PostgreSQL · Socket.IO · Docker · PWA · Modulsystem · Stripe
 
 ## Docker Images
 

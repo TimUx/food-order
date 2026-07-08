@@ -136,6 +136,120 @@ const mockStats = {
 
 const mockUser = { id: 'u1', email: 'admin@verein.local', firstName: 'Admin', lastName: 'Verein', role: 'ADMIN' };
 
+const mockModuleMenu = [
+  { id: 'payment-settings', label: 'Payment', path: '/admin/module/payment', icon: 'Payment', parentId: 'modules', sortOrder: 10 },
+];
+
+const mockModules = [
+  {
+    id: 'payment', name: 'Online-Zahlung', version: '1.0.0', imageVersion: '1.0.0',
+    description: 'Online-Zahlungen über Stripe, PayPal, VR Payment, S-Payment, PAYONE und SumUp',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'ACTIVATED', installed: true, enabled: true,
+    flags: { enabled: true, disabled: false, configurable: true, visible: true, health: 'healthy' },
+    permissions: [
+      { key: 'payment.view', description: 'Zahlungsstatus einsehen' },
+      { key: 'payment.settings', description: 'Zahlungseinstellungen verwalten' },
+      { key: 'payment.refund', description: 'Rückerstattungen durchführen' },
+    ],
+    menuItems: mockModuleMenu, widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0',
+    installedAt: '2026-01-15T10:00:00.000Z', lastHealthStatus: 'healthy', upgradeAvailable: false,
+  },
+  {
+    id: 'inventory', name: 'Lagerverwaltung', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Bestandsführung und Lagerbestände für Speisen und Getränke',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [{ key: 'inventory.view', description: 'Lagerbestände einsehen' }],
+    menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
+  },
+  {
+    id: 'printer', name: 'Bondruck', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Automatischer Bondruck für Küche und Kasse',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [], menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
+  },
+  {
+    id: 'voucher', name: 'Gutscheine', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Gutscheinverwaltung und Einlösung',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [{ key: 'voucher.manage', description: 'Gutscheine verwalten' }],
+    menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: ['payment'], optional: ['inventory'] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
+  },
+  {
+    id: 'discount', name: 'Rabatte', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Rabattaktionen und Sonderpreise',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [], menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
+  },
+  {
+    id: 'notifications', name: 'Benachrichtigungen', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'E-Mail, Push und ntfy Benachrichtigungen',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'INSTALLED', installed: true, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [], menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0',
+    installedAt: '2026-02-01T12:00:00.000Z', upgradeAvailable: false,
+  },
+  {
+    id: 'analytics', name: 'Auswertungen', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Statistiken und Berichte zu Bestellungen und Veranstaltungen',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [], menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
+  },
+  {
+    id: 'loyalty', name: 'Treueprogramm', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Stammkundenprogramm mit Punkten und Belohnungen',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [], menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
+  },
+  {
+    id: 'checkin', name: 'QR-Code Einlass', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Einlasskontrolle per QR-Code',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    permissions: [], menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
+  },
+  {
+    id: 'cash-register', name: 'Kassenanbindung', version: '0.1.0', imageVersion: '0.1.0',
+    description: 'Anbindung an Kassensysteme und TSE',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'DISABLED', installed: true, enabled: false,
+    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'degraded' },
+    permissions: [], menuItems: [], widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0',
+    installedAt: '2026-01-20T08:00:00.000Z', lastHealthStatus: 'degraded', upgradeAvailable: false,
+  },
+];
+
+const mockPaymentConfig = {
+  defaultProvider: 'stripe',
+  onlinePaymentForEvents: true,
+  stripe: {
+    enabled: true,
+    sandbox: true,
+    publishableKey: 'pk_test_51Muster••••Key',
+    secretKey: 'sk_test_51M••••Key',
+    webhookSecret: 'whsec_••••••••',
+  },
+  paypal: { enabled: false, sandbox: true },
+  vrPayment: { enabled: false },
+  sPayment: { enabled: false },
+  payone: { enabled: false },
+  sumup: { enabled: false },
+};
+
 const mockUsers = [
   { id: 'u1', email: 'admin@verein.local', firstName: 'Admin', lastName: 'Verein', role: 'ADMIN', active: true, createdAt: '2026-01-01T00:00:00.000Z' },
   { id: 'u2', email: 'kueche@verein.local', firstName: 'Küche', lastName: 'Team', role: 'STAFF', active: true, createdAt: '2026-01-02T00:00:00.000Z' },
@@ -181,6 +295,16 @@ function mockApi(pathname: string, method: string, body?: string): unknown {
   }
   if (pathname.match(/\/staff\/events\/[^/]+\/orders$/) && method === 'GET') return mockOrders;
   if (pathname === '/api/admin/users' && method === 'GET') return mockUsers;
+  if (pathname === '/api/admin/modules' && method === 'GET') return mockModules;
+  if (pathname === '/api/public/modules/menu') return mockModuleMenu;
+  if (pathname === '/api/public/payment/status') return { available: true };
+  if (pathname === '/api/modules/features/payment/admin/config') return mockPaymentConfig;
+  if (pathname.match(/\/admin\/modules\/[^/]+\/(install|activate|deactivate|uninstall|reinitialize)$/) && method === 'POST') {
+    return mockModules[0];
+  }
+  if (pathname.match(/\/admin\/modules\/[^/]+\/health$/)) {
+    return { status: 'healthy', message: 'Stripe verbunden (Sandbox/Test)' };
+  }
   if (pathname === '/api/health') return { status: 'ok' };
   return {};
 }
@@ -378,6 +502,8 @@ async function main() {
     { name: '17-benutzerverwaltung', url: '/admin/benutzer', auth: true },
     { name: '18-bestell-einstellungen', url: '/admin/bestellung', auth: true },
     { name: '19-email-einstellungen', url: '/admin/email', auth: true },
+    { name: '20-modulverwaltung', url: '/admin/module', auth: true },
+    { name: '21-payment-einstellungen', url: '/admin/module/payment', auth: true },
   ];
 
   for (const spec of pages) {

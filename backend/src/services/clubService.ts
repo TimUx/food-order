@@ -1,5 +1,6 @@
 import { clubRepository, DEFAULT_CLUB } from '../repositories/clubRepository';
 import { emitClubUpdate } from '../socket';
+import { featureHooks, CORE_HOOKS } from '../module-system';
 
 type ClubSettingsRow = Awaited<ReturnType<typeof clubRepository.get>>;
 
@@ -85,6 +86,7 @@ export const clubService = {
     }
 
     const settings = await clubRepository.update(update);
+    featureHooks.emitAsync(CORE_HOOKS.SETTINGS_CHANGED, { type: 'email', settings: mapEmailSettings(settings) });
     return mapEmailSettings(settings);
   },
 
@@ -106,6 +108,7 @@ export const clubService = {
     const settings = await clubRepository.update(data);
     const mapped = mapClub(settings);
     emitClubUpdate(mapped);
+    featureHooks.emitAsync(CORE_HOOKS.SETTINGS_CHANGED, { type: 'club', settings: mapped });
     return mapped;
   },
 };

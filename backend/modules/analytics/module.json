@@ -1,0 +1,15 @@
+{
+  "id": "analytics",
+  "name": "Auswertungen",
+  "description": "Statistiken und Berichte zu Bestellungen und Veranstaltungen",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": { "required": [], "optional": ["inventory"] },
+  "permissions": [
+    { "key": "analytics.view", "description": "Auswertungen einsehen" },
+    { "key": "analytics.export", "description": "Berichte exportieren" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

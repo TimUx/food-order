@@ -30,6 +30,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
 import fs from 'fs';
+import moduleAdminRoutes from '../core/routes/modules';
 
 const uploadDir = config.uploadsDir;
 if (!fs.existsSync(uploadDir)) {
@@ -153,5 +154,17 @@ router.post('/admin/club/logo', upload.single('image'), async (req, res, next) =
 router.get('/admin/users', userController.list);
 router.post('/admin/users', validateBody(createUserSchema), userController.create);
 router.put('/admin/users/:id', validateParams(idParamSchema), validateBody(updateUserSchema), userController.update);
+
+router.use('/admin/modules', moduleAdminRoutes);
+
+router.get('/public/modules/menu', async (_req, res) => {
+  const { moduleRegistry } = await import('../module-system');
+  res.json(moduleRegistry.getMenuItems());
+});
+
+router.get('/public/payment/status', async (_req, res) => {
+  const { paymentServiceRegistry } = await import('../module-system');
+  res.json({ available: await paymentServiceRegistry.isAvailable() });
+});
 
 export default router;

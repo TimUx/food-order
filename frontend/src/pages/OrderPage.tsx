@@ -119,6 +119,12 @@ export function OrderPage() {
         _hp: honeypot,
         turnstileToken: turnstileToken || undefined,
       });
+
+      if ('payment' in order && order.payment?.required && order.payment.checkoutUrl) {
+        window.location.href = order.payment.checkoutUrl;
+        return;
+      }
+
       navigate(`/status/${order.id}`, { state: { order } });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bestellung fehlgeschlagen');

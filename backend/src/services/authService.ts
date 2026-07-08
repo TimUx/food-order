@@ -4,6 +4,7 @@ import { config } from '../config';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
 import { AuthPayload } from '../middleware/auth';
+import { featureHooks, CORE_HOOKS } from '../module-system';
 
 export const authService = {
   async login(email: string, password: string) {
@@ -26,6 +27,12 @@ export const authService = {
     const token = jwt.sign(payload, config.jwt.secret, {
       expiresIn: config.jwt.expiresIn,
     } as jwt.SignOptions);
+
+    featureHooks.emitAsync(CORE_HOOKS.USER_LOGIN, {
+      userId: user.id,
+      email: user.email,
+      role: user.role.name,
+    });
 
     return {
       token,

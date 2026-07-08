@@ -1,0 +1,15 @@
+{
+  "id": "printer",
+  "name": "Bondruck",
+  "description": "Automatischer Bondruck für Küche und Kasse",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": { "required": [], "optional": [] },
+  "permissions": [
+    { "key": "printer.settings", "description": "Druckereinstellungen verwalten" },
+    { "key": "printer.print", "description": "Belege drucken" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}

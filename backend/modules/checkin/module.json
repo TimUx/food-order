@@ -1,0 +1,15 @@
+{
+  "id": "checkin",
+  "name": "QR-Code Einlass",
+  "description": "Einlasskontrolle per QR-Code",
+  "version": "0.1.0",
+  "author": "Vereinsbestellung",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": { "required": [], "optional": [] },
+  "permissions": [
+    { "key": "checkin.scan", "description": "QR-Codes scannen" },
+    { "key": "checkin.manage", "description": "Einlasseinstellungen verwalten" }
+  ],
+  "minimumCoreVersion": "1.0.0"
+}
