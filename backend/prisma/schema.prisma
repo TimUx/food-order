@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  ADMIN
+  STAFF
+}
+
+enum OrderSource {
+  ONLINE
+  CASHIER
+}
+
+enum StatusCode {
+  NEW
+  IN_PROGRESS
+  READY
+  PICKED_UP
+  CANCELLED
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      RoleName @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  active       Boolean  @default(true)
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Event {
+  id                  String     @id @default(uuid())
+  name                String
+  description         String?
+  date                DateTime   @db.Date
+  startTime           String
+  endTime             String
+  onlineOrdersActive  Boolean    @default(true)
+  cashierActive       Boolean    @default(true)
+  ordersClosed        Boolean    @default(false)
+  isActive            Boolean    @default(false)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  foodItems           FoodItem[]
+  orders              Order[]
+  dailyCounters       DailyOrderCounter[]
+}
+
+model DailyOrderCounter {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  counter   Int      @default(0)
+
+  @@unique([eventId, date])
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model FoodItem {
+  id          String      @id @default(uuid())
+  eventId     String
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  imageUrl    String?
+  sortOrder   Int         @default(0)
+  active      Boolean     @default(true)
+  soldOut     Boolean     @default(false)
+  maxQuantity Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id              String        @id @default(uuid())
+  eventId         String
+  event           Event         @relation(fields: [eventId], references: [id])
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  orderNumber     Int
+  orderDate       DateTime      @db.Date
+  source          OrderSource
+  status          StatusCode    @default(NEW)
+  totalPrice      Decimal       @db.Decimal(10, 2)
+  readyAt         DateTime?
+  pickedUpAt      DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  items           OrderItem[]
+  statusHistory   OrderStatus[]
+
+  @@unique([eventId, orderDate, orderNumber])
+  @@index([eventId, status])
+  @@index([eventId, orderDate])
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  foodItemId String
+  foodItem   FoodItem @relation(fields: [foodItemId], references: [id])
+  quantity   Int
+  unitPrice  Decimal  @db.Decimal(10, 2)
+  lineTotal  Decimal  @db.Decimal(10, 2)
+}
+
+model OrderStatus {
+  id        String     @id @default(uuid())
+  orderId   String
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    StatusCode
+  changedBy String?
+  createdAt DateTime   @default(now())
+
+  @@index([orderId])
+}
