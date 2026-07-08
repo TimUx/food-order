@@ -31,6 +31,10 @@ Anleitung für Mitarbeiter in Küche, Abholung und Service – ohne Administrato
 
 > Die App kann als PWA auf dem Tablet installiert werden (Zum Startbildschirm hinzufügen).
 
+### Menü ein- und ausblenden
+
+In Küche, Abholung und Bestellung ist das Seitenmenü standardmäßig **ausgeblendet** – für maximale Arbeitsfläche. Über das Menü-Symbol oben links können Sie es jederzeit ein- oder ausblenden.
+
 ---
 
 ## Übersicht der Bereiche

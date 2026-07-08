@@ -80,7 +80,13 @@ Die öffentliche Bestellseite zeigt dann:
 > *Veranstaltung: Samstag, 15. August 2026*
 > *Sie können bereits jetzt vorbestellen – auch Tage oder Wochen vor der Veranstaltung.*
 
-![Bestellseite mit Vorbestellung](screenshots/01-bestellseite.png)
+![Bestellseite mit Vorbestellung](screenshots/01-bestellseite-monitor.png)
+
+Die Bestellseite ist für Touch-Bedienung auf Smartphone und Tablet optimiert (große Buttons, gut lesbare Texte):
+
+| Monitor | iPhone | iPad |
+|:---:|:---:|:---:|
+| ![Monitor](screenshots/01-bestellseite-monitor.png) | ![iPhone](screenshots/01-bestellseite-iphone.png) | ![iPad](screenshots/01-bestellseite-ipad.png) |
 
 ### Wichtige Regeln
 

@@ -16,6 +16,7 @@ import { StatusChip } from '@/components/StatusChip';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
 import { Order } from '@/types';
+import { touchFieldSx, touchPrimaryButtonSx, touchIconButtonSx } from '@/theme/touch';
 
 export function CashierPage() {
   const { token } = useAuth();
@@ -54,13 +55,16 @@ export function CashierPage() {
   };
 
   return (
-    <StaffLayout title="Abholung">
-      <Typography variant="h5" fontWeight={700} gutterBottom>
+    <StaffLayout title="Abholung" fullWidth>
+      <Typography variant="h4" fontWeight={800} gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}>
         Abholung bestätigen
       </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: '1.1rem' }}>
+        Abholnummer eingeben und Abholung bestätigen.
+      </Typography>
 
-      <Paper sx={{ p: 3, maxWidth: 500, mb: 3 }}>
-        <Stack direction="row" spacing={2}>
+      <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3, maxWidth: 560 }}>
+        <Stack direction="row" spacing={1.5} alignItems="stretch">
           <TextField
             label="Abholnummer"
             value={orderNumber}
@@ -69,44 +73,45 @@ export function CashierPage() {
             fullWidth
             autoFocus
             onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
-            inputProps={{ style: { fontSize: '1.5rem', textAlign: 'center' } }}
+            sx={touchFieldSx}
+            inputProps={{ style: { fontSize: '1.75rem', textAlign: 'center', fontWeight: 700 } }}
           />
           <Button
             variant="contained"
-            size="large"
             onClick={handleLookup}
             disabled={loading || !orderNumber}
-            sx={{ minWidth: 120, minHeight: 56 }}
+            aria-label="Suchen"
+            sx={{ ...touchIconButtonSx, minWidth: 72, minHeight: 72, width: 72, height: 72, flexShrink: 0 }}
           >
-            <SearchIcon />
+            <SearchIcon sx={{ fontSize: 32 }} />
           </Button>
         </Stack>
       </Paper>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>{error}</Alert>}
 
       {order && (
-        <Paper sx={{ p: 4, maxWidth: 600 }}>
+        <Paper sx={{ p: { xs: 3, sm: 4 }, maxWidth: 640 }}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="overline">Abholnummer</Typography>
-            <Typography variant="h1" fontWeight={900} color="primary" sx={{ fontSize: '5rem' }}>
+            <Typography variant="overline" sx={{ fontSize: '1rem' }}>Abholnummer</Typography>
+            <Typography variant="h1" fontWeight={900} color="primary" sx={{ fontSize: { xs: '4.5rem', sm: '6rem' }, lineHeight: 1.1 }}>
               {order.displayNumber}
             </Typography>
-            <StatusChip status={order.status} />
+            <Box sx={{ mt: 1 }}><StatusChip status={order.status} /></Box>
           </Box>
 
           <Divider sx={{ my: 2 }} />
 
-          <Stack spacing={1} sx={{ mb: 2 }}>
+          <Stack spacing={1.5} sx={{ mb: 3 }}>
             {order.items.map((item) => (
-              <Box key={item.id || item.foodItemId} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="h6">{item.quantity}× {item.name}</Typography>
-                <Typography>{formatPrice(item.lineTotal || 0)}</Typography>
+              <Box key={item.id || item.foodItemId} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h5" fontWeight={600}>{item.quantity}× {item.name}</Typography>
+                <Typography variant="h6">{formatPrice(item.lineTotal || 0)}</Typography>
               </Box>
             ))}
           </Stack>
 
-          <Typography variant="h5" fontWeight={700} textAlign="right" sx={{ mb: 3 }}>
+          <Typography variant="h4" fontWeight={800} textAlign="right" sx={{ mb: 3 }}>
             Gesamt: {formatPrice(order.totalPrice)}
           </Typography>
 
@@ -114,23 +119,29 @@ export function CashierPage() {
             <Button
               variant="contained"
               color="success"
-              size="large"
               fullWidth
-              startIcon={<DoneAllIcon />}
               onClick={handleConfirmPickup}
               disabled={confirming}
-              sx={{ minHeight: 64, fontSize: '1.2rem' }}
+              sx={{
+                ...touchPrimaryButtonSx,
+                minHeight: 80,
+                fontSize: '1.35rem',
+                flexDirection: 'column',
+                gap: 1,
+                py: 2,
+              }}
             >
+              <DoneAllIcon sx={{ fontSize: 40 }} />
               Abholung bestätigen
             </Button>
           )}
 
           {order.status === 'PICKED_UP' && (
-            <Alert severity="success">Bereits abgeholt</Alert>
+            <Alert severity="success" sx={{ fontSize: '1.1rem' }}>Bereits abgeholt</Alert>
           )}
 
           {order.status !== 'READY' && order.status !== 'PICKED_UP' && (
-            <Alert severity="info">
+            <Alert severity="info" sx={{ fontSize: '1.05rem' }}>
               Bestellung ist noch nicht fertig (Status: {order.statusLabel})
             </Alert>
           )}

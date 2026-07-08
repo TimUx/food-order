@@ -8,3 +8,4 @@ uploads/
 coverage/
 .vite/
 *.tsbuildinfo
+docs/screenshots/_raw/

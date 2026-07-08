@@ -7,7 +7,6 @@ import {
   CircularProgress,
   Alert,
   Button,
-  Stack,
 } from '@mui/material';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -17,6 +16,7 @@ import EuroIcon from '@mui/icons-material/Euro';
 import TimerIcon from '@mui/icons-material/Timer';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { Link } from 'react-router-dom';
+import { touchSquareActionSx } from '@/theme/touch';
 import { StaffLayout } from '@/components/StaffLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
@@ -126,17 +126,23 @@ export function DashboardPage() {
         ))}
       </Box>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr 1fr', md: '220px 220px' },
+          gap: 2,
+          maxWidth: 480,
+          mx: { md: 0 },
+        }}
+      >
         <Button
           component={Link}
           to="/mitarbeiter/abholung"
           variant="contained"
           color="success"
-          size="large"
-          startIcon={<DoneAllIcon />}
-          fullWidth
-          sx={{ minHeight: 72, fontSize: '1.25rem', fontWeight: 700 }}
+          sx={touchSquareActionSx}
         >
+          <DoneAllIcon />
           Abholung
         </Button>
         <Button
@@ -144,14 +150,12 @@ export function DashboardPage() {
           to="/mitarbeiter/bestellung"
           variant="contained"
           color="primary"
-          size="large"
-          startIcon={<AddShoppingCartIcon />}
-          fullWidth
-          sx={{ minHeight: 72, fontSize: '1.25rem', fontWeight: 700 }}
+          sx={touchSquareActionSx}
         >
+          <AddShoppingCartIcon />
           Bestellung
         </Button>
-      </Stack>
+      </Box>
     </StaffLayout>
   );
 }

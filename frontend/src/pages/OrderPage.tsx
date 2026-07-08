@@ -17,6 +17,7 @@ import { PublicLayout } from '@/components/PublicLayout';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { api, formatPrice } from '@/services/api';
 import { FoodItem } from '@/types';
+import { touchFieldSx, touchPrimaryButtonSx, touchButtonSx } from '@/theme/touch';
 
 export function OrderPage() {
   const navigate = useNavigate();
@@ -114,7 +115,7 @@ export function OrderPage() {
           <Typography variant="h4" fontWeight={800} gutterBottom>
             {eventName || 'Essen bestellen'}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '1.05rem', sm: '1.1rem' } }}>
             Wählen Sie Ihre Gerichte und geben Sie Ihre Daten ein.
           </Typography>
         </Box>
@@ -123,13 +124,13 @@ export function OrderPage() {
           to="/kontakt"
           variant="outlined"
           startIcon={<ContactMailIcon />}
-          sx={{ flexShrink: 0 }}
+          sx={{ ...touchButtonSx, flexShrink: 0, minWidth: 120 }}
         >
           Kontakt
         </Button>
       </Box>
       {eventDateLabel && (
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 3, fontSize: '1.05rem' }}>
           <strong>Veranstaltung:</strong> {eventDateLabel}
           <br />
           Sie können bereits jetzt vorbestellen – auch Tage oder Wochen vor der Veranstaltung.
@@ -140,26 +141,26 @@ export function OrderPage() {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom fontWeight={600}>
+        <Typography variant="h5" gutterBottom fontWeight={700}>
           Ihre Daten
         </Typography>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="Vorname *" fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            <TextField label="Vorname *" fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={touchFieldSx} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="Nachname *" fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            <TextField label="Nachname *" fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} sx={touchFieldSx} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="E-Mail (optional)" type="email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} />
+            <TextField label="E-Mail (optional)" type="email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} sx={touchFieldSx} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="Telefon (optional)" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <TextField label="Telefon (optional)" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} sx={touchFieldSx} />
           </Grid>
         </Grid>
       </Paper>
 
-      <Typography variant="h6" gutterBottom fontWeight={600}>
+      <Typography variant="h5" gutterBottom fontWeight={700}>
         Gerichte
       </Typography>
       <Grid container spacing={2} sx={{ mb: 10 }}>
@@ -169,6 +170,7 @@ export function OrderPage() {
               item={item}
               quantity={quantities[item.id] || 0}
               onQuantityChange={(q) => setQuantities((prev) => ({ ...prev, [item.id]: q }))}
+              touchMode
             />
           </Grid>
         ))}
@@ -199,12 +201,19 @@ export function OrderPage() {
           </Box>
           <Button
             variant="contained"
-            size="large"
-            startIcon={<ShoppingCartIcon />}
             onClick={handleSubmit}
             disabled={submitting || totalCount === 0}
-            sx={{ minWidth: 200, minHeight: 56 }}
+            sx={{
+              ...touchPrimaryButtonSx,
+              width: { xs: '100%', sm: 'auto' },
+              minWidth: { sm: 280 },
+              minHeight: 72,
+              flexDirection: 'column',
+              gap: 0.5,
+              py: 1.5,
+            }}
           >
+            <ShoppingCartIcon sx={{ fontSize: 32 }} />
             {submitting ? 'Wird gesendet…' : 'Bestellung absenden'}
           </Button>
         </Stack>

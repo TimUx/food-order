@@ -2,7 +2,7 @@
 
 Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstaltungen – mit Vorausbestellungen, Vereins-Branding, Echtzeit-Updates und PWA-Unterstützung.
 
-![Bestellseite](docs/screenshots/01-bestellseite.png)
+![Bestellseite](docs/screenshots/01-bestellseite-monitor.png)
 
 ## Funktionen auf einen Blick
 
@@ -37,9 +37,13 @@ Ohne Konfiguration werden sinnvolle Standardwerte verwendet.
 
 ### Öffentlicher Bereich
 
-| Bestellseite | Kundenstatus | Kontakt |
+| Bestellseite (Monitor) | Bestellseite (iPhone) | Bestellseite (iPad) |
 |:---:|:---:|:---:|
-| ![Bestellseite](docs/screenshots/01-bestellseite.png) | ![Kundenstatus](docs/screenshots/02-kundenstatus.png) | ![Kontakt](docs/screenshots/14-kontakt.png) |
+| ![Bestellseite Monitor](docs/screenshots/01-bestellseite-monitor.png) | ![Bestellseite iPhone](docs/screenshots/01-bestellseite-iphone.png) | ![Bestellseite iPad](docs/screenshots/01-bestellseite-ipad.png) |
+
+| Kundenstatus | Status-Abfrage | Kontakt |
+|:---:|:---:|:---:|
+| ![Kundenstatus](docs/screenshots/02-kundenstatus.png) | ![Status-Abfrage](docs/screenshots/03-status-abfrage.png) | ![Kontakt](docs/screenshots/14-kontakt.png) |
 
 ### Monitore
 

@@ -1,15 +1,19 @@
 /**
  * Erstellt Screenshots aller Ansichten für die Dokumentation.
  * Verwendet API-Mocking mit realistischen Beispieldaten.
+ * Standardauflösung: 1920×1080 (Full HD).
  */
 import { chromium, Page } from 'playwright';
 import { createServer } from 'http';
-import { readFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { join, extname } from 'path';
+import { execFileSync } from 'child_process';
 
 const PORT = 4173;
 const OUT_DIR = join(process.cwd(), 'docs', 'screenshots');
+const RAW_DIR = join(OUT_DIR, '_raw');
 const DIST = join(process.cwd(), 'frontend', 'dist');
+const FULL_HD = { width: 1920, height: 1080 };
 
 const EVENT_ID = '00000000-0000-0000-0000-000000000001';
 const ORDER_ID = '00000000-0000-0000-0000-000000000042';
@@ -159,13 +163,88 @@ async function setupPage(page: Page, auth = false) {
   }
 }
 
+async function prepareOrderPage(page: Page) {
+  await page.getByLabel('Vorname *').fill('Max');
+  await page.getByLabel('Nachname *').fill('Mustermann');
+  await page.locator('button[aria-label="Menge erhöhen"]').first().click();
+  await page.locator('button[aria-label="Menge erhöhen"]').first().click();
+  await page.locator('button[aria-label="Menge erhöhen"]').nth(1).click();
+}
+
 interface PageSpec {
   name: string;
   url: string;
   viewport?: { width: number; height: number };
   auth?: boolean;
   prepare?: (page: Page) => Promise<void>;
-  fullPage?: boolean;
+}
+
+function embedDevice(rawPath: string, device: 'iphone' | 'ipad' | 'monitor', outPath: string) {
+  execFileSync('python3', [
+    join(process.cwd(), 'scripts', 'embed-device-frame.py'),
+    rawPath,
+    device,
+    outPath,
+  ], { stdio: 'inherit' });
+}
+
+async function captureScreenshot(
+  browser: Awaited<ReturnType<typeof chromium.launch>>,
+  spec: PageSpec,
+) {
+  const viewport = spec.viewport || FULL_HD;
+  const context = await browser.newContext({ viewport, locale: 'de-DE' });
+  const page = await context.newPage();
+  await setupPage(page, spec.auth);
+
+  await page.goto(`http://localhost:${PORT}${spec.url}`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  if (spec.prepare) await spec.prepare(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400);
+
+  await page.screenshot({
+    path: join(OUT_DIR, `${spec.name}.png`),
+    fullPage: false,
+  });
+  console.log(`✓ ${spec.name}.png (${viewport.width}×${viewport.height})`);
+  await context.close();
+}
+
+async function captureOrderPageDevices(browser: Awaited<ReturnType<typeof chromium.launch>>) {
+  const devices: Array<{ name: string; device: 'iphone' | 'ipad' | 'monitor'; viewport: { width: number; height: number } }> = [
+    { name: '01-bestellseite-monitor', device: 'monitor', viewport: { width: 1280, height: 800 } },
+    { name: '01-bestellseite-iphone', device: 'iphone', viewport: { width: 393, height: 852 } },
+    { name: '01-bestellseite-ipad', device: 'ipad', viewport: { width: 834, height: 1194 } },
+  ];
+
+  for (const { name, device, viewport } of devices) {
+    const context = await browser.newContext({ viewport, locale: 'de-DE', isMobile: device === 'iphone' });
+    const page = await context.newPage();
+    await setupPage(page, false);
+
+    await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(800);
+    await prepareOrderPage(page);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(400);
+
+    const rawPath = join(RAW_DIR, `${name}.png`);
+    await page.screenshot({ path: rawPath, fullPage: device !== 'monitor' });
+    await context.close();
+
+    const outPath = join(OUT_DIR, `${name}.png`);
+    embedDevice(rawPath, device, outPath);
+  }
+
+  // Legacy-Dateiname für README-Kompatibilität
+  const monitorPath = join(OUT_DIR, '01-bestellseite-monitor.png');
+  const legacyPath = join(OUT_DIR, '01-bestellseite.png');
+  if (existsSync(monitorPath)) {
+    const { copyFileSync } = await import('fs');
+    copyFileSync(monitorPath, legacyPath);
+    console.log('✓ 01-bestellseite.png (Kopie von Monitor-Variante)');
+  }
 }
 
 async function main() {
@@ -175,27 +254,15 @@ async function main() {
   }
 
   mkdirSync(OUT_DIR, { recursive: true });
+  mkdirSync(RAW_DIR, { recursive: true });
   await startStaticServer();
 
   const browser = await chromium.launch({ headless: true });
 
+  await captureOrderPageDevices(browser);
+
   const pages: PageSpec[] = [
-    {
-      name: '01-bestellseite',
-      url: '/',
-      viewport: { width: 1280, height: 900 },
-      prepare: async (page) => {
-        await page.getByLabel('Vorname *').fill('Max');
-        await page.getByLabel('Nachname *').fill('Mustermann');
-        await page.locator('button[aria-label="Menge erhöhen"]').first().click();
-        await page.locator('button[aria-label="Menge erhöhen"]').first().click();
-        await page.locator('button[aria-label="Menge erhöhen"]').nth(1).click();
-      },
-    },
-    {
-      name: '02-kundenstatus',
-      url: `/status/${ORDER_ID}`,
-    },
+    { name: '02-kundenstatus', url: `/status/${ORDER_ID}` },
     {
       name: '03-status-abfrage',
       url: '/status',
@@ -204,10 +271,10 @@ async function main() {
         await page.getByLabel('Nachname').fill('Mustermann');
       },
     },
-    { name: '04-abholboard-monitor', url: '/abholboard', viewport: { width: 1920, height: 1080 }, fullPage: false },
+    { name: '04-abholboard-monitor', url: '/abholboard' },
     { name: '05-mitarbeiter-login', url: '/mitarbeiter/login' },
-    { name: '06-dashboard', url: '/mitarbeiter', auth: true, viewport: { width: 1280, height: 800 } },
-    { name: '07-kuechenansicht-tablet', url: '/mitarbeiter/kueche', viewport: { width: 1024, height: 768 }, auth: true },
+    { name: '06-dashboard', url: '/mitarbeiter', auth: true },
+    { name: '07-kuechenansicht-tablet', url: '/mitarbeiter/kueche', auth: true },
     {
       name: '08-abholung',
       url: '/mitarbeiter/abholung',
@@ -235,38 +302,18 @@ async function main() {
   ];
 
   for (const spec of pages) {
-    const context = await browser.newContext({
-      viewport: spec.viewport || { width: 1280, height: 800 },
-      locale: 'de-DE',
-    });
-    const page = await context.newPage();
-    await setupPage(page, spec.auth);
-
-    await page.goto(`http://localhost:${PORT}${spec.url}`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(800);
-    if (spec.prepare) await spec.prepare(page);
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(400);
-
-    await page.screenshot({
-      path: join(OUT_DIR, `${spec.name}.png`),
-      fullPage: spec.fullPage === true,
-    });
-    console.log(`✓ ${spec.name}.png`);
-    await context.close();
+    await captureScreenshot(browser, spec);
   }
 
-  // Alte Dateinamen entfernen
   const oldNames = ['08-kassenansicht.png', '09-lokale-kasse.png'];
   for (const old of oldNames) {
     try {
-      const { unlinkSync } = await import('fs');
       unlinkSync(join(OUT_DIR, old));
     } catch { /* ignore */ }
   }
 
   await browser.close();
-  console.log(`\nScreenshots gespeichert in ${OUT_DIR}`);
+  console.log(`\nScreenshots gespeichert in ${OUT_DIR} (1920×1080)`);
   process.exit(0);
 }
 
