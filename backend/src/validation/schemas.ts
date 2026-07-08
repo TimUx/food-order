@@ -59,6 +59,9 @@ export const createOnlineOrderSchema = z.object({
   email: z.string().email('Ungültige E-Mail').optional().or(z.literal('')),
   phone: z.string().optional(),
   items: z.array(orderItemSchema).min(1, 'Mindestens ein Gericht erforderlich'),
+  _hp: z.string().optional(),
+  formStartedAt: z.number().int().positive(),
+  turnstileToken: z.string().optional(),
 });
 
 export const createCashierOrderSchema = z.object({

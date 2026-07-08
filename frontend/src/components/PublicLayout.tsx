@@ -18,15 +18,24 @@ import { getImageUrl } from '@/services/api';
 interface PublicLayoutProps {
   children: React.ReactNode;
   fullWidth?: boolean;
+  /** Kind füllt die verbleibende Viewport-Höhe (z. B. für scrollbare Bereiche mit Footer) */
+  fillHeight?: boolean;
 }
 
-export function PublicLayout({ children, fullWidth = false }: PublicLayoutProps) {
+export function PublicLayout({ children, fullWidth = false, fillHeight = false }: PublicLayoutProps) {
   const { mode, toggleMode } = useThemeMode();
   const { club } = useClub();
   const logoUrl = getImageUrl(club.logoUrl || undefined);
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        height: fillHeight ? '100dvh' : 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <AppBar position="fixed" elevation={1}>
         <Toolbar>
           {logoUrl ? (
@@ -50,7 +59,16 @@ export function PublicLayout({ children, fullWidth = false }: PublicLayoutProps)
       <Toolbar />
       <Container
         maxWidth={fullWidth ? false : 'md'}
-        sx={{ flexGrow: 1, py: 3, px: { xs: 2, sm: 3 } }}
+        sx={{
+          flexGrow: 1,
+          py: 3,
+          px: { xs: 2, sm: 3 },
+          ...(fillHeight && {
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }),
+        }}
       >
         {children}
       </Container>

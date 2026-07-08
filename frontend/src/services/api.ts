@@ -43,6 +43,9 @@ export const api = {
     email?: string;
     phone?: string;
     items: { foodItemId: string; quantity: number }[];
+    formStartedAt: number;
+    _hp?: string;
+    turnstileToken?: string;
   }) => request<Order>('/public/orders', { method: 'POST', body: JSON.stringify(data) }),
   lookupOrder: (orderNumber: number, lastName: string) =>
     request<Order>('/public/orders/lookup', { method: 'POST', body: JSON.stringify({ orderNumber, lastName }) }),

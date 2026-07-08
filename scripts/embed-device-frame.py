@@ -2,16 +2,22 @@
 """
 Bettet einen Screenshot in ein Geräte-Mockup ein (iPhone, iPad, Monitor).
 Ausgabe immer 1920×1080 px.
+
+Die Viewport-Größen in capture-screenshots.ts müssen exakt zu SCREEN_* passen.
 """
 from __future__ import annotations
 
 import argparse
-import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter
 
 CANVAS_W, CANVAS_H = 1920, 1080
+
+# Bildschirmflächen innerhalb der Frames (muss mit Playwright-Viewport übereinstimmen)
+SCREEN_IPHONE = (390, 844)
+SCREEN_IPAD = (768, 1024)
+SCREEN_MONITOR = (1280, 720)
 
 
 def _rounded_mask(size: tuple[int, int], radius: int) -> Image.Image:
@@ -33,14 +39,18 @@ def _gradient_bg() -> Image.Image:
     return img
 
 
-def _fit_screen(screenshot: Image.Image, screen_w: int, screen_h: int) -> Image.Image:
+def _fill_screen(screenshot: Image.Image, screen_w: int, screen_h: int) -> Image.Image:
+    """Skaliert den Screenshot so, dass er die Bildschirmfläche vollständig füllt (cover + crop)."""
     sw, sh = screenshot.size
-    scale = min(screen_w / sw, screen_h / sh)
+    if sw == screen_w and sh == screen_h:
+        return screenshot.copy()
+
+    scale = max(screen_w / sw, screen_h / sh)
     nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
     resized = screenshot.resize((nw, nh), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGB", (screen_w, screen_h), (0, 0, 0))
-    canvas.paste(resized, ((screen_w - nw) // 2, (screen_h - nh) // 2))
-    return canvas
+    left = (nw - screen_w) // 2
+    top = (nh - screen_h) // 2
+    return resized.crop((left, top, left + screen_w, top + screen_h))
 
 
 def _draw_shadow(base: Image.Image, box: tuple[int, int, int, int], radius: int, spread: int = 28) -> None:
@@ -58,9 +68,8 @@ def _draw_shadow(base: Image.Image, box: tuple[int, int, int, int], radius: int,
 
 
 def embed_iphone(screenshot: Image.Image) -> Image.Image:
+    screen_w, screen_h = SCREEN_IPHONE
     bezel = 14
-    notch_h = 34
-    screen_w, screen_h = 390, 844
     frame_w = screen_w + bezel * 2
     frame_h = screen_h + bezel * 2 + 8
     radius = 48
@@ -74,14 +83,14 @@ def embed_iphone(screenshot: Image.Image) -> Image.Image:
     draw = ImageDraw.Draw(frame)
     draw.rounded_rectangle((0, 0, frame_w - 1, frame_h - 1), radius=radius, fill=(18, 18, 20))
 
-    screen = _fit_screen(screenshot, screen_w, screen_h)
+    screen = _fill_screen(screenshot, screen_w, screen_h)
     screen_mask = _rounded_mask((screen_w, screen_h), radius - bezel)
     screen.putalpha(screen_mask)
     frame.paste(screen, (bezel, bezel), screen)
 
     # Notch
     draw = ImageDraw.Draw(frame)
-    nw, nh = 126, notch_h
+    nw, nh = 126, 34
     nx = (frame_w - nw) // 2
     draw.rounded_rectangle((nx, bezel - 2, nx + nw, bezel + nh), radius=18, fill=(18, 18, 20))
     draw.ellipse((nx + nw // 2 - 6, bezel + 10, nx + nw // 2 + 6, bezel + 22), fill=(40, 40, 44))
@@ -97,37 +106,38 @@ def embed_iphone(screenshot: Image.Image) -> Image.Image:
 
 
 def embed_ipad(screenshot: Image.Image) -> Image.Image:
+    screen_w, screen_h = SCREEN_IPAD
     bezel = 22
-    screen_w, screen_h = 768, 1024
     frame_w = screen_w + bezel * 2
     frame_h = screen_h + bezel * 2
     radius = 36
 
     canvas = _gradient_bg()
     scale = min((CANVAS_W - 120) / frame_w, (CANVAS_H - 120) / frame_h)
-    frame_w = int(frame_w * scale)
-    frame_h = int(frame_h * scale)
-    screen_w = int(screen_w * scale)
-    screen_h = int(screen_h * scale)
-    bezel = int(bezel * scale)
-    radius = int(radius * scale)
+    frame_w_s = int(frame_w * scale)
+    frame_h_s = int(frame_h * scale)
+    screen_w_s = int(screen_w * scale)
+    screen_h_s = int(screen_h * scale)
+    bezel_s = int(bezel * scale)
+    radius_s = int(radius * scale)
 
-    ox = (CANVAS_W - frame_w) // 2
-    oy = (CANVAS_H - frame_h) // 2
-    _draw_shadow(canvas, (ox, oy, ox + frame_w, oy + frame_h), radius)
+    ox = (CANVAS_W - frame_w_s) // 2
+    oy = (CANVAS_H - frame_h_s) // 2
+    _draw_shadow(canvas, (ox, oy, ox + frame_w_s, oy + frame_h_s), radius_s)
 
-    frame = Image.new("RGBA", (frame_w, frame_h), (0, 0, 0, 0))
+    frame = Image.new("RGBA", (frame_w_s, frame_h_s), (0, 0, 0, 0))
     draw = ImageDraw.Draw(frame)
-    draw.rounded_rectangle((0, 0, frame_w - 1, frame_h - 1), radius=radius, fill=(22, 22, 24))
+    draw.rounded_rectangle((0, 0, frame_w_s - 1, frame_h_s - 1), radius=radius_s, fill=(22, 22, 24))
 
-    screen = _fit_screen(screenshot, screen_w, screen_h)
-    screen_mask = _rounded_mask((screen_w, screen_h), max(8, radius - bezel))
+    screen = _fill_screen(screenshot, screen_w, screen_h)
+    if scale != 1.0:
+        screen = screen.resize((screen_w_s, screen_h_s), Image.Resampling.LANCZOS)
+    screen_mask = _rounded_mask((screen_w_s, screen_h_s), max(8, radius_s - bezel_s))
     screen.putalpha(screen_mask)
-    frame.paste(screen, (bezel, bezel), screen)
+    frame.paste(screen, (bezel_s, bezel_s), screen)
 
-    # Kamera
     cam = max(6, int(8 * scale))
-    cx, cy = frame_w // 2, bezel // 2 + 2
+    cx, cy = frame_w_s // 2, bezel_s // 2 + 2
     draw.ellipse((cx - cam, cy - cam, cx + cam, cy + cam), fill=(50, 50, 54))
 
     canvas.paste(frame, (ox, oy), frame)
@@ -135,8 +145,8 @@ def embed_ipad(screenshot: Image.Image) -> Image.Image:
 
 
 def embed_monitor(screenshot: Image.Image) -> Image.Image:
+    screen_w, screen_h = SCREEN_MONITOR
     bezel_x, bezel_top, bezel_bottom = 18, 18, 52
-    screen_w, screen_h = 1280, 720
     frame_w = screen_w + bezel_x * 2
     frame_h = screen_h + bezel_top + bezel_bottom
     radius = 12
@@ -150,10 +160,9 @@ def embed_monitor(screenshot: Image.Image) -> Image.Image:
     draw = ImageDraw.Draw(frame)
     draw.rounded_rectangle((0, 0, frame_w - 1, frame_h - 1), radius=radius, fill=(28, 28, 32))
 
-    screen = _fit_screen(screenshot, screen_w, screen_h)
+    screen = _fill_screen(screenshot, screen_w, screen_h)
     frame.paste(screen, (bezel_x, bezel_top))
 
-    # Stand
     neck_w, neck_h = 80, 36
     base_w, base_h = 220, 14
     nx = (frame_w - neck_w) // 2
@@ -162,8 +171,6 @@ def embed_monitor(screenshot: Image.Image) -> Image.Image:
     bx = (frame_w - base_w) // 2
     by = ny + neck_h - 4
     draw.rounded_rectangle((bx, by, bx + base_w, by + base_h), radius=6, fill=(50, 50, 54))
-
-    # Power LED
     draw.ellipse((frame_w - bezel_x - 14, frame_h - 20, frame_w - bezel_x - 6, frame_h - 12), fill=(60, 180, 100))
 
     canvas.paste(frame, (ox, oy), frame)

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Typography,
   TextField,
@@ -15,12 +15,14 @@ import ContactMailIcon from '@mui/icons-material/ContactMail';
 import { useNavigate, Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/PublicLayout';
 import { FoodItemCard } from '@/components/FoodItemCard';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { api, formatPrice } from '@/services/api';
 import { FoodItem } from '@/types';
 import { touchFieldSx, touchPrimaryButtonSx, touchButtonSx } from '@/theme/touch';
 
 export function OrderPage() {
   const navigate = useNavigate();
+  const formStartedAt = useRef(Date.now());
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -32,6 +34,10 @@ export function OrderPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  const turnstileRequired = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY);
 
   useEffect(() => {
     api.getPublicMenu()
@@ -71,6 +77,10 @@ export function OrderPage() {
       setError('Bitte mindestens ein Gericht auswählen');
       return;
     }
+    if (turnstileRequired && !turnstileToken) {
+      setError('Bitte bestätigen Sie die Sicherheitsprüfung');
+      return;
+    }
 
     setSubmitting(true);
     setError('');
@@ -81,6 +91,9 @@ export function OrderPage() {
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
         items: selectedItems,
+        formStartedAt: formStartedAt.current,
+        _hp: honeypot,
+        turnstileToken: turnstileToken || undefined,
       });
       navigate(`/status/${order.id}`, { state: { order } });
     } catch (err) {
@@ -109,115 +122,169 @@ export function OrderPage() {
   }
 
   return (
-    <PublicLayout>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-        <Box>
-          <Typography variant="h4" fontWeight={800} gutterBottom>
-            {eventName || 'Essen bestellen'}
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '1.05rem', sm: '1.1rem' } }}>
-            Wählen Sie Ihre Gerichte und geben Sie Ihre Daten ein.
+    <PublicLayout fillHeight>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        <Box sx={{ flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            <Box>
+              <Typography variant="h4" fontWeight={800} gutterBottom>
+                {eventName || 'Essen bestellen'}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '1.05rem', sm: '1.1rem' } }}>
+                Wählen Sie Ihre Gerichte und geben Sie Ihre Daten ein.
+              </Typography>
+            </Box>
+            <Button
+              component={Link}
+              to="/kontakt"
+              variant="outlined"
+              startIcon={<ContactMailIcon />}
+              sx={{ ...touchButtonSx, flexShrink: 0, minWidth: 120 }}
+            >
+              Kontakt
+            </Button>
+          </Box>
+          {eventDateLabel && (
+            <Alert severity="info" sx={{ mb: 3, fontSize: '1.05rem' }}>
+              <strong>Veranstaltung:</strong> {eventDateLabel}
+              <br />
+              Sie können bereits jetzt vorbestellen – auch Tage oder Wochen vor der Veranstaltung.
+              Ihre Abholnummer gilt am Veranstaltungstag.
+            </Alert>
+          )}
+
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+          <Paper sx={{ p: 3, mb: 2 }}>
+            <Typography variant="h5" gutterBottom fontWeight={700}>
+              Ihre Daten
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Vorname *" fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={touchFieldSx} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Nachname *" fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} sx={touchFieldSx} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="E-Mail (optional)" type="email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} sx={touchFieldSx} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField label="Telefon (optional)" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} sx={touchFieldSx} />
+              </Grid>
+            </Grid>
+            {/* Honeypot – für Bots unsichtbar */}
+            <Box
+              component="label"
+              aria-hidden
+              sx={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                padding: 0,
+                margin: -1,
+                overflow: 'hidden',
+                clip: 'rect(0,0,0,0)',
+                whiteSpace: 'nowrap',
+                border: 0,
+              }}
+            >
+              Website
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </Box>
+          </Paper>
+
+          <Typography variant="h5" gutterBottom fontWeight={700} sx={{ mb: 1 }}>
+            Gerichte
           </Typography>
         </Box>
-        <Button
-          component={Link}
-          to="/kontakt"
-          variant="outlined"
-          startIcon={<ContactMailIcon />}
-          sx={{ ...touchButtonSx, flexShrink: 0, minWidth: 120 }}
+
+        <Box
+          data-testid="order-dishes-scroll"
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            pr: { xs: 0.5, sm: 1 },
+            mr: { xs: -0.5, sm: -1 },
+          }}
         >
-          Kontakt
-        </Button>
+          <Grid container spacing={2} sx={{ pb: 2 }}>
+            {items.map((item) => (
+              <Grid key={item.id} size={{ xs: 12, sm: 6 }}>
+                <FoodItemCard
+                  item={item}
+                  quantity={quantities[item.id] || 0}
+                  onQuantityChange={(q) => setQuantities((prev) => ({ ...prev, [item.id]: q }))}
+                  touchMode
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+
+        <Paper
+          sx={{
+            flexShrink: 0,
+            p: 2,
+            mt: 1,
+            borderRadius: { xs: 0, sm: 2 },
+            borderTop: 2,
+            borderColor: 'primary.main',
+            mx: { xs: -2, sm: 0 },
+            mb: { xs: -3, sm: 0 },
+          }}
+          elevation={8}
+        >
+          {turnstileRequired && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(null)} />
+            </Box>
+          )}
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
+            <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+              <Typography variant="h6">
+                Gesamt: <strong>{totalCount}</strong> {totalCount === 1 ? 'Gericht' : 'Gerichte'}
+              </Typography>
+              <Typography variant="h5" fontWeight={800} color="primary">
+                {formatPrice(totalPrice)}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={submitting || totalCount === 0 || (turnstileRequired && !turnstileToken)}
+              sx={{
+                ...touchPrimaryButtonSx,
+                width: { xs: '100%', sm: 'auto' },
+                minWidth: { sm: 280 },
+                minHeight: 72,
+                flexDirection: 'column',
+                gap: 0.5,
+                py: 1.5,
+              }}
+            >
+              <ShoppingCartIcon sx={{ fontSize: 32 }} />
+              {submitting ? 'Wird gesendet…' : 'Bestellung absenden'}
+            </Button>
+          </Stack>
+        </Paper>
       </Box>
-      {eventDateLabel && (
-        <Alert severity="info" sx={{ mb: 3, fontSize: '1.05rem' }}>
-          <strong>Veranstaltung:</strong> {eventDateLabel}
-          <br />
-          Sie können bereits jetzt vorbestellen – auch Tage oder Wochen vor der Veranstaltung.
-          Ihre Abholnummer gilt am Veranstaltungstag.
-        </Alert>
-      )}
-
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom fontWeight={700}>
-          Ihre Daten
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="Vorname *" fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={touchFieldSx} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="Nachname *" fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} sx={touchFieldSx} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="E-Mail (optional)" type="email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} sx={touchFieldSx} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="Telefon (optional)" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} sx={touchFieldSx} />
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Typography variant="h5" gutterBottom fontWeight={700}>
-        Gerichte
-      </Typography>
-      <Grid container spacing={2} sx={{ mb: 10 }}>
-        {items.map((item) => (
-          <Grid key={item.id} size={{ xs: 12, sm: 6 }}>
-            <FoodItemCard
-              item={item}
-              quantity={quantities[item.id] || 0}
-              onQuantityChange={(q) => setQuantities((prev) => ({ ...prev, [item.id]: q }))}
-              touchMode
-            />
-          </Grid>
-        ))}
-      </Grid>
-
-      <Paper
-        sx={{
-          p: 2,
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1100,
-          borderRadius: 0,
-          borderTop: 2,
-          borderColor: 'primary.main',
-        }}
-        elevation={8}
-      >
-        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
-          <Box>
-            <Typography variant="h6">
-              Gesamt: <strong>{totalCount}</strong> {totalCount === 1 ? 'Gericht' : 'Gerichte'}
-            </Typography>
-            <Typography variant="h5" fontWeight={800} color="primary">
-              {formatPrice(totalPrice)}
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={submitting || totalCount === 0}
-            sx={{
-              ...touchPrimaryButtonSx,
-              width: { xs: '100%', sm: 'auto' },
-              minWidth: { sm: 280 },
-              minHeight: 72,
-              flexDirection: 'column',
-              gap: 0.5,
-              py: 1.5,
-            }}
-          >
-            <ShoppingCartIcon sx={{ fontSize: 32 }} />
-            {submitting ? 'Wird gesendet…' : 'Bestellung absenden'}
-          </Button>
-        </Stack>
-      </Paper>
     </PublicLayout>
   );
 }

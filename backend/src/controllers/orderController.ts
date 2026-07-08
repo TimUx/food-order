@@ -3,11 +3,18 @@ import { StatusCode } from '@prisma/client';
 import { orderService } from '../services/orderService';
 import { eventService } from '../services/eventService';
 import { AuthRequest } from '../middleware/auth';
+import { validateOrderBotProtection, BotProtectionPayload } from '../middleware/botProtection';
 
 export const orderController = {
-  async createOnline(req: { body: Parameters<typeof orderService.createOnlineOrder>[0] }, res: Response, next: NextFunction) {
+  async createOnline(
+    req: { body: Parameters<typeof orderService.createOnlineOrder>[0] & BotProtectionPayload },
+    res: Response,
+    next: NextFunction
+  ) {
     try {
-      const order = await orderService.createOnlineOrder(req.body);
+      await validateOrderBotProtection(req.body);
+      const { firstName, lastName, email, phone, items } = req.body;
+      const order = await orderService.createOnlineOrder({ firstName, lastName, email, phone, items });
       res.status(201).json(order);
     } catch (err) {
       next(err);

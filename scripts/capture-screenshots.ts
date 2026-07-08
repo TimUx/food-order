@@ -15,6 +15,13 @@ const RAW_DIR = join(OUT_DIR, '_raw');
 const DIST = join(process.cwd(), 'frontend', 'dist');
 const FULL_HD = { width: 1920, height: 1080 };
 
+/** Viewports müssen exakt zu scripts/embed-device-frame.py SCREEN_* passen */
+const DEVICE_CAPTURES = {
+  monitor: { width: 1280, height: 720 },
+  iphone: { width: 390, height: 844 },
+  ipad: { width: 768, height: 1024 },
+} as const;
+
 const EVENT_ID = '00000000-0000-0000-0000-000000000001';
 const ORDER_ID = '00000000-0000-0000-0000-000000000042';
 
@@ -166,9 +173,13 @@ async function setupPage(page: Page, auth = false) {
 async function prepareOrderPage(page: Page) {
   await page.getByLabel('Vorname *').fill('Max');
   await page.getByLabel('Nachname *').fill('Mustermann');
-  await page.locator('button[aria-label="Menge erhöhen"]').first().click();
-  await page.locator('button[aria-label="Menge erhöhen"]').first().click();
-  await page.locator('button[aria-label="Menge erhöhen"]').nth(1).click();
+  const dishesScroll = page.getByTestId('order-dishes-scroll');
+  await dishesScroll.evaluate((el) => { el.scrollTop = 0; });
+  const increaseButtons = page.locator('button[aria-label="Menge erhöhen"]');
+  await increaseButtons.first().click({ force: true });
+  await increaseButtons.first().click({ force: true });
+  await increaseButtons.nth(1).click({ force: true });
+  await dishesScroll.evaluate((el) => { el.scrollTop = 0; });
 }
 
 interface PageSpec {
@@ -212,14 +223,20 @@ async function captureScreenshot(
 }
 
 async function captureOrderPageDevices(browser: Awaited<ReturnType<typeof chromium.launch>>) {
-  const devices: Array<{ name: string; device: 'iphone' | 'ipad' | 'monitor'; viewport: { width: number; height: number } }> = [
-    { name: '01-bestellseite-monitor', device: 'monitor', viewport: { width: 1280, height: 800 } },
-    { name: '01-bestellseite-iphone', device: 'iphone', viewport: { width: 393, height: 852 } },
-    { name: '01-bestellseite-ipad', device: 'ipad', viewport: { width: 834, height: 1194 } },
+  const devices: Array<{ name: string; device: keyof typeof DEVICE_CAPTURES }> = [
+    { name: '01-bestellseite-monitor', device: 'monitor' },
+    { name: '01-bestellseite-iphone', device: 'iphone' },
+    { name: '01-bestellseite-ipad', device: 'ipad' },
   ];
 
-  for (const { name, device, viewport } of devices) {
-    const context = await browser.newContext({ viewport, locale: 'de-DE', isMobile: device === 'iphone' });
+  for (const { name, device } of devices) {
+    const viewport = DEVICE_CAPTURES[device];
+    const context = await browser.newContext({
+      viewport,
+      locale: 'de-DE',
+      isMobile: device === 'iphone',
+      hasTouch: device === 'iphone' || device === 'ipad',
+    });
     const page = await context.newPage();
     await setupPage(page, false);
 
@@ -230,7 +247,7 @@ async function captureOrderPageDevices(browser: Awaited<ReturnType<typeof chromi
     await page.waitForTimeout(400);
 
     const rawPath = join(RAW_DIR, `${name}.png`);
-    await page.screenshot({ path: rawPath, fullPage: device !== 'monitor' });
+    await page.screenshot({ path: rawPath, fullPage: false });
     await context.close();
 
     const outPath = join(OUT_DIR, `${name}.png`);
