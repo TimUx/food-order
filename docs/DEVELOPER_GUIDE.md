@@ -83,7 +83,7 @@ cd backend
 cp ../.env.example .env
 # DATABASE_URL in .env anpassen
 npm install
-npx prisma migrate deploy
+npx prisma db push
 npm run seed
 npm run dev
 ```
@@ -120,14 +120,15 @@ docker compose exec backend npm run seed
 - **DailyOrderCounter** – Atomarer Zähler für Tages-Bestellnummern
 - **OrderStatus** – Status-Historie (Audit-Trail)
 
-### Migrationen
+### Datenbankschema
+
+Das Schema wird direkt aus `prisma/schema.prisma` synchronisiert (keine Migrationen):
 
 ```bash
-# Neue Migration erstellen (nach Schema-Änderung)
-npx prisma migrate dev --name beschreibung
+# Schema in die Datenbank übernehmen
+npx prisma db push
 
-# In Produktion
-npx prisma migrate deploy
+# Im Docker-Container startet das Backend automatisch mit prisma db push
 ```
 
 ### Seed
@@ -260,6 +261,31 @@ cd .. && npx tsx scripts/capture-screenshots.ts
 docker compose up --build -d
 docker compose exec backend npm run seed
 ```
+
+### Docker Images (GitHub Container Registry)
+
+Der Workflow `.github/workflows/docker-publish.yml` baut und veröffentlicht Images unter:
+
+- `ghcr.io/<owner>/food-order/backend`
+- `ghcr.io/<owner>/food-order/frontend`
+
+**Auslöser:**
+
+| Auslöser | Tags |
+|----------|------|
+| Manuell (`workflow_dispatch`) | `latest`, `sha-<commit>` |
+| Release veröffentlicht | Semver-Tags (`1.0.0`, `1.0`, `1`), `sha-<commit>` |
+
+**Manuell starten:** GitHub → Actions → „Docker Images“ → Run workflow
+
+**Release:** GitHub → Releases → Create new release → Workflow startet automatisch
+
+Optionale Repository-Variablen für den Frontend-Build:
+
+| Variable | Beschreibung |
+|----------|-------------|
+| `VITE_API_URL` | API-URL im Frontend-Image |
+| `VITE_WS_URL` | WebSocket-URL im Frontend-Image |
 
 ---
 

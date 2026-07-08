@@ -67,6 +67,8 @@ docker compose up --build -d
 docker compose exec backend npm run seed
 ```
 
+Das Backend synchronisiert das Datenbankschema automatisch per `prisma db push` beim Start.
+
 | Dienst | URL |
 |--------|-----|
 | Frontend | http://localhost:5173 |
@@ -116,6 +118,15 @@ docker compose exec backend npm run seed
 ## Technologie-Stack
 
 React · TypeScript · Vite · Material UI · Node.js · Express · Prisma · PostgreSQL · Socket.IO · Docker · PWA
+
+## Docker Images
+
+Fertige Images werden per GitHub Actions in die GitHub Container Registry veröffentlicht:
+
+- `ghcr.io/timux/food-order/backend`
+- `ghcr.io/timux/food-order/frontend`
+
+Ausführung: manuell über Actions oder automatisch beim Erstellen eines Releases.
 
 ## Screenshots aktualisieren
 
