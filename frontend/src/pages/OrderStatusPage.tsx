@@ -9,9 +9,15 @@ import {
   Button,
   Stack,
   keyframes,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/PublicLayout';
 import { StatusChip } from '@/components/StatusChip';
@@ -35,6 +41,10 @@ export function OrderStatusPage() {
   const [orderNumber, setOrderNumber] = useState('');
   const [lastName, setLastName] = useState('');
   const [showReadyAlert, setShowReadyAlert] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelLastName, setCancelLastName] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
   const prevStatus = useRef<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -79,10 +89,26 @@ export function OrderStatusPage() {
       const result = await api.lookupOrder(parseInt(orderNumber, 10), lastName);
       setOrder(result);
       setLookupMode(false);
+      setCancelLastName(lastName);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bestellung nicht gefunden');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!order) return;
+    setCancelling(true);
+    setCancelError('');
+    try {
+      const updated = await api.cancelOrder(order.id, cancelLastName.trim());
+      setOrder(updated);
+      setCancelDialogOpen(false);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'Stornierung fehlgeschlagen');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -196,6 +222,34 @@ export function OrderStatusPage() {
             Ihre Bestellung wurde abgeholt. Vielen Dank!
           </Alert>
         )}
+
+        {order.status === 'CANCELLED' && (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Diese Bestellung wurde storniert.
+          </Alert>
+        )}
+
+        {order.canCancel && (
+          <Box sx={{ mt: 3 }}>
+            {order.cancellationDeadlineLabel && (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Stornierung möglich bis: {order.cancellationDeadlineLabel}
+              </Typography>
+            )}
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<CancelIcon />}
+              onClick={() => {
+                setCancelError('');
+                setCancelLastName(order.customer?.lastName || cancelLastName);
+                setCancelDialogOpen(true);
+              }}
+            >
+              Bestellung stornieren
+            </Button>
+          </Box>
+        )}
       </Paper>
 
       <Box sx={{ mt: 3, textAlign: 'center' }}>
@@ -203,6 +257,37 @@ export function OrderStatusPage() {
           Andere Bestellung abfragen
         </Button>
       </Box>
+
+      <Dialog open={cancelDialogOpen} onClose={() => !cancelling && setCancelDialogOpen(false)}>
+        <DialogTitle>Bestellung stornieren</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Möchten Sie Ihre Bestellung (Abholnummer {order.displayNumber}) wirklich stornieren?
+            Dieser Vorgang kann nicht rückgängig gemacht werden.
+          </DialogContentText>
+          {cancelError && <Alert severity="error" sx={{ mb: 2 }}>{cancelError}</Alert>}
+          <TextField
+            label="Nachname zur Bestätigung"
+            fullWidth
+            value={cancelLastName}
+            onChange={(e) => setCancelLastName(e.target.value)}
+            helperText="Bitte geben Sie Ihren Nachnamen ein, um die Stornierung zu bestätigen."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>
+            Abbrechen
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleCancel}
+            disabled={cancelling || !cancelLastName.trim()}
+          >
+            {cancelling ? 'Wird storniert…' : 'Stornieren'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PublicLayout>
   );
 }

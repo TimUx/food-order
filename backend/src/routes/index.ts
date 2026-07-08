@@ -19,6 +19,8 @@ import {
   updateOrderStatusSchema,
   lookupOrderSchema,
   lookupByNumberSchema,
+  cancelOrderSchema,
+  updateEmailSettingsSchema,
   idParamSchema,
   createUserSchema,
   updateUserSchema,
@@ -64,11 +66,13 @@ router.get('/auth/me', authenticate, loadUser, authController.me);
 
 // Public
 router.get('/public/club', clubController.getPublic);
+router.get('/public/order-settings', clubController.getOrderSettings);
 router.get('/public/event', eventController.getActive);
 router.get('/public/menu', foodItemController.getPublic);
 router.post('/public/orders', validateBody(createOnlineOrderSchema), orderController.createOnline);
 router.post('/public/orders/lookup', validateBody(lookupOrderSchema), orderController.lookup);
 router.get('/public/orders/:id', validateParams(idParamSchema), orderController.getById);
+router.post('/public/orders/:id/cancel', validateParams(idParamSchema), validateBody(cancelOrderSchema), orderController.cancelOnline);
 router.get('/public/pickup-board', orderController.getReady);
 
 // Staff - Orders
@@ -129,6 +133,8 @@ router.use('/admin', authenticate, loadUser, requireRole('ADMIN'));
 
 router.get('/admin/club', clubController.get);
 router.put('/admin/club', validateBody(updateClubSchema), clubController.update);
+router.get('/admin/email-settings', clubController.getEmailSettings);
+router.put('/admin/email-settings', validateBody(updateEmailSettingsSchema), clubController.updateEmailSettings);
 router.post('/admin/club/logo', upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {

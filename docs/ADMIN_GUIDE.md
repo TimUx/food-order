@@ -113,14 +113,14 @@ POSTGRES_DB=vereinsbestellung
 ```env
 JWT_SECRET=change-me-in-production-use-long-random-string
 JWT_EXPIRES_IN=8h
-CORS_ORIGIN=http://localhost:5173    # Öffentliche URL des Frontends
+CORS_ORIGIN=http://localhost:5173    # Öffentliche Frontend-URL (auch für E-Mail-Links)
 ```
 
 | Variable | Beschreibung |
 |----------|--------------|
 | `JWT_SECRET` | Geheimer Schlüssel für Mitarbeiter-Login – **in Produktion unbedingt ändern** |
 | `JWT_EXPIRES_IN` | Gültigkeitsdauer des Login-Tokens (z. B. `8h`, `24h`) |
-| `CORS_ORIGIN` | Erlaubte Frontend-URL (bei HTTPS: `https://bestellung.sv-musterstadt.de` – siehe [Reverse Proxy](#reverse-proxy-https)) |
+| `CORS_ORIGIN` | Erlaubte Frontend-URL; wird auch für Links in Bestätigungs-E-Mails verwendet (bei HTTPS: `https://bestellung.sv-musterstadt.de` – siehe [Reverse Proxy](#reverse-proxy-https)) |
 
 ### Frontend-URLs (Build-Zeit)
 
@@ -147,13 +147,15 @@ docker compose up --build -d
 
 ### E-Mail (optional)
 
-```env
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=ihr-benutzer
-SMTP_PASS=ihr-passwort
-SMTP_FROM=noreply@ihr-verein.de
-```
+E-Mail-Versand wird im Admin-Bereich unter **E-Mail** (`/admin/email`) konfiguriert – nicht mehr über `.env`.
+
+| Feld | Beschreibung |
+|------|-------------|
+| SMTP-Server | Hostname des Mailservers (leer = kein Versand) |
+| Port | Üblich: 587 (STARTTLS) oder 465 (SSL) |
+| Benutzername / Passwort | Falls der Server Authentifizierung verlangt |
+| Absender-Adresse | z. B. `noreply@ihr-verein.de` |
+| Zusätzlicher E-Mail-Text | Optionaler Freitext am Anfang von Bestell- und Stornierungsmails |
 
 Ohne SMTP-Konfiguration funktionieren Bestellungen weiterhin – Kunden erhalten dann nur keine Bestätigungs-E-Mail.
 
@@ -174,7 +176,7 @@ Cloudflare Turnstile schützt die öffentliche Bestellseite vor automatisierten 
 | `JWT_SECRET` | ✅ Ja |
 | `CORS_ORIGIN` / `VITE_API_URL` / `VITE_WS_URL` | ✅ Ja (auf echte Domain) |
 | Admin-Passwort (nach Seed) | ✅ Ja |
-| SMTP | Optional |
+| SMTP (unter `/admin/email`) | Optional |
 | Turnstile | Optional |
 
 ---
@@ -458,25 +460,34 @@ sudo systemctl reload caddy
 Navigieren Sie zu **Verein & Kontakt** (`/admin/verein`) und tragen Sie ein:
 
 - Vereinsname und Logo
-- Kontaktdaten für die öffentliche Kontaktseite
+- Kontaktdaten für die öffentliche Kontaktseite und Bestätigungs-E-Mails
 
 ![Vereinseinstellungen](screenshots/13-vereinseinstellungen.png)
 
-### 3. Benutzer anlegen
+### 3. Bestell-Einstellungen konfigurieren
+
+Unter **Bestellung** (`/admin/bestellung`) legen Sie fest:
+
+- Welche Felder auf der öffentlichen Bestellseite **Pflicht** oder **optional** sind (Vorname, Nachname, E-Mail, Telefon)
+- Die **Stornierungsfrist** in Stunden vor Veranstaltungsbeginn
+
+![Bestell-Einstellungen](screenshots/18-bestell-einstellungen.png)
+
+### 4. Benutzer anlegen
 
 Unter `/admin/benutzer` können Sie weitere Mitarbeiter und Administratoren anlegen.
 
 ![Benutzerverwaltung](screenshots/17-benutzerverwaltung.png)
 
-### 4. Erste Veranstaltung anlegen
+### 5. Erste Veranstaltung anlegen
 
 Unter **Veranstaltungen** (`/admin/veranstaltungen`) eine Veranstaltung mit korrektem **Veranstaltungsdatum** anlegen und **aktivieren**.
 
-### 5. Speisen pflegen
+### 6. Speisen pflegen
 
 Unter **Speisen** (`/admin/speisen`) Gerichte für die aktive Veranstaltung anlegen.
 
-### 6. Testbestellung durchführen
+### 7. Testbestellung durchführen
 
 Öffnen Sie die öffentliche Bestellseite (`/`), geben Sie eine Testbestellung auf und prüfen Sie, ob sie in der Küchenansicht erscheint.
 
@@ -494,6 +505,8 @@ Der **Administrationsbereich** (`/admin`) ist vom Mitarbeiterbereich getrennt un
 | `/admin/benutzer` | Benutzerverwaltung (anlegen, bearbeiten, deaktivieren) |
 | `/admin/veranstaltungen` | Veranstaltungen verwalten |
 | `/admin/speisen` | Speisekarte pflegen |
+| `/admin/bestellung` | Pflichtfelder & Stornierungsfrist |
+| `/admin/email` | SMTP / E-Mail-Versand |
 
 Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: Dashboard, Küche, Abholung, Bestellung, Bestellübersicht.
 
@@ -503,11 +516,51 @@ Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: 
 |---------|------------|
 | Admin-Login | ![Admin-Login](screenshots/15-admin-login.png) |
 | Verein & Kontakt | ![Verein](screenshots/13-vereinseinstellungen.png) |
+| Bestell-Einstellungen | ![Bestellung](screenshots/18-bestell-einstellungen.png) |
 | Benutzerverwaltung | ![Benutzer](screenshots/17-benutzerverwaltung.png) |
 | Veranstaltungen | ![Veranstaltungen](screenshots/12-veranstaltungen.png) |
 | Speisen | ![Speisen](screenshots/11-speisenverwaltung.png) |
 
 ---
+
+## Bestell-Einstellungen
+
+Navigieren Sie zu **Bestellung** (`/admin/bestellung`).
+
+![Bestell-Einstellungen](screenshots/18-bestell-einstellungen.png)
+
+### Pflichtfelder
+
+Legen Sie fest, welche Kundendaten auf der öffentlichen Bestellseite erforderlich sind:
+
+| Feld | Standard |
+|------|----------|
+| Vorname | Pflicht |
+| Nachname | Pflicht |
+| E-Mail | Optional |
+| Telefon | Optional |
+
+Nur wenn alle als Pflicht markierten Felder ausgefüllt sind, kann die Bestellung abgeschickt werden.
+
+### Stornierungsfrist
+
+Geben Sie an, wie viele **Stunden vor Veranstaltungsbeginn** Kunden ihre Online-Bestellung selbst stornieren können (Standard: 24 Stunden).
+
+Beispiel: Veranstaltung beginnt Samstag um 11:00 Uhr, Stornierungsfrist 24 h → Stornierung möglich bis Freitag 11:00 Uhr.
+
+Kunden stornieren über die Statusseite (`/status/:orderId`) mit Nachnamen zur Bestätigung. Stornierung ist nur bei Status **Neu** oder **In Bearbeitung** möglich.
+
+---
+
+## E-Mail-Einstellungen
+
+Navigieren Sie zu **E-Mail** (`/admin/email`).
+
+![E-Mail-Einstellungen](screenshots/19-email-einstellungen.png)
+
+Tragen Sie die Zugangsdaten Ihres SMTP-Servers ein. Das Passwort wird in der Datenbank gespeichert und beim Laden nicht angezeigt – ein leeres Passwortfeld beim Speichern lässt das bestehende Passwort unverändert.
+
+Die Links in Bestätigungs-E-Mails verwenden die in `CORS_ORIGIN` hinterlegte öffentliche Frontend-URL.
 
 ## Veranstaltungen verwalten
 
@@ -674,12 +727,19 @@ Das Abholboard (`/abholboard`) ist für Fernseher oder Monitore gedacht.
 
 ## E-Mail-Benachrichtigungen
 
-Wenn Kunden optional eine E-Mail angeben, erhalten sie eine Bestellbestätigung mit:
-- Abholnummer
-- Veranstaltungstag
-- Bestellte Gerichte und Gesamtpreis
+Wenn Kunden eine E-Mail angeben (Pflichtfeld oder optional), erhalten sie eine Bestellbestätigung mit:
 
-Konfiguration in `.env` – siehe Abschnitt [Konfiguration](#konfiguration).
+- Abholnummer und Veranstaltungstag
+- Vereinsdaten (Name, Kontaktdaten des Verkäufers)
+- Bestellte Gerichte und Gesamtpreis
+- Rechtlicher Hinweis zum verbindlichen Kaufvertrag und zur Abrechnung nicht abgeholter Bestellungen
+- Link zur Status- und Stornierungsseite
+
+Bei Stornierung erhalten Kunden zusätzlich eine **Stornierungsbestätigung** mit stornierten Gerichten, Zeitpunkt der Stornierung und Hinweis zur Vertragsaufhebung (sowohl bei Selbststornierung als auch bei Stornierung durch Mitarbeiter).
+
+Die Links in E-Mails verwenden die in `CORS_ORIGIN` hinterlegte öffentliche Frontend-URL – setzen Sie diese daher auf die tatsächliche Domain (z. B. `https://bestellung.sv-musterstadt.de`).
+
+SMTP-Zugangsdaten konfigurieren Sie unter `/admin/email` – siehe Abschnitt [E-Mail-Einstellungen](#e-mail-einstellungen).
 
 ---
 
@@ -708,7 +768,11 @@ Die Nummerierung (001, 002, …) bezieht sich auf den **Veranstaltungstag**, nic
 
 ### Können Kunden ohne E-Mail bestellen?
 
-Ja. E-Mail und Telefon sind optional. Pflicht sind nur Vor- und Nachname sowie mindestens ein Gericht.
+Ja, sofern E-Mail nicht als Pflichtfeld konfiguriert ist. Vor- und Nachname sind standardmäßig Pflicht; die Pflichtfelder können unter `/admin/bestellung` angepasst werden.
+
+### Können Kunden ihre Bestellung selbst stornieren?
+
+Ja. Auf der Statusseite (`/status/:orderId`) können Kunden innerhalb der konfigurierten Stornierungsfrist stornieren. Dazu ist die Eingabe des Nachnamens zur Bestätigung erforderlich. Stornierung ist nur bei Status **Neu** oder **In Bearbeitung** möglich.
 
 ### Wie schütze ich die Bestellseite vor Bots?
 
@@ -771,7 +835,7 @@ Für den lokalen Betrieb im Vereinsnetz reicht das interne Netzwerk. Für E-Mail
 
 ### E-Mails kommen nicht an
 
-1. SMTP-Einstellungen in `.env` prüfen
+1. SMTP-Einstellungen unter `/admin/email` prüfen
 2. Backend nach Änderung neu starten: `docker compose up -d backend`
 3. Logs prüfen: `docker compose logs backend | grep -i mail`
 4. Spam-Ordner des Empfängers prüfen

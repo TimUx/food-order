@@ -48,6 +48,31 @@ const mockClub = {
   address: 'Sportplatzstraße 1, 12345 Musterstadt',
   website: 'https://www.sv-musterstadt.de',
   logoUrl: null,
+  orderFieldFirstNameRequired: true,
+  orderFieldLastNameRequired: true,
+  orderFieldEmailRequired: false,
+  orderFieldPhoneRequired: false,
+  cancellationDeadlineHours: 24,
+};
+
+const mockEmailSettings = {
+  smtpHost: 'smtp.sv-musterstadt.de',
+  smtpPort: 587,
+  smtpUser: 'noreply@sv-musterstadt.de',
+  smtpFrom: 'noreply@sv-musterstadt.de',
+  smtpPassConfigured: true,
+  smtpEnabled: true,
+  emailCustomText: 'Bitte holen Sie Ihre Bestellung am Veranstaltungstag an der Hauptkasse ab.',
+};
+
+const mockOrderSettings = {
+  fields: {
+    firstNameRequired: true,
+    lastNameRequired: true,
+    emailRequired: false,
+    phoneRequired: false,
+  },
+  cancellationDeadlineHours: 24,
 };
 
 const mockEvent = {
@@ -118,13 +143,20 @@ const mockUsers = [
 ];
 
 function mockApi(pathname: string, method: string, body?: string): unknown {
+  if (pathname === '/api/public/order-settings') return mockOrderSettings;
+  if (pathname === '/api/admin/email-settings') return mockEmailSettings;
   if (pathname === '/api/public/club' || pathname === '/api/staff/club' || pathname === '/api/admin/club') return mockClub;
   if (pathname === '/api/public/menu') {
     return { event: mockEvent, items: mockFoodItems, preOrderInfo: 'Vorbestellung möglich' };
   }
   if (pathname === '/api/public/event') return mockEvent;
   if (pathname === `/api/public/orders/${ORDER_ID}`) {
-    return { ...mockOrders[1] };
+    return {
+      ...mockOrders[1],
+      canCancel: true,
+      cancellationDeadline: '2026-08-14T11:00:00.000Z',
+      cancellationDeadlineLabel: 'Freitag, 14. August 2026, 11:00',
+    };
   }
   if (pathname === '/api/public/pickup-board') {
     return [
@@ -344,6 +376,8 @@ async function main() {
     { name: '15-admin-login', url: '/admin/login' },
     { name: '16-admin-uebersicht', url: '/admin', auth: true },
     { name: '17-benutzerverwaltung', url: '/admin/benutzer', auth: true },
+    { name: '18-bestell-einstellungen', url: '/admin/bestellung', auth: true },
+    { name: '19-email-einstellungen', url: '/admin/email', auth: true },
   ];
 
   for (const spec of pages) {

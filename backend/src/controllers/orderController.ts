@@ -110,4 +110,17 @@ export const orderController = {
       next(err);
     }
   },
+
+  async cancelOnline(
+    req: { params: { id: string }; body: { lastName: string } },
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const order = await orderService.cancelOnlineOrder(req.params.id, req.body.lastName);
+      res.json(order);
+    } catch (err) {
+      next(err);
+    }
+  },
 };

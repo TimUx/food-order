@@ -69,3 +69,48 @@ export function getNextStatus(current: StatusCode): StatusCode | null {
   if (idx === -1 || idx >= flow.length - 1) return null;
   return flow[idx + 1];
 }
+
+/** Kombiniert Veranstaltungsdatum und Startzeit zu einem Zeitpunkt (UTC). */
+export function getEventStartDateTime(eventDate: Date | string, startTime: string): Date {
+  const d = normalizeDate(eventDate);
+  const [hours, minutes] = startTime.split(':').map(Number);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), hours, minutes));
+}
+
+/** Stornierungsfrist: X Stunden vor Veranstaltungsbeginn. */
+export function getCancellationDeadline(
+  eventDate: Date | string,
+  startTime: string,
+  hoursBefore: number
+): Date {
+  const eventStart = getEventStartDateTime(eventDate, startTime);
+  return new Date(eventStart.getTime() - hoursBefore * 60 * 60 * 1000);
+}
+
+export function formatDateTimeDE(date: Date): string {
+  return date.toLocaleString('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
+}
+
+const CANCELLABLE_STATUSES: StatusCode[] = ['NEW', 'IN_PROGRESS'];
+
+export function canCustomerCancelOrder(
+  status: StatusCode,
+  source: string,
+  eventDate: Date | string,
+  startTime: string,
+  cancellationDeadlineHours: number,
+  now: Date = new Date()
+): boolean {
+  if (source !== 'ONLINE') return false;
+  if (!CANCELLABLE_STATUSES.includes(status)) return false;
+  const deadline = getCancellationDeadline(eventDate, startTime, cancellationDeadlineHours);
+  return now < deadline;
+}

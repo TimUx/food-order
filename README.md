@@ -9,13 +9,15 @@ Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstalt
 | Bereich | Beschreibung |
 |---------|-------------|
 | **Öffentliche Bestellseite** | Ohne Registrierung, Vorausbestellungen, Kontakt-Link |
-| **Kundenstatusseite** | Live-Status per WebSocket |
+| **Kundenstatusseite** | Live-Status per WebSocket, Selbststornierung |
 | **Abholboard** | Vollbild-Monitor für fertige Bestellungen |
 | **Mitarbeiter-Dashboard** | Statistiken, Umsatz, beliebte Gerichte |
 | **Küchenansicht** | Tablet-optimiert mit großen Buttons |
 | **Abholung** | Abholung per Tages-Bestellnummer bestätigen |
 | **Bestellung** | Bestellungen vor Ort aufgeben (ohne Kundendaten) |
-| **Vereinseinstellungen** | Name, Logo, Kontaktdaten, Benutzer (Admin) |
+| **Vereinseinstellungen** | Name, Logo, Kontaktdaten (Admin) |
+| **Bestell-Einstellungen** | Pflichtfelder & Stornierungsfrist (Admin) |
+| **E-Mail-Einstellungen** | SMTP-Server für Bestätigungsmails (Admin) |
 | **Speisenverwaltung** | CRUD mit Bild-Upload (Admin) |
 | **Veranstaltungsverwaltung** | Mehrere Events, eine aktiv (Admin) |
 
@@ -63,13 +65,13 @@ Ohne Konfiguration werden sinnvolle Standardwerte verwendet.
 
 ### Administrationsbereich
 
-| Admin-Übersicht | Verein & Kontakt | Benutzerverwaltung |
+| Admin-Übersicht | Verein & Kontakt | Bestell-Einstellungen |
 |:---:|:---:|:---:|
-| ![Admin](docs/screenshots/16-admin-uebersicht.png) | ![Verein](docs/screenshots/13-vereinseinstellungen.png) | ![Benutzer](docs/screenshots/17-benutzerverwaltung.png) |
+| ![Admin](docs/screenshots/16-admin-uebersicht.png) | ![Verein](docs/screenshots/13-vereinseinstellungen.png) | ![Bestellung](docs/screenshots/18-bestell-einstellungen.png) |
 
-| Veranstaltungen | Speisenverwaltung |
-|:---:|:---:|
-| ![Veranstaltungen](docs/screenshots/12-veranstaltungen.png) | ![Speisen](docs/screenshots/11-speisenverwaltung.png) |
+| Benutzerverwaltung | Veranstaltungen | Speisenverwaltung |
+|:---:|:---:|:---:|
+| ![Benutzer](docs/screenshots/17-benutzerverwaltung.png) | ![Veranstaltungen](docs/screenshots/12-veranstaltungen.png) | ![Speisen](docs/screenshots/11-speisenverwaltung.png) |
 
 ## Schnellstart
 
@@ -130,6 +132,8 @@ Das Backend synchronisiert das Datenbankschema automatisch per `prisma db push` 
 | `/admin/benutzer` | Benutzerverwaltung | ADMIN |
 | `/admin/veranstaltungen` | Veranstaltungen | ADMIN |
 | `/admin/speisen` | Speisenverwaltung | ADMIN |
+| `/admin/bestellung` | Pflichtfelder & Stornierungsfrist | ADMIN |
+| `/admin/email` | SMTP / E-Mail-Versand | ADMIN |
 
 > Alte Routen `/mitarbeiter/kasse`, `/mitarbeiter/lokale-kasse`, `/mitarbeiter/verein`, `/mitarbeiter/speisen` und `/mitarbeiter/veranstaltungen` leiten automatisch weiter.
 
@@ -158,5 +162,8 @@ Ausführung: manuell über Actions oder automatisch beim Erstellen eines Release
 
 ```bash
 cd frontend && npm run build
-cd .. && npm run screenshots
+cd .. && npm install
+npm run screenshots
 ```
+
+Voraussetzungen: Playwright (`npx playwright install chromium`) und Python 3 mit Pillow für Geräte-Mockups. Details siehe [Developer Guide](docs/DEVELOPER_GUIDE.md#screenshots-generieren).

@@ -19,6 +19,8 @@ import { ClubSettingsPage } from '@/pages/admin/ClubSettingsPage';
 import { UsersPage } from '@/pages/admin/UsersPage';
 import { EventsPage } from '@/pages/admin/EventsPage';
 import { FoodItemsPage } from '@/pages/admin/FoodItemsPage';
+import { OrderSettingsPage } from '@/pages/admin/OrderSettingsPage';
+import { MailSettingsPage } from '@/pages/admin/MailSettingsPage';
 
 export default function App() {
   return (
@@ -46,6 +48,8 @@ export default function App() {
               <Route path="/admin/benutzer" element={<AdminRoute><UsersPage /></AdminRoute>} />
               <Route path="/admin/veranstaltungen" element={<AdminRoute><EventsPage /></AdminRoute>} />
               <Route path="/admin/speisen" element={<AdminRoute><FoodItemsPage /></AdminRoute>} />
+              <Route path="/admin/bestellung" element={<AdminRoute><OrderSettingsPage /></AdminRoute>} />
+              <Route path="/admin/email" element={<AdminRoute><MailSettingsPage /></AdminRoute>} />
 
               {/* Alte Routen weiterleiten */}
               <Route path="/mitarbeiter/kasse" element={<Navigate to="/mitarbeiter/abholung" replace />} />

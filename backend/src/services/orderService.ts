@@ -5,6 +5,7 @@ import {
   foodItemRepository,
 } from '../repositories';
 import { eventService } from './eventService';
+import { clubService } from './clubService';
 import { AppError } from '../middleware/errorHandler';
 import {
   formatOrderNumber,
@@ -14,12 +15,16 @@ import {
   STATUS_LABELS,
   SOURCE_LABELS,
   formatEventDate,
+  getCancellationDeadline,
+  formatDateTimeDE,
+  canCustomerCancelOrder,
 } from '../utils/helpers';
 import { emitOrderCreated, emitOrderUpdate } from '../socket';
 import { emailService } from './emailService';
 
 type OrderWithRelations = Order & {
   customer?: { firstName: string; lastName: string; email?: string | null; phone?: string | null } | null;
+  event?: { date: Date; startTime: string };
   items: Array<{
     id: string;
     foodItemId: string;
@@ -30,7 +35,38 @@ type OrderWithRelations = Order & {
   }>;
 };
 
-function mapOrder(order: OrderWithRelations) {
+type CancellationInfo = {
+  canCancel: boolean;
+  cancellationDeadline?: string;
+  cancellationDeadlineLabel?: string;
+};
+
+async function getCancellationInfo(order: OrderWithRelations): Promise<CancellationInfo> {
+  if (!order.event || order.source !== 'ONLINE') {
+    return { canCancel: false };
+  }
+
+  const settings = await clubService.getSettings();
+  const deadline = getCancellationDeadline(
+    order.event.date,
+    order.event.startTime,
+    settings.cancellationDeadlineHours
+  );
+
+  return {
+    canCancel: canCustomerCancelOrder(
+      order.status,
+      order.source,
+      order.event.date,
+      order.event.startTime,
+      settings.cancellationDeadlineHours
+    ),
+    cancellationDeadline: deadline.toISOString(),
+    cancellationDeadlineLabel: formatDateTimeDE(deadline),
+  };
+}
+
+function mapOrder(order: OrderWithRelations, cancellation?: CancellationInfo) {
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -45,6 +81,7 @@ function mapOrder(order: OrderWithRelations) {
     createdAt: order.createdAt,
     readyAt: order.readyAt,
     pickedUpAt: order.pickedUpAt,
+    cancelledAt: order.cancelledAt,
     customer: order.customer
       ? {
           firstName: order.customer.firstName,
@@ -61,7 +98,42 @@ function mapOrder(order: OrderWithRelations) {
       unitPrice: Number(item.unitPrice),
       lineTotal: Number(item.lineTotal),
     })),
+    ...(cancellation
+      ? {
+          canCancel: cancellation.canCancel,
+          cancellationDeadline: cancellation.cancellationDeadline,
+          cancellationDeadlineLabel: cancellation.cancellationDeadlineLabel,
+        }
+      : {}),
   };
+}
+
+async function mapOrderWithCancellation(order: OrderWithRelations) {
+  const cancellation = await getCancellationInfo(order);
+  return mapOrder(order, cancellation);
+}
+
+function validateOrderFields(
+  data: { firstName?: string; lastName?: string; email?: string; phone?: string },
+  fields: {
+    firstNameRequired: boolean;
+    lastNameRequired: boolean;
+    emailRequired: boolean;
+    phoneRequired: boolean;
+  }
+) {
+  if (fields.firstNameRequired && !data.firstName?.trim()) {
+    throw new AppError(400, 'Vorname ist erforderlich');
+  }
+  if (fields.lastNameRequired && !data.lastName?.trim()) {
+    throw new AppError(400, 'Nachname ist erforderlich');
+  }
+  if (fields.emailRequired && !data.email?.trim()) {
+    throw new AppError(400, 'E-Mail ist erforderlich');
+  }
+  if (fields.phoneRequired && !data.phone?.trim()) {
+    throw new AppError(400, 'Telefon ist erforderlich');
+  }
 }
 
 export const orderService = {
@@ -77,7 +149,7 @@ export const orderService = {
   async getById(id: string) {
     const order = await orderRepository.findById(id);
     if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
-    return mapOrder(order as OrderWithRelations);
+    return mapOrderWithCancellation(order as OrderWithRelations);
   },
 
   async getReadyOrders(eventId: string) {
@@ -105,7 +177,7 @@ export const orderService = {
     ) {
       throw new AppError(404, 'Bestellung nicht gefunden');
     }
-    return mapOrder(order as OrderWithRelations);
+    return mapOrderWithCancellation(order as OrderWithRelations);
   },
 
   async lookupByNumber(orderNumber: number) {
@@ -121,8 +193,8 @@ export const orderService = {
   },
 
   async createOnlineOrder(data: {
-    firstName: string;
-    lastName: string;
+    firstName?: string;
+    lastName?: string;
     email?: string;
     phone?: string;
     items: { foodItemId: string; quantity: number }[];
@@ -132,12 +204,17 @@ export const orderService = {
       throw new AppError(403, 'Online-Bestellungen sind derzeit nicht möglich');
     }
 
-    return this._createOrder(event, 'ONLINE', data.items, {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email || undefined,
-      phone: data.phone,
-    });
+    const orderSettings = await clubService.getOrderSettings();
+    const customerData = {
+      firstName: data.firstName?.trim() || '',
+      lastName: data.lastName?.trim() || '',
+      email: data.email?.trim() || undefined,
+      phone: data.phone?.trim() || undefined,
+    };
+
+    validateOrderFields(customerData, orderSettings.fields);
+
+    return this._createOrder(event, 'ONLINE', data.items, customerData);
   },
 
   async createCashierOrder(items: { foodItemId: string; quantity: number }[]) {
@@ -148,8 +225,39 @@ export const orderService = {
     return this._createOrder(event, 'CASHIER', items);
   },
 
+  async cancelOnlineOrder(id: string, lastName: string) {
+    const order = await orderRepository.findById(id);
+    if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
+
+    if (order.source !== 'ONLINE') {
+      throw new AppError(400, 'Diese Bestellung kann nicht online storniert werden');
+    }
+
+    if (
+      !order.customer ||
+      order.customer.lastName.toLowerCase() !== lastName.toLowerCase()
+    ) {
+      throw new AppError(403, 'Stornierung nicht möglich – Nachname stimmt nicht überein');
+    }
+
+    const settings = await clubService.getSettings();
+    if (
+      !canCustomerCancelOrder(
+        order.status,
+        order.source,
+        order.event.date,
+        order.event.startTime,
+        settings.cancellationDeadlineHours
+      )
+    ) {
+      throw new AppError(400, 'Stornierung nicht mehr möglich – Frist abgelaufen oder Bestellung bereits bearbeitet');
+    }
+
+    return this.updateStatus(id, 'CANCELLED');
+  },
+
   async _createOrder(
-    event: { id: string; date: Date },
+    event: { id: string; date: Date; startTime: string },
     source: 'ONLINE' | 'CASHIER',
     items: { foodItemId: string; quantity: number }[],
     customerData?: {
@@ -218,11 +326,43 @@ export const orderService = {
       },
     });
 
-    const mapped = mapOrder(order)!;
+    const orderWithEvent = { ...order, event: { date: event.date, startTime: event.startTime } };
+    const mapped = await mapOrderWithCancellation(orderWithEvent as OrderWithRelations);
     emitOrderCreated(eventId, mapped);
 
     if (customerData?.email) {
-      emailService.sendOrderConfirmation(customerData.email, mapped).catch(() => {});
+      const club = await clubService.getPublic();
+      const settings = await clubService.getSettings();
+      const deadline = getCancellationDeadline(
+        event.date,
+        event.startTime,
+        settings.cancellationDeadlineHours
+      );
+
+      emailService
+        .sendOrderConfirmation(
+          customerData.email,
+          {
+            id: mapped.id,
+            displayNumber: mapped.displayNumber,
+            totalPrice: mapped.totalPrice,
+            eventDateLabel: mapped.eventDateLabel,
+            items: mapped.items.map((i) => ({
+              name: i.name!,
+              quantity: i.quantity,
+              lineTotal: i.lineTotal!,
+            })),
+            cancellationDeadlineLabel: formatDateTimeDE(deadline),
+          },
+          {
+            clubName: club.clubName,
+            contactName: club.contactName,
+            email: club.email,
+            phone: club.phone,
+            address: club.address,
+          }
+        )
+        .catch(() => {});
     }
 
     return mapped;
@@ -245,8 +385,39 @@ export const orderService = {
     if (status === 'CANCELLED') extra.cancelledAt = new Date();
 
     const updated = await orderRepository.updateStatus(id, status, changedBy, extra);
-    const mapped = mapOrder(updated)!;
+    const mapped = await mapOrderWithCancellation(updated as OrderWithRelations);
     emitOrderUpdate(order.eventId, mapped);
+
+    if (status === 'CANCELLED' && order.source === 'ONLINE' && order.customer?.email) {
+      const club = await clubService.getPublic();
+      const cancelledAt = extra.cancelledAt || new Date();
+      emailService
+        .sendOrderCancellation(
+          order.customer.email,
+          {
+            id: mapped.id,
+            displayNumber: mapped.displayNumber,
+            totalPrice: mapped.totalPrice,
+            eventDateLabel: mapped.eventDateLabel,
+            items: mapped.items.map((i) => ({
+              name: i.name!,
+              quantity: i.quantity,
+              lineTotal: i.lineTotal!,
+            })),
+            cancelledAtLabel: formatDateTimeDE(cancelledAt),
+          },
+          {
+            clubName: club.clubName,
+            contactName: club.contactName,
+            email: club.email,
+            phone: club.phone,
+            address: club.address,
+          },
+          { initiatedByStaff: Boolean(changedBy) }
+        )
+        .catch(() => {});
+    }
+
     return mapped;
   },
 

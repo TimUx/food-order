@@ -30,6 +30,17 @@ export const clubRepository = {
     address?: string | null;
     website?: string | null;
     logoUrl?: string | null;
+    orderFieldFirstNameRequired?: boolean;
+    orderFieldLastNameRequired?: boolean;
+    orderFieldEmailRequired?: boolean;
+    orderFieldPhoneRequired?: boolean;
+    cancellationDeadlineHours?: number;
+    smtpHost?: string | null;
+    smtpPort?: number;
+    smtpUser?: string | null;
+    smtpPass?: string | null;
+    smtpFrom?: string | null;
+    emailCustomText?: string | null;
   }) =>
     prisma.clubSettings.upsert({
       where: { id: 'default' },

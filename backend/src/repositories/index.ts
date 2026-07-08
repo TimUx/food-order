@@ -61,6 +61,7 @@ export const orderRepository = {
       where: { id },
       include: {
         customer: true,
+        event: true,
         items: { include: { foodItem: true } },
         statusHistory: { orderBy: { createdAt: 'asc' } },
       },
@@ -86,6 +87,7 @@ export const orderRepository = {
       },
       include: {
         customer: true,
+        event: true,
         items: { include: { foodItem: true } },
       },
     }),

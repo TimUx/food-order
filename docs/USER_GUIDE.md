@@ -152,12 +152,21 @@ Kunden können **Wochen vorher** online bestellen. Am Veranstaltungstag:
 2. Die Abholnummer wurde bereits bei der Bestellung vergeben
 3. Kunden können ihren Status unter `/status` verfolgen
 4. Bei Abfrage mit **Abholnummer + Nachname** finden Kunden ihre Bestellung wieder
+5. Innerhalb der Stornierungsfrist können Kunden auf der Statusseite selbst stornieren (Nachname zur Bestätigung)
 
 ![Kundenstatus](screenshots/02-kundenstatus.png)
+
+Die Statusseite zeigt bei stornierbaren Bestellungen einen **Stornieren**-Button und die Stornierungsfrist an.
 
 ---
 
 ## Tipps & häufige Fragen
+
+### Kunde möchte Bestellung stornieren?
+
+- Kunden können auf der Statusseite (`/status` oder Link aus der Bestätigungs-E-Mail) innerhalb der Stornierungsfrist selbst stornieren
+- Dazu Nachname zur Bestätigung eingeben
+- Nach Ablauf der Frist oder bei Status **Fertig** / **Abgeholt**: Stornierung nur noch durch Mitarbeiter in der Bestellübersicht
 
 ### Kunde hat Abholnummer vergessen?
 

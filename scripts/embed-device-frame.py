@@ -12,6 +12,11 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter
 
+try:
+    _LANCZOS = Image.Resampling.LANCZOS
+except AttributeError:
+    _LANCZOS = Image.LANCZOS
+
 CANVAS_W, CANVAS_H = 1920, 1080
 
 # Bildschirmflächen innerhalb der Frames (muss mit Playwright-Viewport übereinstimmen)
@@ -48,7 +53,7 @@ def _fill_screen(screenshot: Image.Image, screen_w: int, screen_h: int) -> Image
 
     scale = max(screen_w / sw, screen_h / sh)
     nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
-    resized = screenshot.resize((nw, nh), Image.Resampling.LANCZOS)
+    resized = screenshot.resize((nw, nh), _LANCZOS)
     left = (nw - screen_w) // 2
     top = (nh - screen_h) // 2
     return resized.crop((left, top, left + screen_w, top + screen_h))
@@ -132,7 +137,7 @@ def embed_ipad(screenshot: Image.Image) -> Image.Image:
 
     screen = _fill_screen(screenshot, screen_w, screen_h)
     if scale != 1.0:
-        screen = screen.resize((screen_w_s, screen_h_s), Image.Resampling.LANCZOS)
+        screen = screen.resize((screen_w_s, screen_h_s), _LANCZOS)
     screen_mask = _rounded_mask((screen_w_s, screen_h_s), max(8, radius_s - bezel_s))
     screen.putalpha(screen_mask)
     frame.paste(screen, (bezel_s, bezel_s), screen)

@@ -50,8 +50,11 @@ export const api = {
   lookupOrder: (orderNumber: number, lastName: string) =>
     request<Order>('/public/orders/lookup', { method: 'POST', body: JSON.stringify({ orderNumber, lastName }) }),
   getOrder: (id: string) => request<Order>(`/public/orders/${id}`),
+  cancelOrder: (id: string, lastName: string) =>
+    request<Order>(`/public/orders/${id}/cancel`, { method: 'POST', body: JSON.stringify({ lastName }) }),
   getPickupBoard: () => request<PickupBoardOrder[]>('/public/pickup-board'),
   getClub: () => request<import('@/types/club').ClubSettings>('/public/club'),
+  getOrderSettings: () => request<import('@/types/club').OrderSettings>('/public/order-settings'),
 
   // Auth
   login: (email: string, password: string) =>
@@ -111,6 +114,17 @@ export const api = {
     request<import('@/types/club').ClubSettings>('/admin/club', {}, token),
   updateClubSettings: (token: string, data: Partial<import('@/types/club').ClubSettings>) =>
     request<import('@/types/club').ClubSettings>('/admin/club', { method: 'PUT', body: JSON.stringify(data) }, token),
+  getEmailSettings: (token: string) =>
+    request<import('@/types/club').EmailSettings>('/admin/email-settings', {}, token),
+  updateEmailSettings: (token: string, data: {
+    smtpHost?: string | null;
+    smtpPort?: number;
+    smtpUser?: string | null;
+    smtpPass?: string | null;
+    smtpFrom?: string | null;
+    emailCustomText?: string | null;
+  }) =>
+    request<import('@/types/club').EmailSettings>('/admin/email-settings', { method: 'PUT', body: JSON.stringify(data) }, token),
   uploadClubLogo: async (token: string, file: File) => {
     const formData = new FormData();
     formData.append('image', file);

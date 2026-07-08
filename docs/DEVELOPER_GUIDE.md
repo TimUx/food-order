@@ -115,7 +115,7 @@ docker compose exec backend npm run seed
 
 ### Wichtige Modelle
 
-- **ClubSettings** – Vereinsname, Logo, Kontaktdaten (Singleton)
+- **ClubSettings** – Vereinsname, Logo, Kontaktdaten, Bestell-Pflichtfelder, Stornierungsfrist (Singleton)
 - **FoodItem** – Gerichte pro Veranstaltung
 - **Order** – Bestellung mit `orderNumber`, `orderDate`, `status`
 - **DailyOrderCounter** – Atomarer Zähler für Tages-Bestellnummern
@@ -151,11 +151,13 @@ Basis-URL: `/api`
 | Methode | Pfad | Beschreibung |
 |---------|------|-------------|
 | GET | `/public/club` | Vereinsdaten (öffentlich) |
+| GET | `/public/order-settings` | Pflichtfelder & Stornierungsfrist |
 | GET | `/public/event` | Aktive Veranstaltung |
 | GET | `/public/menu` | Speisekarte + Event-Info |
 | POST | `/public/orders` | Online-Bestellung |
 | POST | `/public/orders/lookup` | Status per Nummer + Nachname |
-| GET | `/public/orders/:id` | Bestellung per ID |
+| GET | `/public/orders/:id` | Bestellung per ID (inkl. Storno-Infos) |
+| POST | `/public/orders/:id/cancel` | Online-Bestellung stornieren (Nachname) |
 | GET | `/public/pickup-board` | Fertige Bestellungen |
 
 ### Mitarbeiter-Endpunkte (JWT)
@@ -168,6 +170,13 @@ Basis-URL: `/api`
 | PATCH | `/staff/orders/:id/status` | ADMIN, STAFF |
 | PUT | `/staff/club` | ADMIN |
 | POST | `/staff/club/logo` | ADMIN |
+
+### Admin-Endpunkte (JWT, ADMIN)
+
+| Methode | Pfad | Beschreibung |
+|---------|------|-------------|
+| GET | `/admin/email-settings` | SMTP-Konfiguration |
+| PUT | `/admin/email-settings` | SMTP-Konfiguration speichern |
 
 Vollständige Liste: siehe `backend/src/routes/index.ts`.
 
@@ -240,8 +249,20 @@ cd frontend && npm test
 
 ```bash
 cd frontend && npm run build
-cd .. && npx tsx scripts/capture-screenshots.ts
+cd .. && npm install
+npm run screenshots
 ```
+
+Voraussetzungen: Playwright-Browser (`npx playwright install chromium`), Python 3 mit Pillow (`python3-pil` oder `pip install Pillow`) für Geräte-Mockups.
+
+Alternativ per Docker (Playwright-Image + `python3-pil`):
+
+```bash
+docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.61.1-jammy \
+  bash -c "apt-get update -qq && apt-get install -y -qq python3-pil && cd frontend && npm install && npm run build && cd .. && npm install && npm run screenshots"
+```
+
+Neue Screenshots (u. a. `18-bestell-einstellungen.png`) werden automatisch mit erzeugt.
 
 ---
 
@@ -253,8 +274,7 @@ cd .. && npx tsx scripts/capture-screenshots.ts
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL-Verbindung |
 | `JWT_SECRET` | Langer zufälliger String |
-| `CORS_ORIGIN` | Frontend-URL |
-| `SMTP_*` | Optional für E-Mail-Bestätigungen |
+| `CORS_ORIGIN` | Frontend-URL (CORS, Socket.IO und Links in E-Mails) |
 
 ### Docker Compose
 
@@ -298,7 +318,7 @@ Optionale Repository-Variablen für den Frontend-Build:
 |---------|--------|-----------|
 | Öffentlich | `/` | Bestellseite, `/kontakt`, `/abholboard` |
 | Mitarbeiter | `/mitarbeiter` | Küche, Abholung, Bestellungen |
-| Administration | `/admin` | Verein, Benutzer, Veranstaltungen, Speisen |
+| Administration | `/admin` | Verein, Benutzer, Veranstaltungen, Speisen, Bestell-Einstellungen |
 | API Admin | `/api/admin` | `/users`, `/club` |
 
 ---

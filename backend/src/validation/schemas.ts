@@ -43,6 +43,11 @@ export const updateClubSchema = z.object({
   phone: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   website: z.string().url('Ungültige URL').optional().nullable().or(z.literal('')),
+  orderFieldFirstNameRequired: z.boolean().optional(),
+  orderFieldLastNameRequired: z.boolean().optional(),
+  orderFieldEmailRequired: z.boolean().optional(),
+  orderFieldPhoneRequired: z.boolean().optional(),
+  cancellationDeadlineHours: z.number().int().min(0, 'Mindestens 0 Stunden').max(720, 'Maximal 720 Stunden').optional(),
 });
 
 export const createFoodItemSchema = z.object({
@@ -63,10 +68,10 @@ export const orderItemSchema = z.object({
 });
 
 export const createOnlineOrderSchema = z.object({
-  firstName: z.string().min(1, 'Vorname erforderlich'),
-  lastName: z.string().min(1, 'Nachname erforderlich'),
+  firstName: z.string().optional().or(z.literal('')),
+  lastName: z.string().optional().or(z.literal('')),
   email: z.string().email('Ungültige E-Mail').optional().or(z.literal('')),
-  phone: z.string().optional(),
+  phone: z.string().optional().or(z.literal('')),
   items: z.array(orderItemSchema).min(1, 'Mindestens ein Gericht erforderlich'),
   _hp: z.string().optional(),
   formStartedAt: z.number().int().positive(),
@@ -88,6 +93,19 @@ export const lookupOrderSchema = z.object({
 
 export const lookupByNumberSchema = z.object({
   orderNumber: z.coerce.number().int().positive(),
+});
+
+export const cancelOrderSchema = z.object({
+  lastName: z.string().min(1, 'Nachname erforderlich'),
+});
+
+export const updateEmailSettingsSchema = z.object({
+  smtpHost: z.string().optional().nullable(),
+  smtpPort: z.number().int().min(1).max(65535).optional(),
+  smtpUser: z.string().optional().nullable(),
+  smtpPass: z.string().optional().nullable(),
+  smtpFrom: z.string().email('Ungültige Absender-E-Mail').optional().nullable().or(z.literal('')),
+  emailCustomText: z.string().max(5000, 'Maximal 5000 Zeichen').optional().nullable(),
 });
 
 export const idParamSchema = z.object({

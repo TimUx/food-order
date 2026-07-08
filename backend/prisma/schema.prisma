@@ -147,14 +147,25 @@ model OrderStatus {
 }
 
 model ClubSettings {
-  id          String   @id @default("default")
-  clubName    String   @default("Vereinsbestellung")
-  description String?
-  contactName String?
-  email       String?
-  phone       String?
-  address     String?
-  website     String?
-  logoUrl     String?
-  updatedAt   DateTime @updatedAt
+  id                          String   @id @default("default")
+  clubName                    String   @default("Vereinsbestellung")
+  description                 String?
+  contactName                 String?
+  email                       String?
+  phone                       String?
+  address                     String?
+  website                     String?
+  logoUrl                     String?
+  orderFieldFirstNameRequired Boolean  @default(true)
+  orderFieldLastNameRequired  Boolean  @default(true)
+  orderFieldEmailRequired     Boolean  @default(false)
+  orderFieldPhoneRequired     Boolean  @default(false)
+  cancellationDeadlineHours   Int      @default(24)
+  smtpHost                    String?
+  smtpPort                    Int      @default(587)
+  smtpUser                    String?
+  smtpPass                    String?
+  smtpFrom                    String?
+  emailCustomText             String?
+  updatedAt                   DateTime @updatedAt
 }

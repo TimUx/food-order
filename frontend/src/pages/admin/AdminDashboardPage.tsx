@@ -4,6 +4,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import PeopleIcon from '@mui/icons-material/People';
 import EventIcon from '@mui/icons-material/Event';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import EmailIcon from '@mui/icons-material/Email';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { AdminLayout } from '@/components/AdminLayout';
 
@@ -12,6 +14,8 @@ const tiles = [
   { path: '/admin/benutzer', label: 'Benutzer', description: 'Mitarbeiter und Administratoren', icon: <PeopleIcon fontSize="large" color="primary" /> },
   { path: '/admin/veranstaltungen', label: 'Veranstaltungen', description: 'Events anlegen und aktivieren', icon: <EventIcon fontSize="large" color="primary" /> },
   { path: '/admin/speisen', label: 'Speisen', description: 'Speisekarte pflegen', icon: <RestaurantMenuIcon fontSize="large" color="primary" /> },
+  { path: '/admin/bestellung', label: 'Bestellung', description: 'Pflichtfelder & Stornierungsfrist', icon: <ShoppingCartIcon fontSize="large" color="primary" /> },
+  { path: '/admin/email', label: 'E-Mail', description: 'SMTP-Server für Bestätigungsmails', icon: <EmailIcon fontSize="large" color="primary" /> },
   { path: '/mitarbeiter', label: 'Mitarbeiterbereich', description: 'Küche, Abholung, Bestellungen', icon: <StorefrontIcon fontSize="large" color="secondary" /> },
 ];
 

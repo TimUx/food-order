@@ -19,7 +19,23 @@ import { FoodItemCard } from '@/components/FoodItemCard';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { api, formatPrice } from '@/services/api';
 import { FoodItem } from '@/types';
+import { OrderFieldConfig, DEFAULT_ORDER_FIELD_CONFIG } from '@/types/club';
 import { touchFieldSx, touchPrimaryButtonSx, touchButtonSx } from '@/theme/touch';
+
+function fieldLabel(name: string, required: boolean): string {
+  return required ? `${name} *` : `${name} (optional)`;
+}
+
+function isFormValid(
+  fields: OrderFieldConfig,
+  data: { firstName: string; lastName: string; email: string; phone: string }
+): boolean {
+  if (fields.firstNameRequired && !data.firstName.trim()) return false;
+  if (fields.lastNameRequired && !data.lastName.trim()) return false;
+  if (fields.emailRequired && !data.email.trim()) return false;
+  if (fields.phoneRequired && !data.phone.trim()) return false;
+  return true;
+}
 
 export function OrderPage() {
   const navigate = useNavigate();
@@ -37,17 +53,19 @@ export function OrderPage() {
   const [phone, setPhone] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [fieldConfig, setFieldConfig] = useState<OrderFieldConfig>(DEFAULT_ORDER_FIELD_CONFIG);
 
   const turnstileRequired = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY);
 
   useEffect(() => {
-    api.getPublicMenu()
-      .then((data) => {
-        setEventName(data.event.name);
-        setEventDateLabel((data.event as { eventDateLabel?: string }).eventDateLabel || '');
-        setItems(data.items);
+    Promise.all([api.getPublicMenu(), api.getOrderSettings()])
+      .then(([menuData, settings]) => {
+        setEventName(menuData.event.name);
+        setEventDateLabel((menuData.event as { eventDateLabel?: string }).eventDateLabel || '');
+        setItems(menuData.items);
+        setFieldConfig(settings.fields);
         const initial: Record<string, number> = {};
-        data.items.forEach((i) => { initial[i.id] = 0; });
+        menuData.items.forEach((i) => { initial[i.id] = 0; });
         setQuantities(initial);
       })
       .catch((err) => setError(err.message))
@@ -69,9 +87,14 @@ export function OrderPage() {
     return { totalCount: count, totalPrice: price, selectedItems: selected };
   }, [items, quantities]);
 
+  const formValid = useMemo(
+    () => isFormValid(fieldConfig, { firstName, lastName, email, phone }),
+    [fieldConfig, firstName, lastName, email, phone]
+  );
+
   const handleSubmit = async () => {
-    if (!firstName.trim() || !lastName.trim()) {
-      setError('Bitte Vor- und Nachname eingeben');
+    if (!formValid) {
+      setError('Bitte alle Pflichtfelder ausfüllen');
       return;
     }
     if (selectedItems.length === 0) {
@@ -186,16 +209,16 @@ export function OrderPage() {
             </Typography>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label="Vorname *" fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={touchFieldSx} />
+                <TextField label={fieldLabel('Vorname', fieldConfig.firstNameRequired)} fullWidth required={fieldConfig.firstNameRequired} value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={touchFieldSx} />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label="Nachname *" fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} sx={touchFieldSx} />
+                <TextField label={fieldLabel('Nachname', fieldConfig.lastNameRequired)} fullWidth required={fieldConfig.lastNameRequired} value={lastName} onChange={(e) => setLastName(e.target.value)} sx={touchFieldSx} />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label="E-Mail (optional)" type="email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} sx={touchFieldSx} />
+                <TextField label={fieldLabel('E-Mail', fieldConfig.emailRequired)} type="email" fullWidth required={fieldConfig.emailRequired} value={email} onChange={(e) => setEmail(e.target.value)} sx={touchFieldSx} />
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label="Telefon (optional)" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} sx={touchFieldSx} />
+                <TextField label={fieldLabel('Telefon', fieldConfig.phoneRequired)} fullWidth required={fieldConfig.phoneRequired} value={phone} onChange={(e) => setPhone(e.target.value)} sx={touchFieldSx} />
               </Grid>
             </Grid>
             {/* Honeypot – für Bots unsichtbar */}
@@ -286,7 +309,7 @@ export function OrderPage() {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={submitting || totalCount === 0 || (turnstileRequired && !turnstileToken)}
+              disabled={submitting || totalCount === 0 || !formValid || (turnstileRequired && !turnstileToken)}
               sx={{
                 ...touchPrimaryButtonSx,
                 width: { xs: '100%', sm: 'auto' },

@@ -61,6 +61,10 @@ export interface Order {
   createdAt: string;
   readyAt?: string;
   pickedUpAt?: string;
+  cancelledAt?: string;
+  canCancel?: boolean;
+  cancellationDeadline?: string;
+  cancellationDeadlineLabel?: string;
   customer?: {
     firstName: string;
     lastName: string;
