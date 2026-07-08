@@ -178,11 +178,11 @@ Cloudflare Turnstile schützt die öffentliche Bestellseite vor automatisierten 
 
 ## Erste Schritte nach der Installation
 
-### 1. Anmeldung
+### 1. Anmeldung (Administrationsbereich)
 
-1. Öffnen Sie `/mitarbeiter/login`
+1. Öffnen Sie `/admin/login`
 2. Melden Sie sich mit den Admin-Zugangsdaten an
-3. Nach dem Login gelangen Sie zum Dashboard
+3. Nach dem Login gelangen Sie zur Admin-Übersicht
 
 **Standard-Zugangsdaten (nach Seed):**
 
@@ -191,20 +191,26 @@ Cloudflare Turnstile schützt die öffentliche Bestellseite vor automatisierten 
 | Administrator | admin@verein.local | admin123 |
 | Mitarbeiter (Küche) | kueche@verein.local | staff123 |
 
-> **Wichtig:** Ändern Sie die Passwörter vor dem produktiven Einsatz!
+> **Wichtig:** Ändern Sie die Passwörter vor dem produktiven Einsatz! Mitarbeiter melden sich unter `/mitarbeiter/login` an.
 
-![Dashboard](screenshots/06-dashboard.png)
+![Admin-Login](screenshots/15-admin-login.png)
+
+![Admin-Übersicht](screenshots/16-admin-uebersicht.png)
 
 ### 2. Verein einrichten
 
-Navigieren Sie zum **Administrationsbereich** (`/admin/verein`) und tragen Sie ein:
+Navigieren Sie zu **Verein & Kontakt** (`/admin/verein`) und tragen Sie ein:
 
 - Vereinsname und Logo
 - Kontaktdaten für die öffentliche Kontaktseite
 
+![Vereinseinstellungen](screenshots/13-vereinseinstellungen.png)
+
 ### 3. Benutzer anlegen
 
 Unter `/admin/benutzer` können Sie weitere Mitarbeiter und Administratoren anlegen.
+
+![Benutzerverwaltung](screenshots/17-benutzerverwaltung.png)
 
 ### 4. Erste Veranstaltung anlegen
 
@@ -234,6 +240,16 @@ Der **Administrationsbereich** (`/admin`) ist vom Mitarbeiterbereich getrennt un
 | `/admin/speisen` | Speisekarte pflegen |
 
 Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: Dashboard, Küche, Abholung, Bestellung, Bestellübersicht.
+
+![Admin-Übersicht](screenshots/16-admin-uebersicht.png)
+
+| Bereich | Screenshot |
+|---------|------------|
+| Admin-Login | ![Admin-Login](screenshots/15-admin-login.png) |
+| Verein & Kontakt | ![Verein](screenshots/13-vereinseinstellungen.png) |
+| Benutzerverwaltung | ![Benutzer](screenshots/17-benutzerverwaltung.png) |
+| Veranstaltungen | ![Veranstaltungen](screenshots/12-veranstaltungen.png) |
+| Speisen | ![Speisen](screenshots/11-speisenverwaltung.png) |
 
 ---
 

@@ -57,9 +57,19 @@ Ohne Konfiguration werden sinnvolle Standardwerte verwendet.
 |:---:|:---:|:---:|
 | ![Dashboard](docs/screenshots/06-dashboard.png) | ![Küche](docs/screenshots/07-kuechenansicht-tablet.png) | ![Abholung](docs/screenshots/08-abholung.png) |
 
-| Bestellung | Bestellübersicht | Vereinseinstellungen |
+| Bestellung | Bestellübersicht |
+|:---:|:---:|
+| ![Bestellung](docs/screenshots/09-bestellung.png) | ![Bestellungen](docs/screenshots/10-bestellungen.png) |
+
+### Administrationsbereich
+
+| Admin-Übersicht | Verein & Kontakt | Benutzerverwaltung |
 |:---:|:---:|:---:|
-| ![Bestellung](docs/screenshots/09-bestellung.png) | ![Bestellungen](docs/screenshots/10-bestellungen.png) | ![Verein](docs/screenshots/13-vereinseinstellungen.png) |
+| ![Admin](docs/screenshots/16-admin-uebersicht.png) | ![Verein](docs/screenshots/13-vereinseinstellungen.png) | ![Benutzer](docs/screenshots/17-benutzerverwaltung.png) |
+
+| Veranstaltungen | Speisenverwaltung |
+|:---:|:---:|
+| ![Veranstaltungen](docs/screenshots/12-veranstaltungen.png) | ![Speisen](docs/screenshots/11-speisenverwaltung.png) |
 
 ## Schnellstart
 

@@ -104,7 +104,8 @@ Frontend läuft auf `http://localhost:5173` mit Proxy zu `/api` und `/socket.io`
 
 ```bash
 cp .env.example .env
-docker compose up --build -d
+docker compose pull
+docker compose up -d
 docker compose exec backend npm run seed
 ```
 
@@ -258,9 +259,12 @@ cd .. && npx tsx scripts/capture-screenshots.ts
 ### Docker Compose
 
 ```bash
-docker compose up --build -d
+docker compose pull
+docker compose up -d
 docker compose exec backend npm run seed
 ```
+
+Verwendet Images aus der GitHub Container Registry (`GHCR_IMAGE_PREFIX`, `IMAGE_TAG` in `.env`).
 
 ### Docker Images (GitHub Container Registry)
 
@@ -286,6 +290,16 @@ Optionale Repository-Variablen für den Frontend-Build:
 |----------|-------------|
 | `VITE_API_URL` | API-URL im Frontend-Image |
 | `VITE_WS_URL` | WebSocket-URL im Frontend-Image |
+| `VITE_TURNSTILE_SITE_KEY` | Optional: Cloudflare Turnstile (Bot-Schutz) |
+
+### Routen (Auszug)
+
+| Bereich | Prefix | Beispiele |
+|---------|--------|-----------|
+| Öffentlich | `/` | Bestellseite, `/kontakt`, `/abholboard` |
+| Mitarbeiter | `/mitarbeiter` | Küche, Abholung, Bestellungen |
+| Administration | `/admin` | Verein, Benutzer, Veranstaltungen, Speisen |
+| API Admin | `/api/admin` | `/users`, `/club` |
 
 ---
 

@@ -21,13 +21,15 @@ Anleitung für Mitarbeiter in Küche, Abholung und Service – ohne Administrato
 2. Geben Sie E-Mail und Passwort ein
 3. Tippen Sie auf **Anmelden**
 
-![Login](screenshots/05-mitarbeiter-login.png)
+![Mitarbeiter-Login](screenshots/05-mitarbeiter-login.png)
 
 **Test-Zugangsdaten (Demo):**
 
-| Rolle | E-Mail | Passwort |
-|-------|--------|----------|
-| Küche | kueche@verein.local | staff123 |
+| Rolle | E-Mail | Passwort | Login |
+|-------|--------|----------|-------|
+| Küche / Service | kueche@verein.local | staff123 | `/mitarbeiter/login` |
+
+> **Hinweis für Administratoren:** Vereinsdaten, Benutzer und Veranstaltungen verwalten Sie im separaten [Administrationsbereich](/admin/login) – siehe [Admin Guide](ADMIN_GUIDE.md).
 
 > Die App kann als PWA auf dem Tablet installiert werden (Zum Startbildschirm hinzufügen).
 
@@ -50,6 +52,7 @@ Nach der Anmeldung sehen Sie das **Dashboard** mit aktuellen Zahlen:
 | Küche | Küchenteam | Bestellungen bearbeiten |
 | Abholung | Ausgabe | Abholung per Nummer bestätigen |
 | Bestellung | Vor Ort | Neue Bestellung aufgeben |
+| Administration | Nur Admin | Link zum Admin-Bereich (Verein, Benutzer, Events) |
 
 ---
 

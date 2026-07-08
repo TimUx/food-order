@@ -111,8 +111,14 @@ const mockStats = {
 
 const mockUser = { id: 'u1', email: 'admin@verein.local', firstName: 'Admin', lastName: 'Verein', role: 'ADMIN' };
 
+const mockUsers = [
+  { id: 'u1', email: 'admin@verein.local', firstName: 'Admin', lastName: 'Verein', role: 'ADMIN', active: true, createdAt: '2026-01-01T00:00:00.000Z' },
+  { id: 'u2', email: 'kueche@verein.local', firstName: 'Küche', lastName: 'Team', role: 'STAFF', active: true, createdAt: '2026-01-02T00:00:00.000Z' },
+  { id: 'u3', email: 'service@verein.local', firstName: 'Service', lastName: 'Muster', role: 'STAFF', active: false, createdAt: '2026-02-15T00:00:00.000Z' },
+];
+
 function mockApi(pathname: string, method: string, body?: string): unknown {
-  if (pathname === '/api/public/club' || pathname === '/api/staff/club') return mockClub;
+  if (pathname === '/api/public/club' || pathname === '/api/staff/club' || pathname === '/api/admin/club') return mockClub;
   if (pathname === '/api/public/menu') {
     return { event: mockEvent, items: mockFoodItems, preOrderInfo: 'Vorbestellung möglich' };
   }
@@ -142,6 +148,7 @@ function mockApi(pathname: string, method: string, body?: string): unknown {
     return mockOrders[2];
   }
   if (pathname.match(/\/staff\/events\/[^/]+\/orders$/) && method === 'GET') return mockOrders;
+  if (pathname === '/api/admin/users' && method === 'GET') return mockUsers;
   if (pathname === '/api/health') return { status: 'ok' };
   return {};
 }
@@ -316,10 +323,13 @@ async function main() {
       },
     },
     { name: '10-bestellungen', url: '/mitarbeiter/bestellungen', auth: true },
-    { name: '11-speisenverwaltung', url: '/mitarbeiter/speisen', auth: true },
-    { name: '12-veranstaltungen', url: '/mitarbeiter/veranstaltungen', auth: true },
-    { name: '13-vereinseinstellungen', url: '/mitarbeiter/verein', auth: true },
+    { name: '11-speisenverwaltung', url: '/admin/speisen', auth: true },
+    { name: '12-veranstaltungen', url: '/admin/veranstaltungen', auth: true },
+    { name: '13-vereinseinstellungen', url: '/admin/verein', auth: true },
     { name: '14-kontakt', url: '/kontakt' },
+    { name: '15-admin-login', url: '/admin/login' },
+    { name: '16-admin-uebersicht', url: '/admin', auth: true },
+    { name: '17-benutzerverwaltung', url: '/admin/benutzer', auth: true },
   ];
 
   for (const spec of pages) {
