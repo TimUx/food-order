@@ -25,11 +25,11 @@ Technische Details: [Tenant Context ADR](docs/architecture/021-tenant-context.md
 
 | Host | Bereich |
 |------|---------|
-| `www.festmanager.org` | Öffentliche Homepage (Landingpage, FAQ, Bewerbung) |
-| `festmanager.org` | Plattform (Marketing + `/platform` Administration) |
-| `<tenant>.festmanager.org` | Mandantenplattform des Veranstalters |
+| `www.<konfigurierte-plattformdomain>` | Öffentliche Homepage (Landingpage, FAQ, Bewerbung) |
+| `<plattformdomain>` (Apex) | Plattform (Marketing + `/platform` Administration) |
+| `<tenant>.<plattformdomain>` | Mandantenplattform des Veranstalters |
 
-Die Homepage ist Teil derselben React-Anwendung – kein separates Projekt. Rechtliche Seiten werden über `/platform/rechtliches` gepflegt und nur bei veröffentlichtem Inhalt verlinkt.
+Die Domain wird ausschließlich über ENV/Docker konfiguriert (`PLATFORM_DOMAIN`, `PLATFORM_WWW_DOMAIN`, …). In Dokumentation und Beispielen ist `festmanager.org` nur ein Platzhalter.
 
 ## Funktionen auf einen Blick
 

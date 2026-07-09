@@ -14,6 +14,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import BackupIcon from '@mui/icons-material/Backup';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GavelIcon from '@mui/icons-material/Gavel';
+import LanguageIcon from '@mui/icons-material/Language';
 import MemoryIcon from '@mui/icons-material/Memory';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePlatformAuth } from '@/contexts/PlatformAuthContext';
@@ -31,6 +32,7 @@ const NAV = [
   { path: '/platform/logs', label: 'Logs', icon: <ArticleIcon /> },
   { path: '/platform/backups', label: 'Backups', icon: <BackupIcon /> },
   { path: '/platform/rechtliches', label: 'Rechtliches', icon: <GavelIcon /> },
+  { path: '/platform/domains', label: 'Domains', icon: <LanguageIcon /> },
   { path: '/platform/einstellungen', label: 'Einstellungen', icon: <SettingsIcon /> },
 ];
 

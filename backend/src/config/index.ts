@@ -20,7 +20,20 @@ export const config = {
   multiTenant: {
     enabled: process.env.MULTI_TENANT_ENABLED === 'true',
     defaultTenantSlug: process.env.DEFAULT_TENANT_SLUG || 'default',
-    baseDomain: process.env.PLATFORM_BASE_DOMAIN || 'festmanager.org',
+    /** Primäre Plattformdomain – ausschließlich über ENV konfigurierbar (Default: localhost). */
+    baseDomain:
+      process.env.PLATFORM_DOMAIN?.trim() ||
+      process.env.PLATFORM_BASE_DOMAIN?.trim() ||
+      'localhost',
+    wwwDomain: process.env.PLATFORM_WWW_DOMAIN?.trim() || '',
+    apiDomain: process.env.PLATFORM_API_DOMAIN?.trim() || '',
+    wildcardDomain: process.env.PLATFORM_WILDCARD_DOMAIN?.trim() || '',
+    cookieDomain: process.env.PLATFORM_COOKIE_DOMAIN?.trim() || '',
+    sessionDomain: process.env.PLATFORM_SESSION_DOMAIN?.trim() || '',
+    allowedOrigins: (process.env.PLATFORM_ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
     trustedProxies: (process.env.TRUSTED_PROXY_IPS || '127.0.0.1,::1')
       .split(',')
       .map((item) => item.trim())

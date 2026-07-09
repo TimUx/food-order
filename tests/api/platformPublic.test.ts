@@ -28,11 +28,12 @@ describe('API platform public', () => {
     expect(Array.isArray(res.body.items)).toBe(true);
   });
 
-  it('POST /api/public/tenant-applications validates input', async () => {
-    const res = await request(app)
-      .post('/api/public/tenant-applications')
-      .set('Host', 'localhost')
-      .send({ organization: 'X' });
-    expect(res.status).toBe(400);
+  it('GET /api/public/routing-config includes domain URLs', async () => {
+    const res = await request(app).get('/api/public/routing-config').set('Host', 'localhost');
+    expect(res.status).toBe(200);
+    expect(res.body.platformUrl).toBeDefined();
+    expect(res.body.wwwUrl).toBeDefined();
+    expect(res.body.domains?.baseDomain).toBeDefined();
+    expect(res.body.domains.baseDomain).not.toBe('festmanager.org');
   });
 });

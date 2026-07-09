@@ -58,7 +58,11 @@ export interface PlatformContextData {
   platformName: string;
   platformVersion: string;
   baseDomain: string;
+  wwwDomain: string;
+  apiDomain: string | null;
   wildcardDomain: string;
+  cookieDomain: string | null;
+  sessionDomain: string | null;
   maintenanceMode: boolean;
   maintenanceMessage?: string;
   allowedDomains: string[];
@@ -161,10 +165,14 @@ export const RESERVED_SUBDOMAINS = [
 export const DEFAULT_PLATFORM_CONTEXT: PlatformContextData = {
   platformName: 'FestManager',
   platformVersion: '2.0.0',
-  baseDomain: 'festmanager.org',
-  wildcardDomain: '*.festmanager.org',
+  baseDomain: 'localhost',
+  wwwDomain: 'localhost',
+  apiDomain: null,
+  wildcardDomain: '*.localhost',
+  cookieDomain: null,
+  sessionDomain: null,
   maintenanceMode: false,
-  allowedDomains: ['festmanager.org', 'localhost'],
+  allowedDomains: ['localhost'],
   pathPrefixRoutingEnabled: false,
   defaultLocale: 'de-DE',
   defaultTimezone: 'Europe/Berlin',

@@ -53,7 +53,7 @@ export async function migrateNotificationTenantSchema(): Promise<void> {
     { key: 'platform.smtp.port', value: 587 },
     { key: 'platform.smtp.user', value: '' },
     { key: 'platform.smtp.pass', value: '', encrypted: true },
-    { key: 'platform.smtp.from', value: 'noreply@festmanager.org' },
+    { key: 'platform.smtp.from', value: 'noreply@localhost' },
     { key: 'platform.smtp.senderName', value: 'FestManager' },
     { key: 'platform.smtp.replyTo', value: '' },
     { key: 'platform.smtp.secure', value: false },

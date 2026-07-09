@@ -5,12 +5,14 @@ import {
   tenantApplicationService,
 } from '../platform/bootstrap';
 import { platformLegalService } from '../platform/PlatformLegalService';
+import { platformDomainService } from '../platform/PlatformDomainService';
 
 export const platformPublicController = {
   async getPlatform(_req: Request, res: Response, next: NextFunction) {
     try {
       const platform = platformContext.current();
       const settings = await platformSettingsService.getAllSettings();
+      const domains = platformDomainService.getPublicView(platform);
       const readString = (key: string): string | null => {
         const v = settings[key];
         return typeof v === 'string' && v.trim() ? v.trim() : null;
@@ -20,6 +22,11 @@ export const platformPublicController = {
         name: platform.platformName,
         version: platform.platformVersion,
         baseDomain: platform.baseDomain,
+        wwwDomain: domains.wwwDomain,
+        apiDomain: domains.apiDomain,
+        wildcardDomain: domains.wildcardDomain,
+        tenantDomainPattern: domains.tenantDomainPattern,
+        domains,
         maintenanceMode: platform.maintenanceMode,
         maintenanceMessage: platform.maintenanceMessage ?? null,
         primaryColor: readString('platform.branding.primaryColor') ?? '#1565c0',

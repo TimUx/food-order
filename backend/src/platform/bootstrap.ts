@@ -51,7 +51,7 @@ import { PlatformDashboardService, PlatformMonitoringService } from './PlatformD
 import { PlatformTenantAdminService } from './PlatformTenantAdminService';
 import { TenantApplicationService } from './TenantApplicationService';
 import { ImpersonationService } from './ImpersonationService';
-import { corsPolicy } from '../middleware/corsPolicy';
+import { platformDomainService } from './PlatformDomainService';
 
 export const platformContainer = new ServiceContainer();
 
@@ -229,14 +229,16 @@ export async function initializeTenantInfrastructure(): Promise<void> {
   if (tenantInfrastructureInitialized) return;
 
   const platformData = await platformSettingsServiceInstance.loadContextData(config.coreVersion);
-  platformData.baseDomain = config.multiTenant.baseDomain;
-  if (!platformData.allowedDomains.includes('localhost')) {
-    platformData.allowedDomains = [...platformData.allowedDomains, 'localhost'];
+  const domainConfig = platformDomainService.loadFromEnv();
+  const merged = platformDomainService.applyToContext(platformData, domainConfig);
+  merged.baseDomain = config.multiTenant.baseDomain;
+  if (!merged.allowedDomains.includes('localhost')) {
+    merged.allowedDomains = [...merged.allowedDomains, 'localhost'];
   }
-  platformContextInstance.initialize(platformData);
+  platformContextInstance.initialize(merged);
 
   const networkSettings = await platformSettingsServiceInstance.getNamespace('platform.network');
-  corsPolicy.bindFromPlatform(platformData, networkSettings);
+    corsPolicy.bindFromPlatform(merged, networkSettings);
 
   const { ensureDefaultTenant } = await import('../core/tenant/ensureDefaultTenant');
   await ensureDefaultTenant();

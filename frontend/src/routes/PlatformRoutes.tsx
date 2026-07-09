@@ -29,6 +29,7 @@ import { PlatformDynamicLegalPage } from '@/pages/platform/PlatformDynamicLegalP
 import { PlatformApplicationsPage } from '@/pages/platform/PlatformApplicationsPage';
 import { PlatformApplicationDetailPage } from '@/pages/platform/PlatformApplicationDetailPage';
 import { PlatformLegalAdminPage } from '@/pages/platform/PlatformLegalAdminPage';
+import { PlatformDomainsPage } from '@/pages/platform/PlatformDomainsPage';
 import { PlatformNotFoundPage } from '@/pages/errors/PlatformNotFoundPage';
 import { MaintenanceGate } from '@/components/MaintenanceGate';
 
@@ -63,6 +64,7 @@ export function PlatformRoutes() {
           <Route path="bewerbungen" element={<PlatformApplicationsPage />} />
           <Route path="bewerbungen/:id" element={<PlatformApplicationDetailPage />} />
           <Route path="rechtliches" element={<PlatformLegalAdminPage />} />
+          <Route path="domains" element={<PlatformDomainsPage />} />
           <Route path="benutzer" element={<PlatformUsersPage />} />
           <Route path="einstellungen" element={<PlatformSettingsPage />} />
           <Route path="logs" element={<PlatformLogsPage />} />

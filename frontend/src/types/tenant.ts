@@ -19,6 +19,11 @@ export interface PlatformPublicData {
   name: string;
   version: string;
   baseDomain: string;
+  wwwDomain?: string;
+  apiDomain?: string | null;
+  wildcardDomain?: string;
+  tenantDomainPattern?: string;
+  domains?: import('./routing').PlatformDomainsConfig;
   maintenanceMode: boolean;
   maintenanceMessage?: string | null;
   primaryColor?: string;
@@ -81,7 +86,7 @@ export const DEFAULT_TENANT: TenantPublicData = {
 export const DEFAULT_PLATFORM: PlatformPublicData = {
   name: 'FestManager',
   version: '2.0.0',
-  baseDomain: 'festmanager.org',
+  baseDomain: 'localhost',
   maintenanceMode: false,
   primaryColor: '#1565c0',
   defaultLocale: 'de-DE',

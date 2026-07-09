@@ -47,7 +47,14 @@ docker compose -f docker-compose.ci.yml build
 | `APP_ENCRYPTION_KEY` | DB-Secret-Verschlüsselung |
 | `DATABASE_URL` | PostgreSQL-Verbindung |
 | `MULTI_TENANT_ENABLED` | Multi-Tenant aktivieren |
-| `PLATFORM_BASE_DOMAIN` | Basis-Domain |
+| `PLATFORM_DOMAIN` | Primäre Plattformdomain (ersetzt `PLATFORM_BASE_DOMAIN`) |
+| `PLATFORM_BASE_DOMAIN` | Alias für `PLATFORM_DOMAIN` (Abwärtskompatibilität) |
+| `PLATFORM_WWW_DOMAIN` | WWW-Domain (Default: `www.<PLATFORM_DOMAIN>`) |
+| `PLATFORM_WILDCARD_DOMAIN` | Wildcard-Pattern (Default: `*.<PLATFORM_DOMAIN>`) |
+| `PLATFORM_API_DOMAIN` | Optionale API-Domain |
+| `PLATFORM_ALLOWED_ORIGINS` | CORS-Origins (kommagetrennt) |
+| `PLATFORM_COOKIE_DOMAIN` | Cookie-Domain (optional) |
+| `PLATFORM_SESSION_DOMAIN` | Session-Domain (optional) |
 | `TRUSTED_PROXY_HOPS` | Proxy-Hops für Express |
 | `ACME_EMAIL` | Let's Encrypt (Traefik) |
 | `LOG_FORMAT` | `text` oder `json` |

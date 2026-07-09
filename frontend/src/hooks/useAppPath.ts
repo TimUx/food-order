@@ -14,6 +14,9 @@ export function useAbsoluteUrl() {
       if (routing.scope === 'tenant' && routing.tenantUrl) {
         return `${routing.tenantUrl}${normalized}`;
       }
+      if (routing.scope === 'platform') {
+        return `${routing.wwwUrl || routing.platformUrl}${normalized}`;
+      }
       return `${routing.platformUrl}${normalized}`;
     },
     [routing]

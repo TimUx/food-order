@@ -127,7 +127,8 @@ describe('TenantResolver', () => {
     platformContext = new PlatformContext();
     platformContext.initialize({
       ...DEFAULT_PLATFORM_CONTEXT,
-      baseDomain: 'festmanager.org',
+      baseDomain: 'example.test',
+      wwwDomain: 'www.example.test',
       pathPrefixRoutingEnabled: false,
     });
     tenantService = createMockTenantService();
@@ -141,8 +142,8 @@ describe('TenantResolver', () => {
   it('resolves tenant by subdomain', async () => {
     vi.mocked(tenantService.findBySubdomain).mockResolvedValue(sampleTenant);
     const req = {
-      headers: { host: 'asv-libelle.festmanager.org' },
-      hostname: 'asv-libelle.festmanager.org',
+      headers: { host: 'asv-libelle.example.test' },
+      hostname: 'asv-libelle.example.test',
       path: '/api/public/tenant',
     } as Request;
 

@@ -43,7 +43,11 @@ export class PlatformSettingsService {
       platformName: this.readString(map, PLATFORM_SETTING_KEYS.NAME, DEFAULT_PLATFORM_CONTEXT.platformName),
       platformVersion,
       baseDomain,
+      wwwDomain: DEFAULT_PLATFORM_CONTEXT.wwwDomain,
+      apiDomain: DEFAULT_PLATFORM_CONTEXT.apiDomain,
       wildcardDomain: this.readString(map, PLATFORM_SETTING_KEYS.WILDCARD_DOMAIN, `*.${baseDomain}`),
+      cookieDomain: DEFAULT_PLATFORM_CONTEXT.cookieDomain,
+      sessionDomain: DEFAULT_PLATFORM_CONTEXT.sessionDomain,
       maintenanceMode: this.readBoolean(map, PLATFORM_SETTING_KEYS.MAINTENANCE_ENABLED, false),
       maintenanceMessage: this.readString(map, PLATFORM_SETTING_KEYS.MAINTENANCE_MESSAGE, undefined),
       allowedDomains: this.readStringArray(map, PLATFORM_SETTING_KEYS.ALLOWED_DOMAINS, [

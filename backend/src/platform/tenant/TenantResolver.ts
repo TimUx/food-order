@@ -182,7 +182,10 @@ export class TenantResolver {
   }
 
   private isPlatformHost(host: string, baseDomain: string): boolean {
-    return host === baseDomain.toLowerCase() || host === 'localhost';
+    const platform = this.platformContext.current();
+    const www = platform.wwwDomain?.toLowerCase();
+    const base = baseDomain.toLowerCase();
+    return host === base || host === 'localhost' || (www ? host === www : false);
   }
 
   private extractSubdomain(host: string, baseDomain: string): string | null {

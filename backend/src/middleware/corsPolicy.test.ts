@@ -4,18 +4,21 @@ import { DEFAULT_PLATFORM_CONTEXT } from '../platform/tenant/types';
 
 describe('corsPolicy', () => {
   beforeEach(() => {
-    corsPolicy.bindFromPlatform(DEFAULT_PLATFORM_CONTEXT, {
-      corsOrigins: ['https://festmanager.org'],
-      allowWildcardSubdomains: true,
-    });
+    corsPolicy.bindFromPlatform(
+      { ...DEFAULT_PLATFORM_CONTEXT, baseDomain: 'example.test' },
+      {
+        corsOrigins: ['https://example.test'],
+        allowWildcardSubdomains: true,
+      }
+    );
   });
 
   it('allows explicit origins from platform settings', () => {
-    expect(corsPolicy.isAllowed('https://festmanager.org')).toBe(true);
+    expect(corsPolicy.isAllowed('https://example.test')).toBe(true);
   });
 
   it('allows tenant subdomains', () => {
-    expect(corsPolicy.isAllowed('https://asv-libelle.festmanager.org')).toBe(true);
+    expect(corsPolicy.isAllowed('https://asv-libelle.example.test')).toBe(true);
   });
 
   it('allows localhost in development', () => {

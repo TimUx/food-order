@@ -13,6 +13,8 @@ import {
   tenantApplicationService,
 } from '../platform/bootstrap';
 import { platformLegalService } from '../platform/PlatformLegalService';
+import { platformContext } from '../platform/bootstrap';
+import { platformDomainService } from '../platform/PlatformDomainService';
 import { platformUserRepository } from '../repositories/platformUserRepository';
 import { AppError } from '../middleware/errorHandler';
 import bcrypt from 'bcryptjs';
@@ -400,6 +402,20 @@ export const platformController = {
   async listLegalPages(_req: PlatformAuthRequest, res: Response, next: NextFunction) {
     try {
       res.json({ items: await platformLegalService.listAdmin() });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getDomains(_req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const platform = platformContext.current();
+      const domains = platformDomainService.getPublicView(platform);
+      res.json({
+        ...domains,
+        allowedDomains: platform.allowedDomains,
+        note: 'Domainwerte werden über die Infrastruktur-Konfiguration (ENV/Docker) gesetzt und sind hier nur zur Anzeige.',
+      });
     } catch (err) {
       next(err);
     }

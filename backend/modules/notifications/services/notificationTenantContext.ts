@@ -1,5 +1,6 @@
 import { tenantContext, platformContext } from '../../../src/platform/bootstrap';
 import { config } from '../../../src/config';
+import { platformDomainService } from '../../../src/platform/PlatformDomainService';
 
 /**
  * Ermittelt die öffentliche Basis-URL des aktuellen Mandanten (ohne Request-Parsing).
@@ -8,11 +9,11 @@ import { config } from '../../../src/config';
 export function resolveTenantPublicBaseUrl(): string {
   const ctx = tenantContext.current();
   const platform = platformContext.current();
-  const baseDomain = platform?.baseDomain ?? config.multiTenant.baseDomain;
-  const proto = config.nodeEnv === 'production' ? 'https' : 'http';
+  const domains = platformDomainService.getPublicView(platform);
+  const proto = platformDomainService.resolveProto();
 
-  if (ctx?.subdomain && baseDomain && baseDomain !== 'localhost') {
-    return `${proto}://${ctx.subdomain}.${baseDomain}`;
+  if (ctx?.subdomain && domains.baseDomain && domains.baseDomain !== 'localhost') {
+    return platformDomainService.buildTenantUrl(domains, ctx.subdomain, '', proto);
   }
 
   if (ctx?.slug && platform?.pathPrefixRoutingEnabled) {

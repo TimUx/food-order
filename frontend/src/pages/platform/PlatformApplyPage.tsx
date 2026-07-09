@@ -11,6 +11,7 @@ import { ORGANIZATION_TYPES } from '@/content/platformMarketing';
 import type { PlatformLegalLink } from '@/types/tenant';
 import { Link } from 'react-router-dom';
 import { usePlatform } from '@/contexts/PlatformProvider';
+import { useRouting } from '@/contexts/RoutingProvider';
 
 const INITIAL = {
   organization: '',
@@ -38,6 +39,7 @@ const INITIAL = {
 export function PlatformApplyPage() {
   const navigate = useNavigate();
   const { platform } = usePlatform();
+  const { routing } = useRouting();
   const [form, setForm] = useState(INITIAL);
   const [legalLinks, setLegalLinks] = useState<PlatformLegalLink[]>([]);
   const [error, setError] = useState('');
@@ -130,7 +132,16 @@ export function PlatformApplyPage() {
             <Grid size={{ xs: 12, md: 4 }}><TextField fullWidth label="Website" value={form.website} onChange={(e) => update('website', e.target.value)} /></Grid>
             <Grid size={{ xs: 12, md: 3 }}><TextField fullWidth type="number" label="Anzahl Mitglieder" value={form.memberCount} onChange={(e) => update('memberCount', e.target.value)} /></Grid>
             <Grid size={{ xs: 12, md: 3 }}><TextField fullWidth type="number" label="Veranstaltungen pro Jahr" value={form.eventsPerYear} onChange={(e) => update('eventsPerYear', e.target.value)} /></Grid>
-            <Grid size={{ xs: 12, md: 6 }}><TextField required fullWidth label="Gewünschte Subdomain" helperText="z. B. mein-verein → mein-verein.festmanager.org" value={form.requestedSubdomain} onChange={(e) => update('requestedSubdomain', e.target.value)} /></Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                required
+                fullWidth
+                label="Gewünschte Subdomain"
+                helperText={`z. B. mein-verein → ${routing.domains?.tenantDomainPattern?.replace('{subdomain}', 'mein-verein') ?? `${platform.baseDomain}`}`}
+                value={form.requestedSubdomain}
+                onChange={(e) => update('requestedSubdomain', e.target.value)}
+              />
+            </Grid>
             <Grid size={12}><TextField required fullWidth multiline minRows={3} label="Warum wird FestManager benötigt?" value={form.reason} onChange={(e) => update('reason', e.target.value)} /></Grid>
             <Grid size={12}><TextField required fullWidth multiline minRows={2} label="Welche Funktionen sollen genutzt werden?" value={form.desiredFeatures} onChange={(e) => update('desiredFeatures', e.target.value)} /></Grid>
             <Grid size={12}><TextField required fullWidth multiline minRows={2} label="Warum sollte ein kostenloser Mandant bereitgestellt werden?" value={form.freeTierJustification} onChange={(e) => update('freeTierJustification', e.target.value)} /></Grid>

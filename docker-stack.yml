@@ -41,7 +41,12 @@ services:
       DATABASE_URL: postgresql://verein@postgres:5432/vereinsbestellung
       JWT_SECRET_FILE: /run/secrets/jwt_secret
       MULTI_TENANT_ENABLED: "true"
-      PLATFORM_BASE_DOMAIN: ${PLATFORM_BASE_DOMAIN:-festmanager.org}
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-localhost}
+      PLATFORM_BASE_DOMAIN: ${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}
+      PLATFORM_WWW_DOMAIN: ${PLATFORM_WWW_DOMAIN:-}
+      PLATFORM_WILDCARD_DOMAIN: ${PLATFORM_WILDCARD_DOMAIN:-}
+      PLATFORM_API_DOMAIN: ${PLATFORM_API_DOMAIN:-}
+      PLATFORM_ALLOWED_ORIGINS: ${PLATFORM_ALLOWED_ORIGINS:-}
       TRUSTED_PROXY_HOPS: "2"
       LOG_FORMAT: json
     secrets:
@@ -76,7 +81,7 @@ services:
         condition: on-failure
       labels:
         - traefik.enable=true
-        - traefik.http.routers.festmanager.rule=Host(`${PLATFORM_BASE_DOMAIN:-festmanager.org}`) || HostRegexp(`^[a-z0-9-]+\\.${PLATFORM_BASE_DOMAIN:-festmanager.org}$$`)
+        - traefik.http.routers.festmanager.rule=Host(`${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}`) || HostRegexp(`^[a-z0-9-]+\\.${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}$$`)
         - traefik.http.routers.festmanager.entrypoints=websecure
         - traefik.http.routers.festmanager.tls.certresolver=letsencrypt
         - traefik.http.services.festmanager.loadbalancer.server.port=80

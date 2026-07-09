@@ -15,7 +15,7 @@ Internet → Traefik (TLS, Wildcard) → Frontend (nginx) → Backend → Postgr
 
 | Anforderung | Beschreibung |
 |-------------|--------------|
-| **DNS** | `festmanager.org` + `*.festmanager.org` → Server-IP |
+| **DNS** | `<PLATFORM_DOMAIN>` + `*.<PLATFORM_DOMAIN>` → Server-IP (Beispiel: `plattform.de`) |
 | **Ports** | 80, 443 (Produktion mit Traefik) |
 | **Docker** | Compose v2 oder Swarm |
 | **Secrets** | `JWT_SECRET`, `APP_ENCRYPTION_KEY`, DB-Passwort |
@@ -39,14 +39,18 @@ cp .env.example .env
 Wichtige Variablen:
 
 ```env
-ACME_EMAIL=admin@festmanager.org
-PLATFORM_BASE_DOMAIN=festmanager.org
+ACME_EMAIL=admin@example.test
+PLATFORM_DOMAIN=plattform.de
+PLATFORM_WWW_DOMAIN=www.plattform.de
+PLATFORM_WILDCARD_DOMAIN=*.plattform.de
 MULTI_TENANT_ENABLED=true
 JWT_SECRET=<64+ Zeichen zufällig>
 APP_ENCRYPTION_KEY=<32+ Zeichen>
 TRUSTED_PROXY_HOPS=2
 LOG_FORMAT=json
 ```
+
+> **Hinweis:** In älteren Dokumenten und ADRs erscheint `festmanager.org` als **Beispieldomain**. Die Plattform verwendet ausschließlich die konfigurierte `PLATFORM_DOMAIN`.
 
 Start:
 
@@ -113,14 +117,14 @@ Restore: dokumentiert, vollständige Automatisierung folgt in späterer Phase.
 `/etc/hosts` oder dnsmasq:
 
 ```
-127.0.0.1 festmanager.local
-127.0.0.1 asv-libelle.festmanager.local
+127.0.0.1 plattform.local
+127.0.0.1 asv-libelle.plattform.local
 ```
 
 ```env
-PLATFORM_BASE_DOMAIN=festmanager.local
+PLATFORM_DOMAIN=plattform.local
 MULTI_TENANT_ENABLED=true
-CORS_ORIGIN=http://festmanager.local:5173
+CORS_ORIGIN=http://plattform.local:5173
 ```
 
 Frontend mit Vite-Proxy oder Traefik lokal testen.

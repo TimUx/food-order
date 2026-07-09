@@ -75,6 +75,21 @@ ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1–
 | `GET /api/public/platform/legal-links` | Veröffentlichte Rechtslinks |
 | `GET /api/public/platform/legal/:slug` | Rechtsseiten-Inhalt |
 | `POST /api/public/tenant-applications` | Mandantenbewerbung einreichen |
+| `GET /api/platform/domains` | Domain-Konfiguration (Anzeige) |
+
+### Domain-Konfiguration
+
+Zentrale Verwaltung: `backend/src/platform/PlatformDomainService.ts`
+
+| ENV | Beschreibung |
+|-----|--------------|
+| `PLATFORM_DOMAIN` | Primäre Plattformdomain (Default: `localhost`) |
+| `PLATFORM_WWW_DOMAIN` | WWW-Domain |
+| `PLATFORM_WILDCARD_DOMAIN` | Wildcard-Pattern |
+| `PLATFORM_API_DOMAIN` | Optionale API-Domain |
+| `PLATFORM_ALLOWED_ORIGINS` | CORS-Origins |
+
+Linkgenerierung (QR, E-Mails, Routing, SEO) nutzt ausschließlich diese Konfiguration. `festmanager.org` in älteren ADRs ist ein **Beispiel-Platzhalter**.
 
 Plattform-APIs erfordern JWT mit `scope: "platform"`. Mandanten-APIs lehnen Plattform-Tokens ab.
 

@@ -5,6 +5,8 @@ import type { AuthPayload } from '../middleware/platformAuth';
 import { AppError } from '../middleware/errorHandler';
 import type { AuditLogEntry } from './types';
 import { platformSessionService } from '../services/platformSessionService';
+import { platformContext } from './bootstrap';
+import { platformDomainService } from './PlatformDomainService';
 
 export class ImpersonationService {
   constructor(private readonly audit: { log: (entry: AuditLogEntry) => Promise<void> }) {}
@@ -56,12 +58,13 @@ export class ImpersonationService {
       },
     });
 
-    const baseDomain = config.multiTenant.baseDomain;
-    const proto = baseDomain === 'localhost' ? 'http' : 'https';
+    const platform = platformContext.current();
+    const domains = platformDomainService.getPublicView(platform);
+    const proto = platformDomainService.resolveProto();
     const redirectTo =
-      baseDomain === 'localhost'
+      domains.baseDomain === 'localhost'
         ? '/admin'
-        : `${proto}://${tenant.subdomain}.${baseDomain}/admin`;
+        : platformDomainService.buildTenantUrl(domains, tenant.subdomain, '/admin', proto);
 
     return {
       token: accessToken,

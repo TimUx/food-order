@@ -1,4 +1,5 @@
 import { prisma } from '../../../src/config/database';
+import { config } from '../../../src/config';
 import { decryptValue, isEncryptedValue } from '../../../src/platform/settings/SettingsEncryption';
 import type { NotificationConfig } from '../config';
 
@@ -41,7 +42,7 @@ export async function loadPlatformSmtp(): Promise<PlatformSmtpConfig | null> {
     port: readNumber(map.get('platform.smtp.port'), 587),
     user: readString(map.get('platform.smtp.user')),
     pass: resolvePass(map.get('platform.smtp.pass')),
-    from: readString(map.get('platform.smtp.from')) || 'noreply@festmanager.org',
+    from: readString(map.get('platform.smtp.from')) || `noreply@${config.multiTenant.baseDomain}`,
     senderName: readString(map.get('platform.smtp.senderName')),
     replyTo: readString(map.get('platform.smtp.replyTo')),
     secure: readBool(map.get('platform.smtp.secure')),

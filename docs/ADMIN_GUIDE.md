@@ -16,6 +16,7 @@ Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf all
 | Dashboard | `/platform` | Kennzahlen, Systemstatus |
 | Mandanten | `/platform/mandanten` | Anlegen, Bearbeiten, Sperren, Impersonation |
 | Mandantenanträge | `/platform/bewerbungen` | Bewerbungen prüfen, genehmigen, Mandant anlegen |
+| Domains | `/platform/domains` | Anzeige der konfigurierten Plattformdomains (ENV) |
 | Rechtliches | `/platform/rechtliches` | Impressum, Datenschutz, Nutzungsbedingungen (Plattformebene) |
 | Einstellungen | `/platform/einstellungen` | Plattformweite Konfiguration inkl. Bewerbungen & Kontakt |
 | Monitoring | `/platform/monitoring` | CPU, RAM, Speicher |
@@ -35,6 +36,8 @@ Die Marketing-Homepage ist unter der Apex-Domain bzw. `www.<domain>` erreichbar.
 4. Bei Genehmigung kann optional automatisch ein Mandant mit der gewünschten Subdomain angelegt werden.
 
 **Rechtliche Seiten:** Unter `/platform/rechtliches` pflegen Sie Impressum, Datenschutz und Nutzungsbedingungen. Es werden keine Mustertexte vorgegeben – Links erscheinen auf der Homepage nur bei veröffentlichtem Inhalt.
+
+**Domains:** Unter `/platform/domains` sehen Sie die aktive Domain-Konfiguration (Basis, WWW, Wildcard, API). Technisch kritische Werte werden über Docker/ENV gesetzt (`PLATFORM_DOMAIN`, `PLATFORM_WWW_DOMAIN`, …). In Dokumentation ist `festmanager.org` nur ein Platzhalter.
 
 ---
 

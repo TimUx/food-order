@@ -32,9 +32,12 @@ export function BrandingHead({ titleSuffix, description, path }: BrandingHeadPro
     let title: string;
     let favicon: string | undefined;
     const desc = description ?? DEFAULT_DESCRIPTION;
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const origin =
+      routing.scope === 'platform'
+        ? (routing.wwwUrl || routing.platformUrl)
+        : (routing.tenantUrl || routing.platformUrl || (typeof window !== 'undefined' ? window.location.origin : ''));
     const pagePath = path ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
-    const canonical = `${origin}${pagePath}`;
+    const canonical = `${origin.replace(/\/$/, '')}${pagePath}`;
 
     if (routing.scope === 'platform') {
       title = platform.name;
@@ -98,6 +101,8 @@ export function BrandingHead({ titleSuffix, description, path }: BrandingHeadPro
     document.head.appendChild(script);
   }, [
     routing.scope,
+    routing.wwwUrl,
+    routing.platformUrl,
     tenant.name,
     tenant.logoUrl,
     tenant.locale,

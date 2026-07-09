@@ -191,4 +191,11 @@ router.put(
   platformController.updateLegalPage
 );
 
+// Domain-Konfiguration (Anzeige)
+router.get(
+  '/domains',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  platformController.getDomains
+);
+
 export default router;

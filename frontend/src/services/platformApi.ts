@@ -50,6 +50,19 @@ export interface PlatformLegalPageAdmin {
   contentHtml: string;
 }
 
+export interface PlatformDomainsInfo {
+  baseDomain: string;
+  wwwDomain: string;
+  apiDomain: string | null;
+  wildcardDomain: string;
+  tenantDomainPattern: string;
+  cookieDomain: string | null;
+  sessionDomain: string | null;
+  allowedDomains?: string[];
+  source: 'infrastructure';
+  note?: string;
+}
+
 export interface PlatformTenant {
   id: string;
   name: string;
@@ -235,6 +248,9 @@ export const platformApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }, token),
+
+  getDomains: (token: string) =>
+    platformRequest<PlatformDomainsInfo>('/domains', {}, token),
 };
 
 export const PLATFORM_TOKEN_KEY = 'fm_platform_token';
