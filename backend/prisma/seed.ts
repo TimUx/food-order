@@ -152,10 +152,18 @@ async function main() {
   }
 
   await prisma.clubSettings.upsert({
-    where: { id: 'default' },
-    update: { tenantId: DEFAULT_TENANT_ID },
+    where: { tenantId: DEFAULT_TENANT_ID },
+    update: {
+      clubName: 'SV Musterstadt e.V.',
+      description: 'Sportverein Musterstadt – seit 1920',
+      contactName: 'Vereinsverwaltung',
+      email: 'kontakt@sv-musterstadt.de',
+      phone: '+49 1234 567890',
+      address: 'Sportplatzstraße 1, 12345 Musterstadt',
+      website: 'https://www.sv-musterstadt.de',
+    },
     create: {
-      id: 'default',
+      id: `club-${DEFAULT_TENANT_ID}`,
       tenantId: DEFAULT_TENANT_ID,
       clubName: 'SV Musterstadt e.V.',
       description: 'Sportverein Musterstadt – seit 1920',
