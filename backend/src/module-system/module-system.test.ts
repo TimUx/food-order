@@ -1,4 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('../platform/tenant/tenantModuleHelpers', () => ({
+  isModuleEnabledForCurrentTenant: vi.fn().mockResolvedValue(true),
+}));
+
 import { HookSystem } from '../platform/HookSystem';
 import { EventBus } from '../platform/EventBus';
 import { MetadataRegistry } from '../platform/MetadataRegistry';
