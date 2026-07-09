@@ -241,6 +241,9 @@ export async function initializeTenantInfrastructure(): Promise<void> {
   const { migratePlatformAdminSchema } = await import('../core/tenant/migratePlatformAdminSchema');
   await migratePlatformAdminSchema();
 
+  const { migrateNotificationTenantSchema } = await import('../core/tenant/migrateNotificationTenantSchema');
+  await migrateNotificationTenantSchema();
+
   if (defaultTenant) {
     const { migrateModulesTenantSchema } = await import('../core/tenant/migrateModulesTenantSchema');
     await migrateModulesTenantSchema(defaultTenant.id);

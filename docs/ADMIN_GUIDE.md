@@ -613,10 +613,16 @@ Tragen Sie die Zugangsdaten Ihres SMTP-Servers ein. Das Passwort wird in der Dat
 | Port | Üblich: 587 (STARTTLS) oder 465 (SSL) |
 | Benutzername / Passwort | Falls der Server Authentifizierung verlangt |
 | Absender-Adresse | z. B. `noreply@ihr-verein.de` |
+| Absendername | Anzeigename in E-Mails |
+| Reply-To | Antwortadresse für Kunden |
+| SMTP-Quelle | Eigener Server oder Plattform-SMTP (Fallback) |
+| SSL / STARTTLS | Port 465 (SSL) oder 587 (STARTTLS) |
+
+Unter **Branding & Absender** konfigurieren Sie Logo, Primärfarbe, Footer und Signatur für E-Mails.
 
 Weitere Kanäle (ntfy, Discord, Slack, Teams) konfigurieren Sie auf derselben Seite.
 
-Die Links in Bestätigungs-E-Mails verwenden die in `CORS_ORIGIN` hinterlegte öffentliche Frontend-URL.
+Die Links in Bestätigungs-E-Mails verwenden die mandantenspezifische öffentliche URL (Subdomain oder Pfad-Präfix).
 
 ### Inhalt der E-Mails
 

@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { renderTemplate } from './render';
 import { buildOrderConfirmationMessage, buildOrderCancellationMessage, buildKitchenCompletedMessage } from '../services/MessageTemplateService';
+import { defaultNotificationConfig } from '../config';
+
+const testConfig = {
+  ...defaultNotificationConfig,
+  branding: { primaryColor: '#1976d2', locale: 'de-DE', timezone: 'Europe/Berlin' },
+};
 
 describe('notification templates', () => {
   it('replaces placeholders', () => {
@@ -17,7 +23,8 @@ describe('notification templates', () => {
         items: [{ name: 'Bratwurst', quantity: 2, lineTotal: 9 }],
         cancellationDeadlineLabel: 'Freitag, 14. August 2026, 11:00',
       },
-      { clubName: 'Feuerwehr Musterstadt', email: 'kontakt@example.de' }
+      { clubName: 'Feuerwehr Musterstadt', email: 'kontakt@example.de' },
+      testConfig
     );
     expect(msg.title).toContain('042');
     expect(msg.body).toContain('Feuerwehr Musterstadt');
@@ -38,6 +45,7 @@ describe('notification templates', () => {
         cancelledAtLabel: 'Montag, 8. Juli 2026, 10:00',
       },
       { clubName: 'Feuerwehr Musterstadt' },
+      testConfig,
       { initiatedByStaff: true },
     );
     expect(msg.html).toContain('Kaufvertrag aufgehoben');

@@ -491,6 +491,17 @@ Das Legal-Modul registriert den Extension Point `legalContentRegistry`. Der Core
 
 Wichtig: Ohne aktiviertes Modul bleibt die Plattform unverändert; der Registry-Zugriff liefert dann keine öffentlichen Seiten.
 
+### Notification-Modul (Phase 7)
+
+Mandantenfähige Kommunikation über `modules/notifications/`:
+
+- SMTP: Mandant zuerst, Plattform-Fallback (`resolveSmtpConfig`)
+- Branding: `notificationBranding.ts`, Tenant-URLs via `notificationTenantContext.ts`
+- Delivery-Log: `notification_deliveries` (tenant-scoped)
+- Keine direkten Sends aus anderen Modulen – nur Hooks
+
+→ **[NOTIFICATION_GUIDE.md](./NOTIFICATION_GUIDE.md)**
+
 ### Payment & PayableResource
 
 Das Payment-Modul arbeitet ausschließlich mit `PayableResource` – es kennt keine Bestellungen. Der Core registriert Bestellungen als zahlbare Ressource:

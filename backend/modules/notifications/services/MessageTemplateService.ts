@@ -1,10 +1,12 @@
-import { config } from '../../../src/config';
 import { getLegalContentRegistry } from '../../../src/core/extensionPoints';
 import { formatPrice } from '../../../src/utils/helpers';
 import type { ClubContactData, OrderEmailData } from '../../../src/platform/extension-points/NotificationService';
+import type { NotificationConfig } from '../config';
 import { legalNotices, notificationTemplates } from '../templates/de';
 import { renderTemplate } from '../templates/render';
 import type { NotificationLocale } from '../templates/types';
+import { resolveEmailBranding, wrapEmailHtml } from './notificationBranding';
+import { resolveTenantPublicBaseUrl } from './notificationTenantContext';
 
 const DEFAULT_LOCALE: NotificationLocale = 'de';
 
@@ -38,8 +40,28 @@ function contactLines(club: ClubContactData, asHtml: boolean): string {
   return lines.join('\n');
 }
 
-function baseOrderVars(order: OrderEmailData, club: ClubContactData, emailCustomText?: string) {
-  const statusUrl = `${config.corsOrigin.replace(/\/$/, '')}/status/${order.id}`;
+function getTemplates(locale: NotificationLocale = DEFAULT_LOCALE, config?: NotificationConfig) {
+  const base = notificationTemplates[locale];
+  if (!config?.templates) return base;
+
+  const merged = structuredClone(base) as typeof base;
+  for (const [eventKey, overrides] of Object.entries(config.templates)) {
+    const event = (merged as Record<string, Record<string, string> | string>)[eventKey];
+    if (event && overrides && typeof event === 'object') {
+      Object.assign(event, overrides);
+    }
+  }
+  return merged;
+}
+
+function baseOrderVars(
+  order: OrderEmailData,
+  club: ClubContactData,
+  config: NotificationConfig,
+  emailCustomText?: string
+) {
+  const branding = resolveEmailBranding(config);
+  const statusUrl = `${branding.baseUrl}/status/${order.id}`;
   const itemsHtml = order.items
     .map((i) => `${i.quantity}× ${escapeHtml(i.name)} – ${formatPrice(i.lineTotal)}`)
     .join('<br>');
@@ -79,6 +101,7 @@ function baseOrderVars(order: OrderEmailData, club: ClubContactData, emailCustom
     itemsText,
     totalPrice: formatPrice(order.totalPrice),
     statusUrl,
+    primaryColor: branding.primaryColor,
     cancellationNoteHtml,
     cancellationNoteText,
     contactHtml: contactLines(club, true),
@@ -88,10 +111,6 @@ function baseOrderVars(order: OrderEmailData, club: ClubContactData, emailCustom
     privacyFooterHtml: '',
     privacyFooterText: '',
   };
-}
-
-function getTemplates(locale: NotificationLocale = DEFAULT_LOCALE) {
-  return notificationTemplates[locale];
 }
 
 async function buildLegalFooter(clubName: string): Promise<{ html: string; text: string }> {
@@ -105,11 +124,12 @@ async function buildLegalFooter(clubName: string): Promise<{ html: string; text:
     return { html: '', text: '' };
   }
 
+  const baseUrl = resolveTenantPublicBaseUrl();
   const htmlLinks = links
-    .map((link) => `<a href="${config.corsOrigin.replace(/\/$/, '')}${link.path}">${escapeHtml(link.title)}</a>`)
+    .map((link) => `<a href="${baseUrl}${link.path}">${escapeHtml(link.title)}</a>`)
     .join(' | ');
   const textLinks = links
-    .map((link) => `${link.title}: ${config.corsOrigin.replace(/\/$/, '')}${link.path}`)
+    .map((link) => `${link.title}: ${baseUrl}${link.path}`)
     .join('\n');
 
   return {
@@ -121,62 +141,72 @@ async function buildLegalFooter(clubName: string): Promise<{ html: string; text:
 export function buildOrderConfirmationMessage(
   order: OrderEmailData,
   club: ClubContactData,
+  config: NotificationConfig,
   emailCustomText?: string
 ): Promise<{ title: string; body: string; html: string }> {
   return (async () => {
-  const t = getTemplates();
-  const vars = baseOrderVars(order, club, emailCustomText);
-  const legalFooter = await buildLegalFooter(club.clubName);
-  return {
-    title: renderTemplate(t.orderCreated.emailSubject, vars),
-    body: [renderTemplate(t.orderCreated.text, vars), legalFooter.text].filter(Boolean).join('\n\n'),
-    html: [renderTemplate(t.orderCreated.html, vars), legalFooter.html].filter(Boolean).join('\n'),
-  };
+    const t = getTemplates(DEFAULT_LOCALE, config);
+    const vars = baseOrderVars(order, club, config, emailCustomText);
+    const legalFooter = await buildLegalFooter(club.clubName);
+    const branding = resolveEmailBranding(config);
+    const innerHtml = renderTemplate(t.orderCreated.html, vars);
+    return {
+      title: renderTemplate(t.orderCreated.emailSubject, vars),
+      body: [renderTemplate(t.orderCreated.text, vars), legalFooter.text, branding.signatureText]
+        .filter(Boolean)
+        .join('\n\n'),
+      html: [wrapEmailHtml(innerHtml, branding), legalFooter.html].filter(Boolean).join('\n'),
+    };
   })();
 }
 
 export function buildOrderCancellationMessage(
   order: OrderEmailData,
   club: ClubContactData,
+  config: NotificationConfig,
   options: { initiatedByStaff?: boolean } = {},
   emailCustomText?: string
 ): Promise<{ title: string; body: string; html: string }> {
   return (async () => {
-  const t = getTemplates();
-  const vars = baseOrderVars(order, club, emailCustomText);
-  const introHtml = options.initiatedByStaff
-    ? renderTemplate(t.orderCancelled.introStaffHtml, { clubName: escapeHtml(club.clubName) })
-    : renderTemplate(t.orderCancelled.introCustomerHtml, { clubName: escapeHtml(club.clubName) });
-  const introText = options.initiatedByStaff
-    ? renderTemplate(t.orderCancelled.introStaffText, vars)
-    : renderTemplate(t.orderCancelled.introCustomerText, vars);
+    const t = getTemplates(DEFAULT_LOCALE, config);
+    const vars = baseOrderVars(order, club, config, emailCustomText);
+    const introHtml = options.initiatedByStaff
+      ? renderTemplate(t.orderCancelled.introStaffHtml, { clubName: escapeHtml(club.clubName) })
+      : renderTemplate(t.orderCancelled.introCustomerHtml, { clubName: escapeHtml(club.clubName) });
+    const introText = options.initiatedByStaff
+      ? renderTemplate(t.orderCancelled.introStaffText, vars)
+      : renderTemplate(t.orderCancelled.introCustomerText, vars);
 
-  const cancellationLegalHtml = renderTemplate(
-    options.initiatedByStaff
-      ? legalNotices.de.orderCancellationStaff
-      : legalNotices.de.orderCancellationCustomer,
-    { clubName: escapeHtml(club.clubName) },
-  );
+    const cancellationLegalHtml = renderTemplate(
+      options.initiatedByStaff
+        ? legalNotices.de.orderCancellationStaff
+        : legalNotices.de.orderCancellationCustomer,
+      { clubName: escapeHtml(club.clubName) }
+    );
 
-  const cancelledAtBlockHtml = order.cancelledAtLabel
-    ? `<p><strong>Storniert am:</strong> ${escapeHtml(order.cancelledAtLabel)}</p>`
-    : '';
+    const cancelledAtBlockHtml = order.cancelledAtLabel
+      ? `<p><strong>Storniert am:</strong> ${escapeHtml(order.cancelledAtLabel)}</p>`
+      : '';
 
-  const fullVars = {
-    ...vars,
-    introHtml,
-    introText,
-    cancelledAtLabel: order.cancelledAtLabel ?? '',
-    cancelledAtBlockHtml,
-    cancellationLegalHtml,
-  };
-  const legalFooter = await buildLegalFooter(club.clubName);
+    const fullVars = {
+      ...vars,
+      introHtml,
+      introText,
+      cancelledAtLabel: order.cancelledAtLabel ?? '',
+      cancelledAtBlockHtml,
+      cancellationLegalHtml,
+    };
+    const legalFooter = await buildLegalFooter(club.clubName);
+    const branding = resolveEmailBranding(config);
+    const innerHtml = renderTemplate(t.orderCancelled.html, fullVars);
 
-  return {
-    title: renderTemplate(t.orderCancelled.emailSubject, fullVars),
-    body: [renderTemplate(t.orderCancelled.text, fullVars), legalFooter.text].filter(Boolean).join('\n\n'),
-    html: [renderTemplate(t.orderCancelled.html, fullVars), legalFooter.html].filter(Boolean).join('\n'),
-  };
+    return {
+      title: renderTemplate(t.orderCancelled.emailSubject, fullVars),
+      body: [renderTemplate(t.orderCancelled.text, fullVars), legalFooter.text, branding.signatureText]
+        .filter(Boolean)
+        .join('\n\n'),
+      html: [wrapEmailHtml(innerHtml, branding), legalFooter.html].filter(Boolean).join('\n'),
+    };
   })();
 }
 
@@ -189,15 +219,15 @@ export function buildKitchenCompletedMessage(order: {
   const vars = {
     displayNumber: order.displayNumber,
     totalPrice: formatPrice(order.totalPrice),
-    eventDateLabel: order.eventDateLabel
-      ? `Veranstaltung: ${order.eventDateLabel}`
-      : '',
+    eventDateLabel: order.eventDateLabel ? `Veranstaltung: ${order.eventDateLabel}` : '',
   };
   const body = [
     renderTemplate(t.kitchenCompleted.pushTitle, vars),
     vars.eventDateLabel,
     `Gesamt: ${vars.totalPrice}`,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
   return {
     title: renderTemplate(t.kitchenCompleted.pushTitle, vars),
     body,
@@ -212,18 +242,11 @@ export function buildOrderPaidMessage(order: OrderEmailData, club: ClubContactDa
     totalPrice: formatPrice(order.totalPrice),
   };
   const title = renderTemplate(t.orderPaid.pushTitle, vars);
-  const body = [
-    title,
-    `Veranstalter: ${club.clubName}`,
-    `Betrag: ${formatPrice(order.totalPrice)}`,
-  ].join('\n');
+  const body = [title, `Veranstalter: ${club.clubName}`, `Betrag: ${formatPrice(order.totalPrice)}`].join('\n');
   return { title, body };
 }
 
-export function buildPaymentFailedMessage(payload: {
-  displayNumber: string;
-  reason?: string;
-}) {
+export function buildPaymentFailedMessage(payload: { displayNumber: string; reason?: string }) {
   const t = getTemplates();
   const vars = {
     displayNumber: payload.displayNumber,

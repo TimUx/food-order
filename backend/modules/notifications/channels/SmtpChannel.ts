@@ -9,19 +9,26 @@ function resolveSmtpPass(pass: unknown): string {
   return isEncryptedValue(pass) ? decryptValue(pass) : pass;
 }
 
-function createTransporter(config: NotificationConfig): Transporter | null {
-  const smtp = config.smtp;
+function createTransporter(smtp: NotificationConfig['smtp']): Transporter | null {
   const host = String(smtp.host ?? '').trim();
   if (!host) return null;
   const port = Number(smtp.port ?? 587);
   const user = String(smtp.user ?? '').trim();
   const pass = resolveSmtpPass(smtp.pass);
+  const secure = Boolean(smtp.secure) || port === 465;
   return nodemailer.createTransport({
     host,
     port,
-    secure: port === 465,
+    secure,
+    requireTLS: !secure && smtp.useTls !== false,
     auth: user ? { user, pass } : undefined,
   });
+}
+
+function formatFrom(smtp: NotificationConfig['smtp']): string {
+  const address = String(smtp.from ?? '').trim() || 'noreply@verein.local';
+  const name = String(smtp.senderName ?? '').trim();
+  return name ? `"${name.replace(/"/g, '\\"')}" <${address}>` : address;
 }
 
 export class SmtpChannel implements NotificationChannel {
@@ -36,15 +43,16 @@ export class SmtpChannel implements NotificationChannel {
     if (!message.recipientEmail) {
       return { ok: false, error: 'Keine Empfänger-E-Mail' };
     }
-    const transporter = createTransporter(config);
+    const transporter = createTransporter(config.smtp);
     if (!transporter) {
       return { ok: false, error: 'SMTP nicht konfiguriert' };
     }
-    const from = String(config.smtp.from ?? '').trim() || 'noreply@verein.local';
+    const replyTo = String(config.smtp.replyTo ?? '').trim();
     try {
       await transporter.sendMail({
-        from,
+        from: formatFrom(config.smtp),
         to: message.recipientEmail,
+        replyTo: replyTo || undefined,
         subject: message.title,
         text: message.body,
         html: message.html ?? message.body,
@@ -56,13 +64,14 @@ export class SmtpChannel implements NotificationChannel {
   }
 
   async testConnection(config: NotificationConfig): Promise<ChannelHealthResult> {
-    const transporter = createTransporter(config);
+    const transporter = createTransporter(config.smtp);
     if (!transporter) {
       return { ok: false, message: 'SMTP-Host fehlt' };
     }
     try {
       await transporter.verify();
-      return { ok: true, message: 'SMTP-Verbindung erfolgreich' };
+      const source = config.smtp.source === 'platform' ? ' (Plattform-SMTP)' : '';
+      return { ok: true, message: `SMTP-Verbindung erfolgreich${source}` };
     } catch (err) {
       return { ok: false, message: err instanceof Error ? err.message : 'Verbindung fehlgeschlagen' };
     }
