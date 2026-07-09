@@ -91,7 +91,7 @@ jobs:
       - name: Seed QA data
         run: |
           npm ci --prefix backend
-          (cd backend && npx prisma migrate deploy && npm run seed)
+          (cd backend && npm run seed)
           npm run qa:seed
 
       - name: Module scenarios
