@@ -2,9 +2,36 @@ import { PrismaClient, RoleName } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000010';
 
 async function main() {
   console.log('Seeding Datenbank...');
+
+  await prisma.tenant.upsert({
+    where: { slug: 'default' },
+    update: {
+      name: 'SV Musterstadt e.V.',
+      shortName: 'SVM',
+      status: 'ACTIVE',
+      activatedAt: new Date(),
+    },
+    create: {
+      id: DEFAULT_TENANT_ID,
+      name: 'SV Musterstadt e.V.',
+      shortName: 'SVM',
+      slug: 'default',
+      subdomain: 'default',
+      status: 'ACTIVE',
+      contactName: 'Vereinsverwaltung',
+      email: 'kontakt@sv-musterstadt.de',
+      phone: '+49 1234 567890',
+      description: 'Sportverein Musterstadt – seit 1920',
+      address: 'Sportplatzstraße 1, 12345 Musterstadt',
+      website: 'https://www.sv-musterstadt.de',
+      activatedAt: new Date(),
+      settings: { create: {} },
+    },
+  });
 
   const adminRole = await prisma.role.upsert({
     where: { name: RoleName.ADMIN },
@@ -20,9 +47,10 @@ async function main() {
 
   const adminPassword = await bcrypt.hash('admin123', 12);
   await prisma.user.upsert({
-    where: { email: 'admin@verein.local' },
+    where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'admin@verein.local' } },
     update: {},
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       email: 'admin@verein.local',
       passwordHash: adminPassword,
       firstName: 'Admin',
@@ -33,9 +61,10 @@ async function main() {
 
   const staffPassword = await bcrypt.hash('staff123', 12);
   await prisma.user.upsert({
-    where: { email: 'kueche@verein.local' },
+    where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'kueche@verein.local' } },
     update: {},
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       email: 'kueche@verein.local',
       passwordHash: staffPassword,
       firstName: 'Küche',
@@ -45,7 +74,6 @@ async function main() {
   });
 
   const today = new Date();
-  // Veranstaltung in 14 Tagen – demonstriert Vorausbestellungen
   const eventDate = new Date(Date.UTC(
     today.getUTCFullYear(),
     today.getUTCMonth(),
@@ -57,6 +85,7 @@ async function main() {
     update: { isActive: true },
     create: {
       id: '00000000-0000-0000-0000-000000000001',
+      tenantId: DEFAULT_TENANT_ID,
       name: 'Sommerfest 2026',
       description: 'Jährliches Vereins-Sommerfest mit leckerem Essen',
       date: eventDate,
@@ -110,6 +139,7 @@ async function main() {
       update: {},
       create: {
         id: `00000000-0000-0000-0001-${item.sortOrder.toString().padStart(12, '0')}`,
+        tenantId: DEFAULT_TENANT_ID,
         eventId: event.id,
         name: item.name,
         description: item.description,
@@ -123,9 +153,10 @@ async function main() {
 
   await prisma.clubSettings.upsert({
     where: { id: 'default' },
-    update: {},
+    update: { tenantId: DEFAULT_TENANT_ID },
     create: {
       id: 'default',
+      tenantId: DEFAULT_TENANT_ID,
       clubName: 'SV Musterstadt e.V.',
       description: 'Sportverein Musterstadt – seit 1920',
       contactName: 'Vereinsverwaltung',
@@ -133,32 +164,6 @@ async function main() {
       phone: '+49 1234 567890',
       address: 'Sportplatzstraße 1, 12345 Musterstadt',
       website: 'https://www.sv-musterstadt.de',
-    },
-  });
-
-  await (prisma as unknown as { tenant: { upsert: (args: unknown) => Promise<unknown> } }).tenant.upsert({
-    where: { slug: 'default' },
-    update: {
-      name: 'SV Musterstadt e.V.',
-      shortName: 'SVM',
-      status: 'ACTIVE',
-      activatedAt: new Date(),
-    },
-    create: {
-      id: '00000000-0000-0000-0000-000000000010',
-      name: 'SV Musterstadt e.V.',
-      shortName: 'SVM',
-      slug: 'default',
-      subdomain: 'default',
-      status: 'ACTIVE',
-      contactName: 'Vereinsverwaltung',
-      email: 'kontakt@sv-musterstadt.de',
-      phone: '+49 1234 567890',
-      description: 'Sportverein Musterstadt – seit 1920',
-      address: 'Sportplatzstraße 1, 12345 Musterstadt',
-      website: 'https://www.sv-musterstadt.de',
-      activatedAt: new Date(),
-      settings: { create: {} },
     },
   });
 

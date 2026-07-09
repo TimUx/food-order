@@ -1,7 +1,7 @@
 import { Router, RequestHandler } from 'express';
-import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
+import { tenantModuleRepository } from '../repositories/tenantModuleRepository';
 import type { AuditService } from './AuditService';
 import type { DependencyResolver } from './DependencyResolver';
 import type { FeatureContext } from './types';
@@ -46,23 +46,20 @@ export class ModuleManager {
   }
 
   private async setLifecycleStatus(moduleId: string, status: string | null): Promise<void> {
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { lifecycleStatus: status },
-    });
+    await tenantModuleRepository.update(moduleId, { lifecycleStatus: status });
   }
 
   private async setLastError(moduleId: string, message: string): Promise<void> {
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { lastError: message, lifecycleStatus: 'FAILED' },
+    await tenantModuleRepository.update(moduleId, {
+      lastError: message,
+      lifecycleStatus: 'FAILED',
     });
   }
 
   private async clearLifecycleError(moduleId: string): Promise<void> {
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { lastError: null, lifecycleStatus: null },
+    await tenantModuleRepository.update(moduleId, {
+      lastError: null,
+      lifecycleStatus: null,
     });
   }
 
@@ -90,17 +87,16 @@ export class ModuleManager {
   }
 
   private async ensureDbRow(moduleId: string, version: string): Promise<void> {
-    await prisma.installedModule.upsert({
-      where: { moduleId },
-      create: {
-        moduleId,
+    await tenantModuleRepository.upsert(
+      moduleId,
+      {
         moduleVersion: version,
         imageVersion: version,
         installed: false,
         enabled: false,
       },
-      update: { imageVersion: version },
-    });
+      { imageVersion: version }
+    );
   }
 
   async initialize(): Promise<void> {
@@ -162,21 +158,15 @@ export class ModuleManager {
         hookSystem.unsubscribe(moduleId);
         this.activatedIds.delete(moduleId);
         featureFlags.set(moduleId, { enabled: false, disabled: true, visible: false });
-        await prisma.installedModule.update({
-          where: { moduleId },
-          data: { enabled: false },
-        });
+        await tenantModuleRepository.update(moduleId, { enabled: false });
       }
 
       await mod.upgrade(featureContext, fromVersion, toVersion);
       await migrationService.runForModule(moduleId);
 
-      await prisma.installedModule.update({
-        where: { moduleId },
-        data: {
-          moduleVersion: toVersion,
-          imageVersion: toVersion,
-        },
+      await tenantModuleRepository.update(moduleId, {
+        moduleVersion: toVersion,
+        imageVersion: toVersion,
       });
 
       if (wasEnabled) {
@@ -189,12 +179,9 @@ export class ModuleManager {
           await this.mountModuleRoutes(moduleId);
         }
         const health = await this.deps.healthService.checkModule(moduleId, mod, featureContext);
-        await prisma.installedModule.update({
-          where: { moduleId },
-          data: {
-            lastHealthStatus: health.status,
-            lastHealthCheck: new Date(),
-          },
+        await tenantModuleRepository.update(moduleId, {
+          lastHealthStatus: health.status,
+          lastHealthCheck: new Date(),
         });
       }
 
@@ -306,10 +293,9 @@ export class ModuleManager {
         });
       }
 
-      await prisma.installedModule.upsert({
-        where: { moduleId },
-        create: {
-          moduleId,
+      await tenantModuleRepository.upsert(
+        moduleId,
+        {
           moduleVersion: manifest.version,
           imageVersion: manifest.version,
           installed: true,
@@ -317,14 +303,14 @@ export class ModuleManager {
           installedAt: new Date(),
           everInstalled: true,
         },
-        update: {
+        {
           installed: true,
           installedAt: new Date(),
           everInstalled: true,
           moduleVersion: manifest.version,
           imageVersion: manifest.version,
-        },
-      });
+        }
+      );
 
       await this.clearLifecycleError(moduleId);
       await this.deps.auditService.log({ action: 'module.installed', moduleId });
@@ -350,9 +336,9 @@ export class ModuleManager {
 
     await mod.uninstall(this.deps.featureContext);
 
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { installed: false, enabled: false },
+    await tenantModuleRepository.update(moduleId, {
+      installed: false,
+      enabled: false,
     });
 
     await this.deps.auditService.log({ action: 'module.uninstalled', moduleId });
@@ -402,14 +388,11 @@ export class ModuleManager {
       const health = await healthService.checkModule(moduleId, mod, featureContext);
 
       if (persist) {
-        await prisma.installedModule.update({
-          where: { moduleId },
-          data: {
-            enabled: true,
-            everActivated: true,
-            lastHealthStatus: health.status,
-            lastHealthCheck: new Date(),
-          },
+        await tenantModuleRepository.update(moduleId, {
+          enabled: true,
+          everActivated: true,
+          lastHealthStatus: health.status,
+          lastHealthCheck: new Date(),
         });
         await this.clearLifecycleError(moduleId);
         await auditService.log({ action: 'module.enabled', moduleId, details: { health: health.status } });
@@ -444,10 +427,7 @@ export class ModuleManager {
     this.activatedIds.delete(moduleId);
     featureFlags.set(moduleId, { ...featureFlags.get(moduleId), enabled: false, disabled: true, visible: false });
 
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { enabled: false },
-    });
+    await tenantModuleRepository.update(moduleId, { enabled: false });
 
     await auditService.log({ action: 'module.deactivated', moduleId });
     await hookSystem.emit(CORE_HOOKS.MODULE_DEACTIVATED, { moduleId });

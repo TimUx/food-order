@@ -1,40 +1,95 @@
 import { prisma } from '../config/database';
 import { Prisma, StatusCode } from '@prisma/client';
 import crypto from 'crypto';
+import { requireTenantId, tenantWhere, withTenantId } from '../platform/tenant/tenantScope';
 
 export const userRepository = {
   findByEmail: (email: string) =>
-    prisma.user.findUnique({ where: { email }, include: { role: true } }),
+    prisma.user.findUnique({
+      where: { tenantId_email: { tenantId: requireTenantId(), email } },
+      include: { role: true },
+    }),
 
   findById: (id: string) =>
-    prisma.user.findUnique({ where: { id }, include: { role: true } }),
+    prisma.user.findFirst({
+      where: tenantWhere({ id }),
+      include: { role: true },
+    }),
 
-  findAll: () =>
-    prisma.user.findMany({ include: { role: true }, orderBy: { createdAt: 'desc' } }),
+  findForTenant: () =>
+    prisma.user.findMany({
+      where: tenantWhere(),
+      include: { role: true },
+      orderBy: { createdAt: 'desc' },
+    }),
 
-  create: (data: Prisma.UserCreateInput) =>
-    prisma.user.create({ data, include: { role: true } }),
+  create: (data: Prisma.UserUncheckedCreateWithoutTenantInput) =>
+    prisma.user.create({
+      data: {
+        ...data,
+        tenantId: requireTenantId(),
+      },
+      include: { role: true },
+    }),
 
-  update: (id: string, data: Prisma.UserUpdateInput) =>
-    prisma.user.update({ where: { id }, data, include: { role: true } }),
+  update: async (id: string, data: Prisma.UserUpdateInput) => {
+    const result = await prisma.user.updateMany({
+      where: tenantWhere({ id }),
+      data,
+    });
+    if (result.count === 0) {
+      throw new Error('Benutzer nicht gefunden');
+    }
+    const user = await userRepository.findById(id);
+    if (!user) throw new Error('Benutzer nicht gefunden');
+    return user;
+  },
 };
 
 export const eventRepository = {
-  findAll: () => prisma.event.findMany({ orderBy: [{ date: 'desc' }, { name: 'asc' }] }),
+  findForTenant: () =>
+    prisma.event.findMany({
+      where: tenantWhere(),
+      orderBy: [{ date: 'desc' }, { name: 'asc' }],
+    }),
 
-  findById: (id: string) => prisma.event.findUnique({ where: { id } }),
+  findById: (id: string) =>
+    prisma.event.findFirst({ where: tenantWhere({ id }) }),
 
-  findActive: () => prisma.event.findFirst({ where: { isActive: true } }),
+  findActive: () =>
+    prisma.event.findFirst({ where: tenantWhere({ isActive: true }) }),
 
-  create: (data: Prisma.EventCreateInput) => prisma.event.create({ data }),
+  create: (data: Prisma.EventUncheckedCreateWithoutTenantInput) =>
+    prisma.event.create({
+      data: {
+        ...data,
+        tenantId: requireTenantId(),
+      },
+    }),
 
-  update: (id: string, data: Prisma.EventUpdateInput) =>
-    prisma.event.update({ where: { id }, data }),
+  update: async (id: string, data: Prisma.EventUpdateInput) => {
+    const result = await prisma.event.updateMany({
+      where: tenantWhere({ id }),
+      data,
+    });
+    if (result.count === 0) throw new Error('Veranstaltung nicht gefunden');
+    const event = await eventRepository.findById(id);
+    if (!event) throw new Error('Veranstaltung nicht gefunden');
+    return event;
+  },
 
   setActive: async (id: string) => {
+    const tenantId = requireTenantId();
     return prisma.$transaction(async (tx) => {
-      await tx.event.updateMany({ where: { isActive: true }, data: { isActive: false } });
-      return tx.event.update({ where: { id }, data: { isActive: true } });
+      await tx.event.updateMany({
+        where: { tenantId, isActive: true },
+        data: { isActive: false },
+      });
+      await tx.event.updateMany({
+        where: { tenantId, id },
+        data: { isActive: true },
+      });
+      return tx.event.findFirst({ where: { tenantId, id } });
     });
   },
 };
@@ -42,24 +97,43 @@ export const eventRepository = {
 export const foodItemRepository = {
   findByEvent: (eventId: string, activeOnly = false) =>
     prisma.foodItem.findMany({
-      where: { eventId, ...(activeOnly ? { active: true } : {}) },
+      where: tenantWhere({
+        eventId,
+        ...(activeOnly ? { active: true } : {}),
+      }),
       orderBy: { sortOrder: 'asc' },
     }),
 
-  findById: (id: string) => prisma.foodItem.findUnique({ where: { id } }),
+  findById: (id: string) =>
+    prisma.foodItem.findFirst({ where: tenantWhere({ id }) }),
 
-  create: (data: Prisma.FoodItemCreateInput) => prisma.foodItem.create({ data }),
+  create: (data: Prisma.FoodItemUncheckedCreateWithoutTenantInput) =>
+    prisma.foodItem.create({
+      data: {
+        ...data,
+        tenantId: requireTenantId(),
+      },
+    }),
 
-  update: (id: string, data: Prisma.FoodItemUpdateInput) =>
-    prisma.foodItem.update({ where: { id }, data }),
+  update: async (id: string, data: Prisma.FoodItemUpdateInput) => {
+    const result = await prisma.foodItem.updateMany({
+      where: tenantWhere({ id }),
+      data,
+    });
+    if (result.count === 0) throw new Error('Speise nicht gefunden');
+    const item = await foodItemRepository.findById(id);
+    if (!item) throw new Error('Speise nicht gefunden');
+    return item;
+  },
 
-  delete: (id: string) => prisma.foodItem.delete({ where: { id } }),
+  delete: (id: string) =>
+    prisma.foodItem.deleteMany({ where: tenantWhere({ id }) }),
 };
 
 export const orderRepository = {
   findById: (id: string) =>
-    prisma.order.findUnique({
-      where: { id },
+    prisma.order.findFirst({
+      where: tenantWhere({ id }),
       include: {
         customer: true,
         event: true,
@@ -69,8 +143,8 @@ export const orderRepository = {
     }),
 
   findByLookupToken: (lookupToken: string) =>
-    prisma.order.findUnique({
-      where: { lookupToken },
+    prisma.order.findFirst({
+      where: tenantWhere({ lookupToken }),
       include: {
         customer: true,
         event: true,
@@ -81,10 +155,10 @@ export const orderRepository = {
 
   findByEvent: (eventId: string, filters?: { status?: StatusCode[] }) =>
     prisma.order.findMany({
-      where: {
+      where: tenantWhere({
         eventId,
         ...(filters?.status ? { status: { in: filters.status } } : {}),
-      },
+      }),
       include: {
         customer: true,
         items: { include: { foodItem: true } },
@@ -93,10 +167,8 @@ export const orderRepository = {
     }),
 
   findByOrderNumber: (eventId: string, orderDate: Date, orderNumber: number) =>
-    prisma.order.findUnique({
-      where: {
-        eventId_orderDate_orderNumber: { eventId, orderDate, orderNumber },
-      },
+    prisma.order.findFirst({
+      where: tenantWhere({ eventId, orderDate, orderNumber }),
       include: {
         customer: true,
         event: true,
@@ -106,23 +178,27 @@ export const orderRepository = {
 
   findReadyOrders: (eventId: string) =>
     prisma.order.findMany({
-      where: { eventId, status: 'READY' },
+      where: tenantWhere({ eventId, status: 'READY' }),
       orderBy: { readyAt: 'asc' },
     }),
 
   getNextOrderNumber: async (eventId: string, orderDate: Date): Promise<number> => {
+    const tenantId = requireTenantId();
     const counter = await prisma.dailyOrderCounter.upsert({
       where: { eventId_date: { eventId, date: orderDate } },
-      create: { eventId, date: orderDate, counter: 1 },
+      create: { tenantId, eventId, date: orderDate, counter: 1 },
       update: { counter: { increment: 1 } },
     });
     return counter.counter;
   },
 
-  create: (data: Omit<Prisma.OrderCreateInput, 'lookupToken'> & { lookupToken?: string }) =>
+  create: (
+    data: Prisma.OrderUncheckedCreateWithoutTenantInput & { lookupToken?: string }
+  ) =>
     prisma.order.create({
       data: {
         ...data,
+        tenantId: requireTenantId(),
         lookupToken: data.lookupToken ?? crypto.randomBytes(32).toString('hex'),
       },
       include: {
@@ -137,7 +213,11 @@ export const orderRepository = {
     changedBy?: string,
     extra?: Partial<{ readyAt: Date; pickedUpAt: Date; cancelledAt: Date }>
   ) => {
+    const tenantId = requireTenantId();
     return prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findFirst({ where: { tenantId, id } });
+      if (!existing) throw new Error('Bestellung nicht gefunden');
+
       const order = await tx.order.update({
         where: { id },
         data: { status, ...extra },
@@ -155,7 +235,7 @@ export const orderRepository = {
 
   getStats: async (eventId: string) => {
     const orders = await prisma.order.findMany({
-      where: { eventId, status: { not: 'CANCELLED' } },
+      where: tenantWhere({ eventId, status: { not: 'CANCELLED' } }),
       include: { items: { include: { foodItem: true } } },
     });
 
@@ -203,5 +283,11 @@ export const orderRepository = {
 };
 
 export const customerRepository = {
-  create: (data: Prisma.CustomerCreateInput) => prisma.customer.create({ data }),
+  create: (data: Prisma.CustomerUncheckedCreateWithoutTenantInput) =>
+    prisma.customer.create({
+      data: {
+        ...data,
+        tenantId: requireTenantId(),
+      },
+    }),
 };

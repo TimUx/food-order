@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { AppError } from './errorHandler';
 import { prisma } from '../config/database';
+import { AppError } from './errorHandler';
+import { tenantWhere } from '../platform/tenant/tenantScope';
 import { parsePermissionKeys } from '../platform/permissions';
 
 export interface AuthPayload {
@@ -63,8 +64,8 @@ export async function loadUser(req: AuthRequest, _res: Response, next: NextFunct
     next();
     return;
   }
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.userId },
+  const user = await prisma.user.findFirst({
+    where: tenantWhere({ id: req.user.userId }),
     include: { role: true },
   });
   if (!user || !user.active) {

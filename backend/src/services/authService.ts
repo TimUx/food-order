@@ -91,7 +91,7 @@ export const authService = {
       passwordHash,
       firstName: data.firstName,
       lastName: data.lastName,
-      role: { connect: { id: role.id } },
+      roleId: role.id,
     });
   },
 };

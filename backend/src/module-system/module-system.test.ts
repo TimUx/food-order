@@ -6,9 +6,12 @@ import { FeatureFlags } from '../platform/FeatureFlags';
 import { CORE_HOOKS } from '../platform/types';
 import { deriveModuleStatus } from '../platform/ModuleRegistry';
 import { compareVersions } from '../platform/types';
-import type { InstalledModule } from '@prisma/client';
+import type { TenantModule } from '@prisma/client';
+
+const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000010';
 
 const baseRow = {
+  tenantId: DEFAULT_TENANT_ID,
   moduleId: 'payment',
   moduleVersion: '1.0.0',
   installed: true,
@@ -24,7 +27,7 @@ const baseRow = {
   lastError: null,
   schemaVersion: '0',
   imageVersion: '1.0.0',
-} as InstalledModule;
+} as TenantModule;
 
 describe('HookSystem', () => {
   let hooks: HookSystem;

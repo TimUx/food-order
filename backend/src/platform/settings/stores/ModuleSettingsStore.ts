@@ -1,6 +1,8 @@
 import { prisma } from '../../../config/database';
 import { moduleIdFromNamespace } from '../SettingsNamespaces';
 import type { SettingsStore } from '../types';
+import { tenantModuleRepository } from '../../../repositories/tenantModuleRepository';
+import { requireTenantId } from '../../tenant/tenantScope';
 
 export class ModuleSettingsStore implements SettingsStore {
   supports(namespace: string): boolean {
@@ -11,7 +13,7 @@ export class ModuleSettingsStore implements SettingsStore {
     const moduleId = moduleIdFromNamespace(namespace);
     if (!moduleId) throw new Error(`Invalid module namespace: ${namespace}`);
 
-    const row = await prisma.installedModule.findUnique({ where: { moduleId } });
+    const row = await tenantModuleRepository.findUnique(moduleId);
     const json = (row?.configJson ?? {}) as Record<string, unknown>;
     return structuredClone(json);
   }
@@ -20,22 +22,18 @@ export class ModuleSettingsStore implements SettingsStore {
     const moduleId = moduleIdFromNamespace(namespace);
     if (!moduleId) throw new Error(`Invalid module namespace: ${namespace}`);
 
-    const existing = await prisma.installedModule.findUnique({ where: { moduleId } });
+    const existing = await tenantModuleRepository.findUnique(moduleId);
     if (!existing) {
-      await prisma.installedModule.create({
-        data: {
-          moduleId,
-          configJson: values as object,
-          installed: false,
-          enabled: false,
-        },
-      });
+      await tenantModuleRepository.upsert(moduleId, {
+        configJson: values as object,
+        installed: false,
+        enabled: false,
+      }, {});
       return;
     }
 
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { configJson: values as object },
+    await tenantModuleRepository.update(moduleId, {
+      configJson: values as object,
     });
   }
 }

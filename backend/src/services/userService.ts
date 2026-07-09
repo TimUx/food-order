@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { RoleName } from '@prisma/client';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
+import { requireTenantId, tenantWhere } from '../platform/tenant/tenantScope';
 import { prisma } from '../config/database';
 
 function mapUser(user: {
@@ -26,7 +27,7 @@ function mapUser(user: {
 
 export const userService = {
   async list() {
-    const users = await userRepository.findAll();
+    const users = await userRepository.findForTenant();
     return users.map(mapUser);
   },
 
@@ -51,7 +52,7 @@ export const userService = {
       passwordHash,
       firstName: data.firstName,
       lastName: data.lastName,
-      role: { connect: { id: role.id } },
+      roleId: role.id,
     });
     return mapUser(user);
   },
@@ -82,7 +83,7 @@ export const userService = {
 
     if (data.role && data.role !== 'ADMIN' && user.role.name === 'ADMIN') {
       const adminCount = await prisma.user.count({
-        where: { active: true, role: { name: 'ADMIN' } },
+        where: tenantWhere({ active: true, role: { name: 'ADMIN' } }),
       });
       if (adminCount <= 1) {
         throw new AppError(400, 'Der letzte Administrator kann nicht herabgestuft werden');

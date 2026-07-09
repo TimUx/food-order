@@ -205,6 +205,12 @@ export async function initializeTenantInfrastructure(): Promise<void> {
   const { ensureDefaultTenant } = await import('../core/tenant/ensureDefaultTenant');
   await ensureDefaultTenant();
 
+  const defaultTenant = await tenantServiceInstance.findBySlug(config.multiTenant.defaultTenantSlug);
+  if (defaultTenant) {
+    const { migrateMultiTenantSchema } = await import('../core/tenant/migrateMultiTenantSchema');
+    await migrateMultiTenantSchema(defaultTenant.id);
+  }
+
   tenantInfrastructureInitialized = true;
 }
 

@@ -50,7 +50,24 @@ Ab Version 2.0 arbeitet die Plattform mandantenfähig. Kernbausteine:
 - Alle Datenbankzugriffe mandantenbezogener Tabellen filtern über `tenant_id` aus `TenantContext`
 - UI-Begriff bleibt **Veranstalter**; intern **Mandant**
 
-ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Implementierung: [Phase 1 Report](architecture/PHASE_1_COMPLETION_REPORT.md) · Branch: `feature/v2-multi-tenant-platform`
+ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1: [Report](architecture/PHASE_1_COMPLETION_REPORT.md) · Phase 2: [Report](architecture/PHASE_2_COMPLETION_REPORT.md) · Branch: `feature/v2-multi-tenant-platform`
+
+### Repository-Filter (Phase 2)
+
+Mandantenbezogene Repositories nutzen `backend/src/platform/tenant/tenantScope.ts`:
+
+```typescript
+import { tenantWhere, withTenantId, requireTenantId } from '../platform/tenant/tenantScope';
+
+// Lesen – tenantId wird automatisch ergänzt
+prisma.user.findMany({ where: tenantWhere({ active: true }) });
+
+// Schreiben
+prisma.event.create({ data: withTenantId({ name: 'Sommerfest', date: new Date() }) });
+```
+
+Beim App-Start: `ensureDefaultTenant()` → `migrateMultiTenantSchema()` (idempotent, Marker in `platform_settings`).
+
 
 ### Implementierte APIs (Phase 1)
 

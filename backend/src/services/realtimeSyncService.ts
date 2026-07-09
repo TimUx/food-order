@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { StatusCode } from '@prisma/client';
 import { prisma } from '../config/database';
+import { tenantWhere } from '../platform/tenant/tenantScope';
 import { orderService } from './orderService';
 import { eventService } from './eventService';
 import { clubService } from './clubService';
@@ -30,10 +31,10 @@ export const realtimeSyncService = {
     statusFilter: StatusCode[] | undefined,
     clientEtag?: string
   ): Promise<SyncResult<Awaited<ReturnType<typeof orderService.getByEvent>>>> {
-    const where = {
+    const where = tenantWhere({
       eventId,
       ...(statusFilter?.length ? { status: { in: statusFilter } } : {}),
-    };
+    });
     const agg = await prisma.order.aggregate({
       where,
       _max: { updatedAt: true },
@@ -56,7 +57,7 @@ export const realtimeSyncService = {
     clientEtag?: string
   ): Promise<SyncResult<Awaited<ReturnType<typeof orderService.getStats>>>> {
     const agg = await prisma.order.aggregate({
-      where: { eventId, status: { not: 'CANCELLED' } },
+      where: tenantWhere({ eventId, status: { not: StatusCode.CANCELLED } }),
       _max: { updatedAt: true },
       _count: true,
     });
@@ -69,7 +70,7 @@ export const realtimeSyncService = {
   async syncPickupBoard(clientEtag?: string): Promise<SyncResult<Awaited<ReturnType<typeof orderService.getReadyOrders>>>> {
     const event = await eventService.getActive();
     const agg = await prisma.order.aggregate({
-      where: { eventId: event.id, status: 'READY' },
+      where: tenantWhere({ eventId: event.id, status: StatusCode.READY }),
       _max: { updatedAt: true },
       _count: true,
     });
@@ -84,8 +85,8 @@ export const realtimeSyncService = {
     lastName: string | undefined,
     clientEtag?: string
   ): Promise<SyncResult<Awaited<ReturnType<typeof orderService.getByLookupToken>>>> {
-    const order = await prisma.order.findUnique({
-      where: { lookupToken },
+    const order = await prisma.order.findFirst({
+      where: tenantWhere({ lookupToken }),
       select: { id: true, updatedAt: true, status: true },
     });
     if (!order) {
@@ -120,7 +121,10 @@ export const realtimeSyncService = {
   },
 
   async syncClub(clientEtag?: string): Promise<SyncResult<Awaited<ReturnType<typeof clubService.getPublic>>>> {
-    const club = await prisma.clubSettings.findFirst({ select: { updatedAt: true, clubName: true } });
+    const club = await prisma.clubSettings.findFirst({
+      where: tenantWhere(),
+      select: { updatedAt: true, clubName: true },
+    });
     const etag = buildEtag(['club', club?.updatedAt?.toISOString(), club?.clubName]);
     if (clientEtag && clientEtag === etag) return unchanged(etag);
     const data = await clubService.getPublic();

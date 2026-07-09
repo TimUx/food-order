@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
 import type { AuditLogEntry } from './types';
+import { optionalTenantId } from './tenant/tenantScope';
 
 export class AuditService {
   async log(entry: AuditLogEntry): Promise<void> {
@@ -9,6 +10,7 @@ export class AuditService {
         data: {
           action: entry.action,
           actorId: entry.actorId ?? null,
+          tenantId: optionalTenantId() ?? (entry.details?.tenantId as string | undefined) ?? null,
           moduleId: entry.moduleId ?? null,
           details: (entry.details ?? {}) as object,
         },

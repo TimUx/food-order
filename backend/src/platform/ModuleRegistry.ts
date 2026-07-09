@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { config } from '../config';
-import type { InstalledModule } from '@prisma/client';
+import type { TenantModule } from '@prisma/client';
+import { tenantModuleRepository } from '../repositories/tenantModuleRepository';
 import type { Module, ModuleInfo, ModuleMenuItem, ModulePermissionDefinition, ModuleWidget, FeatureContext } from './types';
 import { compareVersions } from './types';
 import type { FeatureFlags } from './FeatureFlags';
@@ -15,7 +16,7 @@ export interface ModuleRegistryPlatformDeps {
   dependencyResolver: DependencyResolver;
 }
 
-export function deriveModuleStatus(row: InstalledModule | null): ModuleStatus {
+export function deriveModuleStatus(row: TenantModule | null): ModuleStatus {
   if (!row) return 'AVAILABLE';
   if (row.lifecycleStatus === 'UPGRADING') return 'UPGRADING';
   if (row.lifecycleStatus === 'FAILED') return 'FAILED';
@@ -62,8 +63,8 @@ export class ModuleRegistry {
     return Array.from(this.manifests.values());
   }
 
-  async getDbRow(moduleId: string): Promise<InstalledModule | null> {
-    return prisma.installedModule.findUnique({ where: { moduleId } });
+  async getDbRow(moduleId: string): Promise<TenantModule | null> {
+    return tenantModuleRepository.findUnique(moduleId);
   }
 
   async isActivated(moduleId: string): Promise<boolean> {
@@ -98,7 +99,7 @@ export class ModuleRegistry {
     context: FeatureContext
   ): Promise<ModuleInfo[]> {
     const deps = this.platformDeps!;
-    const rows = await prisma.installedModule.findMany();
+    const rows = await tenantModuleRepository.findManyForTenant();
     const rowMap = new Map(rows.map((r) => [r.moduleId, r]));
 
     const showPreview = process.env.SHOW_PREVIEW_MODULES === '1';

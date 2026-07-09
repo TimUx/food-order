@@ -1,7 +1,7 @@
-import { prisma } from '../config/database';
 import type { FeatureContext, Module, ModuleHealthCheckResult } from './types';
 import type { FeatureFlags } from './FeatureFlags';
 import type { TenantContext } from './tenant/TenantContext';
+import { tenantModuleRepository } from '../repositories/tenantModuleRepository';
 
 export interface PlatformHealthStatus {
   tenantContextReady: boolean;
@@ -27,12 +27,9 @@ export class HealthService {
   }
 
   async persist(moduleId: string, result: ModuleHealthCheckResult): Promise<void> {
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: {
-        lastHealthStatus: result.status,
-        lastHealthCheck: new Date(),
-      },
+    await tenantModuleRepository.update(moduleId, {
+      lastHealthStatus: result.status,
+      lastHealthCheck: new Date(),
     });
   }
 

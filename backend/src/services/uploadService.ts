@@ -56,7 +56,9 @@ export const uploadService = {
       throw new AppError(400, 'Kein Bild hochgeladen');
     }
 
-    const uploadDir = path.resolve(config.uploadsDir);
+    const { requireTenantId } = await import('../platform/tenant/tenantScope');
+    const tenantId = requireTenantId();
+    const uploadDir = path.resolve(config.uploadsDir, tenantId);
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -70,7 +72,7 @@ export const uploadService = {
 
     return {
       filename,
-      imageUrl: `/uploads/${filename}`,
+      imageUrl: `/uploads/${tenantId}/${filename}`,
     };
   },
 };
