@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ClubSettings, DEFAULT_CLUB } from '@/types/club';
 import { api } from '@/services/api';
-import { onClubUpdated } from '@/services/socket';
+import { subscribeClubUpdates } from '@/services/realtime/channels';
 
 interface ClubContextType {
   club: ClubSettings;
@@ -26,8 +26,8 @@ export function ClubProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refresh().finally(() => setLoading(false));
-    const unsub = onClubUpdated((data) => {
-      setClub({ ...DEFAULT_CLUB, ...(data as ClubSettings) });
+    const unsub = subscribeClubUpdates((data) => {
+      setClub({ ...DEFAULT_CLUB, ...data });
     });
     return unsub;
   }, []);

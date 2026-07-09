@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,19 +18,14 @@ import { PaymentQrCode } from '@/components/PaymentQrCode';
 import { api, formatPrice } from '@/services/api';
 import type { Order } from '@/types';
 import type { OrderPaymentInfo } from '@/types/payment';
-import {
-  isPaymentFailure,
-  isPaymentSuccess,
-  paymentStatusLabel,
-} from '@/utils/paymentSelection';
+import { subscribePaymentStatus } from '@/services/realtime/channels';
+import { isPaymentFailure, isPaymentSuccess, paymentStatusLabel } from '@/utils/paymentSelection';
 import { touchPrimaryButtonSx, touchButtonSx } from '@/theme/touch';
 
 const pulse = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 `;
-
-const POLL_INTERVAL_MS = 3000;
 
 interface PaymentDialogProps {
   open: boolean;
@@ -57,35 +52,6 @@ export function PaymentDialog({
   const [error, setError] = useState('');
   const [retrying, setRetrying] = useState(false);
   const [networkError, setNetworkError] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  }, []);
-
-  const pollStatus = useCallback(async () => {
-    try {
-      const result = await api.getPaymentCheckoutStatus(sessionId);
-      setStatus(result.paymentStatus);
-      setNetworkError(false);
-      if (result.checkoutUrl) setCheckoutUrl(result.checkoutUrl);
-
-      if (isPaymentSuccess(result.paymentStatus)) {
-        stopPolling();
-        const updatedOrder = order.lookupToken && order.customer?.lastName
-          ? await api.getOrderByToken(order.lookupToken, order.customer.lastName)
-          : order;
-        onSuccess(updatedOrder);
-      } else if (isPaymentFailure(result.paymentStatus)) {
-        stopPolling();
-      }
-    } catch {
-      setNetworkError(true);
-    }
-  }, [sessionId, order, onSuccess, stopPolling]);
 
   useEffect(() => {
     if (!open) return;
@@ -97,16 +63,27 @@ export function PaymentDialog({
   }, [open, payment]);
 
   useEffect(() => {
-    if (!open || isPaymentSuccess(status) || isPaymentFailure(status)) return;
-    void pollStatus();
-    pollRef.current = setInterval(() => { void pollStatus(); }, POLL_INTERVAL_MS);
-    return stopPolling;
-  }, [open, status, pollStatus, stopPolling]);
+    if (!open || !sessionId || isPaymentSuccess(status) || isPaymentFailure(status)) return;
+
+    return subscribePaymentStatus(sessionId, (result) => {
+      if (result.paymentStatus) setStatus(result.paymentStatus);
+      setNetworkError(false);
+      if (result.checkoutUrl) setCheckoutUrl(result.checkoutUrl);
+
+      if (result.paymentStatus && isPaymentSuccess(result.paymentStatus)) {
+        void (async () => {
+          const updatedOrder = order.lookupToken && order.customer?.lastName
+            ? await api.getOrderByToken(order.lookupToken, order.customer.lastName)
+            : order;
+          onSuccess(updatedOrder);
+        })();
+      }
+    }, 'high');
+  }, [open, sessionId, status, order, onSuccess]);
 
   const handleRetry = async () => {
     setRetrying(true);
     setError('');
-    stopPolling();
     try {
       const result = await api.retryPaymentCheckout(sessionId);
       setSessionId(result.sessionId);

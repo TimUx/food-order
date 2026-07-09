@@ -176,6 +176,38 @@ export const api = {
   advanceOrder: (token: string, id: string) =>
     request<Order>(`/staff/orders/${id}/advance`, { method: 'POST' }, token),
 
+  // Realtime sync (delta/ETag)
+  syncEventOrders: (token: string, eventId: string, status?: string, etag?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (etag) params.set('etag', etag);
+    const q = params.toString();
+    return request<SyncResult<Order[]>>(`/realtime/events/${eventId}/orders${q ? `?${q}` : ''}`, {}, token);
+  },
+  syncEventStats: (token: string, eventId: string, etag?: string) => {
+    const q = etag ? `?etag=${encodeURIComponent(etag)}` : '';
+    return request<SyncResult<DashboardStats>>(`/realtime/events/${eventId}/stats${q}`, {}, token);
+  },
+  syncPickupBoard: (etag?: string) => {
+    const q = etag ? `?etag=${encodeURIComponent(etag)}` : '';
+    return request<SyncResult<PickupBoardOrder[]>>(`/realtime/pickup-board${q}`, {});
+  },
+  syncOrder: (lookupToken: string, lastName: string | undefined, etag?: string) => {
+    const params = new URLSearchParams();
+    if (lastName) params.set('lastName', lastName);
+    if (etag) params.set('etag', etag);
+    const q = params.toString();
+    return request<SyncResult<Order>>(`/realtime/orders/${lookupToken}${q ? `?${q}` : ''}`, {});
+  },
+  syncPaymentStatus: (sessionId: string, etag?: string) => {
+    const q = etag ? `?etag=${encodeURIComponent(etag)}` : '';
+    return request<SyncResult<OrderPaymentInfo>>(`/realtime/payment/${sessionId}${q}`, {});
+  },
+  syncClub: (etag?: string) => {
+    const q = etag ? `?etag=${encodeURIComponent(etag)}` : '';
+    return request<SyncResult<import('@/types/club').ClubSettings>>(`/realtime/club${q}`, {});
+  },
+
   getClubSettings: (token: string) =>
     request<import('@/types/club').ClubSettings>('/admin/club', {}, token),
   updateClubSettings: (token: string, data: Partial<import('@/types/club').ClubSettings>) =>
@@ -406,6 +438,14 @@ export const api = {
 };
 
 import type { Event, CreateEventInput, FoodItem, Order, User, UserRole, DashboardStats, PickupBoardOrder, OrderStatus } from '@/types';
+import type { OrderPaymentInfo } from '@/types/payment';
+
+export type SyncResult<T> = {
+  changed: boolean;
+  etag: string;
+  serverTime: string;
+  data?: T;
+};
 
 export { ApiError };
 

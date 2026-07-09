@@ -10,7 +10,7 @@ import { StaffLayout } from '@/components/StaffLayout';
 import { OrderCard } from '@/components/OrderCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
-import { joinEvent, onOrderCreated, onOrderUpdated } from '@/services/socket';
+import { subscribeEventOrders } from '@/services/realtime/channels';
 import { Order, OrderStatus } from '@/types';
 
 export function OrdersPage() {
@@ -20,36 +20,23 @@ export function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadOrders = () => {
-    if (!token || !eventId) return;
-    api.getOrders(token, eventId)
-      .then(setOrders)
-      .catch((err) => setError(err.message));
-  };
-
   useEffect(() => {
     if (!token) return;
     api.getActiveEvent(token)
-      .then((event) => {
-        setEventId(event.id);
-        joinEvent(event.id);
-      })
+      .then((event) => setEventId(event.id))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(() => {
-    loadOrders();
-    const unsub1 = onOrderCreated(() => loadOrders());
-    const unsub2 = onOrderUpdated(() => loadOrders());
-    return () => { unsub1(); unsub2(); };
+    if (!token || !eventId) return;
+    return subscribeEventOrders(token, eventId, '', setOrders, 'normal');
   }, [eventId, token]);
 
   const handleStatusChange = async (orderId: string, status: OrderStatus) => {
     if (!token) return;
     try {
       await api.updateOrderStatus(token, orderId, status);
-      loadOrders();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler');
     }
@@ -66,24 +53,21 @@ export function OrdersPage() {
   }
 
   return (
-    <StaffLayout title="Bestellungen" fullWidth>
+    <StaffLayout title="Bestellungen">
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {orders.length} Bestellungen · Sortiert nach Eingang
-      </Typography>
       <Stack spacing={2}>
         {orders.map((order) => (
           <OrderCard
             key={order.id}
             order={order}
             showActions
-            onStatusChange={(status) => handleStatusChange(order.id, status)}
+            onStatusChange={(status) => void handleStatusChange(order.id, status)}
           />
         ))}
       </Stack>
       {orders.length === 0 && (
-        <Typography color="text.secondary" textAlign="center" sx={{ py: 8 }}>
-          Noch keine Bestellungen
+        <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+          Keine Bestellungen
         </Typography>
       )}
     </StaffLayout>

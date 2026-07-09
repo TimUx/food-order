@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, keyframes } from '@mui/material';
 import { api } from '@/services/api';
-import { getSocket, onOrderUpdated, joinPickupBoard } from '@/services/socket';
+import { realtimeService } from '@/services/realtime';
 import { PickupBoardOrder } from '@/types';
 
 const fadeIn = keyframes`
@@ -16,29 +16,47 @@ const slideOut = keyframes`
 
 export function PickupBoardPage() {
   const [orders, setOrders] = useState<PickupBoardOrder[]>([]);
+  const [eventId, setEventId] = useState('');
   const [error, setError] = useState('');
   const [removing, setRemoving] = useState<Set<string>>(new Set());
   const prevCount = useRef(0);
 
-  const loadOrders = () => {
-    api.getPickupBoard()
-      .then(setOrders)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Abholboard nicht erreichbar'));
-  };
+  useEffect(() => {
+    api.getPublicEvent()
+      .then((event) => setEventId(event.id))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Keine Veranstaltung'));
+    realtimeService.connect();
+  }, []);
 
   useEffect(() => {
-    loadOrders();
-    api.getPublicEvent().then((event) => {
-      joinPickupBoard(event.id);
-    }).catch((err) => setError(err instanceof Error ? err.message : 'Keine Veranstaltung'));
-
-    const unsub = onOrderUpdated(() => loadOrders());
-    const interval = setInterval(loadOrders, 10000);
-    return () => {
-      unsub();
-      clearInterval(interval);
-    };
-  }, []);
+    if (!eventId) return;
+    return realtimeService.subscribe(
+      `pickup:${eventId}`,
+      (msg) => {
+        if (msg.type === 'order:updated') {
+          const order = msg.payload as { id: string; status: string };
+          if (order.status === 'PICKED_UP') {
+            setRemoving((prev) => new Set(prev).add(order.id));
+            setTimeout(() => {
+              setOrders((prev) => prev.filter((o) => o.id !== order.id));
+              setRemoving((prev) => {
+                const next = new Set(prev);
+                next.delete(order.id);
+                return next;
+              });
+            }, 600);
+          }
+        }
+      },
+      {
+        wsEvents: ['order:updated'],
+        join: () => realtimeService.joinPickupBoard(eventId),
+        activity: 'high',
+        poll: (etag) => api.syncPickupBoard(etag),
+        onPollData: (data) => setOrders(data as PickupBoardOrder[]),
+      }
+    );
+  }, [eventId]);
 
   useEffect(() => {
     if (orders.length > prevCount.current) {
@@ -49,26 +67,6 @@ export function PickupBoardPage() {
     }
     prevCount.current = orders.length;
   }, [orders.length]);
-
-  useEffect(() => {
-    const socket = getSocket();
-    const handler = (updated: unknown) => {
-      const order = updated as { id: string; status: string };
-      if (order.status === 'PICKED_UP') {
-        setRemoving((prev) => new Set(prev).add(order.id));
-        setTimeout(() => {
-          setOrders((prev) => prev.filter((o) => o.id !== order.id));
-          setRemoving((prev) => {
-            const next = new Set(prev);
-            next.delete(order.id);
-            return next;
-          });
-        }, 600);
-      }
-    };
-    socket.on('order:updated', handler);
-    return () => { socket.off('order:updated', handler); };
-  }, []);
 
   return (
     <Box

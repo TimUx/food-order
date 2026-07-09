@@ -16,7 +16,7 @@ import {
 import { StaffLayout } from '@/components/StaffLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatTime } from '@/services/api';
-import { joinEvent, onOrderCreated, onOrderUpdated } from '@/services/socket';
+import { subscribeEventOrders } from '@/services/realtime/channels';
 import { Order, OrderStatus } from '@/types';
 import { StatusChip } from '@/components/StatusChip';
 
@@ -42,19 +42,17 @@ export function KitchenPage() {
   useEffect(() => {
     if (!token) return;
     api.getActiveEvent(token)
-      .then((event) => {
-        setEventId(event.id);
-        joinEvent(event.id);
-      })
+      .then((event) => setEventId(event.id))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(() => {
-    loadOrders();
-    const unsub1 = onOrderCreated(() => loadOrders());
-    const unsub2 = onOrderUpdated(() => loadOrders());
-    return () => { unsub1(); unsub2(); };
+    if (!token || !eventId) return;
+    const statuses: OrderStatus[] = ['NEW', 'IN_PROGRESS'];
+    if (showReady) statuses.push('READY');
+    if (showPickedUp) statuses.push('PICKED_UP');
+    return subscribeEventOrders(token, eventId, statuses.join(','), setOrders, 'high');
   }, [eventId, token, showReady, showPickedUp]);
 
   const handleAction = async (order: Order) => {

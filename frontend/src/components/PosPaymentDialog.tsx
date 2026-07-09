@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { PaymentQrCode } from '@/components/PaymentQrCode';
 import { api, formatPrice, getImageUrl } from '@/services/api';
+import { subscribePaymentStatus } from '@/services/realtime/channels';
 import { useClub } from '@/contexts/ClubContext';
 import type { Order } from '@/types';
 import type { OrderPaymentInfo, PublicPaymentMethod } from '@/types/payment';
@@ -32,7 +33,6 @@ import {
 } from '@/utils/paymentSelection';
 import { touchPrimaryButtonSx, touchButtonSx } from '@/theme/touch';
 
-const POLL_INTERVAL_MS = 2500;
 const AUTO_CLOSE_MS = 3500;
 
 interface PosPaymentDialogProps {
@@ -79,22 +79,25 @@ export function PosPaymentDialog({
   const [retrying, setRetrying] = useState(false);
   const [networkError, setNetworkError] = useState(false);
   const [aborting, setAborting] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supportedLabels = formatSupportedMethods(paymentMethods);
 
-  const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  }, []);
+  useEffect(() => {
+    if (!open) return;
+    setStatus(payment.paymentStatus ?? 'PAYMENT_PENDING');
+    setCheckoutUrl(payment.checkoutUrl);
+    setSessionId(payment.sessionId);
+    setExpiresAt(payment.expiresAt);
+    setError('');
+    setNetworkError(false);
+  }, [open, payment]);
 
-  const pollStatus = useCallback(async () => {
-    try {
-      const result = await api.getPaymentCheckoutStatus(sessionId);
-      setStatus(result.paymentStatus);
+  useEffect(() => {
+    if (!open || !sessionId || isPaymentSuccess(status) || isPaymentFailure(status)) return;
+
+    return subscribePaymentStatus(sessionId, async (result) => {
+      if (result.paymentStatus) setStatus(result.paymentStatus);
       setNetworkError(false);
       if (result.checkoutUrl) setCheckoutUrl(result.checkoutUrl);
       if (result.expiresAt) setExpiresAt(result.expiresAt);
@@ -109,33 +112,11 @@ export function PosPaymentDialog({
         return;
       }
 
-      if (isPaymentSuccess(result.paymentStatus)) {
-        stopPolling();
+      if (result.paymentStatus && isPaymentSuccess(result.paymentStatus)) {
         closeTimerRef.current = setTimeout(onComplete, AUTO_CLOSE_MS);
-      } else if (isPaymentFailure(result.paymentStatus)) {
-        stopPolling();
       }
-    } catch {
-      setNetworkError(true);
-    }
-  }, [sessionId, onComplete, stopPolling]);
-
-  useEffect(() => {
-    if (!open) return;
-    setStatus(payment.paymentStatus ?? 'PAYMENT_PENDING');
-    setCheckoutUrl(payment.checkoutUrl);
-    setSessionId(payment.sessionId);
-    setExpiresAt(payment.expiresAt);
-    setError('');
-    setNetworkError(false);
-  }, [open, payment]);
-
-  useEffect(() => {
-    if (!open || isPaymentSuccess(status) || isPaymentFailure(status)) return;
-    void pollStatus();
-    pollRef.current = setInterval(() => { void pollStatus(); }, POLL_INTERVAL_MS);
-    return stopPolling;
-  }, [open, status, pollStatus, stopPolling]);
+    }, 'high');
+  }, [open, sessionId, status, onComplete]);
 
   useEffect(() => {
     if (!open || !expiresAt) return;
@@ -146,14 +127,12 @@ export function PosPaymentDialog({
   }, [open, expiresAt]);
 
   useEffect(() => () => {
-    stopPolling();
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-  }, [stopPolling]);
+  }, []);
 
   const handleRetry = async () => {
     setRetrying(true);
     setError('');
-    stopPolling();
     try {
       const result = await api.retryPaymentCheckout(sessionId);
       setSessionId(result.sessionId);

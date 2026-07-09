@@ -21,7 +21,7 @@ import { StaffLayout } from '@/components/StaffLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
 import { DashboardStats } from '@/types';
-import { joinEvent, onOrderCreated, onOrderUpdated } from '@/services/socket';
+import { subscribeEventStats } from '@/services/realtime/channels';
 
 interface StatCardProps {
   title: string;
@@ -59,35 +59,17 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const loadStats = () => {
-    if (!token || !eventId) return;
-    api.getStats(token, eventId)
-      .then(setStats)
-      .catch((err) => setError(err.message));
-  };
-
   useEffect(() => {
     if (!token) return;
     api.getActiveEvent(token)
-      .then((event) => {
-        setEventId(event.id);
-        joinEvent(event.id);
-      })
+      .then((event) => setEventId(event.id))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
 
   useEffect(() => {
-    if (!eventId) return;
-    loadStats();
-    const unsub1 = onOrderCreated(() => loadStats());
-    const unsub2 = onOrderUpdated(() => loadStats());
-    const interval = setInterval(loadStats, 30000);
-    return () => {
-      unsub1();
-      unsub2();
-      clearInterval(interval);
-    };
+    if (!token || !eventId) return;
+    return subscribeEventStats(token, eventId, setStats, 'normal');
   }, [eventId, token]);
 
   if (loading) {

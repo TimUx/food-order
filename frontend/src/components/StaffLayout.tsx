@@ -34,7 +34,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { startPrintJobListener } from '@/modules/printer/printBridge';
-import { configureSocketAuth, useSocketStatus } from '@/services/socket';
+import { realtimeService, useRealtimeConnectionState } from '@/services/realtime';
+import type { ConnectionState } from '@/services/realtime';
 
 const DRAWER_WIDTH = 260;
 
@@ -62,11 +63,25 @@ interface StaffLayoutProps {
   fullWidth?: boolean;
 }
 
+function connectionBanner(state: ConnectionState): { show: boolean; severity: 'warning' | 'error'; text: string } {
+  switch (state) {
+    case 'POLLING':
+    case 'RECONNECTING':
+    case 'DEGRADED':
+      return { show: true, severity: 'warning', text: 'Verbindung eingeschränkt – Aktualisierung per Polling' };
+    case 'DISCONNECTED':
+      return { show: true, severity: 'error', text: 'Offline – Verbindung wird automatisch wiederhergestellt' };
+    default:
+      return { show: false, severity: 'warning', text: '' };
+  }
+}
+
 export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutProps) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(true);
   const [reconnectNotice, setReconnectNotice] = useState(false);
-  const { connected } = useSocketStatus();
+  const connectionState = useRealtimeConnectionState();
+  const banner = connectionBanner(connectionState);
   const wasDisconnected = useRef(false);
   const { user, logout, isAdmin, token } = useAuth();
   const { mode, toggleMode } = useThemeMode();
@@ -83,19 +98,20 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
   }, [location.pathname]);
 
   useEffect(() => {
-    configureSocketAuth(token);
+    realtimeService.configureAuth(token);
+    realtimeService.connect(token);
   }, [token]);
 
   useEffect(() => {
-    if (!connected) {
+    if (connectionState === 'DISCONNECTED' || connectionState === 'POLLING') {
       wasDisconnected.current = true;
       return;
     }
-    if (wasDisconnected.current) {
+    if (connectionState === 'CONNECTED' && wasDisconnected.current) {
       setReconnectNotice(true);
       wasDisconnected.current = false;
     }
-  }, [connected]);
+  }, [connectionState]);
 
   const handleReconnectClose = useCallback(() => setReconnectNotice(false), []);
 
@@ -194,9 +210,9 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
           </Toolbar>
         </AppBar>
 
-        {!connected && (
-          <Alert severity="warning" sx={{ borderRadius: 0 }}>
-            Verbindung unterbrochen – Bestellungen können verzögert ankommen
+        {banner.show && (
+          <Alert severity={banner.severity} sx={{ borderRadius: 0 }}>
+            {banner.text}
           </Alert>
         )}
 

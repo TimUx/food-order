@@ -9,6 +9,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import WarningIcon from '@mui/icons-material/Warning';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { AdminLayout } from '@/components/AdminLayout';
+import { RealtimeStatusPanel } from '@/components/RealtimeStatusPanel';
 import { useAdminUi } from '@/contexts/AdminUiContext';
 import { resolveAdminIcon } from '@/admin/iconMap';
 import { renderWidget } from '@/admin/widgetRegistry';
@@ -67,6 +68,8 @@ export function AdminDashboardPage() {
       )}
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      <RealtimeStatusPanel />
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>

@@ -3,6 +3,7 @@ import { authController } from '../controllers/authController';
 import { eventController } from '../controllers/eventController';
 import { foodItemController } from '../controllers/foodItemController';
 import { orderController } from '../controllers/orderController';
+import { realtimeController } from '../controllers/realtimeController';
 import { clubController } from '../controllers/clubController';
 import { userController } from '../controllers/userController';
 import { authenticate, requireRole, loadUser } from '../middleware/auth';
@@ -106,6 +107,14 @@ router.post('/staff/orders/:id/abort-payment', requireRole('ADMIN', 'STAFF'), va
 router.post('/staff/orders/lookup', requireRole('ADMIN', 'STAFF'), validateBody(lookupByNumberSchema), orderController.lookupByNumber);
 router.patch('/staff/orders/:id/status', requireRole('ADMIN', 'STAFF'), validateParams(idParamSchema), validateBody(updateOrderStatusSchema), orderController.updateStatus);
 router.post('/staff/orders/:id/advance', requireRole('ADMIN', 'STAFF'), validateParams(idParamSchema), orderController.advanceStatus);
+
+// Realtime sync (delta/ETag) — für Polling-Fallback
+router.get('/realtime/events/:eventId/orders', requireRole('ADMIN', 'STAFF'), realtimeController.syncEventOrders);
+router.get('/realtime/events/:eventId/stats', requireRole('ADMIN', 'STAFF'), realtimeController.syncEventStats);
+router.get('/realtime/pickup-board', realtimeController.syncPickupBoard);
+router.get('/realtime/orders/:token', realtimeController.syncOrder);
+router.get('/realtime/payment/:sessionId', realtimeController.syncPayment);
+router.get('/realtime/club', realtimeController.syncClub);
 
 router.get('/staff/club', requireRole('ADMIN'), clubController.get);
 router.put('/staff/club', requireRole('ADMIN'), validateBody(updateClubSchema), clubController.update);

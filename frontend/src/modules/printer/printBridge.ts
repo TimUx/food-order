@@ -1,4 +1,4 @@
-import { onPrintJob } from '@/services/socket';
+import { subscribePrintJobs } from '@/services/realtime/channels';
 
 function printHtml(html: string, title: string): void {
   const frame = document.createElement('iframe');
@@ -31,7 +31,7 @@ function printPdfBase64(pdfBase64: string, title: string): void {
 }
 
 export function startPrintJobListener(): () => void {
-  return onPrintJob((job) => {
+  return subscribePrintJobs((job) => {
     if (job.pdfBase64) {
       printPdfBase64(job.pdfBase64, job.title);
       return;

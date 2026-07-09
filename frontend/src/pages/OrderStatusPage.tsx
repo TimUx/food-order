@@ -22,7 +22,7 @@ import { useParams, useLocation, Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/PublicLayout';
 import { StatusChip } from '@/components/StatusChip';
 import { api } from '@/services/api';
-import { joinOrder, onOrderUpdated } from '@/services/socket';
+import { subscribeOrderStatus } from '@/services/realtime/channels';
 import { Order } from '@/types';
 
 const pulse = keyframes`
@@ -66,15 +66,14 @@ export function OrderStatusPage() {
 
   useEffect(() => {
     if (!order?.lookupToken) return;
-    joinOrder(order.lookupToken, order.customer?.lastName);
-    const unsub = onOrderUpdated((updated) => {
-      const updatedOrder = updated as Order;
-      if (updatedOrder.id === order.id) {
-        setOrder(updatedOrder);
+    return subscribeOrderStatus(
+      order.lookupToken,
+      order.customer?.lastName,
+      (updated) => {
+        if (updated.id === order.id) setOrder(updated);
       }
-    });
-    return unsub;
-  }, [order?.id]);
+    );
+  }, [order?.id, order?.lookupToken, order?.customer?.lastName]);
 
   useEffect(() => {
     if (!order) return;

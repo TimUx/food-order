@@ -111,6 +111,7 @@ export function getIO(): Server {
 export function emitOrderUpdate(eventId: string, order: unknown): void {
   if (!io) return;
   io.to(`staff:event:${eventId}`).emit('order:updated', order);
+  io.to(`pickup:${eventId}`).emit('order:updated', order);
   const orderData = order as { id: string };
   io.to(`order:${orderData.id}`).emit('order:updated', order);
 }
