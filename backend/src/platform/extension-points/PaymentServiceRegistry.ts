@@ -1,4 +1,4 @@
-import type { PayableResource, PaymentCheckoutResult, PaymentMethodInfo, PaymentService, PaymentStatusResult, RefundResult } from './PayableResource';
+import type { PayableResource, PaymentCheckoutResult, PaymentMethodInfo, PaymentService, PaymentStatusResult } from './PayableResource';
 
 class PaymentServiceRegistryImpl {
   private service: PaymentService | null = null;

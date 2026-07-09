@@ -54,7 +54,7 @@ jobs:
         run: |
           docker compose -f docker-compose.ci.yml up -d --build
           npm run qa:wait
-          cd backend && npx prisma db push && npx prisma migrate deploy && npm run seed
+          (cd backend && npx prisma db push && npm run seed)
           npm run qa:seed
           npm run qa:module-scenarios
           npm run qa:api
