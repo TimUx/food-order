@@ -41,10 +41,14 @@ import settingsRoutes from '../core/routes/settings';
 import permissionsRoutes from '../core/routes/permissions';
 import adminUiRoutes from '../core/routes/adminUi';
 import { tenantController, healthService, tenantService } from '../platform/bootstrap';
+import platformRoutes from '../core/routes/platform';
 
 const upload = uploadService.memory;
 
 const router = Router();
+
+// Plattform-Administration (kein Mandanten-Kontext)
+router.use('/platform', platformRoutes);
 
 // Health & API-Dokumentation
 router.get('/health', async (_req, res) => {

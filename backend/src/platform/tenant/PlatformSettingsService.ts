@@ -127,4 +127,38 @@ export class PlatformSettingsService {
     const value = map.get(key);
     return value === 'beta' ? 'beta' : 'stable';
   }
+
+  async getAllSettings(): Promise<Record<string, unknown>> {
+    const rows = await prisma.platformSettings.findMany({ orderBy: { key: 'asc' } });
+    const result: Record<string, unknown> = {};
+    for (const row of rows) {
+      result[row.key] = row.value;
+    }
+    return result;
+  }
+
+  async getNamespace(prefix: string): Promise<Record<string, unknown>> {
+    const all = await this.getAllSettings();
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(all)) {
+      if (key.startsWith(prefix)) {
+        result[key.slice(prefix.length + 1) || key] = value;
+      }
+    }
+    return result;
+  }
+
+  async updateSettings(
+    updates: Record<string, unknown>,
+    updatedBy?: string
+  ): Promise<Record<string, unknown>> {
+    for (const [key, value] of Object.entries(updates)) {
+      await prisma.platformSettings.upsert({
+        where: { key },
+        update: { value: value as object, updatedBy: updatedBy ?? null },
+        create: { key, value: value as object, updatedBy: updatedBy ?? null },
+      });
+    }
+    return this.getAllSettings();
+  }
 }

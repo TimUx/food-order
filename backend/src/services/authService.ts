@@ -23,6 +23,7 @@ export const authService = {
       userId: user.id,
       email: user.email,
       role: user.role.name,
+      scope: 'tenant',
     };
 
     const { accessToken, refreshToken } = await sessionService.createSession(

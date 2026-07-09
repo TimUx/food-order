@@ -44,6 +44,9 @@ import { config } from '../config';
 import { createPlatformContextMiddleware, createPlatformPublicMiddleware } from '../middleware/platformContext';
 import { createTenantContextMiddleware } from '../middleware/tenantContext';
 import { createTenantController } from '../controllers/tenantController';
+import { PlatformDashboardService, PlatformMonitoringService } from './PlatformDashboardService';
+import { PlatformTenantAdminService } from './PlatformTenantAdminService';
+import { ImpersonationService } from './ImpersonationService';
 
 export const platformContainer = new ServiceContainer();
 
@@ -75,6 +78,10 @@ export let tenantServiceInstance!: TenantService;
 export let tenantResolverInstance!: TenantResolver;
 export let platformSettingsServiceInstance!: PlatformSettingsService;
 export let tenantControllerInstance!: ReturnType<typeof createTenantController>;
+export let platformDashboardServiceInstance!: PlatformDashboardService;
+export let platformMonitoringServiceInstance!: PlatformMonitoringService;
+export let platformTenantAdminServiceInstance!: PlatformTenantAdminService;
+export let impersonationServiceInstance!: ImpersonationService;
 
 let tenantInfrastructureInitialized = false;
 
@@ -150,6 +157,16 @@ export function bootstrapPlatform(): void {
     platformContextInstance
   );
 
+  platformDashboardServiceInstance = new PlatformDashboardService(platformContextInstance);
+  platformMonitoringServiceInstance = new PlatformMonitoringService();
+  platformTenantAdminServiceInstance = new PlatformTenantAdminService(
+    tenantServiceInstance,
+    tenantRepository,
+    platformContextInstance,
+    auditServiceInstance
+  );
+  impersonationServiceInstance = new ImpersonationService(auditServiceInstance);
+
   moduleRegistryInstance.bindPlatformDeps({
     featureFlags: featureFlagsInstance,
     metadataRegistry: metadataRegistryInstance,
@@ -211,6 +228,12 @@ export async function initializeTenantInfrastructure(): Promise<void> {
     await migrateMultiTenantSchema(defaultTenant.id);
   }
 
+  const { migratePlatformAdminSchema } = await import('../core/tenant/migratePlatformAdminSchema');
+  await migratePlatformAdminSchema();
+
+  const { ensurePlatformAdmin } = await import('../core/tenant/ensurePlatformAdmin');
+  await ensurePlatformAdmin();
+
   tenantInfrastructureInitialized = true;
 }
 
@@ -250,3 +273,7 @@ export const tenantService = tenantServiceInstance;
 export const tenantResolver = tenantResolverInstance;
 export const platformSettingsService = platformSettingsServiceInstance;
 export const tenantController = tenantControllerInstance;
+export const platformDashboardService = platformDashboardServiceInstance;
+export const platformMonitoringService = platformMonitoringServiceInstance;
+export const platformTenantAdminService = platformTenantAdminServiceInstance;
+export const impersonationService = impersonationServiceInstance;

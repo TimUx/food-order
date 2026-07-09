@@ -261,6 +261,7 @@ export function compareVersions(a: string, b: string): number {
 export interface AuditLogEntry {
   action: string;
   actorId?: string;
+  tenantId?: string;
   moduleId?: string;
   details?: Record<string, unknown>;
 }

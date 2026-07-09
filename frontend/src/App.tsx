@@ -18,6 +18,19 @@ import { OrdersPage } from '@/pages/staff/OrdersPage';
 import { AdminShell } from '@/pages/admin/AdminShell';
 import { AdminRoute } from '@/components/AdminLayout';
 import { SetupWizardPage } from '@/pages/admin/SetupWizardPage';
+import { PlatformAuthProvider } from '@/contexts/PlatformAuthContext';
+import { PlatformShell } from '@/pages/platform/PlatformShell';
+import { PlatformLoginPage } from '@/pages/platform/PlatformLoginPage';
+import { PlatformDashboardPage } from '@/pages/platform/PlatformDashboardPage';
+import { PlatformTenantsPage } from '@/pages/platform/PlatformTenantsPage';
+import { PlatformTenantDetailPage } from '@/pages/platform/PlatformTenantDetailPage';
+import { PlatformSettingsPage } from '@/pages/platform/PlatformSettingsPage';
+import { PlatformUsersPage } from '@/pages/platform/PlatformUsersPage';
+import { PlatformLogsPage } from '@/pages/platform/PlatformLogsPage';
+import { PlatformMonitoringPage } from '@/pages/platform/PlatformMonitoringPage';
+import { PlatformHealthPage } from '@/pages/platform/PlatformHealthPage';
+import { PlatformBackupsPage } from '@/pages/platform/PlatformBackupsPage';
+import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 
 export default function App() {
   return (
@@ -25,6 +38,7 @@ export default function App() {
       <PlatformProvider>
         <TenantProvider>
           <AuthProvider>
+          <ImpersonationBanner />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<OrderPage />} />
@@ -44,6 +58,23 @@ export default function App() {
               <Route path="/admin/login" element={<LoginPage />} />
               <Route path="/admin/einrichtung" element={<AdminRoute><SetupWizardPage /></AdminRoute>} />
               <Route path="/admin/*" element={<AdminShell />} />
+
+              <Route path="/platform/login" element={
+                <PlatformAuthProvider><PlatformLoginPage /></PlatformAuthProvider>
+              } />
+              <Route path="/platform" element={
+                <PlatformAuthProvider><PlatformShell /></PlatformAuthProvider>
+              }>
+                <Route index element={<PlatformDashboardPage />} />
+                <Route path="mandanten" element={<PlatformTenantsPage />} />
+                <Route path="mandanten/:id" element={<PlatformTenantDetailPage />} />
+                <Route path="benutzer" element={<PlatformUsersPage />} />
+                <Route path="einstellungen" element={<PlatformSettingsPage />} />
+                <Route path="logs" element={<PlatformLogsPage />} />
+                <Route path="monitoring" element={<PlatformMonitoringPage />} />
+                <Route path="health" element={<PlatformHealthPage />} />
+                <Route path="backups" element={<PlatformBackupsPage />} />
+              </Route>
 
               {/* Legacy-Weiterleitungen */}
               <Route path="/mitarbeiter/kasse" element={<Navigate to="/mitarbeiter/abholung" replace />} />

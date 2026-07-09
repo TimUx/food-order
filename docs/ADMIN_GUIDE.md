@@ -2,9 +2,26 @@
 
 Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf alle Funktionen – von der Installation bis zum Veranstaltungstag.
 
-> **Version 2.0:** FestManager wird zu einer mandantenfähigen Plattform. Ab v2.0 gibt es zwei Verwaltungsebenen: **Plattform-Administration** (Mandanten anlegen, System konfigurieren) und **Veranstalter-Administration** (bestehendes `/admin`, mandantenspezifisch). In der UI bleibt der Begriff **Veranstalter**. Details: [ADR-022](architecture/022-platform-administration.md).
+> **Version 2.0:** FestManager ist mandantenfähig. Es gibt zwei Verwaltungsebenen:
+> - **Plattform-Administration** unter `/platform` – Mandanten verwalten, System konfigurieren (nur Plattformadministratoren)
+> - **Veranstalter-Administration** unter `/admin` – mandantenspezifisch (normale Administratoren)
+>
+> Standard-Plattformlogin: `platform@festmanager.local` (Passwort via `PLATFORM_ADMIN_PASSWORD` in `.env`). Details: [ADR-022](architecture/022-platform-administration.md), [Phase-3-Report](architecture/PHASE_3_COMPLETION_REPORT.md).
 
-## Inhaltsverzeichnis
+## Plattform-Administration (Phase 3)
+
+| Bereich | URL | Beschreibung |
+|---------|-----|--------------|
+| Login | `/platform/login` | Separater Einstieg für Plattformadministratoren |
+| Dashboard | `/platform` | Kennzahlen, Systemstatus |
+| Mandanten | `/platform/mandanten` | Anlegen, Bearbeiten, Sperren, Impersonation |
+| Einstellungen | `/platform/einstellungen` | Plattformweite Konfiguration |
+| Monitoring | `/platform/monitoring` | CPU, RAM, Speicher |
+| Logs | `/platform/logs` | Audit-Log mit Mandanten-Filter |
+
+**Impersonation:** Plattformadmins können sich temporär als Mandanten-Administrator anmelden. Ein gelbes Banner zeigt den aktiven Impersonation-Modus an.
+
+---
 
 1. [Installation](#installation)
 2. [Konfiguration](#konfiguration)

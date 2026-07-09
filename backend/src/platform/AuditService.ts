@@ -21,9 +21,12 @@ export class AuditService {
     }
   }
 
-  async getRecent(limit = 50, moduleId?: string) {
+  async getRecent(limit = 50, moduleId?: string, tenantId?: string) {
     return prisma.platformAuditLog.findMany({
-      where: moduleId ? { moduleId } : undefined,
+      where: {
+        ...(moduleId ? { moduleId } : {}),
+        ...(tenantId ? { tenantId } : {}),
+      },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });

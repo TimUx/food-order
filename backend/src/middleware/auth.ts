@@ -5,14 +5,9 @@ import { prisma } from '../config/database';
 import { AppError } from './errorHandler';
 import { tenantWhere } from '../platform/tenant/tenantScope';
 import { parsePermissionKeys } from '../platform/permissions';
+import type { AuthPayload } from './platformAuth';
 
-export interface AuthPayload {
-  userId: string;
-  email: string;
-  role: string;
-  permissions?: string[];
-  sessionId?: string;
-}
+export type { AuthPayload, ImpersonationMeta } from './platformAuth';
 
 export interface AuthRequest extends Request {
   user?: AuthPayload;
@@ -29,7 +24,11 @@ export function authenticate(req: AuthRequest, _res: Response, next: NextFunctio
   void (async () => {
     try {
       const payload = jwt.verify(token, config.jwt.secret) as AuthPayload;
-      if (payload.sessionId) {
+      if (payload.scope === 'platform') {
+        next(new AppError(403, 'Plattform-Token nicht für Mandanten-APIs gültig'));
+        return;
+      }
+      if (payload.sessionId && !payload.impersonation) {
         const { sessionService } = await import('../services/sessionService');
         const valid = await sessionService.validateSession(payload.sessionId);
         if (!valid) {
@@ -37,7 +36,7 @@ export function authenticate(req: AuthRequest, _res: Response, next: NextFunctio
           return;
         }
       }
-      req.user = payload;
+      req.user = { ...payload, scope: payload.scope ?? 'tenant' };
       next();
     } catch {
       next(new AppError(401, 'Ungültiges oder abgelaufenes Token'));
@@ -64,6 +63,14 @@ export async function loadUser(req: AuthRequest, _res: Response, next: NextFunct
     next();
     return;
   }
+
+  if (req.user.impersonation) {
+    req.user.role = 'ADMIN';
+    req.user.permissions = ['*'];
+    next();
+    return;
+  }
+
   const user = await prisma.user.findFirst({
     where: tenantWhere({ id: req.user.userId }),
     include: { role: true },

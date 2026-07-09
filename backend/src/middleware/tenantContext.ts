@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import type { AuthPayload } from '../middleware/platformAuth';
 import type { TenantContext } from '../platform/tenant/TenantContext';
 import type { TenantResolver } from '../platform/tenant/TenantResolver';
 import type { TenantService } from '../platform/tenant/TenantService';
@@ -19,6 +20,19 @@ export function createTenantContextMiddleware(
 ) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const authUser = (req as Request & { user?: AuthPayload }).user;
+
+      if (authUser?.impersonation?.tenantId) {
+        const tenant = await tenantService.findById(authUser.impersonation.tenantId);
+        if (!tenant) {
+          next(new Error('Impersonation-Mandant nicht gefunden'));
+          return;
+        }
+        const contextData = await tenantService.resolveContextData(tenant);
+        tenantContext.run(contextData, () => next());
+        return;
+      }
+
       const result = await tenantResolver.resolve(req);
 
       if (result.type === 'tenant' && result.tenant) {

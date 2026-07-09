@@ -32,6 +32,38 @@ enum TenantStatus {
   ARCHIVED
 }
 
+/// Plattformadministrator – gehört keinem Mandanten
+model PlatformUser {
+  id           String                 @id @default(uuid())
+  email        String                 @unique
+  passwordHash String                 @map("password_hash")
+  firstName    String                 @map("first_name")
+  lastName     String                 @map("last_name")
+  active       Boolean                @default(true)
+  permissions  Json                   @default("[]")
+  mfaEnabled   Boolean                @default(false) @map("mfa_enabled")
+  lastLoginAt  DateTime?              @map("last_login_at")
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
+  sessions     PlatformUserSession[]
+
+  @@map("platform_users")
+}
+
+model PlatformUserSession {
+  id               String       @id @default(uuid())
+  userId           String       @map("user_id")
+  user             PlatformUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String       @unique @map("refresh_token_hash")
+  expiresAt        DateTime     @map("expires_at")
+  revokedAt        DateTime?    @map("revoked_at")
+  userAgent        String?      @map("user_agent")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("platform_user_sessions")
+}
+
 model Tenant {
   id            String       @id @default(uuid())
   name          String

@@ -50,7 +50,19 @@ Ab Version 2.0 arbeitet die Plattform mandantenfähig. Kernbausteine:
 - Alle Datenbankzugriffe mandantenbezogener Tabellen filtern über `tenant_id` aus `TenantContext`
 - UI-Begriff bleibt **Veranstalter**; intern **Mandant**
 
-ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1: [Report](architecture/PHASE_1_COMPLETION_REPORT.md) · Phase 2: [Report](architecture/PHASE_2_COMPLETION_REPORT.md) · Branch: `feature/v2-multi-tenant-platform`
+ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1: [Report](architecture/PHASE_1_COMPLETION_REPORT.md) · Phase 2: [Report](architecture/PHASE_2_COMPLETION_REPORT.md) · Phase 3: [Report](architecture/PHASE_3_COMPLETION_REPORT.md)
+
+### Plattform-API (Phase 3)
+
+| Endpoint | Beschreibung |
+|----------|--------------|
+| `POST /api/platform/auth/login` | Plattform-Login |
+| `GET /api/platform/dashboard` | Plattform-Dashboard |
+| `GET/POST/PUT/DELETE /api/platform/tenants` | Mandantenverwaltung |
+| `POST /api/platform/tenants/:id/impersonate` | Mandanten-Impersonation |
+| `GET/PUT /api/platform/settings` | Plattformsettings |
+
+Plattform-APIs erfordern JWT mit `scope: "platform"`. Mandanten-APIs lehnen Plattform-Tokens ab.
 
 ### Repository-Filter (Phase 2)
 
