@@ -49,6 +49,7 @@ import { createTenantContextMiddleware } from '../middleware/tenantContext';
 import { createTenantController } from '../controllers/tenantController';
 import { PlatformDashboardService, PlatformMonitoringService } from './PlatformDashboardService';
 import { PlatformTenantAdminService } from './PlatformTenantAdminService';
+import { TenantApplicationService } from './TenantApplicationService';
 import { ImpersonationService } from './ImpersonationService';
 import { corsPolicy } from '../middleware/corsPolicy';
 
@@ -86,6 +87,7 @@ export let tenantControllerInstance!: ReturnType<typeof createTenantController>;
 export let platformDashboardServiceInstance!: PlatformDashboardService;
 export let platformMonitoringServiceInstance!: PlatformMonitoringService;
 export let platformTenantAdminServiceInstance!: PlatformTenantAdminService;
+export let tenantApplicationServiceInstance!: TenantApplicationService;
 export let impersonationServiceInstance!: ImpersonationService;
 
 let tenantInfrastructureInitialized = false;
@@ -173,6 +175,11 @@ export function bootstrapPlatform(): void {
     platformContextInstance,
     auditServiceInstance
   );
+  tenantApplicationServiceInstance = new TenantApplicationService(
+    platformContextInstance,
+    platformTenantAdminServiceInstance,
+    auditServiceInstance
+  );
   impersonationServiceInstance = new ImpersonationService(auditServiceInstance);
 
   moduleRegistryInstance.bindPlatformDeps({
@@ -249,6 +256,9 @@ export async function initializeTenantInfrastructure(): Promise<void> {
   const { migratePerformanceSchema } = await import('../core/tenant/migratePerformanceSchema');
   await migratePerformanceSchema();
 
+  const { migrateTenantApplicationSchema } = await import('../core/tenant/migrateTenantApplicationSchema');
+  await migrateTenantApplicationSchema();
+
   if (defaultTenant) {
     const { migrateModulesTenantSchema } = await import('../core/tenant/migrateModulesTenantSchema');
     await migrateModulesTenantSchema(defaultTenant.id);
@@ -300,4 +310,5 @@ export const tenantController = tenantControllerInstance;
 export const platformDashboardService = platformDashboardServiceInstance;
 export const platformMonitoringService = platformMonitoringServiceInstance;
 export const platformTenantAdminService = platformTenantAdminServiceInstance;
+export const tenantApplicationService = tenantApplicationServiceInstance;
 export const impersonationService = impersonationServiceInstance;

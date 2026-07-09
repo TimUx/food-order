@@ -31,10 +31,12 @@ import {
   tokenParamSchema,
   createUserSchema,
   updateUserSchema,
+  submitTenantApplicationSchema,
+  legalSlugParamSchema,
 } from '../validation/schemas';
 
 import { uploadService } from '../services/uploadService';
-import { loginRateLimiter, publicOrderRateLimiter, lookupRateLimiter, authRefreshRateLimiter, uploadRateLimiter, paymentPublicRateLimiter } from '../middleware/rateLimit';
+import { loginRateLimiter, publicOrderRateLimiter, lookupRateLimiter, authRefreshRateLimiter, uploadRateLimiter, paymentPublicRateLimiter, tenantApplicationRateLimiter } from '../middleware/rateLimit';
 import { config } from '../config';
 import { openApiDocument } from '../core/openapi';
 import moduleAdminRoutes from '../core/routes/modules';
@@ -43,6 +45,7 @@ import permissionsRoutes from '../core/routes/permissions';
 import adminUiRoutes from '../core/routes/adminUi';
 import { tenantController, healthService, tenantService } from '../platform/bootstrap';
 import platformRoutes from '../core/routes/platform';
+import { platformPublicController } from '../controllers/platformPublicController';
 
 const upload = uploadService.memory;
 
@@ -110,8 +113,16 @@ router.get('/auth/me', authenticate, loadUser, authController.me);
 // Public
 router.get('/public/routing-config', tenantController.getRoutingConfig);
 router.get('/public/health', tenantController.getPublicHealth);
+router.get('/public/platform', platformPublicController.getPlatform);
+router.get('/public/platform/legal-links', platformPublicController.listLegalLinks);
+router.get('/public/platform/legal/:slug', validateParams(legalSlugParamSchema), platformPublicController.getLegalPage);
+router.post(
+  '/public/tenant-applications',
+  tenantApplicationRateLimiter,
+  validateBody(submitTenantApplicationSchema),
+  platformPublicController.submitApplication
+);
 router.get('/public/tenant', tenantController.getPublic);
-router.get('/public/platform', tenantController.getPlatformPublic);
 router.get('/public/club', clubController.getPublic);
 router.get('/public/order-settings', clubController.getOrderSettings);
 router.get('/public/event', eventController.getActive);

@@ -10,7 +10,9 @@ import {
   auditService,
   healthService,
   tenantService,
+  tenantApplicationService,
 } from '../platform/bootstrap';
+import { platformLegalService } from '../platform/PlatformLegalService';
 import { platformUserRepository } from '../repositories/platformUserRepository';
 import { AppError } from '../middleware/errorHandler';
 import bcrypt from 'bcryptjs';
@@ -299,6 +301,115 @@ export const platformController = {
         restoreAvailable: false,
         note: 'Backup/Restore-Automatisierung in Phase 4+',
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async listApplications(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { status, search, page, limit } = req.query;
+      res.json(
+        await tenantApplicationService.list({
+          status: status as 'NEW' | 'UNDER_REVIEW' | 'CLARIFICATION' | 'APPROVED' | 'REJECTED' | 'ARCHIVED' | undefined,
+          search: search as string | undefined,
+          page: page ? Number(page) : undefined,
+          limit: limit ? Number(limit) : undefined,
+        })
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getApplication(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const application = await tenantApplicationService.getById(req.params.id as string);
+      if (!application) {
+        res.status(404).json({ error: 'Bewerbung nicht gefunden' });
+        return;
+      }
+      res.json(application);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updateApplicationStatus(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { status, adminComment } = req.body as {
+        status: 'NEW' | 'UNDER_REVIEW' | 'CLARIFICATION' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
+        adminComment?: string;
+      };
+      res.json(
+        await tenantApplicationService.updateStatus(
+          req.params.id as string,
+          status,
+          req.platformUser!.userId,
+          adminComment
+        )
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async approveApplication(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { createTenant, adminComment } = req.body as {
+        createTenant?: boolean;
+        adminComment?: string;
+      };
+      res.json(
+        await tenantApplicationService.approveAndCreateTenant(
+          req.params.id as string,
+          req.platformUser!.userId,
+          { createTenant, adminComment }
+        )
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async rejectApplication(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { adminComment } = req.body as { adminComment?: string };
+      res.json(
+        await tenantApplicationService.reject(
+          req.params.id as string,
+          req.platformUser!.userId,
+          adminComment
+        )
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async archiveApplication(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      res.json(
+        await tenantApplicationService.archive(req.params.id as string, req.platformUser!.userId)
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async listLegalPages(_req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      res.json({ items: await platformLegalService.listAdmin() });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updateLegalPage(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      res.json(
+        await platformLegalService.updatePage(req.params.pageType as string, req.body)
+      );
     } catch (err) {
       next(err);
     }

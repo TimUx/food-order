@@ -1,24 +1,28 @@
+import { useEffect, useState } from 'react';
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  Container,
-  IconButton,
+  AppBar, Toolbar, Typography, Button, Box, Container, IconButton, Drawer, List, ListItemButton, ListItemText,
 } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { Link, useLocation } from 'react-router-dom';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { usePlatform } from '@/contexts/PlatformProvider';
+import { api } from '@/services/api';
+import type { PlatformLegalLink } from '@/types/tenant';
 
 const NAV_ITEMS = [
   { label: 'Start', path: '/' },
   { label: 'Funktionen', path: '/funktionen' },
+  { label: 'Screenshots', path: '/screenshots' },
+  { label: 'Open Source', path: '/open-source' },
+  { label: 'Über das Projekt', path: '/ueber-das-projekt' },
+  { label: 'Über den Entwickler', path: '/ueber-den-entwickler' },
+  { label: 'Für Vereine', path: '/fuer-vereine' },
+  { label: 'Mandant beantragen', path: '/mandant-beantragen' },
+  { label: 'FAQ', path: '/faq' },
+  { label: 'Kontakt', path: '/kontakt' },
   { label: 'Dokumentation', path: '/dokumentation' },
-  { label: 'Download', path: '/download' },
-  { label: 'Status', path: '/plattform-status' },
 ];
 
 interface PlatformPublicLayoutProps {
@@ -29,11 +33,28 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
   const { mode, toggleMode } = useThemeMode();
   const { platform } = usePlatform();
   const location = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [legalLinks, setLegalLinks] = useState<PlatformLegalLink[]>([]);
+
+  useEffect(() => {
+    api.getPlatformLegalLinks()
+      .then((r) => setLegalLinks(r.items))
+      .catch(() => setLegalLinks([]));
+  }, []);
 
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="fixed" elevation={1} color="primary">
         <Toolbar>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={() => setDrawerOpen(true)}
+            sx={{ mr: 1, display: { md: 'none' } }}
+            aria-label="Navigation öffnen"
+          >
+            <MenuIcon />
+          </IconButton>
           <Typography
             component={Link}
             to="/"
@@ -42,7 +63,7 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
           >
             {platform.name}
           </Typography>
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, mr: 2 }}>
+          <Box sx={{ display: { xs: 'none', lg: 'flex' }, gap: 0.5, mr: 2, flexWrap: 'wrap' }}>
             {NAV_ITEMS.map((item) => (
               <Button
                 key={item.path}
@@ -64,20 +85,55 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
           </IconButton>
         </Toolbar>
       </AppBar>
+
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <Box sx={{ width: 280, pt: 1 }} role="navigation" aria-label="Hauptnavigation">
+          <List>
+            {NAV_ITEMS.map((item) => (
+              <ListItemButton
+                key={item.path}
+                component={Link}
+                to={item.path}
+                selected={location.pathname === item.path}
+                onClick={() => setDrawerOpen(false)}
+              >
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+
       <Toolbar />
       <Box component="main" sx={{ flexGrow: 1 }}>
         {children}
       </Box>
-      <Box component="footer" sx={{ py: 2, borderTop: 1, borderColor: 'divider' }}>
+      <Box component="footer" sx={{ py: 3, borderTop: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
         <Container maxWidth="md">
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
-            <Typography component={Link} to="/impressum" variant="body2" color="text.secondary" sx={{ textDecoration: 'none' }}>
-              Impressum
+          {platform.footerText && (
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
+              {platform.footerText}
             </Typography>
-            <Typography component={Link} to="/datenschutz" variant="body2" color="text.secondary" sx={{ textDecoration: 'none' }}>
-              Datenschutz
-            </Typography>
-          </Box>
+          )}
+          {legalLinks.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+              {legalLinks.map((link) => (
+                <Typography
+                  key={link.slug}
+                  component={Link}
+                  to={`/rechtliches/${link.slug}`}
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                >
+                  {link.title}
+                </Typography>
+              ))}
+            </Box>
+          )}
+          <Typography variant="caption" color="text.secondary" display="block" align="center" sx={{ mt: 2 }}>
+            © {new Date().getFullYear()} {platform.name}
+          </Typography>
         </Container>
       </Box>
     </Box>

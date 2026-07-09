@@ -142,3 +142,52 @@ export const idParamSchema = z.object({
 export const tokenParamSchema = z.object({
   token: z.string().regex(/^[a-f0-9]{64}$/, 'Ungültiger Bestell-Token'),
 });
+
+export const submitTenantApplicationSchema = z.object({
+  organization: z.string().min(2, 'Organisation erforderlich').max(200),
+  organizationType: z.string().min(2, 'Organisationstyp erforderlich').max(100),
+  contactName: z.string().min(2, 'Ansprechpartner erforderlich').max(120),
+  street: z.string().min(2, 'Straße erforderlich').max(200),
+  postalCode: z.string().min(3, 'PLZ erforderlich').max(20),
+  city: z.string().min(2, 'Ort erforderlich').max(100),
+  country: z.string().max(100).optional(),
+  email: z.string().email('Ungültige E-Mail-Adresse'),
+  phone: z.string().max(40).optional(),
+  website: z.string().url('Ungültige URL').optional().or(z.literal('')),
+  memberCount: z.number().int().min(0).max(1_000_000).optional(),
+  eventsPerYear: z.number().int().min(0).max(10_000).optional(),
+  reason: z.string().min(20, 'Bitte ausführlicher begründen').max(5000),
+  desiredFeatures: z.string().min(10, 'Bitte gewünschte Funktionen angeben').max(3000),
+  freeTierJustification: z.string().min(20, 'Bitte Begründung angeben').max(3000),
+  plannedUsage: z.string().min(10, 'Geplante Nutzung angeben').max(3000),
+  notes: z.string().max(3000).optional(),
+  requestedSubdomain: z.string().min(3, 'Subdomain mind. 3 Zeichen').max(48).regex(/^[a-z0-9-]+$/i, 'Nur Buchstaben, Zahlen und Bindestriche'),
+  privacyAccepted: z.literal(true, { errorMap: () => ({ message: 'Datenschutzerklärung muss akzeptiert werden' }) }),
+  termsAccepted: z.literal(true, { errorMap: () => ({ message: 'Nutzungsbedingungen müssen akzeptiert werden' }) }),
+});
+
+export const updateTenantApplicationStatusSchema = z.object({
+  status: z.enum(['NEW', 'UNDER_REVIEW', 'CLARIFICATION', 'APPROVED', 'REJECTED', 'ARCHIVED']),
+  adminComment: z.string().max(5000).optional(),
+});
+
+export const approveTenantApplicationSchema = z.object({
+  createTenant: z.boolean().optional(),
+  adminComment: z.string().max(5000).optional(),
+});
+
+export const updatePlatformLegalPageSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  slug: z.string().min(1).max(100).optional(),
+  enabled: z.boolean().optional(),
+  published: z.boolean().optional(),
+  contentHtml: z.string().max(200_000).optional(),
+});
+
+export const legalSlugParamSchema = z.object({
+  slug: z.string().min(1).max(100),
+});
+
+export const applicationIdParamSchema = z.object({
+  id: z.string().uuid(),
+});

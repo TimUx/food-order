@@ -10,10 +10,14 @@ const TENANT_OPTIONAL_PATHS = new Set([
   '/api/health',
   '/health',
   '/api/public/routing-config',
+  '/api/public/platform',
+  '/api/public/platform/legal-links',
+  '/api/public/tenant-applications',
 ]);
 
 function requiresTenantContext(path: string): boolean {
   if (TENANT_OPTIONAL_PATHS.has(path)) return false;
+  if (path.startsWith('/api/public/platform/legal/')) return false;
   if (PLATFORM_ONLY_PREFIXES.some((prefix) => path.startsWith(prefix))) return false;
   return path.startsWith('/api/') || path.startsWith('/uploads/');
 }

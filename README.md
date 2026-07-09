@@ -16,9 +16,20 @@ Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisat
 | **Mandant (Tenant)** | Eigenständiger Veranstalter mit Branding, Speisekarte, Bestellungen, Team |
 | **Module** | Pro Mandant aktivierbar: Zahlung, Benachrichtigungen, Rechtliches, Druck |
 | **Routing** | Subdomain (`feuerwehr.fest.example`) oder Pfad-Präfix (`fest.example/feuerwehr`) |
+| **Homepage** | Öffentliche Marketing-Seite unter `www.<domain>` bzw. Apex-Domain – Landingpage, FAQ, Mandantenbewerbung |
 | **Isolation** | Shared Database mit `tenantId`; APIs, JWT, Uploads und WebSockets mandantengebunden |
 
 Technische Details: [Tenant Context ADR](docs/architecture/021-tenant-context.md) · [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) · [Security](SECURITY.md)
+
+### Öffentliche Homepage & Routing
+
+| Host | Bereich |
+|------|---------|
+| `www.festmanager.org` | Öffentliche Homepage (Landingpage, FAQ, Bewerbung) |
+| `festmanager.org` | Plattform (Marketing + `/platform` Administration) |
+| `<tenant>.festmanager.org` | Mandantenplattform des Veranstalters |
+
+Die Homepage ist Teil derselben React-Anwendung – kein separates Projekt. Rechtliche Seiten werden über `/platform/rechtliches` gepflegt und nur bei veröffentlichtem Inhalt verlinkt.
 
 ## Funktionen auf einen Blick
 

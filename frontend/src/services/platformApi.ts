@@ -11,6 +11,45 @@ export interface PlatformUser {
   mfaEnabled?: boolean;
 }
 
+export interface TenantApplication {
+  id: string;
+  organization: string;
+  organizationType: string;
+  contactName: string;
+  street: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  email: string;
+  phone: string | null;
+  website: string | null;
+  memberCount: number | null;
+  eventsPerYear: number | null;
+  reason: string;
+  desiredFeatures: string;
+  freeTierJustification: string;
+  plannedUsage: string;
+  notes: string | null;
+  requestedSubdomain: string;
+  status: string;
+  adminComment: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  tenantId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformLegalPageAdmin {
+  id: string;
+  pageType: string;
+  title: string;
+  slug: string;
+  enabled: boolean;
+  published: boolean;
+  contentHtml: string;
+}
+
 export interface PlatformTenant {
   id: string;
   name: string;
@@ -150,6 +189,52 @@ export const platformApi = {
 
   getBackups: (token: string) =>
     platformRequest<Record<string, unknown>>('/backups', {}, token),
+
+  listApplications: (token: string, params?: { search?: string; status?: string; page?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.search) q.set('search', params.search);
+    if (params?.status) q.set('status', params.status);
+    if (params?.page) q.set('page', String(params.page));
+    const qs = q.toString();
+    return platformRequest<{ items: TenantApplication[]; total: number }>(
+      `/applications${qs ? `?${qs}` : ''}`,
+      {},
+      token
+    );
+  },
+
+  getApplication: (token: string, id: string) =>
+    platformRequest<TenantApplication>(`/applications/${id}`, {}, token),
+
+  updateApplicationStatus: (token: string, id: string, status: string, adminComment?: string) =>
+    platformRequest<TenantApplication>(`/applications/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, adminComment }),
+    }, token),
+
+  approveApplication: (token: string, id: string, options?: { createTenant?: boolean; adminComment?: string }) =>
+    platformRequest<{ application: TenantApplication; tenantId?: string }>(`/applications/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(options ?? {}),
+    }, token),
+
+  rejectApplication: (token: string, id: string, adminComment?: string) =>
+    platformRequest<TenantApplication>(`/applications/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ adminComment }),
+    }, token),
+
+  archiveApplication: (token: string, id: string) =>
+    platformRequest<TenantApplication>(`/applications/${id}/archive`, { method: 'POST' }, token),
+
+  listLegalPages: (token: string) =>
+    platformRequest<{ items: PlatformLegalPageAdmin[] }>('/legal-pages', {}, token),
+
+  updateLegalPage: (token: string, pageType: string, data: Partial<PlatformLegalPageAdmin>) =>
+    platformRequest<PlatformLegalPageAdmin>(`/legal-pages/${pageType}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, token),
 };
 
 export const PLATFORM_TOKEN_KEY = 'fm_platform_token';

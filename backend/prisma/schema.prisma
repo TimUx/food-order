@@ -32,6 +32,15 @@ enum TenantStatus {
   ARCHIVED
 }
 
+enum TenantApplicationStatus {
+  NEW
+  UNDER_REVIEW
+  CLARIFICATION
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
 /// Plattformadministrator – gehört keinem Mandanten
 model PlatformUser {
   id           String                 @id @default(uuid())
@@ -405,4 +414,58 @@ model PlatformAuditLog {
   @@index([tenantId, createdAt])
   @@index([createdAt])
   @@map("platform_audit_log")
+}
+
+/// Mandantenbewerbung über die öffentliche Homepage (Plattformebene)
+model TenantApplication {
+  id                    String                  @id @default(uuid())
+  organization          String
+  organizationType      String                  @map("organization_type")
+  contactName           String                  @map("contact_name")
+  street                String
+  postalCode            String                  @map("postal_code")
+  city                  String
+  country               String                  @default("Deutschland")
+  email                 String
+  phone                 String?
+  website               String?
+  memberCount           Int?                    @map("member_count")
+  eventsPerYear         Int?                    @map("events_per_year")
+  reason                String
+  desiredFeatures       String                  @map("desired_features")
+  freeTierJustification String                  @map("free_tier_justification")
+  plannedUsage          String                  @map("planned_usage")
+  notes                 String?
+  requestedSubdomain    String                  @map("requested_subdomain")
+  status                TenantApplicationStatus @default(NEW)
+  adminComment          String?                 @map("admin_comment")
+  reviewedBy            String?                 @map("reviewed_by")
+  reviewedAt            DateTime?               @map("reviewed_at")
+  tenantId              String?                 @map("tenant_id")
+  privacyAccepted       Boolean                 @default(true) @map("privacy_accepted")
+  termsAccepted         Boolean                 @default(true) @map("terms_accepted")
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+
+  @@unique([requestedSubdomain])
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@map("tenant_applications")
+}
+
+/// Rechtliche Seiten auf Plattformebene (www / apex)
+model PlatformLegalPage {
+  id          String   @id @default(uuid())
+  pageType    String   @map("page_type")
+  title       String
+  slug        String   @unique
+  enabled     Boolean  @default(true)
+  published   Boolean  @default(false)
+  contentHtml String   @map("content_html") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([pageType])
+  @@map("platform_legal_pages")
 }

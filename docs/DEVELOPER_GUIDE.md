@@ -63,6 +63,18 @@ ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1–
 | `GET/POST/PUT/DELETE /api/platform/tenants` | Mandantenverwaltung |
 | `POST /api/platform/tenants/:id/impersonate` | Mandanten-Impersonation |
 | `GET/PUT /api/platform/settings` | Plattformsettings |
+| `GET /api/platform/applications` | Mandantenbewerbungen auflisten |
+| `POST /api/platform/applications/:id/approve` | Bewerbung genehmigen (+ optional Mandant anlegen) |
+| `GET/PUT /api/platform/legal-pages/:pageType` | Rechtliche Plattformseiten verwalten |
+
+Öffentliche Homepage-APIs (ohne Mandanten-Kontext):
+
+| Endpoint | Beschreibung |
+|----------|--------------|
+| `GET /api/public/platform` | Plattforminfo inkl. Kontakt, `registrationEnabled` |
+| `GET /api/public/platform/legal-links` | Veröffentlichte Rechtslinks |
+| `GET /api/public/platform/legal/:slug` | Rechtsseiten-Inhalt |
+| `POST /api/public/tenant-applications` | Mandantenbewerbung einreichen |
 
 Plattform-APIs erfordern JWT mit `scope: "platform"`. Mandanten-APIs lehnen Plattform-Tokens ab.
 
@@ -88,7 +100,8 @@ Beim App-Start: `ensureDefaultTenant()` → `migrateMultiTenantSchema()` (idempo
 | Endpoint | Beschreibung |
 |----------|--------------|
 | `GET /api/public/tenant` | Öffentliche Mandantendaten (host-aufgelöst) |
-| `GET /api/public/platform` | Plattforminformationen |
+| `GET /api/public/platform` | Plattforminformationen (Kontakt, Bewerbungen, SEO) |
+| `POST /api/public/tenant-applications` | Mandantenbewerbung |
 
 ### Backend-Nutzung in Modulen
 

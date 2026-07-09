@@ -7,6 +7,13 @@ import {
 import { PLATFORM_PERMISSIONS } from '../../platform/platformPermissions';
 import { platformAuthController, platformController } from '../../controllers/platformController';
 import { loginRateLimiter } from '../../middleware/rateLimit';
+import { validateBody, validateParams } from '../../middleware/validation';
+import {
+  updateTenantApplicationStatusSchema,
+  approveTenantApplicationSchema,
+  updatePlatformLegalPageSchema,
+  applicationIdParamSchema,
+} from '../../validation/schemas';
 
 const router = Router();
 
@@ -130,6 +137,58 @@ router.post(
   '/users',
   requirePlatformPermission(PLATFORM_PERMISSIONS.USERS_MANAGE, PLATFORM_PERMISSIONS.ALL),
   platformController.createPlatformUser
+);
+
+// Mandantenbewerbungen
+router.get(
+  '/applications',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_VIEW, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  platformController.listApplications
+);
+router.get(
+  '/applications/:id',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_VIEW, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateParams(applicationIdParamSchema),
+  platformController.getApplication
+);
+router.patch(
+  '/applications/:id/status',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_UPDATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateParams(applicationIdParamSchema),
+  validateBody(updateTenantApplicationStatusSchema),
+  platformController.updateApplicationStatus
+);
+router.post(
+  '/applications/:id/approve',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_CREATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateParams(applicationIdParamSchema),
+  validateBody(approveTenantApplicationSchema),
+  platformController.approveApplication
+);
+router.post(
+  '/applications/:id/reject',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_UPDATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateParams(applicationIdParamSchema),
+  platformController.rejectApplication
+);
+router.post(
+  '/applications/:id/archive',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_UPDATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateParams(applicationIdParamSchema),
+  platformController.archiveApplication
+);
+
+// Rechtliche Seiten (Plattform)
+router.get(
+  '/legal-pages',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  platformController.listLegalPages
+);
+router.put(
+  '/legal-pages/:pageType',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  validateBody(updatePlatformLegalPageSchema),
+  platformController.updateLegalPage
 );
 
 export default router;

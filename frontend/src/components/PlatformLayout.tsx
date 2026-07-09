@@ -12,6 +12,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import ArticleIcon from '@mui/icons-material/Article';
 import BackupIcon from '@mui/icons-material/Backup';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import GavelIcon from '@mui/icons-material/Gavel';
 import MemoryIcon from '@mui/icons-material/Memory';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePlatformAuth } from '@/contexts/PlatformAuthContext';
@@ -22,11 +24,13 @@ const DRAWER_WIDTH = 260;
 const NAV = [
   { path: '/platform', label: 'Dashboard', icon: <DashboardIcon /> },
   { path: '/platform/mandanten', label: 'Mandanten', icon: <BusinessIcon /> },
+  { path: '/platform/bewerbungen', label: 'Mandantenanträge', icon: <AssignmentIcon /> },
   { path: '/platform/benutzer', label: 'Benutzer', icon: <PeopleIcon /> },
   { path: '/platform/monitoring', label: 'Monitoring', icon: <MemoryIcon /> },
   { path: '/platform/health', label: 'Health', icon: <MonitorHeartIcon /> },
   { path: '/platform/logs', label: 'Logs', icon: <ArticleIcon /> },
   { path: '/platform/backups', label: 'Backups', icon: <BackupIcon /> },
+  { path: '/platform/rechtliches', label: 'Rechtliches', icon: <GavelIcon /> },
   { path: '/platform/einstellungen', label: 'Einstellungen', icon: <SettingsIcon /> },
 ];
 

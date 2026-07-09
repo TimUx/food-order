@@ -15,11 +15,26 @@ Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf all
 | Login | `/platform/login` | Separater Einstieg für Plattformadministratoren |
 | Dashboard | `/platform` | Kennzahlen, Systemstatus |
 | Mandanten | `/platform/mandanten` | Anlegen, Bearbeiten, Sperren, Impersonation |
-| Einstellungen | `/platform/einstellungen` | Plattformweite Konfiguration |
+| Mandantenanträge | `/platform/bewerbungen` | Bewerbungen prüfen, genehmigen, Mandant anlegen |
+| Rechtliches | `/platform/rechtliches` | Impressum, Datenschutz, Nutzungsbedingungen (Plattformebene) |
+| Einstellungen | `/platform/einstellungen` | Plattformweite Konfiguration inkl. Bewerbungen & Kontakt |
 | Monitoring | `/platform/monitoring` | CPU, RAM, Speicher |
 | Logs | `/platform/logs` | Audit-Log mit Mandanten-Filter |
 
 **Impersonation:** Plattformadmins können sich temporär als Mandanten-Administrator anmelden. Ein gelbes Banner zeigt den aktiven Impersonation-Modus an.
+
+### Öffentliche Homepage & Mandantenbewerbungen
+
+Die Marketing-Homepage ist unter der Apex-Domain bzw. `www.<domain>` erreichbar. Bewerbungen können über `/mandant-beantragen` eingereicht werden, sofern `platform.registration.enabled` aktiv ist.
+
+**Workflow:**
+
+1. Antragsteller füllt das Formular aus (Organisation, Kontakt, Subdomain, Begründung).
+2. System speichert den Antrag und versendet E-Mails an Plattformadministratoren und den Antragsteller (sofern SMTP konfiguriert).
+3. Plattformadministrator prüft unter `/platform/bewerbungen` – Status: Neu, In Prüfung, Rückfrage, Genehmigt, Abgelehnt, Archiviert.
+4. Bei Genehmigung kann optional automatisch ein Mandant mit der gewünschten Subdomain angelegt werden.
+
+**Rechtliche Seiten:** Unter `/platform/rechtliches` pflegen Sie Impressum, Datenschutz und Nutzungsbedingungen. Es werden keine Mustertexte vorgegeben – Links erscheinen auf der Homepage nur bei veröffentlichtem Inhalt.
 
 ---
 
