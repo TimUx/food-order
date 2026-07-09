@@ -1,7 +1,7 @@
 import { prisma } from '../config/database';
 import { Prisma, StatusCode } from '@prisma/client';
 import crypto from 'crypto';
-import { requireTenantId, tenantWhere, withTenantId } from '../platform/tenant/tenantScope';
+import { requireTenantId, tenantWhere } from '../platform/tenant/tenantScope';
 
 export const userRepository = {
   findByEmail: (email: string) =>

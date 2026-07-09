@@ -2,11 +2,23 @@
 
 Moderne Open-Source-Plattform für Verkauf, Bestellung und Organisation von Veranstaltungen – mit Vorausbestellungen, Branding des Veranstalters, Echtzeit-Updates und PWA-Unterstützung.
 
-> **Version 2.0:** FestManager wird zu einer mandantenfähigen Plattform weiterentwickelt. Phase 0 (Architektur) ist abgeschlossen – siehe [Multi-Tenant ADRs](docs/architecture/README.md#version-20--multi-tenant). Die produktive Multi-Tenant-Unterstützung folgt in den nächsten Implementierungsphasen auf dem Branch `feature/v2-multi-tenant-platform`.
+> **Version 2.0.0** — FestManager ist eine **mandantenfähige Multi-Tenant-Plattform**. Mehrere Veranstalter (Mandanten) teilen sich eine Installation; jeder Mandant hat eigenes Branding, eigene Daten und optionale Module. Plattformadministration unter `/platform`. Architektur: [Multi-Tenant ADRs](docs/architecture/README.md#version-20--multi-tenant).
 
 Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisationen, Sport- und Musikvereine, Schulen, Firmen, Kommunen, Foodtrucks und private Feste.
 
 ![Bestellseite](docs/screenshots/01-bestellseite-monitor.png)
+
+## Multi-Tenant-Plattform (v2.0)
+
+| Ebene | Beschreibung |
+|-------|--------------|
+| **Plattform** | Zentrale Verwaltung: Mandanten anlegen, Monitoring, globale Einstellungen (`/platform`) |
+| **Mandant (Tenant)** | Eigenständiger Veranstalter mit Branding, Speisekarte, Bestellungen, Team |
+| **Module** | Pro Mandant aktivierbar: Zahlung, Benachrichtigungen, Rechtliches, Druck |
+| **Routing** | Subdomain (`feuerwehr.fest.example`) oder Pfad-Präfix (`fest.example/feuerwehr`) |
+| **Isolation** | Shared Database mit `tenantId`; APIs, JWT, Uploads und WebSockets mandantengebunden |
+
+Technische Details: [Tenant Context ADR](docs/architecture/021-tenant-context.md) · [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) · [Security](SECURITY.md)
 
 ## Funktionen auf einen Blick
 
@@ -182,7 +194,10 @@ Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prism
 | [Developer Guide](docs/DEVELOPER_GUIDE.md) | Entwickler |
 | [Roadmap](docs/ROADMAP.md) | Stabil vs. geplant |
 | [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) | Entwickler (Module, Payment, PayableResource) |
-| [Architektur & ADRs](docs/architecture/README.md) | Entwickler (ADR, Analyse, Migrationsplan, **v2.0 Multi-Tenant**) |
+| [Architektur & ADRs](docs/architecture/README.md) | Entwickler (ADR, Multi-Tenant v2.0) |
+| [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) | Multi-Tenant-Betrieb (Docker, Traefik) |
+| [Performance Guide](docs/architecture/PERFORMANCE_GUIDE.md) | Lasttests, Monitoring, Skalierung |
+| [Notification Guide](docs/architecture/NOTIFICATION_GUIDE.md) | Mandanten-SMTP, Branding, Webhooks |
 
 ## Technologie-Stack
 

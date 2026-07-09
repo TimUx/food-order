@@ -47,7 +47,7 @@ export function PlatformSettingsPage() {
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={2}>
           {SETTING_FIELDS.map((f) => (
-            <Grid item xs={12} md={6} key={f.key}>
+            <Grid size={{ xs: 12, md: 6 }} key={f.key}>
               <TextField
                 fullWidth
                 label={f.label}

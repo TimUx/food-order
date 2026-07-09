@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Container, Typography } from '@mui/material';
 import { PlatformPublicLayout } from '@/components/PlatformPublicLayout';
 import { BrandingHead } from '@/components/BrandingHead';

@@ -21,12 +21,12 @@ export function PlatformMonitoringPage() {
     <Box>
       <Typography variant="h4" gutterBottom>Monitoring</Typography>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={4}><MetricPaper title="CPU Kerne" value={String(cpu?.cores ?? '–')} /></Grid>
-        <Grid item xs={12} md={4}><MetricPaper title="RAM gesamt (MB)" value={String(memory?.totalMb ?? '–')} /></Grid>
-        <Grid item xs={12} md={4}><MetricPaper title="RAM frei (MB)" value={String(memory?.freeMb ?? '–')} /></Grid>
-        <Grid item xs={12} md={4}><MetricPaper title="Uploads (MB)" value={String((data.storage as Record<string, unknown>)?.uploadsMb ?? '–')} /></Grid>
-        <Grid item xs={12} md={4}><MetricPaper title="DB verbunden" value={(data.database as Record<string, unknown>)?.connected ? 'Ja' : 'Nein'} /></Grid>
-        <Grid item xs={12} md={4}><MetricPaper title="Docker" value={(data.docker as Record<string, unknown>)?.detected ? 'Ja' : 'Nein'} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><MetricPaper title="CPU Kerne" value={String(cpu?.cores ?? '–')} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><MetricPaper title="RAM gesamt (MB)" value={String(memory?.totalMb ?? '–')} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><MetricPaper title="RAM frei (MB)" value={String(memory?.freeMb ?? '–')} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><MetricPaper title="Uploads (MB)" value={String((data.storage as Record<string, unknown>)?.uploadsMb ?? '–')} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><MetricPaper title="DB verbunden" value={(data.database as Record<string, unknown>)?.connected ? 'Ja' : 'Nein'} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><MetricPaper title="Docker" value={(data.docker as Record<string, unknown>)?.detected ? 'Ja' : 'Nein'} /></Grid>
       </Grid>
     </Box>
   );

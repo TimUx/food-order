@@ -1,4 +1,4 @@
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Button, Container, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 export function PlatformNotFoundPage() {

@@ -26,19 +26,19 @@ export function PlatformDashboardPage() {
     <Box>
       <Typography variant="h4" gutterBottom>Dashboard</Typography>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Mandanten gesamt" value={tenants?.total ?? 0} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Aktive Mandanten" value={tenants?.active ?? 0} color="success" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Deaktiviert" value={tenants?.suspended ?? 0} color="warning" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Bestellungen heute" value={(data.orders as Record<string, number>)?.today ?? 0} />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Plattformstatus</Typography>
             <Chip
@@ -48,12 +48,12 @@ export function PlatformDashboardPage() {
             <Typography variant="body2" sx={{ mt: 1 }}>Version: {String(platform?.version ?? '–')}</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>System</Typography>
             <Typography variant="body2">RAM: {(system?.memoryMb as Record<string, number>)?.rss ?? '–'} MB</Typography>
             <Typography variant="body2">Uptime: {Math.floor(Number(system?.uptimeSeconds ?? 0) / 60)} Min.</Typography>
-            <Typography variant="body2">CPUs: {system?.cpus ?? '–'}</Typography>
+            <Typography variant="body2">CPUs: {String(system?.cpus ?? '–')}</Typography>
           </Paper>
         </Grid>
       </Grid>

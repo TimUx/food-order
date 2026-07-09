@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { RoleName } from '@prisma/client';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
-import { requireTenantId, tenantWhere } from '../platform/tenant/tenantScope';
+import { tenantWhere } from '../platform/tenant/tenantScope';
 import { prisma } from '../config/database';
 
 function mapUser(user: {

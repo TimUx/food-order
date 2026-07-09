@@ -7,7 +7,6 @@ import type {
   TenantSettingsRecord,
   UpdateTenantInput,
 } from './types';
-import { DEFAULT_TENANT_SETTINGS } from './types';
 import { TenantArchivedError, TenantInactiveError, TenantNotFoundError } from './errors';
 
 export class TenantService {

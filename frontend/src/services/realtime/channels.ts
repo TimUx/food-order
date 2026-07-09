@@ -133,7 +133,12 @@ export function subscribeTenantUpdates(
       activity: 'idle',
       poll: async () => {
         const data = await mapTenant();
-        return { data, etag: undefined };
+        return {
+          changed: true,
+          etag: data ? `tenant-${data.slug}` : 'tenant-missing',
+          serverTime: new Date().toISOString(),
+          data,
+        };
       },
       onPollData: (data) => {
         if (data) onData(data as import('@/types/tenant').TenantPublicData);

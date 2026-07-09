@@ -1,4 +1,3 @@
-import { prisma } from '../config/database';
 import { config } from '../config';
 import type { TenantModule } from '@prisma/client';
 import { tenantModuleRepository } from '../repositories/tenantModuleRepository';

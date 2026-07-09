@@ -16,7 +16,7 @@ export const config = {
   modulesDir: process.env.MODULES_DIR || path.join(process.cwd(), 'modules'),
   pluginsDir: process.env.PLUGINS_DIR || path.join(process.cwd(), 'plugins'),
   modulesDistDir: process.env.MODULES_DIST_DIR || path.join(process.cwd(), 'dist', 'modules'),
-  coreVersion: process.env.CORE_VERSION || '1.0.0',
+  coreVersion: process.env.CORE_VERSION || '2.0.0',
   multiTenant: {
     enabled: process.env.MULTI_TENANT_ENABLED === 'true',
     defaultTenantSlug: process.env.DEFAULT_TENANT_SLUG || 'default',

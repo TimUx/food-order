@@ -1,4 +1,5 @@
 import os from 'os';
+import fs from 'fs';
 import { prisma } from '../config/database';
 import { config } from '../config';
 import type { PlatformContext } from './tenant/PlatformContext';
@@ -147,7 +148,7 @@ export class PlatformMonitoringService {
 
 function fsExists(p: string): boolean {
   try {
-    require('fs').accessSync(p);
+    fs.accessSync(p);
     return true;
   } catch {
     return false;

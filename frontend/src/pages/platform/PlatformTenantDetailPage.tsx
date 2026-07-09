@@ -48,7 +48,7 @@ export function PlatformTenantDetailPage() {
       <Chip label={tenant.status} sx={{ mb: 2 }} />
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Allgemein</Typography>
             <InfoRow label="Slug" value={tenant.slug} />
@@ -61,7 +61,7 @@ export function PlatformTenantDetailPage() {
             <InfoRow label="Währung" value={tenant.currency} />
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>Statistik</Typography>
             <InfoRow label="Aktive Benutzer" value={String(tenant.stats?.activeUsers ?? 0)} />

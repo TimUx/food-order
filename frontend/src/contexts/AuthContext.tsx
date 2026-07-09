@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { User } from '@/types';
 import { api, configureAuthRefresh } from '@/services/api';
 import { useRouting } from '@/contexts/RoutingProvider';
-import { scopedStorageKey, readScopedItem, writeScopedItem, removeScopedItem } from '@/utils/storageScope';
+import { readScopedItem, writeScopedItem, removeScopedItem } from '@/utils/storageScope';
 
 interface AuthContextType {
   user: User | null;

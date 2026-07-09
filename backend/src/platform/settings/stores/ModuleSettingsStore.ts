@@ -1,8 +1,6 @@
-import { prisma } from '../../../config/database';
 import { moduleIdFromNamespace } from '../SettingsNamespaces';
 import type { SettingsStore } from '../types';
 import { tenantModuleRepository } from '../../../repositories/tenantModuleRepository';
-import { requireTenantId } from '../../tenant/tenantScope';
 
 export class ModuleSettingsStore implements SettingsStore {
   supports(namespace: string): boolean {

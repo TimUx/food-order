@@ -3,6 +3,45 @@
 Alle wesentlichen Aenderungen an **FestManager** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.0.0 - 2026-07-09
+
+### Neu — Multi-Tenant-Plattform
+
+- **Mandantenfähige Architektur:** Shared Database mit `tenantId`, `TenantContext` und `PlatformContext` (ADR-020–027).
+- **Plattformadministration:** Dashboard, Mandantenverwaltung, Monitoring, globale Einstellungen unter `/platform`.
+- **Tenant-Routing:** Subdomain- und Pfad-basierte Auflösung via `TenantResolver`; mandantenspezifisches Branding im Frontend.
+- **Mandantenfähige Module:** Payment, Notifications, Legal, Printer mit tenant-scoped Settings und Daten.
+- **Mandanten-Benachrichtigungen:** Eigener SMTP pro Mandant, Branding in Templates, Delivery-Logging (ADR-028).
+- **Deployment:** Docker Compose mit Traefik, Wildcard-TLS, mandantenfähiger nginx-Konfiguration.
+
+### Verbessert
+
+- **Sicherheit:** Tenant-Isolation in APIs, JWT, Uploads, WebSockets; Host-Validation; Rate Limits (ADR-029).
+- **Performance:** DB-Indizes, Slow-Request-Logging, k6-Lasttests bis 250 VUs, Frontend Code Splitting (ADR-030).
+- **Monitoring:** Erweiterte `/api/health`, Platform-Monitoring mit System- und Socket-Metriken.
+- **OpenAPI:** Version 2.0.0, mandantenfähige API-Struktur dokumentiert.
+
+### Geaendert (Breaking)
+
+| Alt (v1.x) | Neu (v2.0) |
+|------------|------------|
+| Single-Tenant | Multi-Tenant — Mandant aus Host/Pfad erforderlich |
+| Keine Plattform-Admin-UI | `/platform` für Plattformadministration |
+| Globale Settings | Plattform- vs. Mandanteneinstellungen getrennt |
+| `CORE_VERSION` 1.5.0 | `CORE_VERSION` 2.0.0 |
+
+### Migration
+
+- Bestehende Single-Tenant-Installationen: Daten werden beim Start in den Default-Mandanten migriert (`migrateTenantSchema`).
+- Siehe [Migrationsplan](docs/architecture/MIGRATION_PLAN.md) und Phase-Abschlussberichte in `docs/architecture/`.
+
+### Dokumentation
+
+- README, ROADMAP, SECURITY, Deployment-, Performance- und Notification-Guides aktualisiert.
+- 10 Phase-Abschlussberichte (Phase 0–10) und ADRs 020–030.
+
+---
+
 ## 1.5.0 - 2026-07-09
 
 ### Geaendert (Rebranding)

@@ -1,5 +1,4 @@
-import { Box, Button, Container, Typography } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Container, Typography, Button } from '@mui/material';
 import { useRouting } from '@/contexts/RoutingProvider';
 
 export function TenantNotFoundPage() {

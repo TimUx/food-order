@@ -2,7 +2,7 @@
 
 Technische Architektur der FestManager-Plattform – Architecture Decision Records (ADRs), Projektanalyse und Migrationsplan.
 
-> **Stand:** Plattform v2.0 Phase 0 – Multi-Tenant-Architektur definiert (keine produktive Implementierung). v1.4.0 – Payment, Notifications, Legal, metadata-first Admin-UI.
+> **Stand:** Plattform **v2.0.0** — Multi-Tenant produktionsbereit (Phasen 0–10 abgeschlossen). v1.4.0 – Payment, Notifications, Legal, metadata-first Admin-UI.
 
 ## Dokumente
 
@@ -57,6 +57,7 @@ Technische Architektur der FestManager-Plattform – Architecture Decision Recor
 | [PHASE_7_COMPLETION_REPORT.md](./PHASE_7_COMPLETION_REPORT.md) | Abschlussbericht Phase 7 (Notifications) |
 | [PHASE_8_COMPLETION_REPORT.md](./PHASE_8_COMPLETION_REPORT.md) | Abschlussbericht Phase 8 (Security) |
 | [PHASE_9_COMPLETION_REPORT.md](./PHASE_9_COMPLETION_REPORT.md) | Abschlussbericht Phase 9 (Performance) |
+| [PHASE_10_COMPLETION_REPORT.md](./PHASE_10_COMPLETION_REPORT.md) | Abschlussbericht Phase 10 (QA & Release) |
 | [030-performance-scalability.md](./030-performance-scalability.md) | ADR Performance & Skalierung |
 
 Siehe auch: [architecture-consolidation-report.md](../audits/architecture-consolidation-report.md) – Abschlussbericht mit Bewertung aller Kritikpunkte.

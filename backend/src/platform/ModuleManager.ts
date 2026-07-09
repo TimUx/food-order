@@ -73,7 +73,7 @@ export class ModuleManager {
     for (const manifest of manifests) {
       if (!this.deps.moduleRegistry.satisfiesCoreVersion(manifest)) {
         logger.warn(
-          `Modul ${manifest.id} benötigt Core ${manifest.minimumCoreVersion}, aktuell ${process.env.CORE_VERSION ?? '1.0.0'}`
+          `Modul ${manifest.id} benötigt Core ${manifest.minimumCoreVersion}, aktuell ${process.env.CORE_VERSION ?? '2.0.0'}`
         );
         continue;
       }

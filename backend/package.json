@@ -1,6 +1,6 @@
 {
   "name": "festmanager-backend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Backend für die FestManager-Plattform",
   "main": "dist/src/index.js",
   "scripts": {

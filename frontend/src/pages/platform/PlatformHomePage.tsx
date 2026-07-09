@@ -1,4 +1,4 @@
-import { Box, Button, Container, Stack, Typography } from '@mui/material';
+import { Button, Container, Stack, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { PlatformPublicLayout } from '@/components/PlatformPublicLayout';
 import { usePlatform } from '@/contexts/PlatformProvider';
