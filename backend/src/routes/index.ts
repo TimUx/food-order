@@ -275,7 +275,8 @@ router.get('/public/payment/methods', async (_req, res) => {
 
 router.get('/public/payment/checkout/:sessionId/status', paymentPublicRateLimiter, async (req, res, next) => {
   try {
-    const status = await getPaymentServiceRegistry().getPaymentStatus(req.params.sessionId);
+    const sessionId = String(req.params.sessionId);
+    const status = await getPaymentServiceRegistry().getPaymentStatus(sessionId);
     if (!status) {
       res.status(404).json({ error: 'Zahlung nicht gefunden' });
       return;
@@ -288,7 +289,8 @@ router.get('/public/payment/checkout/:sessionId/status', paymentPublicRateLimite
 
 router.post('/public/payment/checkout/:sessionId/retry', paymentPublicRateLimiter, async (req, res, next) => {
   try {
-    const result = await getPaymentServiceRegistry().retryCheckout(req.params.sessionId);
+    const sessionId = String(req.params.sessionId);
+    const result = await getPaymentServiceRegistry().retryCheckout(sessionId);
     if (!result) {
       res.status(404).json({ error: 'Zahlung kann nicht wiederholt werden' });
       return;

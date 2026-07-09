@@ -178,7 +178,7 @@ export const orderRepository = {
 
   findReadyOrders: (eventId: string) =>
     prisma.order.findMany({
-      where: tenantWhere({ eventId, status: 'READY' }),
+      where: tenantWhere({ eventId, status: StatusCode.READY }),
       orderBy: { readyAt: 'asc' },
     }),
 
@@ -235,7 +235,7 @@ export const orderRepository = {
 
   getStats: async (eventId: string) => {
     const orders = await prisma.order.findMany({
-      where: tenantWhere({ eventId, status: { not: 'CANCELLED' } }),
+      where: tenantWhere({ eventId, status: { not: StatusCode.CANCELLED } }),
       include: { items: { include: { foodItem: true } } },
     });
 

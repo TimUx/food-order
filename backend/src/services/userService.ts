@@ -83,7 +83,7 @@ export const userService = {
 
     if (data.role && data.role !== 'ADMIN' && user.role.name === 'ADMIN') {
       const adminCount = await prisma.user.count({
-        where: tenantWhere({ active: true, role: { name: 'ADMIN' } }),
+        where: tenantWhere({ active: true, role: { name: RoleName.ADMIN } }),
       });
       if (adminCount <= 1) {
         throw new AppError(400, 'Der letzte Administrator kann nicht herabgestuft werden');

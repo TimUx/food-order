@@ -455,8 +455,8 @@ export const orderService = {
     }
 
     const order = await orderRepository.create({
-      event: { connect: { id: eventId } },
-      ...(customerId ? { customer: { connect: { id: customerId } } } : {}),
+      eventId,
+      ...(customerId ? { customerId } : {}),
       orderNumber,
       orderDate,
       source,

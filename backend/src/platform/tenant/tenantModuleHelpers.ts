@@ -1,5 +1,5 @@
 import { tenantModuleRepository } from '../../repositories/tenantModuleRepository';
-import { optionalTenantId } from './tenant/tenantScope';
+import { optionalTenantId } from './tenantScope';
 
 /**
  * Prüft, ob ein Modul für den aktuellen Mandanten installiert und aktiviert ist.

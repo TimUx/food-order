@@ -52,7 +52,7 @@ export const foodItemService = {
       soldOut: data.soldOut ?? false,
       maxQuantity: data.maxQuantity,
       imageUrl: data.imageUrl,
-      event: { connect: { id: eventId } },
+      eventId,
     });
     const items = await foodItemRepository.findByEvent(eventId);
     emitFoodItemsUpdate(eventId, items);
