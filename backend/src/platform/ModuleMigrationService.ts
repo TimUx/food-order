@@ -31,8 +31,14 @@ export class ModuleMigrationService {
       const sql = fs.readFileSync(path.join(dir, file), 'utf-8');
       const statements = sql
         .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && !s.startsWith('--'));
+        .map((s) =>
+          s
+            .split('\n')
+            .filter((line) => !line.trim().startsWith('--'))
+            .join('\n')
+            .trim()
+        )
+        .filter((s) => s.length > 0);
 
       await prisma.$transaction(async (tx) => {
         for (const statement of statements) {
