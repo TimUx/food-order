@@ -20,15 +20,16 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "express": "^5.2.1",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "nodemailer": "^9.0.3",
     "socket.io": "^4.8.1",
+    "stripe": "^17.7.0",
     "uuid": "^11.1.0",
-    "zod": "^3.25.67",
-    "stripe": "^17.7.0"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
