@@ -70,7 +70,7 @@ export const api = {
   // Staff
   getEvents: (token: string) => request<Event[]>('/staff/events', {}, token),
   getActiveEvent: (token: string) => request<Event>('/staff/events/active', {}, token),
-  createEvent: (token: string, data: Partial<Event>) =>
+  createEvent: (token: string, data: CreateEventInput) =>
     request<Event>('/staff/events', { method: 'POST', body: JSON.stringify(data) }, token),
   updateEvent: (token: string, id: string, data: Partial<Event>) =>
     request<Event>(`/staff/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
@@ -347,7 +347,7 @@ export const api = {
     ),
 };
 
-import type { Event, FoodItem, Order, User, UserRole, DashboardStats, PickupBoardOrder, OrderStatus } from '@/types';
+import type { Event, CreateEventInput, FoodItem, Order, User, UserRole, DashboardStats, PickupBoardOrder, OrderStatus } from '@/types';
 
 export { ApiError };
 

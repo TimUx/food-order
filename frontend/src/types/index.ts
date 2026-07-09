@@ -26,6 +26,8 @@ export interface Event {
   isActive: boolean;
 }
 
+export type CreateEventInput = Partial<Event> & { activateOnCreate?: boolean };
+
 export interface FoodItem {
   id: string;
   eventId: string;

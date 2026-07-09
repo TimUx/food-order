@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Box, Typography, keyframes } from '@mui/material';
 import { api } from '@/services/api';
-import { getSocket, joinEvent, onOrderUpdated, configureSocketAuth, joinPickupBoard } from '@/services/socket';
+import { getSocket, onOrderUpdated, joinPickupBoard } from '@/services/socket';
 import { PickupBoardOrder } from '@/types';
 
 const fadeIn = keyframes`

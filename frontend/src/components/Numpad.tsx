@@ -1,4 +1,4 @@
-import { Box, Button, Grid } from '@mui/material';
+import { Button, Grid } from '@mui/material';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'] as const;
 
