@@ -89,7 +89,7 @@ cd backend
 cp ../.env.example .env
 # DATABASE_URL in .env anpassen
 npm install
-npx prisma migrate deploy
+npx prisma db push
 npm run seed
 npm run dev
 ```
@@ -133,16 +133,13 @@ Modul-spezifische Tabellen (z. B. `payment_sessions`) werden ausschließlich in 
 
 ### Datenbankschema
 
-Schema-Änderungen werden über versionierte Prisma-Migrationen ausgerollt:
+Schema-Änderungen werden direkt aus `schema.prisma` per `db push` synchronisiert:
 
 ```bash
-# Migrationen anwenden (Entwicklung & Produktion)
-npx prisma migrate deploy
+# Schema anwenden (Entwicklung & Docker-Start)
+npx prisma db push
 
-# Neue Migration nach Schema-Änderung (nur Entwicklung)
-npx prisma migrate dev --name beschreibung
-
-# Im Docker-Container startet das Backend automatisch mit prisma migrate deploy
+# Im Docker-Container startet das Backend automatisch mit prisma db push
 ```
 
 Betrieb (Backup vor Update): [OPERATIONS.md](OPERATIONS.md).

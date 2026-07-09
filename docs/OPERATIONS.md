@@ -55,7 +55,7 @@ Reihenfolge einhalten — so bleiben Daten erhalten:
 # 2. Neue Images holen
 docker compose pull
 
-# 3. Container neu starten (Migrationen laufen beim Backend-Start automatisch)
+# 3. Container neu starten (Schema-Sync läuft beim Backend-Start automatisch)
 docker compose up -d
 
 # 4. Prüfen
@@ -63,7 +63,7 @@ docker compose ps
 curl -s http://localhost:3001/api/health
 ```
 
-Das Backend wendet Datenbankänderungen mit `prisma migrate deploy` an — **kein** manuelles Schema-Kommando nötig.
+Das Backend synchronisiert das Datenbankschema mit `prisma db push` — **kein** manuelles Schema-Kommando nötig.
 
 Bei Fehlern nach dem Update: Abschnitt [Wiederherstellung aus Backup](#wiederherstellung-aus-backup).
 

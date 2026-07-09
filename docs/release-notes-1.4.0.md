@@ -35,7 +35,7 @@
 
 1. Backup erstellen: `./scripts/backup/postgres-backup.sh`
 2. Images aktualisieren: `docker compose pull && docker compose up -d`
-3. Datenbankmigrationen anwenden bzw. Backend mit aktuellem Prisma-Schema starten
+3. Backend startet neu und synchronisiert das Schema per `prisma db push`
 4. Health pruefen: `curl -s http://localhost:3001/api/health`
 
 ## Breaking Changes

@@ -55,7 +55,7 @@ docker compose exec backend npm run seed
 Standard-Images: `ghcr.io/timux/food-order/backend:latest` und `ghcr.io/timux/food-order/frontend:latest`  
 Tag ändern über `IMAGE_TAG` in `.env` (z. B. Release-Version).
 
-Das Backend wendet Datenbankänderungen beim Start automatisch per `prisma migrate deploy` an.
+Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prisma db push`.
 
 Ausführliche Checklisten, Backup und Wiederherstellung: **[OPERATIONS.md](OPERATIONS.md)**.
 

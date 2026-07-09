@@ -115,7 +115,7 @@ docker compose up -d
 docker compose exec backend npm run seed
 ```
 
-Das Backend wendet Datenbankänderungen beim Start automatisch per `prisma migrate deploy` an. Betrieb, Backup und Updates: [OPERATIONS.md](docs/OPERATIONS.md).
+Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prisma db push`. Betrieb, Backup und Updates: [OPERATIONS.md](docs/OPERATIONS.md).
 
 | Dienst | URL |
 |--------|-----|
