@@ -2,7 +2,7 @@
 
 Technische Architektur der FestManager-Plattform – Architecture Decision Records (ADRs), Projektanalyse und Migrationsplan.
 
-> **Stand:** Plattform v1.4.0 – Payment-Modul, Notifications-Modul, Legal-Modul, metadata-first Admin-UI.
+> **Stand:** Plattform v2.0 Phase 0 – Multi-Tenant-Architektur definiert (keine produktive Implementierung). v1.4.0 – Payment, Notifications, Legal, metadata-first Admin-UI.
 
 ## Dokumente
 
@@ -31,6 +31,20 @@ Technische Architektur der FestManager-Plattform – Architecture Decision Recor
 | 012 | [architecture-consolidation-review.md](./012-architecture-consolidation-review.md) | Accepted | Konsolidierungsreview: UX vs. Architektur |
 | 013 | [realtime-communication.md](./013-realtime-communication.md) | Accepted | RealtimeService, WS-Fallback, intelligentes Polling |
 | 014 | [legal-module.md](./014-legal-module.md) | Accepted | Optionales Modul für rechtliche Seiten, Footer-Links und Notification-Anbindung |
+| 020 | [multi-tenant-platform.md](./020-multi-tenant-platform.md) | Accepted (Phase 0) | Gesamtzielbild Multi-Tenant-Plattform |
+| 021 | [tenant-context.md](./021-tenant-context.md) | Accepted (Phase 0) | TenantContext & PlatformContext |
+| 022 | [platform-administration.md](./022-platform-administration.md) | Accepted (Phase 0) | Plattform-Administration |
+| 023 | [tenant-routing.md](./023-tenant-routing.md) | Accepted (Phase 0) | TenantResolver & Routing |
+| 024 | [tenant-data-model.md](./024-tenant-data-model.md) | Accepted (Phase 0) | Shared DB, Tenant-Entity, Migration |
+| 025 | [platform-settings.md](./025-platform-settings.md) | Accepted (Phase 0) | Plattform- vs. Mandanteneinstellungen |
+| 026 | [multi-tenant-security.md](./026-multi-tenant-security.md) | Accepted (Phase 0) | Sicherheitskonzept Multi-Tenant |
+| 027 | [multi-tenant-deployment.md](./027-multi-tenant-deployment.md) | Accepted (Phase 0) | Docker, Traefik, Wildcard-TLS |
+
+### Version 2.0 – Multi-Tenant
+
+| Dokument | Inhalt |
+|----------|--------|
+| [PHASE_0_COMPLETION_REPORT.md](./PHASE_0_COMPLETION_REPORT.md) | Abschlussbericht Phase 0 |
 
 Siehe auch: [architecture-consolidation-report.md](../audits/architecture-consolidation-report.md) – Abschlussbericht mit Bewertung aller Kritikpunkte.
 

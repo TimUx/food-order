@@ -2,19 +2,22 @@
 
 Technische Dokumentation für Entwickler, die an der FestManager-Plattform mitarbeiten oder sie erweitern.
 
+> **Version 2.0:** Multi-Tenant-Unterstützung wird mit v2.0 eingeführt. Phase 0 definiert die Architektur (ADRs 020–027). Module und Services müssen künftig ausschließlich über `TenantContext` arbeiten – niemals Hostname, URL oder `tenant_id`-Parameter selbst auswerten. Details: [Architektur-Dokumentation](architecture/README.md).
+
 ## Inhaltsverzeichnis
 
 1. [Architekturübersicht](#architekturübersicht)
-2. [Projektstruktur](#projektstruktur)
-3. [Lokale Entwicklung](#lokale-entwicklung)
-4. [Datenbank & Prisma](#datenbank--prisma)
-5. [API-Design](#api-design)
-6. [Realtime (Socket.IO)](#realtime-socketio)
-7. [Vorausbestellungen](#vorausbestellungen)
-8. [Authentifizierung](#authentifizierung)
-9. [Tests](#tests)
-10. [Deployment](#deployment)
-11. [Erweiterungspunkte](#erweiterungspunkte)
+2. [Multi-Tenant (v2.0)](#multi-tenant-v20)
+3. [Projektstruktur](#projektstruktur)
+4. [Lokale Entwicklung](#lokale-entwicklung)
+5. [Datenbank & Prisma](#datenbank--prisma)
+6. [API-Design](#api-design)
+7. [Realtime (Socket.IO)](#realtime-socketio)
+8. [Vorausbestellungen](#vorausbestellungen)
+9. [Authentifizierung](#authentifizierung)
+10. [Tests](#tests)
+11. [Deployment](#deployment)
+12. [Erweiterungspunkte](#erweiterungspunkte)
 
 ---
 
@@ -28,6 +31,26 @@ Technische Dokumentation für Entwickler, die an der FestManager-Plattform mitar
        │                                │
        └──────── Socket.IO ─────────────┘
 ```
+
+### Multi-Tenant (v2.0)
+
+Ab Version 2.0 arbeitet die Plattform mandantenfähig. Kernbausteine:
+
+| Baustein | Verantwortung |
+|----------|---------------|
+| `TenantContext` | Aktueller Mandant pro Request (serverseitig) |
+| `PlatformContext` | Plattformweite Konfiguration |
+| `TenantResolver` | Einzige Stelle für Host-/URL-Auflösung |
+| `TenantProvider` | React-Provider (ersetzt `ClubContext`) |
+
+**Verbindliche Regeln für Entwickler:**
+
+- Kein `tenant_id` in API-Requests (weder Query, Body noch Path)
+- Kein Hostname-/URL-Parsing in Modulen oder React-Komponenten
+- Alle Datenbankzugriffe mandantenbezogener Tabellen filtern über `tenant_id` aus `TenantContext`
+- UI-Begriff bleibt **Veranstalter**; intern **Mandant**
+
+ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Branch: `feature/v2-multi-tenant-platform`
 
 ### Schichten im Backend
 
@@ -281,6 +304,8 @@ Bei aktivem **Payment-Modul** erscheinen Online-Bestellungen erst in der Küche,
 ---
 
 ## Tests
+
+> **v2.0:** Multi-Tenant-Tests werden erst ab Phase 1 implementiert. Geplante Testebenen: Resolver-Unit-Tests, API-Isolation (Cross-Tenant), Security (Host-Spoofing, CORS), Migrations-Tests. Bestehende Tests (`tests/api/*`, `tests/integration/*`, `tests/e2e/*`) werden in Phase 1 um Standard-Mandant-Fixtures ergänzt. Details: [ADR-020](architecture/020-multi-tenant-platform.md#teststrategie-zukunft).
 
 ```bash
 # Backend

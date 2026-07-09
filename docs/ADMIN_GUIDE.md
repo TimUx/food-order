@@ -2,6 +2,8 @@
 
 Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf alle Funktionen – von der Installation bis zum Veranstaltungstag.
 
+> **Version 2.0:** FestManager wird zu einer mandantenfähigen Plattform. Ab v2.0 gibt es zwei Verwaltungsebenen: **Plattform-Administration** (Mandanten anlegen, System konfigurieren) und **Veranstalter-Administration** (bestehendes `/admin`, mandantenspezifisch). In der UI bleibt der Begriff **Veranstalter**. Details: [ADR-022](architecture/022-platform-administration.md).
+
 ## Inhaltsverzeichnis
 
 1. [Installation](#installation)

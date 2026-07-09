@@ -2,6 +2,8 @@
 
 Kurze Anleitung für ehrenamtliche Betreuer:innen. Kein Entwickler-Jargon — nur das, was vor, während und nach einer Veranstaltung wichtig ist.
 
+> **Version 2.0:** Multi-Tenant-Betrieb erfordert Wildcard-DNS (`*.ihre-domain.de`) und TLS für Subdomains. Traefik wird als Reverse Proxy empfohlen. Bestehende Single-Tenant-Installationen werden per Migration automatisch einem Standard-Veranstalter zugeordnet. Details: [ADR-027](architecture/027-multi-tenant-deployment.md).
+
 Ausführlichere Admin-Themen: [Admin Guide](ADMIN_GUIDE.md) · Einführung ohne Fachbegriffe: [Volunteer Guide](VOLUNTEER_GUIDE.md)
 
 ---

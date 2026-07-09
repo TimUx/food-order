@@ -2,6 +2,8 @@
 
 Moderne Open-Source-Plattform für Verkauf, Bestellung und Organisation von Veranstaltungen – mit Vorausbestellungen, Branding des Veranstalters, Echtzeit-Updates und PWA-Unterstützung.
 
+> **Version 2.0:** FestManager wird zu einer mandantenfähigen Plattform weiterentwickelt. Phase 0 (Architektur) ist abgeschlossen – siehe [Multi-Tenant ADRs](docs/architecture/README.md#version-20--multi-tenant). Die produktive Multi-Tenant-Unterstützung folgt in den nächsten Implementierungsphasen auf dem Branch `feature/v2-multi-tenant-platform`.
+
 Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisationen, Sport- und Musikvereine, Schulen, Firmen, Kommunen, Foodtrucks und private Feste.
 
 ![Bestellseite](docs/screenshots/01-bestellseite-monitor.png)
@@ -180,7 +182,7 @@ Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prism
 | [Developer Guide](docs/DEVELOPER_GUIDE.md) | Entwickler |
 | [Roadmap](docs/ROADMAP.md) | Stabil vs. geplant |
 | [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) | Entwickler (Module, Payment, PayableResource) |
-| [Architektur & ADRs](docs/architecture/README.md) | Entwickler (ADR, Analyse, Migrationsplan) |
+| [Architektur & ADRs](docs/architecture/README.md) | Entwickler (ADR, Analyse, Migrationsplan, **v2.0 Multi-Tenant**) |
 
 ## Technologie-Stack
 
