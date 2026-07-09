@@ -526,6 +526,7 @@ Der **Administrationsbereich** (`/admin`) ist vom Mitarbeiterbereich getrennt un
 | `/admin/settings/module.notifications` | E-Mail & Benachrichtigungskanäle |
 | `/admin/module` | Modulverwaltung (installieren, aktivieren) |
 | `/admin/payment` | Payment-Administration (Dashboard, Provider, Zahlungen) |
+| `/admin/legal` | Rechtliche Informationen (Impressum, Datenschutz, AGB, Widerruf) |
 
 Legacy-Weiterleitungen: `/admin/email` → Benachrichtigungen · `/admin/module/payment` → `/admin/payment`
 
@@ -544,6 +545,7 @@ Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: 
 | Modulverwaltung | ![Module](screenshots/20-modulverwaltung.png) |
 | Payment-Admin | ![Payment-Admin](screenshots/21-payment-admin.png) |
 | Payment-Einstellungen | ![Payment-Einstellungen](screenshots/22-payment-einstellungen.png) |
+| Rechtliche Informationen | ![Legal-Admin](screenshots/23-legal-admin.png) |
 
 ---
 
@@ -769,6 +771,7 @@ Unter **Module** (`/admin/module`) verwalten Sie optionale Erweiterungen der Pla
 | Gutscheine (`voucher`) | Geplant | Gutscheinverwaltung (benötigt Payment) |
 | Rabatte (`discount`) | Geplant | Rabattaktionen und Sonderpreise |
 | **Benachrichtigungen** (`notifications`) | Vollständig | SMTP, ntfy, Discord, Slack, Teams |
+| **Rechtliche Informationen** (`legal`) | Vollständig | Impressum, Datenschutz, AGB, Widerruf |
 | Auswertungen (`analytics`) | Geplant | Statistiken und Berichte |
 | Treueprogramm (`loyalty`) | Geplant | Punkte und Belohnungen |
 | QR-Code Einlass (`checkin`) | Geplant | Einlasskontrolle per QR-Code |
@@ -795,6 +798,42 @@ Unter **Module** (`/admin/module`) verwalten Sie optionale Erweiterungen der Pla
 | **Health Check** | Prüft Konfiguration und externe Verbindungen |
 
 > **Wichtig für Vereine mit reiner Barzahlung:** Kein Modul muss installiert oder aktiviert werden. Ohne aktiviertes Payment-Modul verhält sich die Plattform exakt wie zuvor – Bestellungen gehen direkt an die Küche, Zahlung erfolgt an der Kasse.
+
+### Rechtliche Informationen
+
+Nach Installation und Aktivierung erscheint **Administration → Module → Rechtliche Informationen** (`/admin/legal`).
+
+![Rechtliche Informationen – Übersicht](screenshots/23-legal-admin.png)
+
+Das Modul verwaltet:
+
+- Impressum
+- Datenschutzerklärung
+- Allgemeine Geschäftsbedingungen (AGB)
+- Widerrufsbelehrung
+
+Jede Seite besitzt:
+
+- Aktiviert
+- Veröffentlicht
+- Titel
+- URL-Slug
+- HTML-Inhalt
+- Letzte Änderung
+
+Eine Seite wird nur öffentlich angezeigt, wenn das Modul aktiv ist, die Seite aktiviert und veröffentlicht ist und Inhalt enthält. Veröffentlichte Seiten erscheinen automatisch:
+
+- im Footer der Bestellseite
+- als öffentliche Route wie `/impressum` oder `/datenschutz`
+- in Benachrichtigungs-E-Mails (wenn aktiviert)
+
+> **Wichtig:** Das Modul liefert keine Mustertexte und keine Rechtsberatung. Inhalte müssen vom Verein selbst gepflegt und regelmäßig geprüft werden.
+
+![Rechtliche Informationen – Seiten bearbeiten](screenshots/24-legal-seiten.png)
+
+Öffentliche Rechtsseite (Beispiel Impressum):
+
+![Impressum](screenshots/25-impressum.png)
 
 ### Abhängigkeiten
 

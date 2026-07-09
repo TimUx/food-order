@@ -7,6 +7,7 @@ import { OrderPage } from '@/pages/OrderPage';
 import { OrderStatusPage } from '@/pages/OrderStatusPage';
 import { PickupBoardPage } from '@/pages/PickupBoardPage';
 import { ContactPage } from '@/pages/ContactPage';
+import { LegalPage } from '@/pages/LegalPage';
 import { LoginPage } from '@/pages/staff/LoginPage';
 import { DashboardPage } from '@/pages/staff/DashboardPage';
 import { KitchenPage } from '@/pages/staff/KitchenPage';
@@ -26,6 +27,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<OrderPage />} />
               <Route path="/kontakt" element={<ContactPage />} />
+              <Route path="/:legalSlug" element={<LegalPage />} />
               <Route path="/status" element={<OrderStatusPage />} />
               <Route path="/status/:lookupToken" element={<OrderStatusPage />} />
               <Route path="/abholboard" element={<PickupBoardPage />} />

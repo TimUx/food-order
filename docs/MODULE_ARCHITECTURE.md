@@ -22,6 +22,7 @@ Technische Dokumentation für das Feature-Modulsystem und die Modulverwaltung de
 16. [Community-Plugins (Zukunft)](#community-plugins-zukunft)
 17. [Best Practices](#best-practices)
 18. [Payment-Modul](#payment-modul)
+19. [Legal-Modul](#legal-modul)
 
 ---
 
@@ -59,6 +60,7 @@ food-order/
 ├── backend/
 │   ├── modules/              # Offizielle Module (→ /app/modules im Container)
 │   │   ├── payment/          # Online-Zahlung (vollständig)
+│   │   ├── legal/            # Rechtliche Informationen (vollständig)
 │   │   ├── inventory/        # Lagerverwaltung (Stub)
 │   │   ├── printer/          # Bondruck (Stub)
 │   │   ├── voucher/          # Gutscheine (Stub, benötigt payment)
@@ -486,6 +488,66 @@ API (nur wenn Modul aktiviert):
 - Webhook-Signaturen werden geprüft
 - Keine Secrets in Logs
 - Routes nur über `ModuleManager` mit Aktivierungs-Guard
+
+---
+
+## Legal-Modul
+
+Das Modul `backend/modules/legal/` verwaltet veröffentlichbare Rechtstexte wie Impressum, Datenschutzerklärung, AGB und Widerrufsbelehrung. Der Core kennt keine einzelnen Rechtsseiten, sondern nutzt ausschließlich den Extension Point `legalContentRegistry`.
+
+### Architektur
+
+```text
+PublicLayout / Notification-Modul / Core-Routen
+                 │
+                 ▼
+         legalContentRegistry
+                 │
+                 ▼
+           Legal-Modul
+       (DB + Sanitizing + Slugs)
+```
+
+### Datenmodell
+
+Seiten werden in `legal_pages` gespeichert:
+
+- `page_type`
+- `title`
+- `slug`
+- `enabled`
+- `published`
+- `content_html`
+- `updated_at`
+
+Modulweite Optionen liegen in `module.legal`:
+
+- `appendClubContactToImprint`
+- `showFooterLinks`
+- `showNotificationLinks`
+
+### Öffentliche Sichtbarkeit
+
+Eine Rechtsseite erscheint nur, wenn:
+
+1. das Modul aktiviert ist,
+2. die Seite aktiviert ist,
+3. die Seite veröffentlicht ist,
+4. Inhalt vorhanden ist.
+
+### Öffentliche API
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| GET | `/api/public/legal-links` | Veröffentlichte Footer-/E-Mail-Links |
+| GET | `/api/public/legal/:slug` | Veröffentlichte Rechtsseite |
+| GET | `/api/modules/features/legal/admin/pages` | Seitenliste für Admin |
+| PUT | `/api/modules/features/legal/admin/pages/:pageType` | Seite speichern |
+| POST | `/api/modules/features/legal/admin/preview` | Sanitizte Vorschau |
+
+### Notification-Anbindung
+
+Wenn das Legal-Modul aktiv ist, ergänzt das Notifications-Modul E-Mails automatisch um veröffentlichte Rechtslinks. Ohne aktiviertes Legal-Modul erscheinen keine zusätzlichen Footer-Links.
 
 ---
 

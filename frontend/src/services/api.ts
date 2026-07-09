@@ -282,6 +282,10 @@ export const api = {
     request<Record<string, unknown>>(`/admin/modules/${id}/config`, { method: 'PUT', body: JSON.stringify(config) }, token),
   getPublicModuleMenu: () =>
     request<import('@/module-system').ModuleMenuItem[]>('/public/modules/menu'),
+  getPublicLegalLinks: () =>
+    request<{ links: import('@/types/legal').PublicLegalLink[] }>('/public/legal-links'),
+  getPublicLegalPage: (slug: string) =>
+    request<import('@/types/legal').PublicLegalPage>(`/public/legal/${encodeURIComponent(slug)}`),
   getPaymentStatus: () =>
     request<{ available: boolean }>('/public/payment/status'),
   getPaymentMethods: () =>
@@ -409,6 +413,20 @@ export const api = {
     request<{ ok: boolean; message?: string }>(
       '/modules/features/notifications/admin/smtp/test',
       { method: 'POST' },
+      token
+    ),
+  getLegalPages: (token: string) =>
+    request<import('@/types/legal').AdminLegalPage[]>('/modules/features/legal/admin/pages', {}, token),
+  updateLegalPage: (token: string, pageType: import('@/types/legal').LegalPageType, data: Partial<import('@/types/legal').AdminLegalPage>) =>
+    request<import('@/types/legal').AdminLegalPage>(
+      `/modules/features/legal/admin/pages/${pageType}`,
+      { method: 'PUT', body: JSON.stringify(data) },
+      token
+    ),
+  previewLegalPage: (token: string, pageType: import('@/types/legal').LegalPageType, contentHtml: string) =>
+    request<{ html: string }>(
+      '/modules/features/legal/admin/preview',
+      { method: 'POST', body: JSON.stringify({ pageType, contentHtml }) },
       token
     ),
   testPrinter: (token: string, slotId: string) =>

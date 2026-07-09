@@ -127,6 +127,7 @@ docker compose exec backend npm run seed
 - **DailyOrderCounter** – Atomarer Zähler für Tages-Bestellnummern
 - **OrderStatus** – Status-Historie (Audit-Trail)
 - **InstalledModule** – Modulstatus (`installed`, `enabled`, `config_json`, Health)
+- **LegalPage** – Inhalte und Veröffentlichungsstatus für Impressum, Datenschutz, AGB, Widerruf
 
 Modul-spezifische Tabellen (z. B. `payment_sessions`) werden ausschließlich in Modul-Migrationen verwaltet – nicht im Core-Schema.
 
@@ -183,6 +184,8 @@ Basis-URL: `/api`
 | POST | `/public/orders/:id/cancel` | Online-Bestellung stornieren (Nachname) |
 | GET | `/public/pickup-board` | Fertige Bestellungen |
 | GET | `/public/payment/status` | Onlinezahlung verfügbar? |
+| GET | `/public/legal-links` | Veröffentlichte Rechtslinks für Footer/E-Mail |
+| GET | `/public/legal/:slug` | Veröffentlichte Rechtsseite nach URL-Slug |
 | GET | `/public/modules/menu` | Menüeinträge aktiver Module |
 
 ### Modul- & Payment-Endpunkte
@@ -394,6 +397,7 @@ Die Architektur nutzt ein **Feature-Modulsystem**. Vollständige Dokumentation:
 | Feature | Modul |
 |---------|-------|
 | Online-Zahlung | `modules/payment/` ✅ |
+| Rechtliche Informationen | `modules/legal/` ✅ |
 | Lagerverwaltung | `modules/inventory/` |
 | Bondruck | `modules/printer/` |
 | Gutscheine | `modules/voucher/` |
@@ -405,6 +409,16 @@ Die Architektur nutzt ein **Feature-Modulsystem**. Vollständige Dokumentation:
 | Kassenanbindung | `modules/cash-register/` |
 
 Neue Feature-Module implementieren das `Module`-Interface. Core-Änderungen nur über Hooks.
+
+### Legal Content Extension Point
+
+Das Legal-Modul registriert den Extension Point `legalContentRegistry`. Der Core verwendet ihn für:
+
+- öffentliche Routen `/api/public/legal-links` und `/api/public/legal/:slug`
+- Footer-Links auf der Bestellseite
+- Footer-Links in E-Mail-Benachrichtigungen
+
+Wichtig: Ohne aktiviertes Modul bleibt die Plattform unverändert; der Registry-Zugriff liefert dann keine öffentlichen Seiten.
 
 ### Payment & PayableResource
 

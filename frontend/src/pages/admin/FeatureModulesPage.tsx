@@ -9,7 +9,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { AdminLayout } from '@/components/AdminLayout';
 import { useModules, type ModuleInfo } from '@/module-system';
 
-const PRODUCTION_MODULE_IDS = ['payment', 'notifications', 'printer'];
+const PRODUCTION_MODULE_IDS = ['payment', 'notifications', 'printer', 'legal'];
 
 function isProductionModule(mod: ModuleInfo): boolean {
   return PRODUCTION_MODULE_IDS.includes(mod.id);
@@ -52,6 +52,10 @@ export function FeatureModulesPage() {
       navigate('/admin/payment?tab=presets');
       return;
     }
+    if (mod.id === 'legal') {
+      navigate('/admin/legal');
+      return;
+    }
     if (mod.settingsPath) {
       navigate(mod.settingsPath);
     }
@@ -86,7 +90,7 @@ export function FeatureModulesPage() {
               {visibleModules.map((mod) => {
                 const isOn = mod.status === 'ENABLED';
                 const busy = busyId === mod.id;
-                const canConfigure = mod.installed && (mod.settingsPath || mod.id === 'payment');
+                const canConfigure = mod.installed && (mod.settingsPath || mod.id === 'payment' || mod.id === 'legal');
                 return (
                   <TableRow key={mod.id}>
                     <TableCell>

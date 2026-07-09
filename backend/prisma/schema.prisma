@@ -191,6 +191,20 @@ model ClubSettings {
   updatedAt                   DateTime @updatedAt
 }
 
+model LegalPage {
+  id          String   @id @default(uuid())
+  pageType    String   @unique @map("page_type")
+  title       String
+  slug        String   @unique
+  enabled     Boolean  @default(false)
+  published   Boolean  @default(false)
+  contentHtml String   @default("") @map("content_html")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("legal_pages")
+}
+
 /// Zentrale Modulverwaltung – Status und Konfiguration offizieller Module
 model InstalledModule {
   moduleId         String    @id @map("module_id")

@@ -142,6 +142,7 @@ const mockUser = { id: 'u1', email: 'admin@verein.local', firstName: 'Admin', la
 const mockModuleMenu = [
   { id: 'payment-admin', label: 'Payment', path: '/admin/payment', icon: 'Payment', parentId: 'modules', sortOrder: 10, requiredPermission: 'payment.view' },
   { id: 'notifications-settings', label: 'Notifications', path: '/admin/settings/module.notifications', icon: 'Notifications', parentId: 'modules', sortOrder: 20, requiredPermission: 'notifications.settings' },
+  { id: 'legal-admin', label: 'Rechtliche Informationen', path: '/admin/legal', icon: 'Gavel', parentId: 'modules', sortOrder: 30, requiredPermission: 'legal.view' },
 ];
 
 const mockModules = [
@@ -173,6 +174,23 @@ const mockModules = [
     dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0',
     installedAt: '2026-02-01T12:00:00.000Z', upgradeAvailable: false,
     settingsPath: '/admin/settings/module.notifications',
+  },
+  {
+    id: 'legal', name: 'Rechtliche Informationen', version: '1.4.0', imageVersion: '1.4.0',
+    description: 'Impressum, Datenschutz, AGB und Widerruf',
+    author: 'Vereinsbestellung', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
+    productionReady: true,
+    flags: { enabled: true, disabled: false, configurable: true, visible: true, health: 'healthy' },
+    permissions: [
+      { key: 'legal.view', description: 'Rechtliche Informationen einsehen' },
+      { key: 'legal.manage', description: 'Rechtliche Informationen bearbeiten' },
+      { key: 'legal.publish', description: 'Rechtliche Informationen veroeffentlichen' },
+    ],
+    menuItems: [{ id: 'legal-admin', label: 'Rechtliche Informationen', path: '/admin/legal', icon: 'Gavel', parentId: 'modules', sortOrder: 30, requiredPermission: 'legal.view' }],
+    widgets: [], hasConfig: true,
+    dependencies: { required: [], optional: ['notifications'] }, minimumCoreVersion: '1.0.0',
+    installedAt: '2026-07-09T08:00:00.000Z', lastHealthStatus: 'healthy', upgradeAvailable: false,
+    settingsPath: '/admin/legal?tab=settings',
   },
   {
     id: 'printer', name: 'Bondruck', version: '1.0.0', imageVersion: '1.0.0',
@@ -275,6 +293,56 @@ const mockNotificationsSettingsForm = {
   ],
 };
 
+const mockLegalImprintHtml = [
+  '<h1>Impressum</h1>',
+  '<p>Angaben gemaess § 5 TMG</p>',
+  '<p><strong>Feuerwehr Musterstadt e.V.</strong><br>Feuerwehrstraße 1<br>12345 Musterstadt</p>',
+  '<p>Vertreten durch: Max Mueller (1. Vorsitzender)</p>',
+].join('');
+
+const mockLegalAdminPages = [
+  {
+    pageType: 'imprint', title: 'Impressum', slug: 'impressum', enabled: true, published: true,
+    contentHtml: mockLegalImprintHtml, hasContent: true, isPubliclyVisible: true,
+    updatedAt: '2026-07-09T10:00:00.000Z',
+  },
+  {
+    pageType: 'privacy', title: 'Datenschutzerklaerung', slug: 'datenschutz', enabled: true, published: false,
+    contentHtml: '', hasContent: false, isPubliclyVisible: false,
+    updatedAt: '2026-07-09T09:00:00.000Z',
+  },
+  {
+    pageType: 'terms', title: 'Allgemeine Geschaeftsbedingungen', slug: 'agb', enabled: false, published: false,
+    contentHtml: '', hasContent: false, isPubliclyVisible: false,
+    updatedAt: '2026-07-09T09:00:00.000Z',
+  },
+  {
+    pageType: 'withdrawal', title: 'Widerrufsbelehrung', slug: 'widerruf', enabled: false, published: false,
+    contentHtml: '', hasContent: false, isPubliclyVisible: false,
+    updatedAt: '2026-07-09T09:00:00.000Z',
+  },
+];
+
+const mockLegalConfig = {
+  appendClubContactToImprint: true,
+  showFooterLinks: true,
+  showNotificationLinks: true,
+};
+
+const mockPublicLegalLinks = {
+  links: [
+    { pageType: 'imprint', title: 'Impressum', slug: 'impressum', path: '/impressum' },
+  ],
+};
+
+const mockPublicImprintPage = {
+  pageType: 'imprint',
+  title: 'Impressum',
+  slug: 'impressum',
+  html: `${mockLegalImprintHtml}<section><h2>Kontakt</h2><p><strong>Feuerwehr Musterstadt</strong></p><p>Ansprechpartner: Vereinsvorstand Max Müller</p><p>E-Mail: <a href="mailto:kontakt@feuerwehr-musterstadt.de">kontakt@feuerwehr-musterstadt.de</a></p></section>`,
+  updatedAt: '2026-07-09T10:00:00.000Z',
+};
+
 const mockClubSettingsForm = {
   namespace: 'core.club',
   label: 'Verein',
@@ -333,6 +401,7 @@ const mockAdminPages = [
   { id: 'core-users', path: '/admin/benutzer', label: 'Team', description: 'Mitarbeiter und Administratoren', icon: 'People', pageType: 'builtin', componentId: 'core.users', sortOrder: 25, source: 'core' as const },
   { id: 'core-modules', path: '/admin/module', label: 'Funktionen', description: 'Zahlung, Benachrichtigungen und Druck', icon: 'Extension', pageType: 'modules', componentId: 'core.modules', sortOrder: 30, source: 'core' as const },
   { id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', description: 'Zahlungsanbieter, Transaktionen und Statistiken', icon: 'Payment', pageType: 'report', componentId: 'payment.admin', sortOrder: 35, source: 'module' as const, moduleId: 'payment', requiredPermission: 'payment.view' },
+  { id: 'legal-admin', path: '/admin/legal', label: 'Rechtliche Informationen', description: 'Impressum, Datenschutz, AGB und Widerruf', icon: 'Gavel', pageType: 'report', componentId: 'legal.admin', sortOrder: 36, source: 'module' as const, moduleId: 'legal', requiredPermission: 'legal.view' },
   { id: 'settings-core-club', path: '/admin/verein', label: 'Verein', description: 'Öffentliche Vereinsdaten und Branding', icon: 'Settings', pageType: 'settings', namespace: 'core.club', sortOrder: 1, source: 'core' as const },
   { id: 'settings-core-order', path: '/admin/bestellung', label: 'Bestellung', description: 'Pflichtfelder und Stornierungsfrist', icon: 'ShoppingCart', pageType: 'settings', namespace: 'core.order', sortOrder: 2, source: 'core' as const },
   { id: 'settings-module.notifications', path: '/admin/settings/module.notifications', label: 'Benachrichtigungen', description: 'E-Mail, Push und ntfy', icon: 'Notifications', pageType: 'settings', namespace: 'module.notifications', sortOrder: 3, source: 'module' as const, moduleId: 'notifications' },
@@ -375,7 +444,10 @@ const mockAdminUi = {
   ],
   widgets: [{ id: 'payment-status', title: 'Online-Zahlung', componentId: 'payment.status', sortOrder: 10, moduleId: 'payment' }],
   health: [{ id: 'payment-providers', moduleId: 'payment', label: 'Zahlungsanbieter', status: 'healthy', description: 'Stripe verbunden (Testmodus)' }],
-  reports: [{ id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', componentId: 'payment.admin', moduleId: 'payment' }],
+  reports: [
+    { id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', componentId: 'payment.admin', moduleId: 'payment' },
+    { id: 'legal-admin', path: '/admin/legal', label: 'Rechtliche Informationen', componentId: 'legal.admin', moduleId: 'legal' },
+  ],
   developerPages: [],
 };
 
@@ -420,7 +492,14 @@ function mockApi(pathname: string, method: string, body?: string, searchParams?:
     return { changed: true, etag: nextEtag, serverTime, data: mockClub };
   }
 
-  if (pathname === '/api/public/order-settings') return mockOrderSettings;
+  if (pathname === '/api/public/legal-links') return mockPublicLegalLinks;
+  if (pathname === '/api/public/legal/impressum') return mockPublicImprintPage;
+  if (pathname === '/api/modules/features/legal/admin/pages') return mockLegalAdminPages;
+  if (pathname === '/api/modules/features/legal/admin/preview' && method === 'POST') {
+    const parsed = body ? JSON.parse(body) as { contentHtml?: string } : {};
+    return { html: parsed.contentHtml || mockLegalImprintHtml };
+  }
+  if (pathname === '/api/admin/modules/legal/config') return mockLegalConfig;
   if (pathname === '/api/admin/email-settings') return mockEmailSettings;
   if (pathname === '/api/public/club' || pathname === '/api/staff/club' || pathname === '/api/admin/club') return mockClub;
   if (pathname === '/api/admin/ui') return mockAdminUi;
@@ -672,6 +751,18 @@ async function waitForPageReady(page: Page, spec: PageSpec) {
     return;
   }
 
+  if (adminPath === '/admin/legal') {
+    await page.waitForSelector('text=Rechtliche Informationen', { timeout: 30000 });
+    if (spec.url.includes('tab=pages')) {
+      await page.waitForSelector('text=HTML-Inhalt', { timeout: 30000 });
+    } else if (spec.url.includes('tab=settings')) {
+      await page.waitForSelector('text=Footer der Bestellseite', { timeout: 30000 });
+    } else {
+      await page.waitForSelector('text=Seitenstatus', { timeout: 30000 });
+    }
+    return;
+  }
+
   if (adminPath === '/admin') {
     await page.waitForFunction(() => {
       const t = document.body.innerText;
@@ -837,6 +928,11 @@ async function main() {
     { name: '20-modulverwaltung', url: '/admin/module', auth: true },
     { name: '21-payment-admin', url: '/admin/payment?tab=overview', auth: true },
     { name: '22-payment-einstellungen', url: '/admin/payment?tab=settings', auth: true },
+    { name: '23-legal-admin', url: '/admin/legal?tab=overview', auth: true },
+    { name: '24-legal-seiten', url: '/admin/legal?tab=pages', auth: true },
+    { name: '25-impressum', url: '/impressum', prepare: async (page) => {
+      await page.waitForSelector('text=Feuerwehr Musterstadt e.V.', { timeout: 10000 });
+    } },
   ];
 
   let capturing = !startFrom;

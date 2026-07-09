@@ -25,6 +25,12 @@ export interface NotificationServiceRegistryAccess {
   isAvailable(): Promise<boolean>;
 }
 
+export interface LegalContentRegistryAccess {
+  isAvailable(): boolean;
+  listPublicLinks(): Promise<import('../platform/extension-points').PublicLegalLink[]>;
+  getPublicPageBySlug(slug: string): Promise<import('../platform/extension-points').PublicLegalPage | null>;
+}
+
 /** Core greift Extension Points über die Registry zu – nicht über Modul-Implementierungen. */
 export function getPayableResourceRegistry(): PayableResourceRegistryAccess {
   return extensionPointRegistry.getOrThrow<PayableResourceRegistryAccess>(
@@ -35,6 +41,12 @@ export function getPayableResourceRegistry(): PayableResourceRegistryAccess {
 export function getPaymentServiceRegistry(): PaymentServiceRegistryAccess {
   return extensionPointRegistry.getOrThrow<PaymentServiceRegistryAccess>(
     EXTENSION_POINT_NAMES.PAYMENT_SERVICE
+  );
+}
+
+export function getLegalContentRegistry(): LegalContentRegistryAccess {
+  return extensionPointRegistry.getOrThrow<LegalContentRegistryAccess>(
+    EXTENSION_POINT_NAMES.LEGAL_CONTENT
   );
 }
 

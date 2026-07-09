@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getLegalContentRegistry, getPaymentServiceRegistry } from '../core/extensionPoints';
 import { authController } from '../controllers/authController';
 import { eventController } from '../controllers/eventController';
 import { foodItemController } from '../controllers/foodItemController';
@@ -178,7 +179,18 @@ router.get('/public/modules/menu', async (_req, res) => {
   res.json(moduleRegistry.getMenuItems());
 });
 
-import { getPaymentServiceRegistry } from '../core/extensionPoints';
+router.get('/public/legal-links', async (_req, res) => {
+  res.json({ links: await getLegalContentRegistry().listPublicLinks() });
+});
+
+router.get('/public/legal/:slug', async (req, res) => {
+  const page = await getLegalContentRegistry().getPublicPageBySlug(req.params.slug as string);
+  if (!page) {
+    res.status(404).json({ error: 'Rechtliche Seite nicht gefunden' });
+    return;
+  }
+  res.json(page);
+});
 
 router.get('/public/payment/status', async (_req, res) => {
   res.json({ available: await getPaymentServiceRegistry().isAvailable() });

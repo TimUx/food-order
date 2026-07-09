@@ -15,7 +15,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { useClub } from '@/contexts/ClubContext';
 import { Link } from 'react-router-dom';
-import { getImageUrl } from '@/services/api';
+import { api, getImageUrl } from '@/services/api';
+import { useEffect, useState } from 'react';
+import type { PublicLegalLink } from '@/types/legal';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -28,6 +30,19 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
   const { mode, toggleMode } = useThemeMode();
   const { club } = useClub();
   const logoUrl = getImageUrl(club.logoUrl || undefined);
+  const [legalLinks, setLegalLinks] = useState<PublicLegalLink[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void api.getPublicLegalLinks()
+      .then((data) => {
+        if (active) setLegalLinks(data.links);
+      })
+      .catch(() => {
+        if (active) setLegalLinks([]);
+      });
+    return () => { active = false; };
+  }, []);
 
   return (
     <Box
@@ -84,6 +99,24 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
       >
         {children}
       </Container>
+      {legalLinks.length > 0 && (
+        <Box component="footer" sx={{ px: 2, py: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Container maxWidth="md">
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+              {legalLinks.map((link) => (
+                <Typography
+                  key={link.pageType}
+                  component={Link}
+                  to={link.path}
+                  sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                >
+                  {link.title}
+                </Typography>
+              ))}
+            </Box>
+          </Container>
+        </Box>
+      )}
     </Box>
   );
 }

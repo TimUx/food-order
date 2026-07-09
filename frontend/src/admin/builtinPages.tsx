@@ -5,6 +5,7 @@ import { FoodItemsPage } from '@/pages/admin/FoodItemsPage';
 import { FeatureModulesPage } from '@/pages/admin/FeatureModulesPage';
 import { GenericReportPage } from '@/pages/admin/GenericReportPage';
 import { GenericDeveloperPage } from '@/pages/admin/GenericDeveloperPage';
+import { LegalAdminPage } from '@/pages/admin/LegalAdminPage';
 
 type BuiltinPageComponent = () => ReactNode;
 
@@ -19,6 +20,7 @@ export const BUILTIN_PAGE_COMPONENTS: Record<string, BuiltinPageComponent> = {
 
 export const REPORT_PAGE_COMPONENTS: Record<string, BuiltinPageComponent> = {
   'payment.admin': () => <PaymentAdminPage />,
+  'legal.admin': () => <LegalAdminPage />,
 };
 
 export const DEVELOPER_PAGE_COMPONENTS: Record<string, BuiltinPageComponent> = {};

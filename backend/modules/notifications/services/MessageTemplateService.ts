@@ -1,4 +1,5 @@
 import { config } from '../../../src/config';
+import { getLegalContentRegistry } from '../../../src/core/extensionPoints';
 import { formatPrice } from '../../../src/utils/helpers';
 import type { ClubContactData, OrderEmailData } from '../../../src/platform/extension-points/NotificationService';
 import { legalNotices, notificationTemplates } from '../templates/de';
@@ -93,18 +94,45 @@ function getTemplates(locale: NotificationLocale = DEFAULT_LOCALE) {
   return notificationTemplates[locale];
 }
 
+async function buildLegalFooter(clubName: string): Promise<{ html: string; text: string }> {
+  const registry = getLegalContentRegistry();
+  if (!registry.isAvailable()) {
+    return { html: '', text: '' };
+  }
+
+  const links = await registry.listPublicLinks();
+  if (links.length === 0) {
+    return { html: '', text: '' };
+  }
+
+  const htmlLinks = links
+    .map((link) => `<a href="${config.corsOrigin.replace(/\/$/, '')}${link.path}">${escapeHtml(link.title)}</a>`)
+    .join(' | ');
+  const textLinks = links
+    .map((link) => `${link.title}: ${config.corsOrigin.replace(/\/$/, '')}${link.path}`)
+    .join('\n');
+
+  return {
+    html: `<p style="font-size: 0.8em; color: #666; line-height: 1.5;">${escapeHtml(clubName)} · ${htmlLinks}</p>`,
+    text: textLinks,
+  };
+}
+
 export function buildOrderConfirmationMessage(
   order: OrderEmailData,
   club: ClubContactData,
   emailCustomText?: string
-) {
+): Promise<{ title: string; body: string; html: string }> {
+  return (async () => {
   const t = getTemplates();
   const vars = baseOrderVars(order, club, emailCustomText);
+  const legalFooter = await buildLegalFooter(club.clubName);
   return {
     title: renderTemplate(t.orderCreated.emailSubject, vars),
-    body: renderTemplate(t.orderCreated.text, vars),
-    html: renderTemplate(t.orderCreated.html, vars),
+    body: [renderTemplate(t.orderCreated.text, vars), legalFooter.text].filter(Boolean).join('\n\n'),
+    html: [renderTemplate(t.orderCreated.html, vars), legalFooter.html].filter(Boolean).join('\n'),
   };
+  })();
 }
 
 export function buildOrderCancellationMessage(
@@ -112,7 +140,8 @@ export function buildOrderCancellationMessage(
   club: ClubContactData,
   options: { initiatedByStaff?: boolean } = {},
   emailCustomText?: string
-) {
+): Promise<{ title: string; body: string; html: string }> {
+  return (async () => {
   const t = getTemplates();
   const vars = baseOrderVars(order, club, emailCustomText);
   const introHtml = options.initiatedByStaff
@@ -141,12 +170,14 @@ export function buildOrderCancellationMessage(
     cancelledAtBlockHtml,
     cancellationLegalHtml,
   };
+  const legalFooter = await buildLegalFooter(club.clubName);
 
   return {
     title: renderTemplate(t.orderCancelled.emailSubject, fullVars),
-    body: renderTemplate(t.orderCancelled.text, fullVars),
-    html: renderTemplate(t.orderCancelled.html, fullVars),
+    body: [renderTemplate(t.orderCancelled.text, fullVars), legalFooter.text].filter(Boolean).join('\n\n'),
+    html: [renderTemplate(t.orderCancelled.html, fullVars), legalFooter.html].filter(Boolean).join('\n'),
   };
+  })();
 }
 
 export function buildKitchenCompletedMessage(order: {

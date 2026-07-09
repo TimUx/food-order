@@ -51,6 +51,7 @@ const MODULE_LABELS: Record<string, string> = {
   payment: 'Online-Zahlung',
   notifications: 'Benachrichtigungen',
   printer: 'Bondruck',
+  legal: 'Rechtliche Informationen',
 };
 
 async function loadClubContact(context: FeatureContext): Promise<ClubContactData> {
@@ -155,7 +156,7 @@ class NotificationManager {
 
     const club = await loadClubContact(context);
     const config = await this.loadConfig(context);
-    const template = buildOrderConfirmationMessage(
+    const template = await buildOrderConfirmationMessage(
       toOrderEmailData(payload),
       club,
       config.emailCustomText
@@ -174,7 +175,7 @@ class NotificationManager {
 
     const club = await loadClubContact(context);
     const config = await this.loadConfig(context);
-    const template = buildOrderCancellationMessage(
+    const template = await buildOrderCancellationMessage(
       toOrderEmailData(payload),
       club,
       { initiatedByStaff: Boolean(payload.initiatedByStaff) },

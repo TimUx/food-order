@@ -18,6 +18,7 @@ Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstalt
 | **Vereinseinstellungen** | Name, Logo, Kontaktdaten (Admin) |
 | **Bestell-Einstellungen** | Pflichtfelder & Stornierungsfrist (Admin) |
 | **Benachrichtigungen** | SMTP, ntfy, Discord, Slack, Teams (Admin) |
+| **Rechtliche Informationen** | Optionales Modul für Impressum, Datenschutz, AGB und Widerruf |
 | **Speisenverwaltung** | CRUD mit Bild-Upload (Admin) |
 | **Veranstaltungsverwaltung** | Mehrere Events, eine aktiv (Admin) |
 | **Modulverwaltung** | Optionale Funktionen ein- und ausschalten (Admin) |
@@ -46,6 +47,7 @@ Die Plattform unterstützt **optionale Module**, die mit dem Docker-Image ausgel
 | **Online-Zahlung** | ✅ Vollständig | Stripe, Smart Payment, Admin unter `/admin/payment` |
 | **Benachrichtigungen** | ✅ Vollständig | SMTP, ntfy, Discord, Slack, Teams |
 | **Bondruck** | ✅ Vollständig | Küchen- und Kassenbondruck |
+| **Rechtliche Informationen** | ✅ Vollständig | Impressum, Datenschutz, AGB, Widerruf mit Footer- und E-Mail-Links |
 | Lagerverwaltung | 🔜 Geplant | Bestandsführung für Speisen |
 
 **Wichtig:** Vereine mit ausschließlich Barzahlung an der Kasse müssen **kein Modul aktivieren**. Ohne aktiviertes Payment-Modul verhält sich die Plattform exakt wie zuvor.
@@ -94,9 +96,13 @@ Technische Details: [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) · Admin-An
 |:---:|:---:|
 | ![Funktionen](docs/screenshots/20-modulverwaltung.png) | ![Payment-Admin](docs/screenshots/21-payment-admin.png) |
 
-| Payment-Einstellungen (Tab) |
-|:---:|
-| ![Payment-Einstellungen](docs/screenshots/22-payment-einstellungen.png) |
+| Payment-Einstellungen (Tab) | Rechtliche Informationen |
+|:---:|:---:|
+| ![Payment-Einstellungen](docs/screenshots/22-payment-einstellungen.png) | ![Legal-Admin](docs/screenshots/23-legal-admin.png) |
+
+| Legal-Seiten bearbeiten | Öffentliches Impressum |
+|:---:|:---:|
+| ![Legal-Seiten](docs/screenshots/24-legal-seiten.png) | ![Impressum](docs/screenshots/25-impressum.png) |
 
 ## Schnellstart
 
@@ -128,6 +134,7 @@ Das Backend wendet Datenbankänderungen beim Start automatisch per `prisma migra
 |-------|-------------|
 | `/` | Bestellseite |
 | `/kontakt` | Kontaktdaten des Vereins |
+| `/:legalSlug` | Veröffentlichte Rechtsseite (z. B. `/impressum`, `/datenschutz`) |
 | `/status` | Status abfragen |
 | `/status/:orderId` | Live-Status |
 | `/abholboard` | Abholboard für Monitore |
@@ -152,8 +159,9 @@ Das Backend wendet Datenbankänderungen beim Start automatisch per `prisma migra
 | `/admin/speisen` | Speisenverwaltung | ADMIN |
 | `/admin/bestellung` | Pflichtfelder & Stornierungsfrist | ADMIN |
 | `/admin/email` | SMTP / Benachrichtigungen (Weiterleitung → Modul-Settings) | ADMIN |
-| `/admin/module` | Funktionen (Zahlung, Benachrichtigungen, Druck) | ADMIN |
+| `/admin/module` | Funktionen (Zahlung, Benachrichtigungen, Rechtliches, Druck) | ADMIN |
 | `/admin/payment` | Payment-Administration (Dashboard, Provider, Zahlungen) | ADMIN |
+| `/admin/legal` | Rechtliche Informationen (Übersicht, Seiten, Einstellungen, Vorschau) | ADMIN |
 | `/admin/settings/module.payment` | API-Schlüssel & Provider (alternativ Tab „Einstellungen“) | ADMIN |
 | `/admin/settings/module.notifications` | E-Mail & Benachrichtigungskanäle | ADMIN |
 

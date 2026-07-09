@@ -1,0 +1,55 @@
+{
+  "id": "legal",
+  "name": "Rechtliche Informationen",
+  "description": "Optionale Verwaltung von Impressum, Datenschutz, AGB und Widerruf",
+  "version": "1.4.0",
+  "author": "Vereinsbestellung",
+  "homepage": "https://github.com/TimUx/food-order",
+  "license": "MIT",
+  "entry": "index",
+  "dependencies": {
+    "required": [],
+    "optional": ["notifications"]
+  },
+  "permissions": [
+    { "key": "legal.view", "description": "Rechtliche Informationen einsehen" },
+    { "key": "legal.manage", "description": "Rechtliche Informationen bearbeiten" },
+    { "key": "legal.publish", "description": "Rechtliche Informationen veroeffentlichen" }
+  ],
+  "menus": [
+    {
+      "id": "legal-admin",
+      "label": "Rechtliche Informationen",
+      "path": "/admin/legal",
+      "icon": "Gavel",
+      "parentId": "modules",
+      "sortOrder": 30,
+      "requiredPermission": "legal.view"
+    }
+  ],
+  "reports": [
+    {
+      "id": "legal-admin",
+      "label": "Rechtliche Informationen",
+      "description": "Uebersicht, Seiten, Einstellungen und Vorschau",
+      "path": "/admin/legal",
+      "icon": "Gavel",
+      "componentId": "legal.admin",
+      "sortOrder": 30,
+      "requiredPermission": "legal.view"
+    }
+  ],
+  "healthChecks": [
+    {
+      "id": "pages",
+      "label": "Rechtliche Seiten",
+      "description": "Verfuegbarkeit veroeffentlichter Seiten"
+    }
+  ],
+  "minimumCoreVersion": "1.0.0",
+  "productionReady": true,
+  "qa": {
+    "participatesInScenarios": false,
+    "providesSeed": false
+  }
+}

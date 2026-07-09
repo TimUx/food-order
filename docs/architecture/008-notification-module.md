@@ -42,6 +42,8 @@ Zusätzlich reagiert das Modul per Hook auf:
 - `PAYMENT_FAILED`, `PAYMENT_REFUNDED` – Zahlungs-Alerts
 - `MODULE_ACTIVATED`, `MODULE_DEACTIVATED` – optionale Admin-Hinweise
 
+Wenn das optionale Legal-Modul aktiv ist, ergaenzt `MessageTemplateService` Kunden-E-Mails zusaetzlich um veroeffentlichte Rechtslinks aus dem `legalContentRegistry`.
+
 ### Komponenten (`modules/notifications/`)
 
 | Komponente | Datei | Verantwortung |

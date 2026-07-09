@@ -193,6 +193,8 @@ Kunden finden Vereinskontaktdaten über den **Kontakt**-Button auf der Bestellse
 
 ![Kontakt](screenshots/14-kontakt.png)
 
+Wenn das Modul **Rechtliche Informationen** aktiviert ist, erscheinen zusätzlich Links wie **Impressum**, **Datenschutz**, **AGB** oder **Widerruf** im Footer der Bestellseite. Dort finden Kunden die vom Verein veröffentlichten Rechtstexte.
+
 ### Abholboard für Gäste
 
 Separater Monitor unter `/abholboard` – kein Login nötig.

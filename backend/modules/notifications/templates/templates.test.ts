@@ -7,8 +7,8 @@ describe('notification templates', () => {
     expect(renderTemplate('Hallo {{name}}!', { name: 'Verein' })).toBe('Hallo Verein!');
   });
 
-  it('builds order confirmation in German', () => {
-    const msg = buildOrderConfirmationMessage(
+  it('builds order confirmation in German', async () => {
+    const msg = await buildOrderConfirmationMessage(
       {
         id: 'order-1',
         displayNumber: '042',
@@ -28,8 +28,8 @@ describe('notification templates', () => {
     expect(msg.body).toContain('Verein: Feuerwehr Musterstadt');
   });
 
-  it('builds cancellation with full legal notice', () => {
-    const msg = buildOrderCancellationMessage(
+  it('builds cancellation with full legal notice', async () => {
+    const msg = await buildOrderCancellationMessage(
       {
         id: 'order-2',
         displayNumber: '042',

@@ -10,6 +10,12 @@ export type {
   WebhookVerificationResult,
 } from './PayableResource';
 export type {
+  LegalContentService,
+  LegalPageType,
+  PublicLegalLink,
+  PublicLegalPage,
+} from './LegalContentService';
+export type {
   NotificationService,
   OrderEmailData,
   ClubContactData,
@@ -21,5 +27,6 @@ export type {
 } from './PrinterService';
 export { payableResourceRegistry } from './PayableResourceRegistry';
 export { paymentServiceRegistry } from './PaymentServiceRegistry';
+export { legalContentServiceRegistry } from './LegalContentServiceRegistry';
 export { notificationServiceRegistry } from './NotificationServiceRegistry';
 export { printerServiceRegistry } from './PrinterServiceRegistry';

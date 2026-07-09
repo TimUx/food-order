@@ -3,6 +3,7 @@ import { Registry } from './Registry';
 export const EXTENSION_POINT_NAMES = {
   PAYABLE_RESOURCE: 'payableResource',
   PAYMENT_SERVICE: 'paymentService',
+  LEGAL_CONTENT: 'legalContent',
   NOTIFICATION_SERVICE: 'notificationService',
   PRINTER_SERVICE: 'printerService',
 } as const;

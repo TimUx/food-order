@@ -18,6 +18,7 @@ import { AdminUiService } from './AdminUiService';
 import {
   payableResourceRegistry,
   paymentServiceRegistry,
+  legalContentServiceRegistry,
   notificationServiceRegistry,
   printerServiceRegistry,
 } from './extension-points';
@@ -76,6 +77,7 @@ export function bootstrapPlatform(): void {
 
   extensionPointRegistryInstance.register(EXTENSION_POINT_NAMES.PAYABLE_RESOURCE, payableResourceRegistry);
   extensionPointRegistryInstance.register(EXTENSION_POINT_NAMES.PAYMENT_SERVICE, paymentServiceRegistry);
+  extensionPointRegistryInstance.register(EXTENSION_POINT_NAMES.LEGAL_CONTENT, legalContentServiceRegistry);
   extensionPointRegistryInstance.register(EXTENSION_POINT_NAMES.NOTIFICATION_SERVICE, notificationServiceRegistry);
   extensionPointRegistryInstance.register(EXTENSION_POINT_NAMES.PRINTER_SERVICE, printerServiceRegistry);
 
