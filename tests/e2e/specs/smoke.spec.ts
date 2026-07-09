@@ -9,7 +9,7 @@ test.describe('Administrator', () => {
     await page.getByLabel('E-Mail').fill(admin.email);
     await page.getByLabel('Passwort').fill(admin.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
-    await expect(page).toHaveURL(/\/admin/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 15_000 });
     await page.goto('/admin/module');
     await expect(page.getByRole('heading', { name: /module/i })).toBeVisible({ timeout: 30_000 });
   });
@@ -19,7 +19,7 @@ test.describe('Administrator', () => {
     await page.getByLabel('E-Mail').fill(admin.email);
     await page.getByLabel('Passwort').fill(admin.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
-    await expect(page).toHaveURL(/\/admin/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 15_000 });
     await page.goto('/admin/benutzer');
     await expect(page.getByRole('heading', { name: /benutzer/i })).toBeVisible({ timeout: 30_000 });
     await page.goto('/admin/verein');
@@ -53,7 +53,7 @@ test.describe('Küche & Abholung', () => {
     await page.getByLabel('E-Mail').fill(kitchen.email);
     await page.getByLabel('Passwort').fill(kitchen.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
-    await expect(page).toHaveURL(/\/mitarbeiter/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/mitarbeiter\/?$/, { timeout: 15_000 });
     await page.goto('/mitarbeiter/kueche');
     await expect(page.getByText(/aktive bestellungen|keine bestellungen/i)).toBeVisible({ timeout: 30_000 });
     await page.goto('/mitarbeiter/abholung');
