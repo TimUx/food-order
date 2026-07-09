@@ -12,7 +12,7 @@ export const PAYMENT_PERMISSIONS = {
   SETTINGS: 'payment.settings',
 } as const;
 
-const methodTypeConfigSchema = z.object({
+export const methodTypeConfigSchema = z.object({
   enabled: z.boolean().default(true),
   recommended: z.boolean().default(false),
   sortOrder: z.number().default(10),

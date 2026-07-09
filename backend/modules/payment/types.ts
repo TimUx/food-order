@@ -95,6 +95,7 @@ export type PaymentAuditAction =
   | 'refund'
   | 'timeout'
   | 'provider_error'
+  | 'connection_test'
   | 'checkout_cancelled'
   | 'checkout_retried';
 

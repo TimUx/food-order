@@ -3,7 +3,7 @@ import type { FeatureContext } from '../../src/module-system/types';
 import { requirePermission } from '../../src/middleware/permission';
 import { createPaymentAdminService } from './services/PaymentAdminService';
 import { paymentManager } from './PaymentManager';
-import { PAYMENT_PERMISSIONS } from './config';
+import { PAYMENT_PERMISSIONS, methodTypeConfigSchema } from './config';
 import { refundPaymentSchema } from '../../src/validation/schemas';
 import { paymentAuditRepository } from './repositories/paymentAuditRepository';
 import { z } from 'zod';
@@ -69,7 +69,10 @@ export function createPaymentAdminRoutes(context: FeatureContext): Router {
 
   router.put('/method-types', ...wrap(P.MANAGE, async (req, res) => {
     const body = methodTypesSchema.parse(req.body);
-    res.json(await admin.saveMethodTypes(body.methodTypes));
+    const normalized = Object.fromEntries(
+      Object.entries(body.methodTypes).map(([key, value]) => [key, methodTypeConfigSchema.parse(value)])
+    );
+    res.json(await admin.saveMethodTypes(normalized));
   }));
 
   router.get('/payments', ...wrap(P.VIEW, async (req, res) => {

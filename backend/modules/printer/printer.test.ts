@@ -1,10 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { defaultPrinterConfig } from './config';
 import { slotSupportsTemplate } from './PrinterAdapter';
 import { EscPosNetworkAdapter } from './adapters/EscPosNetworkAdapter';
 import { BluetoothAdapter } from './adapters/BluetoothAdapter';
-import { printManager } from './PrintManager';
-import { paymentServiceRegistry } from '../../src/platform/extension-points';
 
 describe('Printer module', () => {
   it('ESC/POS network requires host when enabled', () => {
@@ -30,9 +28,8 @@ describe('Printer module', () => {
     expect(slotSupportsTemplate({ enabled: true, type: 'browser', port: 9100, template: 'receipt' }, 'kitchen')).toBe(false);
   });
 
-  it('defers online kitchen print when payment is available', async () => {
-    vi.spyOn(paymentServiceRegistry, 'isAvailable').mockResolvedValue(true);
-    await expect(printManager.shouldDeferOnlineKitchenPrint('ONLINE')).resolves.toBe(true);
-    await expect(printManager.shouldDeferOnlineKitchenPrint('CASHIER')).resolves.toBe(false);
+  it('defaults kitchen print to order-created and order-paid hooks', () => {
+    expect(defaultPrinterConfig.autoPrint.kitchenOnOrderCreated).toBe(true);
+    expect(defaultPrinterConfig.autoPrint.kitchenOnOrderPaid).toBe(true);
   });
 });
