@@ -43,13 +43,13 @@ const MIME: Record<string, string> = {
 };
 
 const mockClub = {
-  clubName: 'SV Musterstadt e.V.',
-  description: 'Sportverein Musterstadt – seit 1920',
-  contactName: 'Vereinsverwaltung',
-  email: 'kontakt@sv-musterstadt.de',
+  clubName: 'Feuerwehr Musterstadt',
+  description: 'Freiwillige Feuerwehr Musterstadt – Tradition seit 1892',
+  contactName: 'Vereinsvorstand Max Müller',
+  email: 'kontakt@feuerwehr-musterstadt.de',
   phone: '+49 1234 567890',
-  address: 'Sportplatzstraße 1, 12345 Musterstadt',
-  website: 'https://www.sv-musterstadt.de',
+  address: 'Feuerwehrstraße 1, 12345 Musterstadt',
+  website: 'https://www.feuerwehr-musterstadt.de',
   logoUrl: null,
   orderFieldFirstNameRequired: true,
   orderFieldLastNameRequired: true,
@@ -59,10 +59,10 @@ const mockClub = {
 };
 
 const mockEmailSettings = {
-  smtpHost: 'smtp.sv-musterstadt.de',
+  smtpHost: 'smtp.feuerwehr-musterstadt.de',
   smtpPort: 587,
-  smtpUser: 'noreply@sv-musterstadt.de',
-  smtpFrom: 'noreply@sv-musterstadt.de',
+  smtpUser: 'noreply@feuerwehr-musterstadt.de',
+  smtpFrom: 'noreply@feuerwehr-musterstadt.de',
   smtpPassConfigured: true,
   smtpEnabled: true,
   emailCustomText: 'Bitte holen Sie Ihre Bestellung am Veranstaltungstag an der Hauptkasse ab.',
@@ -93,11 +93,11 @@ const mockEvent = {
 };
 
 const mockFoodItems = [
-  { id: '00000000-0000-0000-0001-000000000001', eventId: EVENT_ID, name: 'Bratwurst mit Brötchen', description: 'Frische Bratwurst vom Grill mit Senf und Brötchen', price: 4.5, sortOrder: 1, active: true, soldOut: false },
-  { id: '00000000-0000-0000-0001-000000000002', eventId: EVENT_ID, name: 'Currywurst', description: 'Currywurst mit Pommes und hausgemachter Soße', price: 6.0, sortOrder: 2, active: true, soldOut: false },
-  { id: '00000000-0000-0000-0001-000000000003', eventId: EVENT_ID, name: 'Schnitzel mit Pommes', description: 'Paniertes Schnitzel mit knusprigen Pommes', price: 8.5, sortOrder: 3, active: true, soldOut: false },
-  { id: '00000000-0000-0000-0001-000000000004', eventId: EVENT_ID, name: 'Vegetarischer Burger', description: 'Gemüseburger mit Salat und hausgemachter Soße', price: 7.0, sortOrder: 4, active: true, soldOut: false },
-  { id: '00000000-0000-0000-0001-000000000005', eventId: EVENT_ID, name: 'Apfelstrudel', description: 'Warmer Apfelstrudel mit Vanillesauce', price: 3.5, sortOrder: 5, active: true, soldOut: false },
+  { id: '00000000-0000-0000-0001-000000000001', eventId: EVENT_ID, name: 'Bratwurst', description: 'Frische Bratwurst vom Grill mit Senf', price: 4.5, sortOrder: 1, active: true, soldOut: false },
+  { id: '00000000-0000-0000-0001-000000000002', eventId: EVENT_ID, name: 'Pommes', description: 'Knusprige Pommes frites', price: 3.5, sortOrder: 2, active: true, soldOut: false },
+  { id: '00000000-0000-0000-0001-000000000003', eventId: EVENT_ID, name: 'Steak', description: 'Rumpsteak vom Grill mit Kräuterbutter', price: 12.0, sortOrder: 3, active: true, soldOut: false },
+  { id: '00000000-0000-0000-0001-000000000004', eventId: EVENT_ID, name: 'Cola', description: 'Erfrischungsgetränk 0,33 l', price: 2.5, sortOrder: 4, active: true, soldOut: false },
+  { id: '00000000-0000-0000-0001-000000000005', eventId: EVENT_ID, name: 'Apfelwein', description: 'Regionaler Apfelwein 0,25 l', price: 3.0, sortOrder: 5, active: true, soldOut: false },
 ];
 
 const mockOrderBase = {
@@ -109,15 +109,15 @@ const mockOrderBase = {
   createdAt: '2026-07-08T10:30:00.000Z',
   customer: { firstName: 'Max', lastName: 'Mustermann', email: 'max@example.com', phone: '+49 170 1234567' },
   items: [
-    { id: 'i1', foodItemId: mockFoodItems[0].id, name: 'Bratwurst mit Brötchen', quantity: 2, unitPrice: 4.5, lineTotal: 9 },
-    { id: 'i2', foodItemId: mockFoodItems[1].id, name: 'Currywurst', quantity: 1, unitPrice: 6, lineTotal: 6 },
+    { id: 'i1', foodItemId: mockFoodItems[0].id, name: 'Bratwurst', quantity: 2, unitPrice: 4.5, lineTotal: 9 },
+    { id: 'i2', foodItemId: mockFoodItems[1].id, name: 'Pommes', quantity: 1, unitPrice: 3.5, lineTotal: 3.5 },
   ],
 };
 
 const mockOrders = [
   { ...mockOrderBase, id: '00000000-0000-0000-0000-000000000041', lookupToken: 'b1b2c3d4e5f6789012345678abcdef01', orderNumber: 41, displayNumber: '041', status: 'NEW', statusLabel: 'Neu' },
   { ...mockOrderBase, id: '00000000-0000-0000-0000-000000000042', lookupToken: ORDER_LOOKUP_TOKEN, orderNumber: 42, displayNumber: '042', status: 'IN_PROGRESS', statusLabel: 'In Bearbeitung' },
-  { ...mockOrderBase, id: '00000000-0000-0000-0000-000000000043', lookupToken: 'c1b2c3d4e5f6789012345678abcdef03', orderNumber: 43, displayNumber: '043', status: 'READY', statusLabel: 'Fertig', totalPrice: 8.5, items: [{ id: 'i3', foodItemId: mockFoodItems[2].id, name: 'Schnitzel mit Pommes', quantity: 1, unitPrice: 8.5, lineTotal: 8.5 }] },
+  { ...mockOrderBase, id: '00000000-0000-0000-0000-000000000043', lookupToken: 'c1b2c3d4e5f6789012345678abcdef03', orderNumber: 43, displayNumber: '043', status: 'READY', statusLabel: 'Fertig', totalPrice: 12.0, items: [{ id: 'i3', foodItemId: mockFoodItems[2].id, name: 'Steak', quantity: 1, unitPrice: 12, lineTotal: 12 }] },
   { ...mockOrderBase, id: '00000000-0000-0000-0000-000000000044', lookupToken: 'd1b2c3d4e5f6789012345678abcdef04', orderNumber: 44, displayNumber: '044', status: 'PICKED_UP', statusLabel: 'Abgeholt', source: 'CASHIER', sourceLabel: 'Vor Ort' },
 ];
 
@@ -128,11 +128,11 @@ const mockStats = {
   pickedUpOrders: 68,
   revenue: 1243.5,
   popularDishes: [
-    { name: 'Bratwurst mit Brötchen', count: 45 },
-    { name: 'Currywurst', count: 32 },
-    { name: 'Schnitzel mit Pommes', count: 28 },
-    { name: 'Vegetarischer Burger', count: 19 },
-    { name: 'Apfelstrudel', count: 15 },
+    { name: 'Bratwurst', count: 45 },
+    { name: 'Pommes', count: 38 },
+    { name: 'Steak', count: 28 },
+    { name: 'Cola', count: 52 },
+    { name: 'Apfelwein', count: 19 },
   ],
   avgProcessingMinutes: 8,
 };
@@ -147,8 +147,9 @@ const mockModuleMenu = [
 const mockModules = [
   {
     id: 'payment', name: 'Online-Zahlung', version: '1.0.0', imageVersion: '1.0.0',
-    description: 'Online-Zahlungen über Stripe, PayPal, VR Payment, S-Payment, PAYONE und SumUp',
+    description: 'Online-Zahlungen über Stripe und weitere Anbieter',
     author: 'Vereinsbestellung', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
+    productionReady: true,
     flags: { enabled: true, disabled: false, configurable: true, visible: true, health: 'healthy' },
     permissions: [
       { key: 'payment.view', description: 'Zahlungsübersicht einsehen' },
@@ -160,82 +161,29 @@ const mockModules = [
     menuItems: mockModuleMenu, widgets: [], hasConfig: true,
     dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0',
     installedAt: '2026-01-15T10:00:00.000Z', lastHealthStatus: 'healthy', upgradeAvailable: false,
+    settingsPath: '/admin/payment?tab=presets',
   },
   {
-    id: 'inventory', name: 'Lagerverwaltung', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Bestandsführung und Lagerbestände für Speisen und Getränke',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
-    permissions: [{ key: 'inventory.view', description: 'Lagerbestände einsehen' }],
-    menuItems: [], widgets: [], hasConfig: true,
-    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
-  },
-  {
-    id: 'printer', name: 'Bondruck', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Automatischer Bondruck für Küche und Kasse',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
-    permissions: [], menuItems: [], widgets: [], hasConfig: true,
-    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
-  },
-  {
-    id: 'voucher', name: 'Gutscheine', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Gutscheinverwaltung und Einlösung',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
-    permissions: [{ key: 'voucher.manage', description: 'Gutscheine verwalten' }],
-    menuItems: [], widgets: [], hasConfig: true,
-    dependencies: { required: ['payment'], optional: ['inventory'] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
-  },
-  {
-    id: 'discount', name: 'Rabatte', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Rabattaktionen und Sonderpreise',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
-    permissions: [], menuItems: [], widgets: [], hasConfig: true,
-    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
-  },
-  {
-    id: 'notifications', name: 'Benachrichtigungen', version: '0.1.0', imageVersion: '0.1.0',
+    id: 'notifications', name: 'Benachrichtigungen', version: '1.0.0', imageVersion: '1.0.0',
     description: 'E-Mail, Push und ntfy Benachrichtigungen',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'INSTALLED', installed: true, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
+    author: 'Vereinsbestellung', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
+    productionReady: true,
+    flags: { enabled: true, disabled: false, configurable: true, visible: true, health: 'healthy' },
     permissions: [], menuItems: [], widgets: [], hasConfig: true,
     dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0',
     installedAt: '2026-02-01T12:00:00.000Z', upgradeAvailable: false,
+    settingsPath: '/admin/settings/module.notifications',
   },
   {
-    id: 'analytics', name: 'Auswertungen', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Statistiken und Berichte zu Bestellungen und Veranstaltungen',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
-    permissions: [], menuItems: [], widgets: [], hasConfig: true,
-    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
-  },
-  {
-    id: 'loyalty', name: 'Treueprogramm', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Stammkundenprogramm mit Punkten und Belohnungen',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
-    permissions: [], menuItems: [], widgets: [], hasConfig: true,
-    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
-  },
-  {
-    id: 'checkin', name: 'QR-Code Einlass', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Einlasskontrolle per QR-Code',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'AVAILABLE', installed: false, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'unknown' },
-    permissions: [], menuItems: [], widgets: [], hasConfig: true,
-    dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0', upgradeAvailable: false,
-  },
-  {
-    id: 'cash-register', name: 'Kassenanbindung', version: '0.1.0', imageVersion: '0.1.0',
-    description: 'Anbindung an Kassensysteme und TSE',
+    id: 'printer', name: 'Bondruck', version: '1.0.0', imageVersion: '1.0.0',
+    description: 'Automatischer Bondruck für Küche und Kasse',
     author: 'Vereinsbestellung', license: 'MIT', status: 'DISABLED', installed: true, enabled: false,
-    flags: { enabled: false, disabled: true, configurable: true, visible: false, health: 'degraded' },
+    productionReady: true,
+    flags: { enabled: false, disabled: true, configurable: true, visible: true, health: 'unknown' },
     permissions: [], menuItems: [], widgets: [], hasConfig: true,
     dependencies: { required: [], optional: [] }, minimumCoreVersion: '1.0.0',
-    installedAt: '2026-01-20T08:00:00.000Z', lastHealthStatus: 'degraded', upgradeAvailable: false,
+    installedAt: '2026-03-01T08:00:00.000Z', upgradeAvailable: false,
+    settingsPath: '/admin/settings/module.printer',
   },
 ];
 
@@ -318,9 +266,9 @@ const mockNotificationsSettingsForm = {
     {
       id: 'smtp', label: 'SMTP / E-Mail', fields: [
         { key: 'smtp.enabled', group: 'smtp', label: 'SMTP aktivieren', type: 'boolean', value: true },
-        { key: 'smtp.host', group: 'smtp', label: 'SMTP-Host', type: 'string', value: 'smtp.sv-musterstadt.de' },
+        { key: 'smtp.host', group: 'smtp', label: 'SMTP-Host', type: 'string', value: 'smtp.feuerwehr-musterstadt.de' },
         { key: 'smtp.port', group: 'smtp', label: 'SMTP-Port', type: 'number', value: 587 },
-        { key: 'smtp.from', group: 'smtp', label: 'Absender-Adresse', type: 'email', value: 'noreply@sv-musterstadt.de' },
+        { key: 'smtp.from', group: 'smtp', label: 'Absender-Adresse', type: 'email', value: 'noreply@feuerwehr-musterstadt.de' },
         { key: 'smtp.pass', group: 'smtp', label: 'SMTP-Passwort', type: 'password', value: '', masked: true, encrypted: true },
       ],
     },
@@ -380,26 +328,26 @@ const mockOrderSettingsForm = {
 
 const mockAdminPages = [
   { id: 'admin-dashboard', path: '/admin', label: 'Übersicht', description: 'Administrationsübersicht', icon: 'Dashboard', pageType: 'dashboard', sortOrder: 0, source: 'core' as const },
-  { id: 'settings-core-club', path: '/admin/verein', label: 'Verein', description: 'Öffentliche Vereinsdaten und Branding', icon: 'Settings', pageType: 'settings', namespace: 'core.club', sortOrder: 15, source: 'core' as const },
-  { id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', description: 'Zahlungsanbieter, Transaktionen und Statistiken', icon: 'Payment', pageType: 'report', componentId: 'payment.admin', sortOrder: 10, source: 'module' as const, moduleId: 'payment', requiredPermission: 'payment.view' },
-  { id: 'core-users', path: '/admin/benutzer', label: 'Benutzer', description: 'Mitarbeiter und Administratoren', icon: 'People', pageType: 'builtin', componentId: 'core.users', sortOrder: 30, source: 'core' as const },
-  { id: 'core-events', path: '/admin/veranstaltungen', label: 'Veranstaltungen', description: 'Events anlegen und aktivieren', icon: 'Event', pageType: 'builtin', componentId: 'core.events', sortOrder: 40, source: 'core' as const },
-  { id: 'core-food-items', path: '/admin/speisen', label: 'Speisen', description: 'Speisekarte pflegen', icon: 'RestaurantMenu', pageType: 'builtin', componentId: 'core.food-items', sortOrder: 50, source: 'core' as const },
-  { id: 'settings-core-order', path: '/admin/bestellung', label: 'Bestellung', description: 'Pflichtfelder und Stornierungsfrist', icon: 'ShoppingCart', pageType: 'settings', namespace: 'core.order', sortOrder: 55, source: 'core' as const },
-  { id: 'core-modules', path: '/admin/module', label: 'Module', description: 'Offizielle Erweiterungen verwalten', icon: 'Extension', pageType: 'modules', componentId: 'core.modules', sortOrder: 90, source: 'core' as const },
-  { id: 'settings-module.notifications', path: '/admin/settings/module.notifications', label: 'Benachrichtigungen', description: 'E-Mail, Push und ntfy', icon: 'Notifications', pageType: 'settings', namespace: 'module.notifications', sortOrder: 200, source: 'module' as const, moduleId: 'notifications' },
+  { id: 'core-events', path: '/admin/veranstaltungen', label: 'Veranstaltungen', description: 'Veranstaltungen anlegen und aktivieren', icon: 'Event', pageType: 'builtin', componentId: 'core.events', sortOrder: 10, source: 'core' as const },
+  { id: 'core-food-items', path: '/admin/speisen', label: 'Speisen', description: 'Speisekarte pflegen', icon: 'RestaurantMenu', pageType: 'builtin', componentId: 'core.food-items', sortOrder: 20, source: 'core' as const },
+  { id: 'core-users', path: '/admin/benutzer', label: 'Team', description: 'Mitarbeiter und Administratoren', icon: 'People', pageType: 'builtin', componentId: 'core.users', sortOrder: 25, source: 'core' as const },
+  { id: 'core-modules', path: '/admin/module', label: 'Funktionen', description: 'Zahlung, Benachrichtigungen und Druck', icon: 'Extension', pageType: 'modules', componentId: 'core.modules', sortOrder: 30, source: 'core' as const },
+  { id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', description: 'Zahlungsanbieter, Transaktionen und Statistiken', icon: 'Payment', pageType: 'report', componentId: 'payment.admin', sortOrder: 35, source: 'module' as const, moduleId: 'payment', requiredPermission: 'payment.view' },
+  { id: 'settings-core-club', path: '/admin/verein', label: 'Verein', description: 'Öffentliche Vereinsdaten und Branding', icon: 'Settings', pageType: 'settings', namespace: 'core.club', sortOrder: 1, source: 'core' as const },
+  { id: 'settings-core-order', path: '/admin/bestellung', label: 'Bestellung', description: 'Pflichtfelder und Stornierungsfrist', icon: 'ShoppingCart', pageType: 'settings', namespace: 'core.order', sortOrder: 2, source: 'core' as const },
+  { id: 'settings-module.notifications', path: '/admin/settings/module.notifications', label: 'Benachrichtigungen', description: 'E-Mail, Push und ntfy', icon: 'Notifications', pageType: 'settings', namespace: 'module.notifications', sortOrder: 3, source: 'module' as const, moduleId: 'notifications' },
 ];
 
 const mockAdminUi = {
   navigation: [
     { id: 'admin-dashboard', label: 'Übersicht', path: '/admin', icon: 'Dashboard', sortOrder: 0, source: 'core' },
-    { id: 'core-users', label: 'Benutzer', path: '/admin/benutzer', icon: 'People', sortOrder: 30, source: 'core' },
-    { id: 'core-events', label: 'Veranstaltungen', path: '/admin/veranstaltungen', icon: 'Event', sortOrder: 40, source: 'core' },
-    { id: 'core-food-items', label: 'Speisen', path: '/admin/speisen', icon: 'RestaurantMenu', sortOrder: 50, source: 'core' },
-    { id: 'settings-core-club', label: 'Verein', path: '/admin/verein', icon: 'Settings', sortOrder: 15, source: 'core' },
-    { id: 'settings-core-order', label: 'Bestellung', path: '/admin/bestellung', icon: 'ShoppingCart', sortOrder: 55, source: 'core' },
-    { id: 'core-modules', label: 'Module', path: '/admin/module', icon: 'Extension', sortOrder: 90, source: 'core' },
-    ...mockModuleMenu.map((m) => ({ ...m, source: 'module' as const, moduleId: m.id.includes('payment') ? 'payment' : 'notifications' })),
+    { id: 'core-events', label: 'Veranstaltungen', path: '/admin/veranstaltungen', icon: 'Event', sortOrder: 10, source: 'core' },
+    { id: 'core-food-items', label: 'Speisen', path: '/admin/speisen', icon: 'RestaurantMenu', sortOrder: 20, source: 'core' },
+    { id: 'core-users', label: 'Team', path: '/admin/benutzer', icon: 'People', sortOrder: 25, source: 'core' },
+    { id: 'core-modules', label: 'Funktionen', path: '/admin/module', icon: 'Extension', sortOrder: 30, source: 'core' },
+    { id: 'settings-core-club', label: 'Verein', path: '/admin/verein', icon: 'Settings', parentId: 'settings', sortOrder: 1, source: 'core' },
+    { id: 'settings-core-order', label: 'Bestellung', path: '/admin/bestellung', icon: 'ShoppingCart', parentId: 'settings', sortOrder: 2, source: 'core' },
+    { id: 'settings-module.notifications', label: 'Benachrichtigungen', path: '/admin/settings/module.notifications', icon: 'Notifications', parentId: 'settings', sortOrder: 3, source: 'module', moduleId: 'notifications' },
   ],
   pages: mockAdminPages,
   dashboardTiles: [
@@ -426,7 +374,7 @@ const mockAdminUi = {
     },
   ],
   widgets: [{ id: 'payment-status', title: 'Online-Zahlung', componentId: 'payment.status', sortOrder: 10, moduleId: 'payment' }],
-  health: [{ id: 'payment-providers', moduleId: 'payment', label: 'Zahlungsanbieter', status: 'healthy' }],
+  health: [{ id: 'payment-providers', moduleId: 'payment', label: 'Zahlungsanbieter', status: 'healthy', description: 'Stripe verbunden (Testmodus)' }],
   reports: [{ id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', componentId: 'payment.admin', moduleId: 'payment' }],
   developerPages: [],
 };
@@ -437,7 +385,41 @@ const mockUsers = [
   { id: 'u3', email: 'service@verein.local', firstName: 'Service', lastName: 'Muster', role: 'STAFF', active: false, createdAt: '2026-02-15T00:00:00.000Z' },
 ];
 
-function mockApi(pathname: string, method: string, body?: string): unknown {
+function mockApi(pathname: string, method: string, body?: string, searchParams?: URLSearchParams): unknown {
+  const etag = searchParams?.get('etag') ?? undefined;
+  const serverTime = new Date().toISOString();
+
+  if (pathname.match(/^\/api\/realtime\/events\/[^/]+\/orders/)) {
+    const status = searchParams?.get('status');
+    let orders = mockOrders;
+    if (status) {
+      const statuses = status.split(',').filter(Boolean);
+      if (statuses.length > 0) orders = mockOrders.filter((o) => statuses.includes(o.status));
+    }
+    const nextEtag = `orders-${orders.length}`;
+    if (etag === nextEtag) return { changed: false, etag: nextEtag, serverTime };
+    return { changed: true, etag: nextEtag, serverTime, data: orders };
+  }
+  if (pathname.match(/^\/api\/realtime\/events\/[^/]+\/stats/)) {
+    const nextEtag = 'stats-v1';
+    if (etag === nextEtag) return { changed: false, etag: nextEtag, serverTime };
+    return { changed: true, etag: nextEtag, serverTime, data: mockStats };
+  }
+  if (pathname === '/api/realtime/pickup-board') {
+    const board = [
+      { id: mockOrders[2].id, orderNumber: 43, displayNumber: '043', readyAt: '2026-07-08T11:00:00.000Z' },
+      { id: '00000000-0000-0000-0000-000000000045', orderNumber: 45, displayNumber: '045', readyAt: '2026-07-08T11:05:00.000Z' },
+    ];
+    const nextEtag = 'pickup-v1';
+    if (etag === nextEtag) return { changed: false, etag: nextEtag, serverTime };
+    return { changed: true, etag: nextEtag, serverTime, data: board };
+  }
+  if (pathname === '/api/realtime/club') {
+    const nextEtag = 'club-v1';
+    if (etag === nextEtag) return { changed: false, etag: nextEtag, serverTime };
+    return { changed: true, etag: nextEtag, serverTime, data: mockClub };
+  }
+
   if (pathname === '/api/public/order-settings') return mockOrderSettings;
   if (pathname === '/api/admin/email-settings') return mockEmailSettings;
   if (pathname === '/api/public/club' || pathname === '/api/staff/club' || pathname === '/api/admin/club') return mockClub;
@@ -491,7 +473,10 @@ function mockApi(pathname: string, method: string, body?: string): unknown {
     return mockOrders[1];
   }
   if (pathname === '/api/auth/login') {
-    return { token: 'mock-token', user: mockUser };
+    return { token: 'mock-token', refreshToken: 'mock-refresh-token', user: mockUser };
+  }
+  if (pathname === '/api/auth/refresh') {
+    return { token: 'mock-token', refreshToken: 'mock-refresh-token' };
   }
   if (pathname === '/api/auth/me') return mockUser;
   if (pathname === '/api/staff/events/active') return mockEvent;
@@ -523,6 +508,28 @@ function mockApi(pathname: string, method: string, body?: string): unknown {
     { id: 'stripe:apple_pay', providerId: 'stripe', label: 'Apple Pay', enabled: true, recommended: false, sortOrder: 20, providerConfigured: true },
   ];
   if (pathname === '/api/modules/features/payment/admin/config') return mockPaymentConfig;
+  if (pathname === '/api/modules/features/payment/admin/payments') {
+    return {
+      items: [
+        { id: 'pay-1', orderId: mockOrders[0].id, displayNumber: '041', amountCents: 1500, status: 'PAYMENT_PAID', provider: 'stripe', createdAt: '2026-07-08T10:30:00.000Z' },
+        { id: 'pay-2', orderId: mockOrders[1].id, displayNumber: '042', amountCents: 1500, status: 'PAYMENT_PENDING', provider: 'stripe', createdAt: '2026-07-08T10:45:00.000Z' },
+      ],
+      total: 2, page: 1, pageSize: 20,
+    };
+  }
+  if (pathname === '/api/modules/features/payment/admin/logs') {
+    return { items: [{ id: 'log-1', action: 'checkout_created', message: 'Checkout erstellt', createdAt: '2026-07-08T10:30:00.000Z' }], total: 1, page: 1 };
+  }
+  if (pathname === '/api/modules/features/payment/admin/webhooks') {
+    return { items: [{ id: 'wh-1', event: 'payment_intent.succeeded', status: 'ok', createdAt: '2026-07-08T10:31:00.000Z' }], total: 1, page: 1 };
+  }
+  if (pathname === '/api/modules/features/payment/admin/health') return mockPaymentProviders;
+  if (pathname === '/api/modules/features/payment/admin/statistics') {
+    return { period: 'today', totalRevenueCents: 15600, paymentCount: 12, byProvider: [{ provider: 'stripe', count: 12, revenueCents: 15600 }] };
+  }
+  if (pathname === '/api/modules/features/payment/admin/refunds') {
+    return { items: [], total: 0, page: 1 };
+  }
   if (pathname.match(/\/admin\/modules\/[^/]+\/(install|activate|deactivate|uninstall|reinitialize)$/) && method === 'POST') {
     return mockModules[0];
   }
@@ -552,10 +559,11 @@ async function setupPage(page: Page, auth = false) {
   await page.route('**/workbox-*.js', (route) => route.abort());
   await page.route('**/api/**', async (route) => {
     const url = new URL(route.request().url());
-    const body = mockApi(url.pathname, route.request().method(), route.request().postData() || undefined);
+    const body = mockApi(url.pathname, route.request().method(), route.request().postData() || undefined, url.searchParams);
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
   });
   await page.addInitScript(() => {
+    localStorage.setItem('verein_theme', 'light');
     void navigator.serviceWorker?.getRegistrations().then((regs) => {
       regs.forEach((reg) => void reg.unregister());
     });
@@ -563,6 +571,7 @@ async function setupPage(page: Page, auth = false) {
   if (auth) {
     await page.addInitScript(() => {
       localStorage.setItem('verein_token', 'mock-token');
+      localStorage.setItem('verein_refresh_token', 'mock-refresh-token');
     });
   }
 }
@@ -610,46 +619,70 @@ function embedDevice(rawPath: string, device: 'iphone' | 'ipad' | 'monitor', out
   ], { stdio: 'inherit' });
 }
 
+async function waitForAdminShell(page: Page, expectedPath: string) {
+  await page.waitForFunction((path) => {
+    if (window.location.pathname.replace(/\/$/, '') !== path) return false;
+    const text = document.body.innerText;
+    if (text.includes('Admin-Login') || text.includes('Mitarbeiter-Login')) return false;
+    const drawer = document.querySelector('.MuiDrawer-paper');
+    return Boolean(drawer) && text.includes('Administration') && text.length > 150;
+  }, expectedPath, { timeout: 60000 });
+}
+
+function adminPathFromSpec(url: string): string {
+  return url.split('?')[0].replace(/\/$/, '') || '/admin';
+}
+
 async function waitForPageReady(page: Page, spec: PageSpec) {
   if (!spec.auth) return;
 
   if (spec.url.startsWith('/mitarbeiter')) {
-    await page.waitForURL(/\/mitarbeiter/, { timeout: 20000 });
-    await page.waitForFunction(() => document.body.innerText.trim().length > 80, { timeout: 20000 });
+    await page.waitForURL(/\/mitarbeiter(?!\/login)/, { timeout: 30000 });
+    await page.waitForFunction(() => document.body.innerText.trim().length > 80, { timeout: 30000 });
     return;
   }
 
   if (!spec.url.startsWith('/admin')) return;
 
-  await page.waitForURL(/\/admin/, { timeout: 30000 });
-  await page.waitForSelector('.MuiDrawer-paper', { state: 'visible', timeout: 30000 });
+  const adminPath = adminPathFromSpec(spec.url);
+  await waitForAdminShell(page, adminPath);
 
   if (spec.url.startsWith('/admin/payment')) {
-    await page.waitForSelector('text=Online-Zahlung', { timeout: 20000 });
+    await page.waitForSelector('text=Online-Zahlung', { timeout: 30000 });
     if (spec.url.includes('tab=settings')) {
-      await page.waitForSelector('text=Einstellungen speichern', { timeout: 20000 });
-    } else {
-      await page.waitForSelector('text=Zahlungen heute', { timeout: 20000 });
+      await page.waitForSelector('text=Stripe aktivieren', { timeout: 30000 });
+    } else if (spec.url.includes('tab=overview') || !spec.url.includes('tab=')) {
+      await page.waitForSelector('text=Zahlungen heute', { timeout: 30000 });
     }
     return;
   }
 
-  if (spec.url === '/admin/verein') {
-    await page.waitForSelector('text=Vereinsname', { timeout: 20000 });
+  if (adminPath === '/admin/verein') {
+    await page.waitForSelector('text=Feuerwehr Musterstadt', { timeout: 30000 });
     return;
   }
 
-  if (spec.url === '/admin/bestellung') {
-    await page.waitForSelector('text=Stornierungsfrist', { timeout: 20000 });
+  if (adminPath === '/admin/bestellung') {
+    await page.waitForSelector('text=Stornierungsfrist', { timeout: 30000 });
     return;
   }
 
-  if (spec.url === '/admin') {
-    await page.waitForSelector('text=Modul-Gesundheit', { timeout: 20000 });
+  if (adminPath === '/admin/module') {
+    await page.waitForSelector('text=Funktionen', { timeout: 30000 });
     return;
   }
 
-  await page.waitForFunction(() => document.body.innerText.trim().length > 120, { timeout: 20000 });
+  if (adminPath === '/admin') {
+    await page.waitForFunction(() => {
+      const t = document.body.innerText;
+      return t.includes('Echtzeit-Verbindung')
+        || t.includes('Funktionsstatus')
+        || (t.includes('Veranstaltungen') && t.includes('Mitarbeiterbereich') && t.includes('Online-Zahlung'));
+    }, { timeout: 90000 });
+    return;
+  }
+
+  await page.waitForFunction(() => document.body.innerText.trim().length > 120, { timeout: 30000 });
 }
 
 async function captureScreenshot(
@@ -661,8 +694,19 @@ async function captureScreenshot(
   const page = await context.newPage();
   await setupPage(page, spec.auth);
 
-  await page.goto(`http://localhost:${PORT}${spec.url}`, { waitUntil: 'load' });
-  if (spec.auth) await waitForPageReady(page, spec);
+  await page.goto(`http://localhost:${PORT}${spec.url}`, { waitUntil: 'domcontentloaded' });
+  if (spec.auth) {
+    try {
+      await waitForPageReady(page, spec);
+    } catch (err) {
+      const debug = await page.evaluate(() => ({
+        url: window.location.href,
+        text: document.body.innerText.slice(0, 1200),
+      }));
+      console.error('Seite nicht bereit:', spec.name, debug);
+      throw err;
+    }
+  }
   await page.waitForTimeout(600);
   if (spec.prepare) await spec.prepare(page);
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -731,10 +775,15 @@ async function main() {
 
   const browser = await chromium.launch({ headless: true });
 
-  try {
-    await captureOrderPageDevices(browser);
-  } catch (err) {
-    console.warn('Geräte-Screenshots Bestellseite übersprungen:', err instanceof Error ? err.message : err);
+  const startFrom = process.env.START_FROM;
+  const skipDevices = process.env.SKIP_DEVICES === '1';
+
+  if (!skipDevices && !startFrom) {
+    try {
+      await captureOrderPageDevices(browser);
+    } catch (err) {
+      console.warn('Geräte-Screenshots Bestellseite übersprungen:', err instanceof Error ? err.message : err);
+    }
   }
 
   const pages: PageSpec[] = [
@@ -763,7 +812,7 @@ async function main() {
         await page.getByLabel('Abholnummer').fill('43');
         await page.getByLabel('Nachname').fill('Mustermann');
         await page.getByRole('button', { name: 'Suchen' }).click();
-        await page.waitForSelector('text=Schnitzel mit Pommes', { timeout: 10000 });
+        await page.waitForSelector('text=Steak', { timeout: 10000 });
       },
     },
     {
@@ -786,11 +835,16 @@ async function main() {
     { name: '18-bestell-einstellungen', url: '/admin/bestellung', auth: true },
     { name: '19-email-einstellungen', url: '/admin/settings/module.notifications', auth: true },
     { name: '20-modulverwaltung', url: '/admin/module', auth: true },
-    { name: '21-payment-admin', url: '/admin/payment', auth: true },
+    { name: '21-payment-admin', url: '/admin/payment?tab=overview', auth: true },
     { name: '22-payment-einstellungen', url: '/admin/payment?tab=settings', auth: true },
   ];
 
+  let capturing = !startFrom;
   for (const spec of pages) {
+    if (!capturing) {
+      if (spec.name === startFrom || spec.name.startsWith(`${startFrom}-`)) capturing = true;
+      else continue;
+    }
     await captureScreenshot(browser, spec);
   }
 

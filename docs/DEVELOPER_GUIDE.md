@@ -303,7 +303,7 @@ Voraussetzungen: Playwright-Browser (`npx playwright install chromium`), Python 
 Alternativ per Docker (Playwright-Image + `python3-pil`):
 
 ```bash
-docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.61.1-jammy \
+docker run --rm -v "$PWD":/work -w /work mcr.microsoft.com/playwright:v1.52.0-jammy \
   bash -c "apt-get update -qq && apt-get install -y -qq python3-pil && cd frontend && npm install && npm run build && cd .. && npm install && npm run screenshots"
 ```
 
@@ -314,6 +314,8 @@ Umgebungsvariablen für die Screenshot-Pipeline:
 | Variable | Beschreibung |
 |----------|-------------|
 | `FRONTEND_DIST` | Optional: alternativer Pfad zu `frontend/dist` (z. B. nach Build in temp-Verzeichnis) |
+| `START_FROM` | Ab einem Screenshot-Namen fortsetzen (z. B. `START_FROM=16-admin-uebersicht`) |
+| `SKIP_DEVICES` | `1` = Geräte-Mockups der Bestellseite (01-*) überspringen |
 
 Die Rohdaten für Geräte-Mockups landen in `$TMPDIR/food-order-screenshots-raw` (nicht mehr unter `docs/screenshots/_raw`).
 

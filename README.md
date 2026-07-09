@@ -20,7 +20,7 @@ Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstalt
 | **Benachrichtigungen** | SMTP, ntfy, Discord, Slack, Teams (Admin) |
 | **Speisenverwaltung** | CRUD mit Bild-Upload (Admin) |
 | **Veranstaltungsverwaltung** | Mehrere Events, eine aktiv (Admin) |
-| **Modulverwaltung** | Optionale Erweiterungen installieren & aktivieren (Admin) |
+| **Modulverwaltung** | Optionale Funktionen ein- und ausschalten (Admin) |
 | **Online-Zahlung** | Stripe-Checkout, Smart Payment, Admin-Dashboard (optional, Modul) |
 
 ## Vorausbestellungen
@@ -45,6 +45,7 @@ Die Plattform unterstützt **optionale Module**, die mit dem Docker-Image ausgel
 |-------|--------|--------------|
 | **Online-Zahlung** | ✅ Vollständig | Stripe, Smart Payment, Admin unter `/admin/payment` |
 | **Benachrichtigungen** | ✅ Vollständig | SMTP, ntfy, Discord, Slack, Teams |
+| **Bondruck** | ✅ Vollständig | Küchen- und Kassenbondruck |
 | Lagerverwaltung | 🔜 Geplant | Bestandsführung für Speisen |
 
 **Wichtig:** Vereine mit ausschließlich Barzahlung an der Kasse müssen **kein Modul aktivieren**. Ohne aktiviertes Payment-Modul verhält sich die Plattform exakt wie zuvor.
@@ -83,15 +84,15 @@ Technische Details: [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) · Admin-An
 
 | Admin-Übersicht | Verein & Kontakt | Bestell-Einstellungen |
 |:---:|:---:|:---:|
-| ![Admin](docs/screenshots/16-admin-uebersicht.png) | ![Verein](docs/screenshots/13-vereinseinstellungen.png) | ![Bestellung](docs/screenshots/18-bestell-einstellungen.png) |
+| ![Admin](docs/screenshots/16-admin-uebersicht.png) | ![Verein](docs/screenshots/13-vereinseinstellungen.png) | ![Bestell-Einstellungen](docs/screenshots/18-bestell-einstellungen.png) |
 
-| Benutzerverwaltung | Veranstaltungen | Speisenverwaltung |
+| Team | Veranstaltungen | Speisenverwaltung |
 |:---:|:---:|:---:|
-| ![Benutzer](docs/screenshots/17-benutzerverwaltung.png) | ![Veranstaltungen](docs/screenshots/12-veranstaltungen.png) | ![Speisen](docs/screenshots/11-speisenverwaltung.png) |
+| ![Team](docs/screenshots/17-benutzerverwaltung.png) | ![Veranstaltungen](docs/screenshots/12-veranstaltungen.png) | ![Speisen](docs/screenshots/11-speisenverwaltung.png) |
 
-| Modulverwaltung | Payment-Administration |
+| Funktionen | Payment-Administration (Übersicht) |
 |:---:|:---:|
-| ![Module](docs/screenshots/20-modulverwaltung.png) | ![Payment-Admin](docs/screenshots/21-payment-admin.png) |
+| ![Funktionen](docs/screenshots/20-modulverwaltung.png) | ![Payment-Admin](docs/screenshots/21-payment-admin.png) |
 
 | Payment-Einstellungen (Tab) |
 |:---:|
@@ -146,12 +147,12 @@ Das Backend wendet Datenbankänderungen beim Start automatisch per `prisma migra
 |-------|-------------|-------|
 | `/admin` | Admin-Übersicht | ADMIN |
 | `/admin/verein` | Vereinseinstellungen | ADMIN |
-| `/admin/benutzer` | Benutzerverwaltung | ADMIN |
+| `/admin/benutzer` | Team verwalten | ADMIN |
 | `/admin/veranstaltungen` | Veranstaltungen | ADMIN |
 | `/admin/speisen` | Speisenverwaltung | ADMIN |
 | `/admin/bestellung` | Pflichtfelder & Stornierungsfrist | ADMIN |
 | `/admin/email` | SMTP / Benachrichtigungen (Weiterleitung → Modul-Settings) | ADMIN |
-| `/admin/module` | Modulverwaltung | ADMIN |
+| `/admin/module` | Funktionen (Zahlung, Benachrichtigungen, Druck) | ADMIN |
 | `/admin/payment` | Payment-Administration (Dashboard, Provider, Zahlungen) | ADMIN |
 | `/admin/settings/module.payment` | API-Schlüssel & Provider (alternativ Tab „Einstellungen“) | ADMIN |
 | `/admin/settings/module.notifications` | E-Mail & Benachrichtigungskanäle | ADMIN |
@@ -191,5 +192,15 @@ cd frontend && npm run build
 cd .. && npm install
 npm run screenshots
 ```
+
+Alle Screenshots werden mit **1920×1080**, **Light Theme** und einheitlichen Beispieldaten (*Feuerwehr Musterstadt*, *Sommerfest 2026*) erzeugt. API-Antworten werden per Mock bereitgestellt — siehe `scripts/capture-screenshots.ts`.
+
+Optionale Umgebungsvariablen:
+
+| Variable | Beschreibung |
+|----------|-------------|
+| `START_FROM` | Ab Screenshot-Namen fortsetzen (z. B. `16-admin-uebersicht`) |
+| `SKIP_DEVICES` | `1` = Geräte-Mockups der Bestellseite überspringen |
+| `FRONTEND_DIST` | Alternativer Pfad zu `frontend/dist` |
 
 Voraussetzungen: Playwright (`npx playwright install chromium`) und Python 3 mit Pillow für Geräte-Mockups. Details siehe [Developer Guide](docs/DEVELOPER_GUIDE.md#screenshots-generieren).

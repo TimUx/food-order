@@ -38,6 +38,14 @@ class RealtimeServiceImpl {
   private lastPollingIntervalMs: number | null = null;
   private pollingActive = false;
   private connectStarted = false;
+  private readonly diagnosticsSnapshot: RealtimeDiagnostics = {
+    state: 'DISCONNECTED',
+    transport: 'none',
+    pollingIntervalMs: null,
+    reconnectCount: 0,
+    subscriptionCount: 0,
+    online: typeof navigator !== 'undefined' ? navigator.onLine : true,
+  };
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -143,18 +151,18 @@ class RealtimeServiceImpl {
 
   getDiagnostics(): RealtimeDiagnostics {
     const intervals = [...this.subscriptions.values()].map((s) => s.scheduler.getIntervalMs());
-    return {
-      state: this.state,
-      transport: this.state === 'CONNECTED' || this.state === 'DEGRADED'
-        ? 'websocket'
-        : this.pollingActive
-          ? 'polling'
-          : 'none',
-      pollingIntervalMs: intervals.length ? Math.min(...intervals) : this.lastPollingIntervalMs,
-      reconnectCount: this.reconnectCount,
-      subscriptionCount: this.subscriptions.size,
-      online: this.online,
-    };
+    const snapshot = this.diagnosticsSnapshot;
+    snapshot.state = this.state;
+    snapshot.transport = this.state === 'CONNECTED' || this.state === 'DEGRADED'
+      ? 'websocket'
+      : this.pollingActive
+        ? 'polling'
+        : 'none';
+    snapshot.pollingIntervalMs = intervals.length ? Math.min(...intervals) : this.lastPollingIntervalMs;
+    snapshot.reconnectCount = this.reconnectCount;
+    snapshot.subscriptionCount = this.subscriptions.size;
+    snapshot.online = this.online;
+    return snapshot;
   }
 
   configureAuth(token: string | null): void {
