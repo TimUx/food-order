@@ -27,8 +27,7 @@ import { buildValuesPayload, type SettingsFormDefinition, type SettingsFormGroup
 import type { AdminLegalPage, LegalModuleConfig, LegalPageType } from '@/types/legal';
 
 const PAGE_ORDER: LegalPageType[] = ['imprint', 'privacy', 'terms', 'withdrawal'];
-const TAB_IDS = ['overview', 'pages', 'settings', 'preview'] as const;
-type LegalTab = (typeof TAB_IDS)[number];
+type LegalTab = 'overview' | 'pages' | 'settings' | 'preview';
 
 const PAGE_TYPE_LABELS: Record<LegalPageType, string> = {
   imprint: 'Impressum',
