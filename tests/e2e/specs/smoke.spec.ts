@@ -4,14 +4,14 @@ const admin = { email: 'admin@verein.local', password: 'admin123' };
 const kitchen = { email: 'kueche@verein.local', password: 'staff123' };
 
 test.describe('Administrator', () => {
-  test('anmelden und Module-Seite öffnen', async ({ page }) => {
+  test('anmelden und Funktionen-Seite öffnen', async ({ page }) => {
     await page.goto('/admin/login');
     await page.getByLabel('E-Mail').fill(admin.email);
     await page.getByLabel('Passwort').fill(admin.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
     await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 15_000 });
     await page.goto('/admin/module');
-    await expect(page.getByRole('heading', { name: /module/i }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: /funktionen/i }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test('Einstellungen und Benutzer erreichbar', async ({ page }) => {
