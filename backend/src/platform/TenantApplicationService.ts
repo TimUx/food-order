@@ -4,7 +4,6 @@ import { AppError } from '../middleware/errorHandler';
 import type { PlatformContext } from './tenant/PlatformContext';
 import type { PlatformTenantAdminService } from './PlatformTenantAdminService';
 import type { AuditLogEntry } from './types';
-import { RESERVED_SUBDOMAINS } from './tenant/types';
 import { platformNotificationService } from './notifications/platformNotificationService';
 
 export interface SubmitTenantApplicationInput {
@@ -67,7 +66,7 @@ export class TenantApplicationService {
     if (!subdomain || subdomain.length < 3) {
       throw new AppError(400, 'Bitte eine gültige Subdomain (mind. 3 Zeichen) angeben.');
     }
-    if ((RESERVED_SUBDOMAINS as readonly string[]).includes(subdomain)) {
+    if (platform.reservedSubdomains.includes(subdomain)) {
       throw new AppError(400, 'Diese Subdomain ist reserviert.');
     }
 

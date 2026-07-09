@@ -2,13 +2,15 @@ import { ReactNode } from 'react';
 import { Alert, Box, Container, Typography } from '@mui/material';
 import { useRouting } from '@/contexts/RoutingProvider';
 import { usePlatform } from '@/contexts/PlatformProvider';
+import { isPlatformSurfaceScope } from '@/types/routing';
 
 export function MaintenanceGate({ children }: { children: ReactNode }) {
   const { routing } = useRouting();
   const { platform } = usePlatform();
 
   const maintenance =
-    routing.maintenanceMode || (routing.scope === 'platform' && platform.maintenanceMode);
+    routing.maintenanceMode ||
+    (isPlatformSurfaceScope(routing.scope) && platform.maintenanceMode);
 
   if (!maintenance) return <>{children}</>;
 

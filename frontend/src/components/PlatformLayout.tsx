@@ -32,7 +32,7 @@ const NAV = [
   { path: '/platform/logs', label: 'Logs', icon: <ArticleIcon /> },
   { path: '/platform/backups', label: 'Backups', icon: <BackupIcon /> },
   { path: '/platform/rechtliches', label: 'Rechtliches', icon: <GavelIcon /> },
-  { path: '/platform/domains', label: 'Domains', icon: <LanguageIcon /> },
+  { path: '/platform/domains', label: 'Domain & Routing', icon: <LanguageIcon /> },
   { path: '/platform/einstellungen', label: 'Einstellungen', icon: <SettingsIcon /> },
 ];
 

@@ -1,12 +1,14 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import {
   loadDomainConfigFromEnv,
-  buildPlatformUrl,
+  buildAppUrl,
   buildWwwUrl,
   buildTenantUrl,
   buildApiUrl,
   formatTenantSubdomainExample,
   applyDomainConfigToPlatformContext,
+  resolveSurfaceFromSubdomain,
+  isReservedSubdomain,
 } from './PlatformDomainService';
 import { DEFAULT_PLATFORM_CONTEXT } from './tenant/types';
 
@@ -17,36 +19,56 @@ describe('PlatformDomainService', () => {
     process.env = { ...envBackup };
   });
 
-  it('loads domain config from ENV without hardcoded production domain', () => {
+  it('loads canonical domain config from ENV without hardcoded production domain', () => {
     process.env.PLATFORM_DOMAIN = 'plattform.de';
-    process.env.PLATFORM_WWW_DOMAIN = 'www.plattform.de';
-    process.env.PLATFORM_API_DOMAIN = 'api.plattform.de';
+    process.env.WWW_SUBDOMAIN = 'www';
+    process.env.APP_SUBDOMAIN = 'app';
     const cfg = loadDomainConfigFromEnv();
-    expect(cfg.baseDomain).toBe('plattform.de');
+    expect(cfg.platformDomain).toBe('plattform.de');
     expect(cfg.wwwDomain).toBe('www.plattform.de');
+    expect(cfg.appDomain).toBe('app.plattform.de');
     expect(cfg.apiDomain).toBe('api.plattform.de');
     expect(cfg.wildcardDomain).toBe('*.plattform.de');
+    expect(cfg.reservedSubdomains).toContain('www');
+    expect(cfg.reservedSubdomains).toContain('app');
   });
 
   it('defaults to localhost in development', () => {
     delete process.env.PLATFORM_DOMAIN;
     delete process.env.PLATFORM_BASE_DOMAIN;
     const cfg = loadDomainConfigFromEnv();
-    expect(cfg.baseDomain).toBe('localhost');
+    expect(cfg.platformDomain).toBe('localhost');
   });
 
-  it('builds URLs from configured domains', () => {
+  it('builds www, app and tenant URLs from configured domains', () => {
     const cfg = loadDomainConfigFromEnv();
     Object.assign(cfg, {
-      baseDomain: 'example.test',
+      platformDomain: 'example.test',
       wwwDomain: 'www.example.test',
+      appDomain: 'app.example.test',
       apiDomain: 'api.example.test',
     });
-    expect(buildPlatformUrl(cfg, '/platform', 'https')).toBe('https://example.test/platform');
+    expect(buildAppUrl(cfg, '/platform', 'https')).toBe('https://app.example.test/platform');
     expect(buildWwwUrl(cfg, '/', 'https')).toBe('https://www.example.test');
     expect(buildTenantUrl(cfg, 'verein', '/bestellung', 'https')).toBe('https://verein.example.test/bestellung');
     expect(buildApiUrl(cfg, '/api', 'https')).toBe('https://api.example.test/api');
     expect(formatTenantSubdomainExample(cfg, 'mein-verein')).toBe('mein-verein.example.test');
+  });
+
+  it('resolves surface from subdomain labels', () => {
+    const cfg = loadDomainConfigFromEnv();
+    Object.assign(cfg, {
+      platformDomain: 'example.test',
+      wwwSubdomain: 'www',
+      appSubdomain: 'app',
+      reservedSubdomains: ['www', 'app', 'api', 'docs', 'status'],
+    });
+    expect(resolveSurfaceFromSubdomain('www', cfg)).toBe('www');
+    expect(resolveSurfaceFromSubdomain('app', cfg)).toBe('app');
+    expect(resolveSurfaceFromSubdomain('api', cfg)).toBe('reserved');
+    expect(resolveSurfaceFromSubdomain('verein', cfg)).toBe('tenant');
+    expect(isReservedSubdomain('api', cfg)).toBe(true);
+    expect(isReservedSubdomain('verein', cfg)).toBe(false);
   });
 
   it('applies ENV domain config to platform context', () => {
@@ -54,6 +76,8 @@ describe('PlatformDomainService', () => {
     const merged = applyDomainConfigToPlatformContext(DEFAULT_PLATFORM_CONTEXT, loadDomainConfigFromEnv());
     expect(merged.baseDomain).toBe('custom.example');
     expect(merged.wwwDomain).toBe('www.custom.example');
+    expect(merged.appDomain).toBe('app.custom.example');
     expect(merged.allowedDomains).toContain('custom.example');
+    expect(merged.reservedSubdomains).toContain('app');
   });
 });

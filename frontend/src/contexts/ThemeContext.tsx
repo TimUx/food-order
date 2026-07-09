@@ -5,6 +5,7 @@ import { useRouting } from '@/contexts/RoutingProvider';
 import { useTenant } from '@/contexts/TenantProvider';
 import { usePlatform } from '@/contexts/PlatformProvider';
 import { scopedStorageKey } from '@/utils/storageScope';
+import { isPlatformSurfaceScope } from '@/types/routing';
 import { resolvePlatformColors, resolveTenantColors } from '@/utils/themeColors';
 
 interface ThemeContextType {
@@ -42,7 +43,7 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   }, [themeStorageKey]);
 
   const colors = useMemo(() => {
-    if (routing.scope === 'platform') {
+    if (isPlatformSurfaceScope(routing.scope)) {
       return resolvePlatformColors(platform.primaryColor);
     }
     return resolveTenantColors(tenant.theme);

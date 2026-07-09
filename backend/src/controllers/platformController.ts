@@ -413,7 +413,9 @@ export const platformController = {
       const domains = platformDomainService.getPublicView(platform);
       res.json({
         ...domains,
+        baseDomain: domains.platformDomain,
         allowedDomains: platform.allowedDomains,
+        allowedOrigins: domains.allowedOrigins,
         note: 'Domainwerte werden über die Infrastruktur-Konfiguration (ENV/Docker) gesetzt und sind hier nur zur Anzeige.',
       });
     } catch (err) {

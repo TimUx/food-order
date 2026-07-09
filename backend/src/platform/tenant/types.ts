@@ -58,8 +58,16 @@ export interface PlatformContextData {
   platformName: string;
   platformVersion: string;
   baseDomain: string;
+  wwwSubdomain: string;
   wwwDomain: string;
+  appSubdomain: string;
+  appDomain: string;
+  apiSubdomain: string;
   apiDomain: string | null;
+  docsSubdomain: string | null;
+  docsDomain: string | null;
+  statusSubdomain: string | null;
+  statusDomain: string | null;
   wildcardDomain: string;
   cookieDomain: string | null;
   sessionDomain: string | null;
@@ -134,11 +142,15 @@ export interface UpdateTenantInput {
 }
 
 export type ResolveType = 'tenant' | 'platform' | 'unknown';
+export type RoutingScope = 'www' | 'app' | 'tenant' | 'unknown';
+export type PlatformSurface = 'www' | 'app' | 'reserved' | 'apex';
 
 export interface ResolveResult {
   type: ResolveType;
+  scope: RoutingScope;
+  surface?: PlatformSurface;
   tenant?: TenantContextData;
-  matchedBy?: 'subdomain' | 'path_prefix' | 'default_fallback' | 'custom_domain';
+  matchedBy?: 'subdomain' | 'path_prefix' | 'default_fallback' | 'custom_domain' | 'localhost_path';
   pathPrefix?: string;
 }
 
@@ -153,21 +165,26 @@ export const DEFAULT_TENANT_SETTINGS: TenantSettingsRecord = {
 
 export const RESERVED_SUBDOMAINS = [
   'www',
+  'app',
   'api',
-  'admin',
-  'platform',
+  'docs',
   'status',
-  'mail',
-  'cdn',
-  'static',
 ] as const;
 
 export const DEFAULT_PLATFORM_CONTEXT: PlatformContextData = {
   platformName: 'FestManager',
   platformVersion: '2.0.0',
   baseDomain: 'localhost',
+  wwwSubdomain: 'www',
   wwwDomain: 'localhost',
+  appSubdomain: 'app',
+  appDomain: 'localhost',
+  apiSubdomain: 'api',
   apiDomain: null,
+  docsSubdomain: null,
+  docsDomain: null,
+  statusSubdomain: null,
+  statusDomain: null,
   wildcardDomain: '*.localhost',
   cookieDomain: null,
   sessionDomain: null,

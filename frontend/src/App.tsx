@@ -6,8 +6,10 @@ import { TenantProvider } from '@/contexts/TenantProvider';
 import { AppThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ImpersonationBanner } from '@/components/ImpersonationBanner';
+import { CanonicalRouteGuard } from '@/components/CanonicalRouteGuard';
 import { TenantRoutes } from '@/routes/TenantRoutes';
-import { PlatformRoutes } from '@/routes/PlatformRoutes';
+import { WwwRoutes } from '@/routes/WwwRoutes';
+import { AppRoutes } from '@/routes/AppRoutes';
 import { TenantNotFoundPage } from '@/pages/errors/TenantNotFoundPage';
 
 function AppRouter() {
@@ -17,8 +19,12 @@ function AppRouter() {
     return <TenantNotFoundPage />;
   }
 
-  if (routing.scope === 'platform') {
-    return <PlatformRoutes />;
+  if (routing.scope === 'www') {
+    return <WwwRoutes />;
+  }
+
+  if (routing.scope === 'app') {
+    return <AppRoutes />;
   }
 
   return <TenantRoutes />;
@@ -50,8 +56,10 @@ function AppBootstrap() {
         <TenantProvider>
           <AppThemeProvider>
             <AuthProvider>
-              <ImpersonationBanner />
-              <AppRouter />
+              <CanonicalRouteGuard>
+                <ImpersonationBanner />
+                <AppRouter />
+              </CanonicalRouteGuard>
             </AuthProvider>
           </AppThemeProvider>
         </TenantProvider>

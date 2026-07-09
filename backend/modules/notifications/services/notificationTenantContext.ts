@@ -1,6 +1,6 @@
 import { tenantContext, platformContext } from '../../../src/platform/bootstrap';
 import { config } from '../../../src/config';
-import { platformDomainService } from '../../../src/platform/PlatformDomainService';
+import { platformDomainService, isLocalPlatformDomain } from '../../../src/platform/PlatformDomainService';
 
 /**
  * Ermittelt die öffentliche Basis-URL des aktuellen Mandanten (ohne Request-Parsing).
@@ -12,7 +12,7 @@ export function resolveTenantPublicBaseUrl(): string {
   const domains = platformDomainService.getPublicView(platform);
   const proto = platformDomainService.resolveProto();
 
-  if (ctx?.subdomain && domains.baseDomain && domains.baseDomain !== 'localhost') {
+  if (ctx?.subdomain && !isLocalPlatformDomain(domains.platformDomain)) {
     return platformDomainService.buildTenantUrl(domains, ctx.subdomain, '', proto);
   }
 

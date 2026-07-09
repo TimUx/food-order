@@ -128,7 +128,10 @@ describe('TenantResolver', () => {
     platformContext.initialize({
       ...DEFAULT_PLATFORM_CONTEXT,
       baseDomain: 'example.test',
+      wwwSubdomain: 'www',
       wwwDomain: 'www.example.test',
+      appSubdomain: 'app',
+      appDomain: 'app.example.test',
       pathPrefixRoutingEnabled: false,
     });
     tenantService = createMockTenantService();
@@ -136,7 +139,34 @@ describe('TenantResolver', () => {
       multiTenantEnabled: true,
       defaultTenantSlug: 'default',
       trustedProxies: [],
+      trustProxyHops: 0,
     });
+  });
+
+  it('resolves www subdomain to homepage scope', async () => {
+    const req = {
+      headers: { host: 'www.example.test' },
+      hostname: 'www.example.test',
+      path: '/',
+    } as Request;
+
+    const result = await resolver.resolve(req);
+    expect(result.type).toBe('platform');
+    expect(result.scope).toBe('www');
+    expect(result.surface).toBe('www');
+  });
+
+  it('resolves app subdomain to platform scope', async () => {
+    const req = {
+      headers: { host: 'app.example.test' },
+      hostname: 'app.example.test',
+      path: '/platform',
+    } as Request;
+
+    const result = await resolver.resolve(req);
+    expect(result.type).toBe('platform');
+    expect(result.scope).toBe('app');
+    expect(result.surface).toBe('app');
   });
 
   it('resolves tenant by subdomain', async () => {
@@ -149,6 +179,7 @@ describe('TenantResolver', () => {
 
     const result = await resolver.resolve(req);
     expect(result.type).toBe('tenant');
+    expect(result.scope).toBe('tenant');
     expect(result.matchedBy).toBe('subdomain');
     expect(result.tenant?.slug).toBe('asv-libelle');
   });
@@ -158,6 +189,7 @@ describe('TenantResolver', () => {
       multiTenantEnabled: false,
       defaultTenantSlug: 'default',
       trustedProxies: [],
+      trustProxyHops: 0,
     });
     vi.mocked(tenantService.findBySlug).mockResolvedValue({
       ...sampleTenant,

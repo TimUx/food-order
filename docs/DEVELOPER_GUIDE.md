@@ -77,19 +77,23 @@ ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1–
 | `POST /api/public/tenant-applications` | Mandantenbewerbung einreichen |
 | `GET /api/platform/domains` | Domain-Konfiguration (Anzeige) |
 
-### Domain-Konfiguration
+### Domain-Konfiguration (kanonische Architektur)
 
-Zentrale Verwaltung: `backend/src/platform/PlatformDomainService.ts`
+Zentrale Verwaltung: `backend/src/platform/PlatformDomainService.ts` · Anzeige in der Plattformverwaltung unter **Domain & Routing**.
 
 | ENV | Beschreibung |
 |-----|--------------|
-| `PLATFORM_DOMAIN` | Primäre Plattformdomain (Default: `localhost`) |
-| `PLATFORM_WWW_DOMAIN` | WWW-Domain |
-| `PLATFORM_WILDCARD_DOMAIN` | Wildcard-Pattern |
-| `PLATFORM_API_DOMAIN` | Optionale API-Domain |
-| `PLATFORM_ALLOWED_ORIGINS` | CORS-Origins |
+| `PLATFORM_DOMAIN` | Basis-Domain (z. B. `example.org`) |
+| `WWW_SUBDOMAIN` | WWW-Subdomain (Default: `www`) |
+| `APP_SUBDOMAIN` | APP-Subdomain (Default: `app`) |
+| `API_SUBDOMAIN` | API-Subdomain (Default: `api`) |
+| `DOCS_SUBDOMAIN` / `STATUS_SUBDOMAIN` | Optionale Dienste |
+| `PLATFORM_RESERVED_SUBDOMAINS` | Zusätzlich reservierte Subdomains (kommagetrennt) |
+| `PLATFORM_WWW_DOMAIN` / `PLATFORM_APP_DOMAIN` | Optionale vollständige Host-Overrides |
+| `COOKIE_DOMAIN` / `SESSION_DOMAIN` | Cookie-/Session-Domain |
+| `ALLOWED_ORIGINS` / `PLATFORM_ALLOWED_ORIGINS` | CORS |
 
-Linkgenerierung (QR, E-Mails, Routing, SEO) nutzt ausschließlich diese Konfiguration. `festmanager.org` in älteren ADRs ist ein **Beispiel-Platzhalter**.
+Linkgenerierung (QR, E-Mails, Routing, SEO) nutzt ausschließlich `PlatformDomainService`. Details: [Canonical Domain Report](architecture/CANONICAL_DOMAIN_COMPLETION_REPORT.md).
 
 Plattform-APIs erfordern JWT mit `scope: "platform"`. Mandanten-APIs lehnen Plattform-Tokens ab.
 

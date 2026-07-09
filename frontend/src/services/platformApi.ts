@@ -52,13 +52,24 @@ export interface PlatformLegalPageAdmin {
 
 export interface PlatformDomainsInfo {
   baseDomain: string;
+  platformDomain: string;
+  wwwSubdomain: string;
   wwwDomain: string;
+  appSubdomain: string;
+  appDomain: string;
+  apiSubdomain: string;
   apiDomain: string | null;
+  docsSubdomain: string | null;
+  docsDomain: string | null;
+  statusSubdomain: string | null;
+  statusDomain: string | null;
   wildcardDomain: string;
   tenantDomainPattern: string;
   cookieDomain: string | null;
   sessionDomain: string | null;
+  reservedSubdomains?: string[];
   allowedDomains?: string[];
+  allowedOrigins?: string[];
   source: 'infrastructure';
   note?: string;
 }

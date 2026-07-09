@@ -3,6 +3,7 @@ import type { TenantService } from '../platform/tenant/TenantService';
 import type { TenantContext } from '../platform/tenant/TenantContext';
 import type { PlatformContext } from '../platform/tenant/PlatformContext';
 import type { TenantResolver } from '../platform/tenant/TenantResolver';
+import type { ResolveResult } from '../platform/tenant/types';
 import { TenantNotFoundError } from '../platform/tenant/errors';
 import { platformDomainService } from '../platform/PlatformDomainService';
 
@@ -15,42 +16,49 @@ export function createTenantController(
   function buildRoutingUrls(
     req: Request,
     platform: ReturnType<PlatformContext['current']>,
-    result: { tenant?: { subdomain: string; slug: string }; matchedBy?: string; pathPrefix?: string } | null
+    result: ResolveResult | null
   ) {
     const host = tenantResolver.extractHost(req) ?? 'localhost';
     const proto = platformDomainService.resolveProto(req);
     const domains = platformDomainService.getPublicView(platform);
 
-    const platformUrl = platformDomainService.buildPlatformUrl(domains, '', proto);
     const wwwUrl = platformDomainService.buildWwwUrl(domains, '', proto);
-    const apiUrl = domains.apiDomain
-      ? platformDomainService.buildApiUrl(domains, '/api', proto)
-      : `${platformUrl}/api`;
+    const appUrl = platformDomainService.buildAppUrl(domains, '', proto);
+    const apiUrl = platformDomainService.buildApiUrl(domains, '/api', proto);
 
     let tenantUrl: string | null = null;
     if (result?.tenant) {
       if (result.matchedBy === 'path_prefix') {
         tenantUrl = `${proto}://${host}${result.pathPrefix ?? ''}`;
-      } else if (host === 'localhost') {
-        tenantUrl = `${proto}://${host}`;
       } else {
         tenantUrl = platformDomainService.buildTenantUrl(domains, result.tenant.subdomain, '', proto);
       }
     }
 
     return {
-      platformUrl,
       wwwUrl,
+      appUrl,
+      platformUrl: appUrl,
       apiUrl,
       tenantUrl,
       domains: {
-        baseDomain: domains.baseDomain,
+        platformDomain: domains.platformDomain,
+        baseDomain: domains.platformDomain,
+        wwwSubdomain: domains.wwwSubdomain,
         wwwDomain: domains.wwwDomain,
+        appSubdomain: domains.appSubdomain,
+        appDomain: domains.appDomain,
+        apiSubdomain: domains.apiSubdomain,
         apiDomain: domains.apiDomain,
+        docsSubdomain: domains.docsSubdomain,
+        docsDomain: domains.docsDomain,
+        statusSubdomain: domains.statusSubdomain,
+        statusDomain: domains.statusDomain,
         wildcardDomain: domains.wildcardDomain,
         tenantDomainPattern: domains.tenantDomainPattern,
         cookieDomain: domains.cookieDomain,
         sessionDomain: domains.sessionDomain,
+        reservedSubdomains: domains.reservedSubdomains,
         source: domains.source,
       },
     };
@@ -75,10 +83,14 @@ export function createTenantController(
     async getPlatformPublic(_req: unknown, res: Response, next: NextFunction) {
       try {
         const platform = platformContext.current();
+        const domains = platformDomainService.getPublicView(platform);
         res.json({
           name: platform.platformName,
           version: platform.platformVersion,
           baseDomain: platform.baseDomain,
+          wwwDomain: domains.wwwDomain,
+          appDomain: domains.appDomain,
+          domains,
           maintenanceMode: platform.maintenanceMode,
           maintenanceMessage: platform.maintenanceMessage ?? null,
           primaryColor: '#1565c0',
@@ -92,15 +104,21 @@ export function createTenantController(
     async getRoutingConfig(req: Request, res: Response, next: NextFunction) {
       try {
         const platform = platformContext.current();
+        const frontendPath =
+          typeof req.query.frontendPath === 'string' && req.query.frontendPath.startsWith('/')
+            ? req.query.frontendPath
+            : req.path;
+        const resolveReq = Object.assign(req, { path: frontendPath });
 
-        let result;
+        let result: ResolveResult;
         try {
-          result = await tenantResolver.resolve(req);
+          result = await tenantResolver.resolve(resolveReq);
         } catch (error) {
           if (error instanceof TenantNotFoundError) {
             const urls = buildRoutingUrls(req, platform, null);
             res.json({
               scope: 'unknown',
+              surface: null,
               basename: '',
               tenantSlug: null,
               matchedBy: null,
@@ -120,7 +138,8 @@ export function createTenantController(
         const urls = buildRoutingUrls(req, platform, result);
 
         res.json({
-          scope: result.type,
+          scope: result.scope,
+          surface: result.surface ?? null,
           basename,
           tenantSlug,
           matchedBy: result.matchedBy ?? null,

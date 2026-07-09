@@ -1,13 +1,16 @@
 import type { Request } from 'express';
 import type { TenantService } from './TenantService';
 import type { PlatformContext } from './PlatformContext';
-import type { ResolveResult } from './types';
-import { RESERVED_SUBDOMAINS } from './types';
+import type { ResolveResult, PlatformSurface, RoutingScope } from './types';
 import {
   TenantInvalidDomainError,
   TenantInvalidHostError,
   TenantNotFoundError,
 } from './errors';
+import {
+  platformDomainService,
+  isLocalPlatformDomain,
+} from '../PlatformDomainService';
 
 interface TenantResolverConfig {
   multiTenantEnabled: boolean;
@@ -19,6 +22,14 @@ interface TenantResolverConfig {
 interface CacheEntry {
   result: ResolveResult;
   expiresAt: number;
+}
+
+function platformResult(
+  scope: RoutingScope,
+  surface: PlatformSurface,
+  matchedBy: ResolveResult['matchedBy'] = 'subdomain'
+): ResolveResult {
+  return { type: 'platform', scope, surface, matchedBy };
 }
 
 export class TenantResolver {
@@ -57,37 +68,49 @@ export class TenantResolver {
     platform: ReturnType<PlatformContext['current']>
   ): Promise<ResolveResult> {
     const normalizedHost = host.toLowerCase();
+    const domains = platformDomainService.getPublicView(platform);
 
-    if (this.isPlatformHost(normalizedHost, platform.baseDomain)) {
-      if (platform.pathPrefixRoutingEnabled) {
-        const prefixResult = await this.resolvePathPrefix(path);
-        if (prefixResult) return prefixResult;
+    if (platform.pathPrefixRoutingEnabled) {
+      const prefixResult = await this.resolvePathPrefix(path);
+      if (prefixResult) return prefixResult;
+    }
+
+    // Localhost: Pfad-basierte Unterscheidung www vs app
+    if (
+      isLocalPlatformDomain(domains.platformDomain) &&
+      (normalizedHost === 'localhost' || normalizedHost === '127.0.0.1')
+    ) {
+      if (path.startsWith('/platform') || path.startsWith('/api/platform')) {
+        return platformResult('app', 'app', 'localhost_path');
       }
-
-      if (path.startsWith('/api/platform') || path.startsWith('/platform')) {
-        return { type: 'platform' };
-      }
-
       if (!this.config.multiTenantEnabled) {
         return this.resolveDefaultTenant('default_fallback');
       }
-
-      return { type: 'platform' };
+      return platformResult('www', 'www', 'localhost_path');
     }
 
-    const subdomain = this.extractSubdomain(normalizedHost, platform.baseDomain);
-    if (subdomain) {
-      if ((RESERVED_SUBDOMAINS as readonly string[]).includes(subdomain)) {
-        return { type: 'platform' };
-      }
-      return this.resolveSubdomain(subdomain);
+    const subdomain = platformDomainService.extractSubdomainFromHost(normalizedHost, domains.platformDomain);
+
+    if (subdomain === null) {
+      // Apex-Domain → Homepage (www)
+      return platformResult('www', 'apex');
     }
 
-    if (!this.config.multiTenantEnabled || normalizedHost === 'localhost') {
-      return this.resolveDefaultTenant('default_fallback');
+    const surface = platformDomainService.resolveSurfaceFromSubdomain(subdomain, domains);
+
+    if (surface === 'www') {
+      return platformResult('www', 'www');
     }
 
-    throw new TenantNotFoundError();
+    if (surface === 'app') {
+      return platformResult('app', 'app');
+    }
+
+    if (surface === 'reserved') {
+      return platformResult('app', 'reserved');
+    }
+
+    return this.resolveSubdomain(subdomain);
   }
 
   private async resolveSubdomain(subdomain: string): Promise<ResolveResult> {
@@ -105,6 +128,7 @@ export class TenantResolver {
     const contextData = await this.tenantService.resolveContextData(tenant);
     return {
       type: 'tenant',
+      scope: 'tenant',
       tenant: contextData,
       matchedBy: 'subdomain',
     };
@@ -115,7 +139,10 @@ export class TenantResolver {
     if (segments.length === 0) return null;
 
     const slug = segments[0];
-    if ((RESERVED_SUBDOMAINS as readonly string[]).includes(slug) || slug === 'api') {
+    const platform = this.platformContext.current();
+    const domains = platformDomainService.getPublicView(platform);
+
+    if (platformDomainService.isReservedSubdomain(slug, domains) || slug === 'api') {
       return null;
     }
 
@@ -125,6 +152,7 @@ export class TenantResolver {
     const contextData = await this.tenantService.resolveContextData(tenant);
     return {
       type: 'tenant',
+      scope: 'tenant',
       tenant: contextData,
       matchedBy: 'path_prefix',
       pathPrefix: `/${slug}`,
@@ -141,6 +169,7 @@ export class TenantResolver {
     const contextData = await this.tenantService.resolveContextData(tenant);
     return {
       type: 'tenant',
+      scope: 'tenant',
       tenant: contextData,
       matchedBy,
     };
@@ -172,6 +201,7 @@ export class TenantResolver {
 
     const isAllowed =
       host === 'localhost' ||
+      host === '127.0.0.1' ||
       host === baseDomain ||
       host.endsWith(`.${baseDomain}`) ||
       allowed.some((domain) => host === domain.toLowerCase() || host.endsWith(`.${domain.toLowerCase()}`));
@@ -179,29 +209,6 @@ export class TenantResolver {
     if (!isAllowed) {
       throw new TenantInvalidDomainError();
     }
-  }
-
-  private isPlatformHost(host: string, baseDomain: string): boolean {
-    const platform = this.platformContext.current();
-    const www = platform.wwwDomain?.toLowerCase();
-    const base = baseDomain.toLowerCase();
-    return host === base || host === 'localhost' || (www ? host === www : false);
-  }
-
-  private extractSubdomain(host: string, baseDomain: string): string | null {
-    const base = baseDomain.toLowerCase();
-    if (host === base || host === 'localhost') return null;
-    if (host.endsWith(`.${base}`)) {
-      return host.slice(0, -(base.length + 1)).split('.')[0] ?? null;
-    }
-    if (host.includes('.') && !host.endsWith(`.${base}`)) {
-      const parts = host.split('.');
-      return parts[0] || null;
-    }
-    if (!host.includes('.')) {
-      return host;
-    }
-    return null;
   }
 
   private buildCacheKey(host: string, path: string, prefixEnabled: boolean): string {

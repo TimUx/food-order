@@ -8,8 +8,8 @@ describe('storageScope', () => {
     );
   });
 
-  it('uses base key for platform scope', () => {
-    expect(scopedStorageKey('fm_platform_token', 'platform', null)).toBe('fm_platform_token');
+  it('uses base key for app scope', () => {
+    expect(scopedStorageKey('fm_platform_token', 'app', null)).toBe('fm_platform_token');
   });
 
   it('uses base key for tenant without slug', () => {

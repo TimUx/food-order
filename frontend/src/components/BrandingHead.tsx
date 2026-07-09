@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useRouting } from '@/contexts/RoutingProvider';
+import { isPlatformSurfaceScope } from '@/types/routing';
 import { useTenant } from '@/contexts/TenantProvider';
 import { usePlatform } from '@/contexts/PlatformProvider';
 import { getImageUrl } from '@/services/api';
@@ -33,13 +34,15 @@ export function BrandingHead({ titleSuffix, description, path }: BrandingHeadPro
     let favicon: string | undefined;
     const desc = description ?? DEFAULT_DESCRIPTION;
     const origin =
-      routing.scope === 'platform'
-        ? (routing.wwwUrl || routing.platformUrl)
-        : (routing.tenantUrl || routing.platformUrl || (typeof window !== 'undefined' ? window.location.origin : ''));
+      routing.scope === 'www'
+        ? routing.wwwUrl
+        : routing.scope === 'app'
+          ? routing.appUrl
+          : (routing.tenantUrl || routing.appUrl || (typeof window !== 'undefined' ? window.location.origin : ''));
     const pagePath = path ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
     const canonical = `${origin.replace(/\/$/, '')}${pagePath}`;
 
-    if (routing.scope === 'platform') {
+    if (isPlatformSurfaceScope(routing.scope)) {
       title = platform.name;
       favicon = undefined;
     } else if (routing.scope === 'tenant') {
@@ -102,7 +105,7 @@ export function BrandingHead({ titleSuffix, description, path }: BrandingHeadPro
   }, [
     routing.scope,
     routing.wwwUrl,
-    routing.platformUrl,
+    routing.appUrl,
     tenant.name,
     tenant.logoUrl,
     tenant.locale,

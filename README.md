@@ -21,15 +21,17 @@ Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisat
 
 Technische Details: [Tenant Context ADR](docs/architecture/021-tenant-context.md) · [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) · [Security](SECURITY.md)
 
-### Öffentliche Homepage & Routing
+### Öffentliche Homepage & kanonisches Routing
 
 | Host | Bereich |
 |------|---------|
-| `www.<konfigurierte-plattformdomain>` | Öffentliche Homepage (Landingpage, FAQ, Bewerbung) |
-| `<plattformdomain>` (Apex) | Plattform (Marketing + `/platform` Administration) |
-| `<tenant>.<plattformdomain>` | Mandantenplattform des Veranstalters |
+| `www.<platform-domain>` | Öffentliche Homepage (Landingpage, FAQ, Bewerbung, Rechtliches) |
+| `app.<platform-domain>` | Plattformadministration (`/platform`) |
+| `<tenant>.<platform-domain>` | Mandantenportal des Veranstalters |
 
-Die Domain wird ausschließlich über ENV/Docker konfiguriert (`PLATFORM_DOMAIN`, `PLATFORM_WWW_DOMAIN`, …). In Dokumentation und Beispielen ist `festmanager.org` nur ein Platzhalter.
+Lokal (ohne Subdomains): Marketing unter `/`, Plattform unter `/platform/*`.
+
+Die Domain wird ausschließlich über ENV/Docker konfiguriert (`PLATFORM_DOMAIN`, `WWW_SUBDOMAIN`, `APP_SUBDOMAIN`, …). Konkrete Domainnamen im Quellcode sind nicht hinterlegt.
 
 ## Funktionen auf einen Blick
 

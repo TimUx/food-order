@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { PlatformAuthProvider } from '@/contexts/PlatformAuthContext';
 import { PlatformShell } from '@/pages/platform/PlatformShell';
 import { PlatformLoginPage } from '@/pages/platform/PlatformLoginPage';
@@ -11,21 +11,6 @@ import { PlatformLogsPage } from '@/pages/platform/PlatformLogsPage';
 import { PlatformMonitoringPage } from '@/pages/platform/PlatformMonitoringPage';
 import { PlatformHealthPage } from '@/pages/platform/PlatformHealthPage';
 import { PlatformBackupsPage } from '@/pages/platform/PlatformBackupsPage';
-import { PlatformHomePage } from '@/pages/platform/PlatformHomePage';
-import { PlatformFeaturesPage } from '@/pages/platform/PlatformFeaturesPage';
-import { PlatformDocsPage } from '@/pages/platform/PlatformDocsPage';
-import { PlatformDownloadPage } from '@/pages/platform/PlatformDownloadPage';
-import { PlatformStatusPublicPage } from '@/pages/platform/PlatformStatusPublicPage';
-import { PlatformScreenshotsPage } from '@/pages/platform/PlatformScreenshotsPage';
-import { PlatformOpenSourcePage } from '@/pages/platform/PlatformOpenSourcePage';
-import { PlatformAboutProjectPage } from '@/pages/platform/PlatformAboutProjectPage';
-import { PlatformAboutDeveloperPage } from '@/pages/platform/PlatformAboutDeveloperPage';
-import { PlatformForClubsPage } from '@/pages/platform/PlatformForClubsPage';
-import { PlatformFaqPage } from '@/pages/platform/PlatformFaqPage';
-import { PlatformContactPage } from '@/pages/platform/PlatformContactPage';
-import { PlatformApplyPage } from '@/pages/platform/PlatformApplyPage';
-import { PlatformApplyConfirmPage } from '@/pages/platform/PlatformApplyConfirmPage';
-import { PlatformDynamicLegalPage } from '@/pages/platform/PlatformDynamicLegalPage';
 import { PlatformApplicationsPage } from '@/pages/platform/PlatformApplicationsPage';
 import { PlatformApplicationDetailPage } from '@/pages/platform/PlatformApplicationDetailPage';
 import { PlatformLegalAdminPage } from '@/pages/platform/PlatformLegalAdminPage';
@@ -33,25 +18,12 @@ import { PlatformDomainsPage } from '@/pages/platform/PlatformDomainsPage';
 import { PlatformNotFoundPage } from '@/pages/errors/PlatformNotFoundPage';
 import { MaintenanceGate } from '@/components/MaintenanceGate';
 
-export function PlatformRoutes() {
+/** Plattformadministration unter app.&lt;platform-domain&gt; */
+export function AppRoutes() {
   return (
     <MaintenanceGate>
       <Routes>
-        <Route path="/" element={<PlatformHomePage />} />
-        <Route path="/funktionen" element={<PlatformFeaturesPage />} />
-        <Route path="/screenshots" element={<PlatformScreenshotsPage />} />
-        <Route path="/open-source" element={<PlatformOpenSourcePage />} />
-        <Route path="/ueber-das-projekt" element={<PlatformAboutProjectPage />} />
-        <Route path="/ueber-den-entwickler" element={<PlatformAboutDeveloperPage />} />
-        <Route path="/fuer-vereine" element={<PlatformForClubsPage />} />
-        <Route path="/mandant-beantragen" element={<PlatformApplyPage />} />
-        <Route path="/mandant-beantragen/bestaetigung" element={<PlatformApplyConfirmPage />} />
-        <Route path="/faq" element={<PlatformFaqPage />} />
-        <Route path="/kontakt" element={<PlatformContactPage />} />
-        <Route path="/rechtliches/:slug" element={<PlatformDynamicLegalPage />} />
-        <Route path="/dokumentation" element={<PlatformDocsPage />} />
-        <Route path="/download" element={<PlatformDownloadPage />} />
-        <Route path="/plattform-status" element={<PlatformStatusPublicPage />} />
+        <Route path="/" element={<Navigate to="/platform" replace />} />
         <Route path="/platform/login" element={
           <PlatformAuthProvider><PlatformLoginPage /></PlatformAuthProvider>
         } />

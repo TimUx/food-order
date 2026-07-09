@@ -16,7 +16,7 @@ Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf all
 | Dashboard | `/platform` | Kennzahlen, Systemstatus |
 | Mandanten | `/platform/mandanten` | Anlegen, Bearbeiten, Sperren, Impersonation |
 | Mandantenanträge | `/platform/bewerbungen` | Bewerbungen prüfen, genehmigen, Mandant anlegen |
-| Domains | `/platform/domains` | Anzeige der konfigurierten Plattformdomains (ENV) |
+| Domain & Routing | `/platform/domains` | Anzeige der kanonischen Domain- und Routing-Konfiguration (ENV) |
 | Rechtliches | `/platform/rechtliches` | Impressum, Datenschutz, Nutzungsbedingungen (Plattformebene) |
 | Einstellungen | `/platform/einstellungen` | Plattformweite Konfiguration inkl. Bewerbungen & Kontakt |
 | Monitoring | `/platform/monitoring` | CPU, RAM, Speicher |
@@ -26,7 +26,7 @@ Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf all
 
 ### Öffentliche Homepage & Mandantenbewerbungen
 
-Die Marketing-Homepage ist unter der Apex-Domain bzw. `www.<domain>` erreichbar. Bewerbungen können über `/mandant-beantragen` eingereicht werden, sofern `platform.registration.enabled` aktiv ist.
+Die Marketing-Homepage ist unter `www.<platform-domain>` erreichbar. Die Plattformadministration liegt unter `app.<platform-domain>`. Bewerbungen können über `/mandant-beantragen` eingereicht werden, sofern `platform.registration.enabled` aktiv ist.
 
 **Workflow:**
 
@@ -37,7 +37,7 @@ Die Marketing-Homepage ist unter der Apex-Domain bzw. `www.<domain>` erreichbar.
 
 **Rechtliche Seiten:** Unter `/platform/rechtliches` pflegen Sie Impressum, Datenschutz und Nutzungsbedingungen. Es werden keine Mustertexte vorgegeben – Links erscheinen auf der Homepage nur bei veröffentlichtem Inhalt.
 
-**Domains:** Unter `/platform/domains` sehen Sie die aktive Domain-Konfiguration (Basis, WWW, Wildcard, API). Technisch kritische Werte werden über Docker/ENV gesetzt (`PLATFORM_DOMAIN`, `PLATFORM_WWW_DOMAIN`, …). In Dokumentation ist `festmanager.org` nur ein Platzhalter.
+**Domain & Routing:** Unter `/platform/domains` sehen Sie die aktive Konfiguration (WWW, APP, Wildcard, API, CORS, reservierte Subdomains). Technisch kritische Werte werden über Docker/ENV gesetzt (`PLATFORM_DOMAIN`, `WWW_SUBDOMAIN`, `APP_SUBDOMAIN`, …).
 
 ---
 

@@ -8,6 +8,7 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { Link, useLocation } from 'react-router-dom';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { usePlatform } from '@/contexts/PlatformProvider';
+import { useRouting } from '@/contexts/RoutingProvider';
 import { api } from '@/services/api';
 import type { PlatformLegalLink } from '@/types/tenant';
 
@@ -32,7 +33,9 @@ interface PlatformPublicLayoutProps {
 export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
   const { mode, toggleMode } = useThemeMode();
   const { platform } = usePlatform();
+  const { routing } = useRouting();
   const location = useLocation();
+  const loginUrl = `${routing.appUrl}/platform/login`;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [legalLinks, setLegalLinks] = useState<PlatformLegalLink[]>([]);
 
@@ -77,7 +80,7 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
               </Button>
             ))}
           </Box>
-          <Button component={Link} to="/platform/login" color="inherit" size="small" sx={{ mr: 1 }}>
+          <Button component="a" href={loginUrl} color="inherit" size="small" sx={{ mr: 1 }}>
             Anmelden
           </Button>
           <IconButton onClick={toggleMode} color="inherit" aria-label="Design wechseln">

@@ -26,6 +26,10 @@ export const config = {
       process.env.PLATFORM_BASE_DOMAIN?.trim() ||
       'localhost',
     wwwDomain: process.env.PLATFORM_WWW_DOMAIN?.trim() || '',
+    appDomain: process.env.PLATFORM_APP_DOMAIN?.trim() || '',
+    wwwSubdomain: process.env.WWW_SUBDOMAIN?.trim() || 'www',
+    appSubdomain: process.env.APP_SUBDOMAIN?.trim() || 'app',
+    apiSubdomain: process.env.API_SUBDOMAIN?.trim() || 'api',
     apiDomain: process.env.PLATFORM_API_DOMAIN?.trim() || '',
     wildcardDomain: process.env.PLATFORM_WILDCARD_DOMAIN?.trim() || '',
     cookieDomain: process.env.PLATFORM_COOKIE_DOMAIN?.trim() || '',

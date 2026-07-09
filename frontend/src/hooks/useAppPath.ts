@@ -14,10 +14,13 @@ export function useAbsoluteUrl() {
       if (routing.scope === 'tenant' && routing.tenantUrl) {
         return `${routing.tenantUrl}${normalized}`;
       }
-      if (routing.scope === 'platform') {
-        return `${routing.wwwUrl || routing.platformUrl}${normalized}`;
+      if (routing.scope === 'www') {
+        return `${routing.wwwUrl}${normalized}`;
       }
-      return `${routing.platformUrl}${normalized}`;
+      if (routing.scope === 'app') {
+        return `${routing.appUrl}${normalized}`;
+      }
+      return `${routing.appUrl}${normalized}`;
     },
     [routing]
   );
