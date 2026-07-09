@@ -33,6 +33,9 @@ jobs:
           npm ci --prefix backend
           npm ci --prefix frontend
 
+      - name: Generate Prisma client
+        run: npm run prisma:generate --prefix backend
+
       - name: Full unit suite
         run: npm run qa:unit
 
