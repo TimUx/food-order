@@ -12,8 +12,8 @@ concurrency:
 
 env:
   DATABASE_URL: postgresql://verein:verein_secret@localhost:5432/vereinsbestellung
-  JWT_SECRET: ci-test-jwt-secret-minimum-32-characters-long
-  APP_ENCRYPTION_KEY: ci-test-encryption-key-32chars
+  JWT_SECRET: qa-docker-ci-jwt-secret-not-in-blocklist-32chars
+  APP_ENCRYPTION_KEY: qa-docker-ci-encryption-key-not-blocked32
   CORS_ORIGIN: http://localhost:5173
   QA_API_BASE: http://localhost:3001/api
   QA_FRONTEND_BASE: http://localhost:5173

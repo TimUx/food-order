@@ -37,10 +37,10 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://verein:verein_secret@postgres:5432/vereinsbestellung
-      JWT_SECRET: ci-test-jwt-secret-minimum-32-characters-long
+      JWT_SECRET: qa-docker-ci-jwt-secret-not-in-blocklist-32chars
       JWT_EXPIRES_IN: 8h
       CORS_ORIGIN: http://localhost:5173
-      APP_ENCRYPTION_KEY: ci-test-encryption-key-32chars
+      APP_ENCRYPTION_KEY: qa-docker-ci-encryption-key-not-blocked32
       MODULES_DIR: /app/modules
       PLUGINS_DIR: /app/plugins
     ports:

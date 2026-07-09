@@ -1,4 +1,5 @@
 import path from 'path';
+import { createRequire } from 'module';
 import { pathToFileURL } from 'url';
 import { config } from '../config';
 import { logger } from '../utils/logger';
@@ -24,7 +25,9 @@ export class ModuleLoader {
     const entryPath = this.resolveEntryPath(manifest);
 
     try {
-      const mod = await import(pathToFileURL(entryPath).href);
+      const mod = config.nodeEnv === 'production'
+        ? createRequire(__filename)(entryPath) as Record<string, unknown>
+        : await import(pathToFileURL(entryPath).href);
       const instance = this.extractModuleInstance(mod, manifest);
       if (instance.id !== manifest.id) {
         throw new Error(`Modul-ID Mismatch: erwartet ${manifest.id}, erhalten ${instance.id}`);
