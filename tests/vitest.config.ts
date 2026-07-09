@@ -6,6 +6,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    env: {
+      MULTI_TENANT_ENABLED: 'false',
+      PLATFORM_BASE_DOMAIN: 'localhost',
+      TRUSTED_PROXY_HOPS: '1',
+    },
     include: ['tests/api/**/*.test.ts', 'tests/integration/**/*.test.ts', 'tests/module/**/*.test.ts', 'tests/security/**/*.test.ts', 'tests/performance/**/*.test.ts'],
     testTimeout: 60_000,
     hookTimeout: 60_000,

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import request from 'supertest';
-import { createTestApp } from '../api/setup';
+import { createTestApp, tenantApi } from '../api/setup';
 import { QA_USERS, QA_EVENT_ID } from '../fixtures/constants';
 import type { Express } from 'express';
 

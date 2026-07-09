@@ -13,11 +13,11 @@ process.env.MULTI_TENANT_ENABLED = process.env.MULTI_TENANT_ENABLED ?? 'false';
 process.env.PLATFORM_BASE_DOMAIN = process.env.PLATFORM_BASE_DOMAIN ?? 'localhost';
 
 export const BACKEND_ROOT = backendRoot;
-export const QA_TENANT_HOST = 'localhost';
+export const QA_TENANT_HOST = 'default.localhost';
 
 /** Supertest helper with Host header for default-tenant API routes. */
 export function tenantApi(app: Express) {
-  return request(app).set('Host', QA_TENANT_HOST);
+  return request(app).set('Host', QA_TENANT_HOST).set('X-Forwarded-Host', QA_TENANT_HOST);
 }
 
 export async function createTestApp() {
