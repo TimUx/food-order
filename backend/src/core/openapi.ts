@@ -2,7 +2,7 @@
 export const openApiDocument = {
   openapi: '3.0.3',
   info: {
-    title: 'Vereinsbestellplattform API',
+    title: 'FestManager API',
     version: '1.0.0',
     description: 'REST-API für Online-Bestellungen, Mitarbeiter- und Admin-Bereich.',
   },

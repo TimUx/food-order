@@ -1,6 +1,6 @@
 # Contributing
 
-Vielen Dank für Ihr Interesse an der Vereinsbestellplattform!
+Vielen Dank für Ihr Interesse an der FestManager-Plattform!
 
 ## Entwicklungsumgebung
 

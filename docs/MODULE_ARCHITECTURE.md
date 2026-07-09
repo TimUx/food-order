@@ -1,6 +1,6 @@
 # Modul-Architektur – Entwicklerdokumentation
 
-Technische Dokumentation für das Feature-Modulsystem und die Modulverwaltung der Vereinsbestellplattform.
+Technische Dokumentation für das Feature-Modulsystem und die Modulverwaltung der FestManager-Plattform.
 
 ## Inhaltsverzeichnis
 
@@ -56,7 +56,7 @@ Bei jedem Image-Upgrade erhält jeder Verein die neuesten Modulversionen. Der `M
 ## Verzeichnisstruktur
 
 ```
-food-order/
+FestManager/
 ├── backend/
 │   ├── modules/              # Offizielle Module (→ /app/modules im Container)
 │   │   ├── payment/          # Online-Zahlung (vollständig)
@@ -157,8 +157,8 @@ Jedes Modul in `/modules/{id}/module.json`:
   "name": "Online-Zahlung",
   "description": "Online-Zahlungen über verschiedene Anbieter",
   "version": "1.0.0",
-  "author": "Vereinsbestellung",
-  "homepage": "https://github.com/TimUx/food-order",
+  "author": "FestManager",
+  "homepage": "https://github.com/TimUx/FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": {

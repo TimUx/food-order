@@ -3,7 +3,7 @@
   "name": "Auswertungen",
   "description": "Statistiken und Berichte zu Bestellungen und Veranstaltungen",
   "version": "0.1.0",
-  "author": "Vereinsbestellung",
+  "author": "FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": { "required": [], "optional": ["inventory"] },

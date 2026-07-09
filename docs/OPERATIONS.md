@@ -1,4 +1,4 @@
-# Betriebshandbuch — Vereinsbestellung
+# Betriebshandbuch — FestManager
 
 Kurze Anleitung für ehrenamtliche Betreuer:innen. Kein Entwickler-Jargon — nur das, was vor, während und nach einer Veranstaltung wichtig ist.
 
@@ -155,7 +155,7 @@ Bei anhaltenden Fehlern nach Update: Backup wiederherstellen und Issue mit Log-A
 
 ## Ressourcen-Empfehlungen (Single-Node)
 
-Für typische Vereinsfeste (ein Server, ein Verein):
+Für typische Veranstaltunge (ein Server, ein Verein):
 
 | Ressource | Minimum | Empfohlen |
 |-----------|---------|-----------|

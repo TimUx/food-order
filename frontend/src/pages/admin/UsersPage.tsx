@@ -271,7 +271,7 @@ export function UsersPage() {
           Rechteverwaltung (STAFF)
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Vorlagen für typische Vereinsrollen. Administratoren haben immer alle Rechte.
+          Vorlagen für typische Rollen im Team. Administratoren haben immer alle Rechte.
         </Typography>
       </Box>
       <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>

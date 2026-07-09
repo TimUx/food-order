@@ -3,7 +3,7 @@
   "name": "Treueprogramm",
   "description": "Stammkundenprogramm mit Punkten und Belohnungen",
   "version": "0.1.0",
-  "author": "Vereinsbestellung",
+  "author": "FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": { "required": [], "optional": ["payment"] },

@@ -11,7 +11,7 @@ Die README-Screenshots wurden vollständig neu erzeugt und an den aktuellen UI-S
 
 | Datei | Problem (vorher) | Lösung (nachher) |
 |-------|------------------|------------------|
-| `13-vereinseinstellungen.png` | Leere Formularansicht | Vollständig ausgefüllte Vereinseinstellungen (Feuerwehr Musterstadt) |
+| `13-vereinseinstellungen.png` | Leere Formularansicht | Vollständig ausgefüllte Veranstalter (Feuerwehr Musterstadt) |
 | `18-bestell-einstellungen.png` | Leere Formularansicht | Pflichtfelder und Stornierungsfrist (24 h) sichtbar konfiguriert |
 | `21-payment-admin.png` | Bestellformular statt Payment-Admin | Payment-Dashboard Tab „Übersicht“ mit KPIs (Zahlungen heute, Umsatz, Health) |
 | `22-payment-einstellungen.png` | Bestellformular statt Einstellungen | Payment-Tab „Einstellungen“ mit Stripe-Konfiguration (Sandbox, API-Schlüssel) |

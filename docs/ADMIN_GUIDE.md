@@ -1,6 +1,6 @@
 # Administratorhandbuch (Admin Guide)
 
-Anleitung für Administratoren der Vereinsbestellplattform mit Vollzugriff auf alle Funktionen – von der Installation bis zum Veranstaltungstag.
+Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf alle Funktionen – von der Installation bis zum Veranstaltungstag.
 
 ## Inhaltsverzeichnis
 
@@ -44,15 +44,15 @@ Anleitung für Administratoren der Vereinsbestellplattform mit Vollzugriff auf a
 Die Anwendung nutzt fertige Images aus der GitHub Container Registry (kein lokaler Build nötig):
 
 ```bash
-git clone https://github.com/TimUx/food-order.git
-cd food-order
+git clone https://github.com/TimUx/FestManager.git
+cd FestManager
 cp .env.example .env
 docker compose pull
 docker compose up -d
 docker compose exec backend npm run seed
 ```
 
-Standard-Images: `ghcr.io/timux/food-order/backend:latest` und `ghcr.io/timux/food-order/frontend:latest`  
+Standard-Images: `ghcr.io/timux/festmanager/backend:latest` und `ghcr.io/timux/festmanager/frontend:latest`  
 Tag ändern über `IMAGE_TAG` in `.env` (z. B. Release-Version).
 
 Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prisma db push`.
@@ -80,8 +80,8 @@ Alle drei Dienste (`postgres`, `backend`, `frontend`) sollten den Status **runni
 
 Fertige Images werden per GitHub Actions veröffentlicht:
 
-- `ghcr.io/timux/food-order/backend`
-- `ghcr.io/timux/food-order/frontend`
+- `ghcr.io/timux/festmanager/backend`
+- `ghcr.io/timux/festmanager/frontend`
 
 Auslösung: manuell über GitHub Actions oder automatisch beim Erstellen eines Releases.
 
@@ -269,7 +269,7 @@ Traefik muss im selben Docker-Netzwerk wie die Anwendung laufen. Beispiel mit Le
 # docker-compose.yml – Ergänzung am frontend-Service
 services:
   frontend:
-    image: ghcr.io/timux/food-order/frontend:latest
+    image: ghcr.io/timux/festmanager/frontend:latest
     container_name: vereins-frontend
     restart: unless-stopped
     networks:
@@ -474,12 +474,12 @@ sudo systemctl reload caddy
 
 ### 2. Verein einrichten
 
-Navigieren Sie zu **Verein & Kontakt** (`/admin/verein`) und tragen Sie ein:
+Navigieren Sie zu **Veranstalter** (`/admin/verein`) und tragen Sie ein:
 
-- Vereinsname und Logo
+- Name des Veranstalters und Logo
 - Kontaktdaten für die öffentliche Kontaktseite und Bestätigungs-E-Mails
 
-![Vereinseinstellungen](screenshots/13-vereinseinstellungen.png)
+![Veranstalter](screenshots/13-vereinseinstellungen.png)
 
 ### 3. Bestell-Einstellungen konfigurieren
 
@@ -518,7 +518,7 @@ Der **Administrationsbereich** (`/admin`) ist vom Mitarbeiterbereich getrennt un
 |-------|----------|
 | `/admin/login` | Admin-Anmeldung |
 | `/admin` | Übersicht |
-| `/admin/verein` | Vereinsname, Logo, Kontaktdaten |
+| `/admin/verein` | Veranstalter: Name, Logo, Kontaktdaten |
 | `/admin/benutzer` | Benutzerverwaltung (anlegen, bearbeiten, deaktivieren) |
 | `/admin/veranstaltungen` | Veranstaltungen verwalten |
 | `/admin/speisen` | Speisekarte pflegen |
@@ -537,7 +537,7 @@ Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: 
 | Bereich | Screenshot |
 |---------|------------|
 | Admin-Login | ![Admin-Login](screenshots/15-admin-login.png) |
-| Verein & Kontakt | ![Verein](screenshots/13-vereinseinstellungen.png) |
+| Veranstalter | ![Verein](screenshots/13-vereinseinstellungen.png) |
 | Bestell-Einstellungen | ![Bestellung](screenshots/18-bestell-einstellungen.png) |
 | Benutzerverwaltung | ![Benutzer](screenshots/17-benutzerverwaltung.png) |
 | Veranstaltungen | ![Veranstaltungen](screenshots/12-veranstaltungen.png) |
@@ -604,7 +604,7 @@ Die Links in Bestätigungs-E-Mails verwenden die in `CORS_ORIGIN` hinterlegte ö
 Wenn Kunden eine E-Mail angeben (Pflichtfeld oder optional), erhalten sie eine Bestellbestätigung mit:
 
 - Abholnummer und Veranstaltungstag
-- Vereinsdaten (Name, Kontaktdaten des Verkäufers)
+- Veranstalterdaten (Name, Kontaktdaten des Verkäufers)
 - Bestellte Gerichte und Gesamtpreis
 - Rechtlicher Hinweis zum verbindlichen Kaufvertrag und zur Abrechnung nicht abgeholter Bestellungen
 - Link zur Status- und Stornierungsseite

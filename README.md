@@ -1,6 +1,8 @@
-# Vereinsbestellung
+# FestManager
 
-Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstaltungen – mit Vorausbestellungen, Vereins-Branding, Echtzeit-Updates und PWA-Unterstützung.
+Moderne Open-Source-Plattform für Verkauf, Bestellung und Organisation von Veranstaltungen – mit Vorausbestellungen, Branding des Veranstalters, Echtzeit-Updates und PWA-Unterstützung.
+
+Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisationen, Sport- und Musikvereine, Schulen, Firmen, Kommunen, Foodtrucks und private Feste.
 
 ![Bestellseite](docs/screenshots/01-bestellseite-monitor.png)
 
@@ -15,7 +17,7 @@ Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstalt
 | **Küchenansicht** | Tablet-optimiert mit großen Buttons |
 | **Abholung** | Abholung per Tages-Bestellnummer bestätigen |
 | **Bestellung** | Bestellungen vor Ort aufgeben (ohne Kundendaten) |
-| **Vereinseinstellungen** | Name, Logo, Kontaktdaten (Admin) |
+| **Veranstalter** | Name, Logo, Kontaktdaten (Admin) |
 | **Bestell-Einstellungen** | Pflichtfelder & Stornierungsfrist (Admin) |
 | **Benachrichtigungen** | SMTP, ntfy, Discord, Slack, Teams (Admin) |
 | **Rechtliche Informationen** | Optionales Modul für Impressum, Datenschutz, AGB und Widerruf |
@@ -28,11 +30,11 @@ Moderne Webanwendung zur Verwaltung von Essensbestellungen bei Vereinsveranstalt
 
 Kunden können **Tage oder Wochen vor** der Veranstaltung bestellen. Die Abholnummer (001, 002, …) bezieht sich auf den **Veranstaltungstag**.
 
-## Vereins-Branding
+## Branding des Veranstalters
 
-Administratoren können unter **Verein** (`/admin/verein`) konfigurieren:
+Administratoren können unter **Veranstalter** (`/admin/verein`) konfigurieren:
 
-- Vereinsname und Logo (im Header sichtbar)
+- Name des Veranstalters und Logo (im Header sichtbar)
 - Beschreibung, Ansprechpartner, E-Mail, Telefon, Adresse, Website
 - Kontaktseite unter `/kontakt` mit Link von der Bestellseite
 
@@ -84,9 +86,9 @@ Technische Details: [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) · Admin-An
 
 ### Administrationsbereich
 
-| Admin-Übersicht | Verein & Kontakt | Bestell-Einstellungen |
+| Admin-Übersicht | Veranstalter | Bestell-Einstellungen |
 |:---:|:---:|:---:|
-| ![Admin](docs/screenshots/16-admin-uebersicht.png) | ![Verein](docs/screenshots/13-vereinseinstellungen.png) | ![Bestell-Einstellungen](docs/screenshots/18-bestell-einstellungen.png) |
+| ![Admin](docs/screenshots/16-admin-uebersicht.png) | ![Veranstalter](docs/screenshots/13-vereinseinstellungen.png) | ![Bestell-Einstellungen](docs/screenshots/18-bestell-einstellungen.png) |
 
 | Team | Veranstaltungen | Speisenverwaltung |
 |:---:|:---:|:---:|
@@ -107,8 +109,8 @@ Technische Details: [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) · Admin-An
 ## Schnellstart
 
 ```bash
-git clone https://github.com/TimUx/food-order.git
-cd food-order
+git clone https://github.com/TimUx/FestManager.git
+cd FestManager
 cp .env.example .env
 docker compose pull
 docker compose up -d
@@ -153,7 +155,7 @@ Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prism
 | Route | Beschreibung | Rolle |
 |-------|-------------|-------|
 | `/admin` | Admin-Übersicht | ADMIN |
-| `/admin/verein` | Vereinseinstellungen | ADMIN |
+| `/admin/verein` | Veranstalter (Name, Logo, Kontakt) | ADMIN |
 | `/admin/benutzer` | Team verwalten | ADMIN |
 | `/admin/veranstaltungen` | Veranstaltungen | ADMIN |
 | `/admin/speisen` | Speisenverwaltung | ADMIN |
@@ -188,8 +190,8 @@ React · TypeScript · Vite · Material UI · Node.js · Express · Prisma · Po
 
 Fertige Images werden per GitHub Actions in die GitHub Container Registry veröffentlicht:
 
-- `ghcr.io/timux/food-order/backend`
-- `ghcr.io/timux/food-order/frontend`
+- `ghcr.io/timux/festmanager/backend`
+- `ghcr.io/timux/festmanager/frontend`
 
 Ausführung: manuell über Actions oder automatisch beim Erstellen eines Releases.
 

@@ -1,4 +1,4 @@
-# Release Notes — Vereinsbestellung {{VERSION}}
+# Release Notes — FestManager {{VERSION}}
 
 **Veröffentlichungsdatum:** {{DATE}}
 

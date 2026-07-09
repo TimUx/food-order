@@ -1,7 +1,7 @@
 {
-  "name": "food-order",
+  "name": "festmanager",
   "private": true,
-  "description": "Vereinsbestellplattform – QA & CI",
+  "description": "FestManager-Plattform – QA & CI",
   "scripts": {
     "qa:lint": "eslint backend/src frontend/src tests scripts/qa --max-warnings 0",
     "qa:typecheck": "npm run build --prefix backend && npm run build --prefix frontend",

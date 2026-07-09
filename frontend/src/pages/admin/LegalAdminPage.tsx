@@ -178,7 +178,7 @@ export function LegalAdminPage() {
       </Stack>
 
       <Alert severity="warning" sx={{ mb: 3 }}>
-        Dieses Modul stellt nur die technische Infrastruktur bereit. Inhalte muessen vom Verein selbst gepflegt, regelmaessig geprueft und rechtlich eigenverantwortlich bewertet werden. Die Plattform bietet keine Rechtsberatung.
+        Dieses Modul stellt nur die technische Infrastruktur bereit. Inhalte muessen vom Veranstalter selbst gepflegt, regelmaessig geprueft und rechtlich eigenverantwortlich bewertet werden. Die Plattform bietet keine Rechtsberatung.
       </Alert>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

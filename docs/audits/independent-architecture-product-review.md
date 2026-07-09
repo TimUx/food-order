@@ -1,11 +1,11 @@
-# Independent Architecture & Product Review — food-order Platform
+# Independent Architecture & Product Review — FestManager Platform
 
 Date: 2026-07-09  
 Reviewer stance: external architecture, product, UX, security, DevOps, QA, and open-source audit before first public release.
 
 ## Executive Summary
 
-food-order is a promising single-tenant modular monolith for association event food ordering, but it is not yet ready for a low-risk public 1.0 release. The core product idea is strong: public no-login ordering, staff kitchen and pickup flows, admin configuration, Docker deployment, screenshots, and a serious QA pipeline. The repository also shows unusual discipline for a young open-source project: architecture decision records, module lifecycle documentation, tests, CI, security scripts, and release validation exist.
+FestManager is a promising single-tenant modular monolith for association event food ordering, but it is not yet ready for a low-risk public 1.0 release. The core product idea is strong: public no-login ordering, staff kitchen and pickup flows, admin configuration, Docker deployment, screenshots, and a serious QA pipeline. The repository also shows unusual discipline for a young open-source project: architecture decision records, module lifecycle documentation, tests, CI, security scripts, and release validation exist.
 
 The main problem is strategic over-engineering. The architecture has a platform kernel, module registry, service container, extension points, metadata registries, settings platform, permissions, lifecycle states, migrations, health checks, admin metadata, and placeholder modules. This is a lot of moving parts for the first public version of software aimed at volunteer-run clubs. Some of that complexity is valid internally, but it is starting to leak into admin concepts such as module installation, activation, configuration, health, provider setup, and advanced settings. The guiding product principle should be: if a club volunteer cannot understand it under event-day pressure, it should not be visible in the primary UI.
 
@@ -41,7 +41,7 @@ The third major issue is operational reliability. Docker Compose is the right de
 
 - The platform layer is too ambitious for the current product. There are two parallel concepts: `backend/src/platform` and `backend/src/module-system`, with the latter acting as compatibility re-exports. This is transitional technical debt and should not survive 1.0.
 - The module lifecycle vocabulary is too heavy: install, enable, activate, disable, deactivate, initialize, shutdown, upgrade, health check, migration, image version, schema version. Internally that may be acceptable; externally it is excessive.
-- Metadata-driven admin UI is powerful, but risks creating generic forms that are technically correct and human-hostile. Vereinsadmins need workflows, not schema renderers.
+- Metadata-driven admin UI is powerful, but risks creating generic forms that are technically correct and human-hostile. Administratoren need workflows, not schema renderers.
 - Placeholder modules such as inventory, loyalty, voucher, discount, check-in, analytics, and cash-register create the impression of breadth without real product completeness.
 - There is no strong boundary between core and official modules. Relative imports from modules into core mean this is not a true plugin architecture; it is feature packaging.
 

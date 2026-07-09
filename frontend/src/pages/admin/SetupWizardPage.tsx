@@ -8,7 +8,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
 
-const STEPS = ['Verein', 'Veranstaltung', 'Speisekarte', 'Zahlungsart', 'Mitarbeiter', 'Fertig'];
+const STEPS = ['Veranstalter', 'Veranstaltung', 'Speisekarte', 'Zahlungsart', 'Mitarbeiter', 'Fertig'];
 
 type PaymentPreset = 'cash_only' | 'cash_and_card' | 'online';
 
@@ -50,7 +50,7 @@ export function SetupWizardPage() {
     try {
       if (step === 0) {
         if (!clubName.trim()) {
-          setError('Bitte Vereinsnamen eingeben');
+          setError('Bitte Namen des Veranstalters eingeben');
           return;
         }
         await api.updateClubSettings(token, { clubName: clubName.trim() });
@@ -110,7 +110,7 @@ export function SetupWizardPage() {
   return (
     <AdminLayout title="Einrichtungsassistent">
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        In wenigen Schritten richten Sie Ihren Verein für die erste Veranstaltung ein.
+        In wenigen Schritten richten Sie Ihren Veranstalter für die erste Veranstaltung ein.
       </Typography>
       <Stepper activeStep={step} sx={{ mb: 4 }} alternativeLabel>
         {STEPS.map((label) => (
@@ -121,7 +121,7 @@ export function SetupWizardPage() {
       <Paper sx={{ p: 3, maxWidth: 560 }}>
         {step === 0 && (
           <TextField
-            label="Vereinsname"
+            label="Name des Veranstalters"
             fullWidth
             value={clubName}
             onChange={(e) => setClubName(e.target.value)}
@@ -171,7 +171,7 @@ export function SetupWizardPage() {
         )}
         {step === 5 && (
           <Alert severity="success">
-            Ihr Verein ist eingerichtet. Unter „Veranstaltungen“ und „Speisen“ können Sie alles weiter anpassen.
+            Ihr Veranstalter ist eingerichtet. Unter „Veranstaltungen“ und „Speisen“ können Sie alles weiter anpassen.
           </Alert>
         )}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>

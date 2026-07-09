@@ -67,7 +67,7 @@ export const notificationTemplates: Record<NotificationLocale, {
   <p><strong>Ihre Abholnummer: {{displayNumber}}</strong></p>
   {{eventDateBlockHtml}}
   <p>Bitte merken Sie sich diese Nummer oder zeigen Sie sie am Veranstaltungstag an der Kasse vor.</p>
-  <h3>Verkäufer / Verein</h3>
+  <h3>Veranstalter</h3>
   <p><strong>{{clubName}}</strong></p>
   {{contactHtml}}
   <h3>Ihre Bestellung</h3>
@@ -87,7 +87,7 @@ export const notificationTemplates: Record<NotificationLocale, {
 </div>`.trim(),
       text: [
         'Bestellbestätigung – Abholnummer {{displayNumber}}',
-        'Verein: {{clubName}}',
+        'Veranstalter: {{clubName}}',
         'Gesamt: {{totalPrice}}',
         'Status: {{statusUrl}}',
       ].join('\n'),
@@ -111,7 +111,7 @@ export const notificationTemplates: Record<NotificationLocale, {
   <h3>Stornierte Bestellung</h3>
   <p>{{itemsHtml}}</p>
   <p><strong>Gesamtbetrag (storniert): {{totalPrice}}</strong></p>
-  <h3>Verkäufer / Verein</h3>
+  <h3>Veranstalter</h3>
   <p><strong>{{clubName}}</strong></p>
   {{contactHtml}}
   <h3>Hinweise</h3>
@@ -160,7 +160,7 @@ export const notificationTemplates: Record<NotificationLocale, {
 <p style="font-size: 0.8em; color: #666; line-height: 1.5;">
   Diese Nachricht wurde im Auftrag von {{clubName}} versendet.
   Ihre Daten werden nur zur Abwicklung Ihrer Bestellung verwendet.
-  Weitere Informationen finden Sie auf der Kontaktseite Ihres Vereins.
+  Weitere Informationen finden Sie auf der Kontaktseite des Veranstalters.
 </p>`.trim(),
     privacyFooterText:
       'Diese Nachricht wurde im Auftrag von {{clubName}} versendet. Ihre Daten werden nur zur Abwicklung Ihrer Bestellung verwendet.',

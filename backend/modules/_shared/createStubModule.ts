@@ -21,7 +21,7 @@ export function createStubModule(options: StubModuleOptions) {
     readonly name = options.name;
     readonly version = options.version ?? '0.1.0';
     readonly description = options.description;
-    readonly author = options.author ?? 'Vereinsbestellung';
+    readonly author = options.author ?? 'FestManager';
 
     registerPermissions(_context: FeatureContext): ModulePermissionDefinition[] {
       return options.permissions ?? [];

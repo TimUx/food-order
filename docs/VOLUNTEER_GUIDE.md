@@ -8,7 +8,7 @@ Technische Details: [Betriebshandbuch](OPERATIONS.md) · [Admin Guide](ADMIN_GUI
 
 ## Was die Plattform macht
 
-An einem Vereinsfest können Gäste **online vorbestellen**, die **Küche** sieht Bestellungen live, an der **Abholung** wird mit einer Nummer ausgegeben, und der **Vorstand** pflegt Speisekarte und Veranstaltung im Admin-Bereich.
+An einem Veranstaltung können Gäste **online vorbestellen**, die **Küche** sieht Bestellungen live, an der **Abholung** wird mit einer Nummer ausgegeben, und der **Vorstand** pflegt Speisekarte und Veranstaltung im Admin-Bereich.
 
 Alles läuft auf **Ihrem** Server — keine Cloud-Pflicht, keine Kunden-Registrierung.
 
@@ -100,4 +100,4 @@ Logs ansehen: `docker compose logs backend` (letzte Zeilen kopieren für Support
 - **Idee einreichen:** GitHub → Issues → „Funktionswunsch“
 - **Geplante Funktionen:** [ROADMAP.md](ROADMAP.md)
 
-Die Software ist **Version 1.0** — für Vereinsfeste gedacht, mit dokumentiertem Betrieb und Backup.
+Die Software ist **Version 1.0** — für Veranstaltunge gedacht, mit dokumentiertem Betrieb und Backup.

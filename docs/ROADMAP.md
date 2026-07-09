@@ -1,8 +1,8 @@
-# Roadmap — Vereinsbestellung
+# Roadmap — FestManager
 
 Überblick: Was **heute stabil** ist und was **geplant** ist. Keine versteckten Experimente in der Hauptoberfläche.
 
-Stand: Release **1.4.0**
+Stand: Release **1.5.0**
 
 ---
 
@@ -52,7 +52,7 @@ Details und Begründung: [Maßnahmenplan](audits/massnahmenplan-architektur-prod
 
 | Version | Fokus |
 |---------|--------|
-| **1.0** | Produktionsreifer Kern für Vereinsfeste |
+| **1.0** | Produktionsreifer Kern für Veranstaltunge |
 | **1.4.0** | Rechtliche Informationen, UX-Vereinfachung (Funktionen, Presets, Assistent, Rollen-Presets), sichere Status-URLs & Sessions |
 | 1.5+ | Lagerverwaltung und weitere Module nach Bedarf der Community |
 

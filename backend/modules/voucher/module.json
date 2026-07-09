@@ -3,7 +3,7 @@
   "name": "Gutscheine",
   "description": "Gutscheinverwaltung und Einlösung",
   "version": "0.1.0",
-  "author": "Vereinsbestellung",
+  "author": "FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": {

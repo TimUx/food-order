@@ -84,7 +84,7 @@ Die Payment-Integration (Specs 6.1–6.4) wurde aus neun Perspektiven geprüft: 
 
 - Tabs statt technischer Menüs
 - Hilfetexte zu API-Schlüsseln
-- Vereinsadmin kann Stripe einrichten ohne Entwickler-Wissen
+- Administrator kann Stripe einrichten ohne Entwickler-Wissen
 - Detaildialog zeigt noch rohe Feldnamen → mittelfristig verbessern
 
 ---

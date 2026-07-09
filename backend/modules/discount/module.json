@@ -3,7 +3,7 @@
   "name": "Rabatte",
   "description": "Rabattaktionen und Sonderpreise",
   "version": "0.1.0",
-  "author": "Vereinsbestellung",
+  "author": "FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": { "required": [], "optional": [] },

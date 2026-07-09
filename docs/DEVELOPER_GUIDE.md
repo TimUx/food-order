@@ -1,6 +1,6 @@
 # Entwicklerhandbuch (Developer Guide)
 
-Technische Dokumentation für Entwickler, die an der Vereinsbestellplattform mitarbeiten oder sie erweitern.
+Technische Dokumentation für Entwickler, die an der FestManager-Plattform mitarbeiten oder sie erweitern.
 
 ## Inhaltsverzeichnis
 
@@ -45,7 +45,7 @@ Technische Dokumentation für Entwickler, die an der Vereinsbestellplattform mit
 ## Projektstruktur
 
 ```
-food-order/
+FestManager/
 ├── backend/
 │   ├── modules/          # Offizielle Feature-Module (payment, inventory, …)
 │   ├── plugins/          # Community-Plugins (Zukunft)
@@ -121,7 +121,7 @@ docker compose exec backend npm run seed
 
 ### Wichtige Modelle
 
-- **ClubSettings** – Vereinsname, Logo, Kontaktdaten, Bestell-Pflichtfelder, Stornierungsfrist (Singleton)
+- **ClubSettings** – Name des Veranstalters, Logo, Kontaktdaten, Bestell-Pflichtfelder, Stornierungsfrist (Singleton)
 - **FoodItem** – Gerichte pro Veranstaltung
 - **Order** – Bestellung mit `orderNumber`, `orderDate`, `status`
 - **DailyOrderCounter** – Atomarer Zähler für Tages-Bestellnummern
@@ -171,7 +171,7 @@ Basis-URL: `/api`
 
 | Methode | Pfad | Beschreibung |
 |---------|------|-------------|
-| GET | `/public/club` | Vereinsdaten (öffentlich) |
+| GET | `/public/club` | Veranstalterdaten (öffentlich) |
 | GET | `/public/order-settings` | Pflichtfelder & Stornierungsfrist |
 | GET | `/public/event` | Aktive Veranstaltung |
 | GET | `/public/menu` | Speisekarte + Event-Info |
@@ -317,7 +317,7 @@ Umgebungsvariablen für die Screenshot-Pipeline:
 | `START_FROM` | Ab einem Screenshot-Namen fortsetzen (z. B. `START_FROM=16-admin-uebersicht`) |
 | `SKIP_DEVICES` | `1` = Geräte-Mockups der Bestellseite (01-*) überspringen |
 
-Die Rohdaten für Geräte-Mockups landen in `$TMPDIR/food-order-screenshots-raw` (nicht mehr unter `docs/screenshots/_raw`).
+Die Rohdaten für Geräte-Mockups landen in `$TMPDIR/festmanager-screenshots-raw` (nicht mehr unter `docs/screenshots/_raw`).
 
 ---
 
@@ -349,8 +349,8 @@ Produktions-Checklisten, Backup und Restore: [OPERATIONS.md](OPERATIONS.md).
 
 Der Workflow `.github/workflows/docker-publish.yml` baut und veröffentlicht Images unter:
 
-- `ghcr.io/<owner>/food-order/backend`
-- `ghcr.io/<owner>/food-order/frontend`
+- `ghcr.io/<owner>/FestManager/backend`
+- `ghcr.io/<owner>/FestManager/frontend`
 
 **Auslöser:**
 

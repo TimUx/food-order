@@ -95,7 +95,7 @@ describe('AdminUiService', () => {
     vi.mocked(settingsService.listNamespaces).mockReturnValue([
       {
         namespace: 'core.club',
-        label: 'Verein',
+        label: 'Veranstalter',
         adminPath: '/admin/verein',
         groupCount: 1,
         fieldCount: 1,

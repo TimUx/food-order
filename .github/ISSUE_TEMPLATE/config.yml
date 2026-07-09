@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: Betrieb & Installation
-    url: https://github.com/TimUx/food-order/blob/main/docs/OPERATIONS.md
+    url: https://github.com/TimUx/FestManager/blob/main/docs/OPERATIONS.md
     about: Checklisten, Backup, Update und Wiederherstellung
   - name: Admin-Handbuch
-    url: https://github.com/TimUx/food-order/blob/main/docs/ADMIN_GUIDE.md
+    url: https://github.com/TimUx/FestManager/blob/main/docs/ADMIN_GUIDE.md
     about: Einrichtung für Vorstände und Administratoren
   - name: Sicherheit melden (privat)
-    url: https://github.com/TimUx/food-order/blob/main/SECURITY.md
+    url: https://github.com/TimUx/FestManager/blob/main/SECURITY.md
     about: Keine Sicherheitslücken als öffentliches Issue — bitte SECURITY.md lesen

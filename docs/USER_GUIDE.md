@@ -29,7 +29,7 @@ Anleitung für Mitarbeiter in Küche, Abholung und Service – ohne Administrato
 |-------|--------|----------|-------|
 | Küche / Service | kueche@verein.local | staff123 | `/mitarbeiter/login` |
 
-> **Hinweis für Administratoren:** Vereinsdaten, Benutzer und Veranstaltungen verwalten Sie im separaten [Administrationsbereich](/admin/login) – siehe [Admin Guide](ADMIN_GUIDE.md).
+> **Hinweis für Administratoren:** Veranstalterdaten, Benutzer und Veranstaltungen verwalten Sie im separaten [Administrationsbereich](/admin/login) – siehe [Admin Guide](ADMIN_GUIDE.md).
 
 > Die App kann als PWA auf dem Tablet installiert werden (Zum Startbildschirm hinzufügen).
 

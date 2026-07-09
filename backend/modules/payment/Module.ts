@@ -18,7 +18,7 @@ class PaymentModule extends BaseModule {
   readonly name = 'Online-Zahlung';
   readonly version = '1.0.0';
   readonly description = 'Online-Zahlungen über Stripe, PayPal, VR Payment, S-Payment, PAYONE und SumUp';
-  readonly author = 'Vereinsbestellung';
+  readonly author = 'FestManager';
 
   async install(_context: FeatureContext): Promise<void> {
     // Schema-Migrationen werden vom ModuleMigrationService ausgeführt

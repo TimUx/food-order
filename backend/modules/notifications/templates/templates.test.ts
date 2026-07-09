@@ -25,7 +25,7 @@ describe('notification templates', () => {
     expect(msg.html).toContain('verbindlicher Kaufvertrag');
     expect(msg.html).toContain('an der Kasse vor');
     expect(msg.html).toContain('Bestellstatus anzeigen / stornieren');
-    expect(msg.body).toContain('Verein: Feuerwehr Musterstadt');
+    expect(msg.body).toContain('Veranstalter: Feuerwehr Musterstadt');
   });
 
   it('builds cancellation with full legal notice', async () => {

@@ -7,8 +7,8 @@ import {
 
 export const clubSettingsSchema: SettingsSchemaDefinition = {
   namespace: CORE_CLUB_NAMESPACE,
-  label: 'Verein',
-  description: 'Öffentliche Vereinsdaten und Branding',
+  label: 'Veranstalter',
+  description: 'Öffentliche Veranstalterdaten und Branding',
   adminPath: '/admin/verein',
   groups: [
     { id: 'general', label: 'Allgemein', description: 'Name und Beschreibung' },
@@ -19,10 +19,10 @@ export const clubSettingsSchema: SettingsSchemaDefinition = {
     {
       key: 'clubName',
       group: 'general',
-      label: 'Vereinsname',
+      label: 'Name des Veranstalters',
       type: 'string',
       required: true,
-      default: 'Vereinsbestellung',
+      default: 'FestManager',
       helpText: 'Wird auf der Bestellseite und in E-Mails angezeigt',
     },
     {
@@ -30,7 +30,7 @@ export const clubSettingsSchema: SettingsSchemaDefinition = {
       group: 'general',
       label: 'Beschreibung',
       type: 'text',
-      helpText: 'Kurzbeschreibung des Vereins',
+      helpText: 'Kurzbeschreibung des Veranstalters',
     },
     {
       key: 'contactName',

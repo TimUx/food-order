@@ -1,5 +1,5 @@
 /**
- * k6 Lasttest — Grundszenarien für Vereinsbestellung (K6)
+ * k6 Lasttest — Grundszenarien für FestManager (K6)
  *
  * Voraussetzungen:
  *   - Stack läuft (docker compose up)

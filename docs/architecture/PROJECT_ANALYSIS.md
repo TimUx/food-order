@@ -1,4 +1,4 @@
-# Projektanalyse – Vereinsbestellplattform
+# Projektanalyse – FestManager-Plattform
 
 Vollständige Ist-Analyse auf Basis des Codestands nach Release **v1.2.0** (Modulare Plattform & Payment-Modul).
 
@@ -58,7 +58,7 @@ Kunde (Browser)
 ### State Management
 
 - `AuthContext` – JWT in `localStorage` (`verein_token`)
-- `ClubContext` – öffentliche Vereinsdaten + Socket `club:updated`
+- `ClubContext` – öffentliche Veranstalterdaten + Socket `club:updated`
 - `ThemeContext` – Light/Dark in `localStorage`
 - Kein React Query/Redux – page-local `useState`/`useEffect`
 

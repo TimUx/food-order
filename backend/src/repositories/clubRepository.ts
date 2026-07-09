@@ -1,9 +1,9 @@
 import { prisma } from '../config/database';
 
 export const DEFAULT_CLUB = {
-  clubName: 'Vereinsbestellung',
+  clubName: 'FestManager',
   description: 'Essensbestellungen für unsere Veranstaltungen',
-  contactName: 'Vereinsverwaltung',
+  contactName: 'Verwaltung',
   email: 'kontakt@verein.local',
   phone: '+49 123 456789',
   address: 'Musterstraße 1, 12345 Musterstadt',

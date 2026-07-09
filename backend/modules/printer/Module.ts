@@ -16,7 +16,7 @@ class PrinterModule extends BaseModule {
   readonly name = 'Bondruck';
   readonly version = '1.0.0';
   readonly description = 'Bondruck für Küche und Kasse (ESC/POS, PDF, Browser, Bluetooth)';
-  readonly author = 'Vereinsbestellung';
+  readonly author = 'FestManager';
 
   async install(_context: FeatureContext): Promise<void> {}
 

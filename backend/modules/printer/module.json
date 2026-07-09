@@ -3,8 +3,8 @@
   "name": "Bondruck",
   "description": "Automatischer Bondruck für Küche und Kasse (ESC/POS, PDF, Browser)",
   "version": "1.0.0",
-  "author": "Vereinsbestellung",
-  "homepage": "https://github.com/TimUx/food-order",
+  "author": "FestManager",
+  "homepage": "https://github.com/TimUx/FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": {

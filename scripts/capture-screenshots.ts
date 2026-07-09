@@ -13,7 +13,7 @@ import { tmpdir } from 'os';
 
 const PORT = 4173;
 const OUT_DIR = join(process.cwd(), 'docs', 'screenshots');
-const RAW_DIR = join(tmpdir(), 'food-order-screenshots-raw');
+const RAW_DIR = join(tmpdir(), 'festmanager-screenshots-raw');
 const DIST = process.env.FRONTEND_DIST ?? join(process.cwd(), 'frontend', 'dist');
 const FULL_HD = { width: 1920, height: 1080 };
 
@@ -149,7 +149,7 @@ const mockModules = [
   {
     id: 'payment', name: 'Online-Zahlung', version: '1.0.0', imageVersion: '1.0.0',
     description: 'Online-Zahlungen über Stripe und weitere Anbieter',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
+    author: 'FestManager', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
     productionReady: true,
     flags: { enabled: true, disabled: false, configurable: true, visible: true, health: 'healthy' },
     permissions: [
@@ -167,7 +167,7 @@ const mockModules = [
   {
     id: 'notifications', name: 'Benachrichtigungen', version: '1.0.0', imageVersion: '1.0.0',
     description: 'E-Mail, Push und ntfy Benachrichtigungen',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
+    author: 'FestManager', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
     productionReady: true,
     flags: { enabled: true, disabled: false, configurable: true, visible: true, health: 'healthy' },
     permissions: [], menuItems: [], widgets: [], hasConfig: true,
@@ -178,7 +178,7 @@ const mockModules = [
   {
     id: 'legal', name: 'Rechtliche Informationen', version: '1.4.0', imageVersion: '1.4.0',
     description: 'Impressum, Datenschutz, AGB und Widerruf',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
+    author: 'FestManager', license: 'MIT', status: 'ENABLED', installed: true, enabled: true,
     productionReady: true,
     flags: { enabled: true, disabled: false, configurable: true, visible: true, health: 'healthy' },
     permissions: [
@@ -195,7 +195,7 @@ const mockModules = [
   {
     id: 'printer', name: 'Bondruck', version: '1.0.0', imageVersion: '1.0.0',
     description: 'Automatischer Bondruck für Küche und Kasse',
-    author: 'Vereinsbestellung', license: 'MIT', status: 'DISABLED', installed: true, enabled: false,
+    author: 'FestManager', license: 'MIT', status: 'DISABLED', installed: true, enabled: false,
     productionReady: true,
     flags: { enabled: false, disabled: true, configurable: true, visible: true, health: 'unknown' },
     permissions: [], menuItems: [], widgets: [], hasConfig: true,
@@ -345,13 +345,13 @@ const mockPublicImprintPage = {
 
 const mockClubSettingsForm = {
   namespace: 'core.club',
-  label: 'Verein',
-  description: 'Öffentliche Vereinsdaten und Branding',
+  label: 'Veranstalter',
+  description: 'Öffentliche Veranstalterdaten und Branding',
   adminPath: '/admin/verein',
   groups: [
     {
       id: 'general', label: 'Allgemein', description: 'Name und Beschreibung', fields: [
-        { key: 'clubName', group: 'general', label: 'Vereinsname', type: 'string', value: mockClub.clubName, required: true },
+        { key: 'clubName', group: 'general', label: 'Name des Veranstalters', type: 'string', value: mockClub.clubName, required: true },
         { key: 'description', group: 'general', label: 'Beschreibung', type: 'text', value: mockClub.description },
       ],
     },
@@ -402,7 +402,7 @@ const mockAdminPages = [
   { id: 'core-modules', path: '/admin/module', label: 'Funktionen', description: 'Zahlung, Benachrichtigungen und Druck', icon: 'Extension', pageType: 'modules', componentId: 'core.modules', sortOrder: 30, source: 'core' as const },
   { id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', description: 'Zahlungsanbieter, Transaktionen und Statistiken', icon: 'Payment', pageType: 'report', componentId: 'payment.admin', sortOrder: 35, source: 'module' as const, moduleId: 'payment', requiredPermission: 'payment.view' },
   { id: 'legal-admin', path: '/admin/legal', label: 'Rechtliche Informationen', description: 'Impressum, Datenschutz, AGB und Widerruf', icon: 'Gavel', pageType: 'report', componentId: 'legal.admin', sortOrder: 36, source: 'module' as const, moduleId: 'legal', requiredPermission: 'legal.view' },
-  { id: 'settings-core-club', path: '/admin/verein', label: 'Verein', description: 'Öffentliche Vereinsdaten und Branding', icon: 'Settings', pageType: 'settings', namespace: 'core.club', sortOrder: 1, source: 'core' as const },
+  { id: 'settings-core-club', path: '/admin/verein', label: 'Veranstalter', description: 'Öffentliche Veranstalterdaten und Branding', icon: 'Settings', pageType: 'settings', namespace: 'core.club', sortOrder: 1, source: 'core' as const },
   { id: 'settings-core-order', path: '/admin/bestellung', label: 'Bestellung', description: 'Pflichtfelder und Stornierungsfrist', icon: 'ShoppingCart', pageType: 'settings', namespace: 'core.order', sortOrder: 2, source: 'core' as const },
   { id: 'settings-module.notifications', path: '/admin/settings/module.notifications', label: 'Benachrichtigungen', description: 'E-Mail, Push und ntfy', icon: 'Notifications', pageType: 'settings', namespace: 'module.notifications', sortOrder: 3, source: 'module' as const, moduleId: 'notifications' },
 ];
@@ -414,7 +414,7 @@ const mockAdminUi = {
     { id: 'core-food-items', label: 'Speisen', path: '/admin/speisen', icon: 'RestaurantMenu', sortOrder: 20, source: 'core' },
     { id: 'core-users', label: 'Team', path: '/admin/benutzer', icon: 'People', sortOrder: 25, source: 'core' },
     { id: 'core-modules', label: 'Funktionen', path: '/admin/module', icon: 'Extension', sortOrder: 30, source: 'core' },
-    { id: 'settings-core-club', label: 'Verein', path: '/admin/verein', icon: 'Settings', parentId: 'settings', sortOrder: 1, source: 'core' },
+    { id: 'settings-core-club', label: 'Veranstalter', path: '/admin/verein', icon: 'Settings', parentId: 'settings', sortOrder: 1, source: 'core' },
     { id: 'settings-core-order', label: 'Bestellung', path: '/admin/bestellung', icon: 'ShoppingCart', parentId: 'settings', sortOrder: 2, source: 'core' },
     { id: 'settings-module.notifications', label: 'Benachrichtigungen', path: '/admin/settings/module.notifications', icon: 'Notifications', parentId: 'settings', sortOrder: 3, source: 'module', moduleId: 'notifications' },
   ],

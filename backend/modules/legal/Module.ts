@@ -15,7 +15,7 @@ class LegalModule extends BaseModule {
   readonly name = 'Rechtliche Informationen';
   readonly version = '1.4.0';
   readonly description = 'Optionale Verwaltung von Impressum, Datenschutz, AGB und Widerruf';
-  readonly author = 'Vereinsbestellung';
+  readonly author = 'FestManager';
 
   async install(_context: FeatureContext): Promise<void> {
     await legalPageService.ensureDefaults();

@@ -24,7 +24,7 @@ class PrintManager {
 
   private async loadClubName(context: FeatureContext): Promise<string> {
     const values = await context.settings.getDecryptedValues(CORE_CLUB_NAMESPACE);
-    return String(values.clubName ?? 'Verein');
+    return String(values.clubName ?? 'Veranstalter');
   }
 
   async hasActivePrinter(context: FeatureContext): Promise<boolean> {

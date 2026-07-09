@@ -168,7 +168,7 @@ model OrderStatus {
 
 model ClubSettings {
   id                          String   @id @default("default")
-  clubName                    String   @default("Vereinsbestellung")
+  clubName                    String   @default("FestManager")
   description                 String?
   contactName                 String?
   email                       String?

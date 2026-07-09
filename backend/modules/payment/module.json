@@ -3,8 +3,8 @@
   "name": "Online-Zahlung",
   "description": "Online-Zahlungen über Stripe, PayPal, VR Payment, S-Payment, Payone und SumUp",
   "version": "1.0.0",
-  "author": "Vereinsbestellung",
-  "homepage": "https://github.com/TimUx/food-order",
+  "author": "FestManager",
+  "homepage": "https://github.com/TimUx/FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": {

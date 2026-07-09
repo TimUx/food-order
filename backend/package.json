@@ -1,7 +1,7 @@
 {
-  "name": "vereinsbestellung-backend",
+  "name": "festmanager-backend",
   "version": "1.0.0",
-  "description": "Backend für Vereinsveranstaltungs-Bestellplattform",
+  "description": "Backend für die FestManager-Plattform",
   "main": "dist/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

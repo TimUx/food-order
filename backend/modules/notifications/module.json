@@ -3,8 +3,8 @@
   "name": "Benachrichtigungen",
   "description": "E-Mail (SMTP), ntfy, Discord, Slack und Microsoft Teams",
   "version": "1.0.0",
-  "author": "Vereinsbestellung",
-  "homepage": "https://github.com/TimUx/food-order",
+  "author": "FestManager",
+  "homepage": "https://github.com/TimUx/FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": {

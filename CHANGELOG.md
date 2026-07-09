@@ -1,7 +1,27 @@
 # Changelog
 
-Alle wesentlichen Aenderungen an **Vereinsbestellung** werden hier dokumentiert.
+Alle wesentlichen Aenderungen an **FestManager** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
+
+## 1.5.0 - 2026-07-09
+
+### Geaendert (Rebranding)
+
+- Produktname von **Vereinsbestellung** auf **FestManager** vereinheitlicht (UI, Dokumentation, Benachrichtigungen, OpenAPI, Docker-Images, Paketnamen).
+- Repository- und Image-Pfade: `FestManager` / `ghcr.io/timux/festmanager`.
+- Terminologie: **Veranstalter** statt „Verein“, wo der Betreiber einer Veranstaltung gemeint ist (Admin-Bereich, Einstellungen, E-Mails).
+- Bereich **Verein & Kontakt** heisst in der Oberflaeche **Veranstalter** (`/admin/verein` unveraendert).
+
+### Dokumentation
+
+- README, Guides, ROADMAP, CHANGELOG und Release Notes auf FestManager und erweiterte Zielgruppe aktualisiert.
+
+### Hinweis
+
+- Keine Breaking Changes: APIs, Datenbankschema, Berechtigungs-Keys und Konfigurationspfade bleiben kompatibel.
+- Beispieldaten mit Vereinsnamen (z. B. Feuerwehr Musterstadt) und interne technische Bezeichner (`core.club`, `verein_token`) bleiben unveraendert.
+
+---
 
 ## 1.4.0 - 2026-07-09
 
@@ -114,14 +134,14 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 ## 1.0.0 - 2026-07-08
 
-Erste stabile Version der Vereinsbestellplattform.
+Erste stabile Version der FestManager-Plattform.
 
 ### Neu
 
 - **Oeffentlicher Bereich:** touch-optimierte Bestellseite, Vorausbestellungen, Kundenstatus per WebSocket, Kontaktseite, Abholboard, Bot-Schutz (Honeypot, Zeitpruefung, optional Turnstile).
 - **Mitarbeiterbereich:** Dashboard mit Live-Statistiken, Kuechenansicht, Abholung, Bestellung vor Ort, Bestelluebersicht.
 - **Administration:** Verein & Kontakt, Benutzerverwaltung, Veranstaltungs- und Speisenverwaltung mit Bild-Upload.
-- **Betrieb:** Docker Compose, PostgreSQL, PWA, automatischer Build der Images in `ghcr.io/timux/food-order/`.
+- **Betrieb:** Docker Compose, PostgreSQL, PWA, automatischer Build der Images in `ghcr.io/timux/festmanager/`.
 
 ### Dokumentation
 

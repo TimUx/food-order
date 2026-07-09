@@ -214,7 +214,7 @@ export function buildOrderPaidMessage(order: OrderEmailData, club: ClubContactDa
   const title = renderTemplate(t.orderPaid.pushTitle, vars);
   const body = [
     title,
-    `Verein: ${club.clubName}`,
+    `Veranstalter: ${club.clubName}`,
     `Betrag: ${formatPrice(order.totalPrice)}`,
   ].join('\n');
   return { title, body };

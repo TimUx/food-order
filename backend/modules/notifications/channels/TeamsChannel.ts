@@ -39,7 +39,7 @@ export class TeamsChannel implements NotificationChannel {
 
   async testConnection(config: NotificationConfig): Promise<ChannelHealthResult> {
     const result = await this.send(config, {
-      title: 'Vereinsbestellung Test',
+      title: 'FestManager Test',
       body: 'Microsoft-Teams-Webhook-Verbindungstest.',
     });
     return { ok: result.ok, message: result.ok ? 'Testnachricht gesendet' : result.error };

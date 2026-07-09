@@ -57,7 +57,7 @@ const MODULE_LABELS: Record<string, string> = {
 async function loadClubContact(context: FeatureContext): Promise<ClubContactData> {
   const values = await context.settings.getDecryptedValues(CORE_CLUB_NAMESPACE);
   return {
-    clubName: String(values.clubName ?? 'Verein'),
+    clubName: String(values.clubName ?? 'Veranstalter'),
     contactName: (values.contactName as string | undefined) ?? undefined,
     email: (values.email as string | undefined) ?? undefined,
     phone: (values.phone as string | undefined) ?? undefined,

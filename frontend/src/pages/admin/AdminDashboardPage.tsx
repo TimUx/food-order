@@ -50,7 +50,7 @@ export function AdminDashboardPage() {
         Administration
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Verein, Team und Funktionen verwalten.
+        Veranstalter, Team und Funktionen verwalten.
       </Typography>
 
       {!loading && !hasEvents && (

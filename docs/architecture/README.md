@@ -1,6 +1,6 @@
 # Architektur-Dokumentation
 
-Technische Architektur der Vereinsbestellplattform – Architecture Decision Records (ADRs), Projektanalyse und Migrationsplan.
+Technische Architektur der FestManager-Plattform – Architecture Decision Records (ADRs), Projektanalyse und Migrationsplan.
 
 > **Stand:** Plattform v1.4.0 – Payment-Modul, Notifications-Modul, Legal-Modul, metadata-first Admin-UI.
 

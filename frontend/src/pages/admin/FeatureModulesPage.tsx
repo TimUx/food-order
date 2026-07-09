@@ -68,7 +68,7 @@ export function FeatureModulesPage() {
         <Typography variant="h4" fontWeight={800}>Funktionen</Typography>
       </Box>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Zusätzliche Funktionen für Ihren Verein ein- oder ausschalten.
+        Zusätzliche Funktionen für Ihren Veranstalter ein- oder ausschalten.
       </Typography>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

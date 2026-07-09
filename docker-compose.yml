@@ -19,7 +19,7 @@ services:
       retries: 10
 
   backend:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/food-order}/backend:${IMAGE_TAG:-latest}
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/festmanager}/backend:${IMAGE_TAG:-latest}
     container_name: vereins-backend
     restart: unless-stopped
     pull_policy: always
@@ -41,7 +41,7 @@ services:
       - uploads_data:/app/uploads
 
   frontend:
-    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/food-order}/frontend:${IMAGE_TAG:-latest}
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/festmanager}/frontend:${IMAGE_TAG:-latest}
     container_name: vereins-frontend
     restart: unless-stopped
     pull_policy: always

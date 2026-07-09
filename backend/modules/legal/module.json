@@ -3,8 +3,8 @@
   "name": "Rechtliche Informationen",
   "description": "Optionale Verwaltung von Impressum, Datenschutz, AGB und Widerruf",
   "version": "1.4.0",
-  "author": "Vereinsbestellung",
-  "homepage": "https://github.com/TimUx/food-order",
+  "author": "FestManager",
+  "homepage": "https://github.com/TimUx/FestManager",
   "license": "MIT",
   "entry": "index",
   "dependencies": {

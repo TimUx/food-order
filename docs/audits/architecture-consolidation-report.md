@@ -11,7 +11,7 @@
 
 ## Zusammenfassung
 
-Die Plattformarchitektur wurde gegen die externe Kritik und die Projektziele (*einfach, modular, wartbar, sicher, performant, erweiterbar*) geprüft. **Die Backend-Architektur bleibt bewusst umfangreich** — sie unterstützt Wachstum und wird von Vereinsadministratoren nicht direkt wahrgenommen.
+Die Plattformarchitektur wurde gegen die externe Kritik und die Projektziele (*einfach, modular, wartbar, sicher, performant, erweiterbar*) geprüft. **Die Backend-Architektur bleibt bewusst umfangreich** — sie unterstützt Wachstum und wird von Administratoren nicht direkt wahrgenommen.
 
 Die umgesetzten Änderungen konzentrieren sich auf **Admin-UX und Sichtbarkeit**:
 
@@ -80,7 +80,7 @@ Keine Plattformkomponente wurde aus theoretischen Gründen entfernt.
 
 | **Maßnahme** | Dokumentation; keine Entkopplung. |
 
-### 7. Admin-Bereich — Verständlichkeit für Vereinsadmins
+### 7. Admin-Bereich — Verständlichkeit für Administratoren
 
 | | |
 |---|---|
@@ -170,7 +170,7 @@ Keine Plattformkomponente wurde aus theoretischen Gründen entfernt.
 
 ### UX
 
-- Vereinsadmins sehen keine Lifecycle-Begriffe
+- Administratoren sehen keine Lifecycle-Begriffe
 - Funktionen-Seite entspricht der Spezifikation
 - Payment-Einstellungen über kuratierte Oberfläche
 - Dashboard-Sprache verständlicher
@@ -191,7 +191,7 @@ Keine Plattformkomponente wurde aus theoretischen Gründen entfernt.
 2. `APP_ENCRYPTION_KEY` gesetzt und dokumentiert
 3. Smoke-Tests (Auth, Bestellung, Payment-Preset, Funktionen-Toggle)
 
-Die Architektur ist für Wachstum vorbereitet; die Oberfläche ist für Vereinsadministratoren verständlich genug für 1.0. Weitere Vereinfachung sollte **nur UX-getrieben** erfolgen — nicht durch Abbau von Erweiterungspunkten.
+Die Architektur ist für Wachstum vorbereitet; die Oberfläche ist für Administratoren verständlich genug für 1.0. Weitere Vereinfachung sollte **nur UX-getrieben** erfolgen — nicht durch Abbau von Erweiterungspunkten.
 
 **Priorität nach 1.0:**
 

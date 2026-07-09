@@ -126,10 +126,10 @@ Details: [notification-communication-flows.md](../architecture/notification-comm
 
 - [x] Keine direkte Kommunikation außerhalb des Notification-Moduls
 - [x] Alle Texte geprüft und verbessert
-- [x] Verständliche Sprache für Vereinsveranstaltungen
+- [x] Verständliche Sprache für Veranstaltungen
 - [x] Einheitlicher Stil über Templates
 - [x] Template-System mit Platzhaltern
 - [x] Rechtlich sachliche Formulierungen
 - [x] Dokumentation der Kommunikationsabläufe
 
-Die Kommunikationsplattform ist nach diesem Review **modular, konsistent und für Vereinsveranstaltungen geeignet**.
+Die Kommunikationsplattform ist nach diesem Review **modular, konsistent und für Veranstaltungen geeignet**.

@@ -1,4 +1,4 @@
-# Release Notes — Vereinsbestellung 1.4.0
+# Release Notes — FestManager 1.4.0
 
 **Veröffentlichungsdatum:** 2026-07-09
 

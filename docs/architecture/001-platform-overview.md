@@ -4,7 +4,7 @@
 |------|------|
 | **Status** | Accepted |
 | **Datum** | 2026-07-08 |
-| **Kontext** | Vereinsbestellplattform für Essensvorbestellungen bei Veranstaltungen |
+| **Kontext** | FestManager-Plattform für Essensvorbestellungen bei Veranstaltungen |
 
 ## Ziel
 
@@ -25,7 +25,7 @@ Vereine benötigen eine einfache, touch-optimierte Lösung für Veranstaltungsta
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Vereinsbestellplattform                   │
+│                        FestManager-Plattform                   │
 ├──────────────┬──────────────────────┬─────────────────────────────┤
 │   Frontend   │       Backend        │        PostgreSQL           │
 │  React SPA   │  Express + Module    │   Core + Modul-Tabellen     │
@@ -49,7 +49,7 @@ Vereine benötigen eine einfache, touch-optimierte Lösung für Veranstaltungsta
 ### Deployment
 
 - **Docker Compose** mit PostgreSQL, Backend, Frontend
-- Images aus **GHCR** (`ghcr.io/timux/food-order/{backend,frontend}`)
+- Images aus **GHCR** (`ghcr.io/timux/festmanager/{backend,frontend}`)
 - Module werden **mit dem Backend-Image** ausgeliefert (`/app/modules`)
 - Kein separates Modul-Download zur Laufzeit
 
