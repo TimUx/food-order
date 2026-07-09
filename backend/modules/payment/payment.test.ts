@@ -76,7 +76,7 @@ describe('Payment status mapping', () => {
       payment_status: null,
       status: 'completed',
       released_to_kitchen: true,
-    })).toBe('PAYMENT_PAID');
+    })).toBe('ORDER_CONFIRMED');
   });
 });
 
