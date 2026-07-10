@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
 import { AuthPayload } from '../middleware/auth';
-import { parsePermissionKeys } from '../platform/permissions';
+import { resolveUserPermissions } from '../core/permissions';
 import { hookSystem, tenantContext, platformContext } from '../platform/bootstrap';
 import { requireTenantId } from '../platform/tenant/tenantScope';
 import { CORE_HOOKS } from '../platform/types';
@@ -19,7 +19,8 @@ async function buildUserResponse(user: Awaited<ReturnType<typeof userRepository.
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role.name,
-    permissions: parsePermissionKeys(user.role.permissions),
+    permissions: resolveUserPermissions(user),
+    roleTemplate: user.roleTemplate ?? null,
   };
 }
 

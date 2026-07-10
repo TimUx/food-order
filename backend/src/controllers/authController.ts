@@ -1,7 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { authService } from '../services/authService';
 import { AuthRequest } from '../middleware/auth';
-import { parsePermissionKeys } from '../platform/permissions';
 import { authConfigService } from '../services/authConfigService';
 
 export const authController = {
@@ -113,13 +112,15 @@ export const authController = {
         return;
       }
 
-      const permissions = parsePermissionKeys(user.role.permissions);
+      const { resolveUserPermissions } = await import('../core/permissions');
+      const permissions = resolveUserPermissions(user);
       res.json({
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role.name,
+        roleTemplate: user.roleTemplate ?? null,
         permissions,
       });
     } catch (err) {

@@ -560,11 +560,22 @@ Unter **Bestellung** (`/admin/bestellung`) legen Sie fest:
 
 ![Bestell-Einstellungen](screenshots/18-bestell-einstellungen.png)
 
-### 4. Benutzer anlegen
+### 4. Team anlegen
 
-Unter `/admin/benutzer` können Sie weitere Mitarbeiter und Administratoren anlegen.
+Unter `/admin/benutzer` legen Sie Mitarbeiter mit **Rollenvorlagen** an — keine technischen Berechtigungslisten nötig:
 
-![Benutzerverwaltung](screenshots/17-benutzerverwaltung.png)
+| Vorlage | Typische Aufgabe |
+|---------|------------------|
+| Küche | Küchenmonitor, Bondruck |
+| Abholung | Bestellungen aushändigen |
+| Kasse | Bestellung vor Ort, Zahlungsstatus |
+| Speisenpflege | Speisekarte und Veranstaltungen |
+| Finanzen | Zahlungen und Auswertungen |
+| Rechtliches | Impressum und AGB |
+
+Administratoren erhalten weiterhin Vollzugriff. Eine Kassenkraft kann weder Team noch Payment-Einstellungen ändern.
+
+![Team](screenshots/17-benutzerverwaltung.png)
 
 ### 5. Erste Veranstaltung anlegen
 
@@ -802,12 +813,23 @@ Neu → In Bearbeitung → Fertig → Abgeholt
 
 ## Mitarbeiter & Rollen
 
-| Rolle | Bereich | Berechtigungen |
-|-------|---------|---------------|
-| **ADMIN** | `/admin` + `/mitarbeiter` | Verein, Benutzer, Veranstaltungen, Speisen + operativer Betrieb |
-| **STAFF** | `/mitarbeiter` | Küche, Abholung, Bestellung, Bestellungen, Dashboard |
+| Typ | Bereich | Beschreibung |
+|-----|---------|--------------|
+| **Administrator** | `/admin` + `/mitarbeiter` | Vollzugriff auf Veranstalter, Team, Veranstaltungen, Funktionen |
+| **Mitarbeiter (Vorlage)** | `/mitarbeiter` und ggf. eingeschränkter `/admin` | Fachliche Vorlage bestimmt die Rechte |
 
-Benutzer werden unter `/admin/benutzer` angelegt und verwaltet.
+### Rollenvorlagen
+
+| Vorlage | Rechte (vereinfacht) |
+|---------|----------------------|
+| Küche | Küchenmonitor, Bestellungen lesen |
+| Abholung | Abholung bestätigen |
+| Kasse | Kasse, Zahlungsstatus lesen — **kein** Team, **keine** Payment-Konfiguration |
+| Speisenpflege | Speisen und Veranstaltungen pflegen |
+| Finanzen | Zahlungen, Statistiken, Rückerstattungen |
+| Rechtliches | Impressum, Datenschutz, AGB |
+
+Team-Mitglieder werden unter `/admin/benutzer` angelegt; die Vorlage wird pro Person gespeichert.
 
 ---
 
@@ -1073,7 +1095,7 @@ Ja. Die Anwendung ist als PWA nutzbar: Im Browser **Zum Startbildschirm hinzufü
 
 ### Wie lege ich neue Mitarbeiter an?
 
-Unter `/admin/benutzer` → **Neuer Benutzer**. Rolle „Mitarbeiter“ für Küche/Abholung, „Administrator“ für den Admin-Bereich.
+Unter `/admin/benutzer` → **Neuer Benutzer** → **Rollenvorlage** wählen (z. B. Küche, Kasse). Nur für Vorstand: Rolle „Administrator“.
 
 ### Was passiert mit hochgeladenen Speisebildern bei einem Update?
 

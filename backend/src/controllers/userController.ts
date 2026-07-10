@@ -20,6 +20,8 @@ export const userController = {
         firstName: string;
         lastName: string;
         role: 'ADMIN' | 'STAFF';
+        roleTemplate?: string;
+        permissions?: string[];
       };
     },
     res: Response,
@@ -51,6 +53,26 @@ export const userController = {
     try {
       const user = await userService.update(req.params.id, req.body, req.user!.userId);
       res.json(user);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updatePermissions(
+    req: AuthRequest & {
+      params: { id: string };
+      body: { permissions: string[]; roleTemplate?: string | null };
+    },
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const result = await userService.updatePermissions(
+        req.params.id,
+        req.body,
+        req.user!.userId
+      );
+      res.json(result);
     } catch (err) {
       next(err);
     }

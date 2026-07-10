@@ -3,6 +3,26 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.0 - 2026-07-10
+
+### Neu
+
+- **Tenant Role Templates:** Fachliche Vorlagen Küche, Abholung, Kasse, Speisenpflege, Finanzen, Rechtliches mit per-User Permissions.
+- **Core Permissions:** `team.manage`, `food.edit`, `orders.kitchen`, `settings.club` u. a. für granulare API-Prüfung.
+- **ADR 043:** Tenant Role Templates.
+
+### Geändert
+
+- Team-UI: Rollenvorlagen pro Benutzer statt globaler STAFF-Matrix.
+- Admin-Zugang für STAFF mit delegierten Rechten (z. B. Finanzen, Rechtliches).
+- Migration kopiert bestehende STAFF-Rechte auf `User.permissions`.
+
+### Tests
+
+- `authorization-matrix.test.ts` — Kasse darf kein Team/Payment-Settings ändern.
+
+---
+
 ## 2.2.1 - 2026-07-10
 
 ### Neu

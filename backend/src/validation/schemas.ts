@@ -71,6 +71,13 @@ export const createUserSchema = z.object({
   firstName: z.string().min(1, 'Vorname erforderlich'),
   lastName: z.string().min(1, 'Nachname erforderlich'),
   role: z.enum(['ADMIN', 'STAFF']),
+  roleTemplate: z.enum(['kueche', 'abholung', 'kasse', 'speisenpflege', 'finanzen', 'rechtliches']).optional(),
+  permissions: z.array(z.string()).optional(),
+});
+
+export const updateUserPermissionsSchema = z.object({
+  permissions: z.array(z.string()).default([]),
+  roleTemplate: z.string().nullable().optional(),
 });
 
 export const updateUserSchema = z.object({

@@ -81,6 +81,14 @@ Mehr dazu: [OPERATIONS.md — Update](OPERATIONS.md#update-durchführen).
 
 ---
 
+## Team & Rechte
+
+Im Admin-Bereich unter **Team** legen Sie Helfer mit **Rollenvorlagen** an — z. B. Küche, Abholung oder Kasse. Jede Person erhält nur die Rechte für ihre Aufgabe. Eine Kassenkraft kann weder andere Teammitglieder verwalten noch Zahlungseinstellungen ändern.
+
+Details: [Admin Guide — Mitarbeiter & Rollen](ADMIN_GUIDE.md#mitarbeiter--rollen)
+
+---
+
 ## Wenn etwas schiefgeht
 
 | Problem | Erste Hilfe |

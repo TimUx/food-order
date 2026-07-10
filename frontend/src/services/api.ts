@@ -292,6 +292,7 @@ export const api = {
     firstName: string;
     lastName: string;
     role: UserRole;
+    roleTemplate?: import('@/types').RoleTemplateId;
   }) => request<User>('/admin/users', { method: 'POST', body: JSON.stringify(data) }, token),
   updateUser: (token: string, id: string, data: {
     email?: string;
@@ -488,9 +489,19 @@ export const api = {
       token
     ),
   getPermissions: (token: string) =>
-    request<{ available: { key: string; description: string }[]; staff: string[] }>(
+    request<{
+      available: { key: string; description: string }[];
+      staff: string[];
+      templates: import('@/types').RoleTemplate[];
+    }>(
       '/admin/permissions',
       {},
+      token
+    ),
+  updateUserPermissions: (token: string, userId: string, data: { permissions: string[]; roleTemplate?: string | null }) =>
+    request<{ permissions: string[] }>(
+      `/admin/users/${userId}/permissions`,
+      { method: 'PUT', body: JSON.stringify(data) },
       token
     ),
   updateStaffPermissions: (token: string, permissions: string[]) =>
