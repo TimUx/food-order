@@ -1,4 +1,4 @@
-import { prisma } from '../../config/database';
+import { prisma } from '../config/database';
 
 export type AuthMode =
   | 'passwordless_only'
@@ -50,7 +50,7 @@ export const authConfigService = {
     const rows = await prisma.platformSettings.findMany({
       where: { key: { startsWith: 'platform.auth.' } },
     });
-    const map = new Map(rows.map((r) => [r.key, r.value]));
+    const map = new Map(rows.map((r: { key: string; value: unknown }) => [r.key, r.value]));
     const modeRaw = readString(map.get('platform.auth.mode'));
     const mode = isAuthMode(modeRaw) ? modeRaw : DEFAULT_MODE;
     const capabilities = deriveCapabilities(mode);

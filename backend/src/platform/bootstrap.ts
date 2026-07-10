@@ -52,6 +52,7 @@ import { PlatformTenantAdminService } from './PlatformTenantAdminService';
 import { TenantApplicationService } from './TenantApplicationService';
 import { ImpersonationService } from './ImpersonationService';
 import { platformDomainService } from './PlatformDomainService';
+import { corsPolicy } from '../middleware/corsPolicy';
 
 export const platformContainer = new ServiceContainer();
 

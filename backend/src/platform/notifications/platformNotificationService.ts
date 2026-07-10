@@ -3,8 +3,8 @@
  */
 
 import type { TenantApplication } from '@prisma/client';
-import { prisma } from '../config/database';
-import { logger } from '../utils/logger';
+import { prisma } from '../../config/database';
+import { logger } from '../../utils/logger';
 import { mailService } from '../mail/MailService';
 
 export type PlatformNotificationEvent =
@@ -29,7 +29,7 @@ async function getAdminEmails(): Promise<string[]> {
     where: { active: true },
     select: { email: true },
   });
-  return users.map((u) => u.email);
+  return users.map((u: { email: string }) => u.email);
 }
 
 async function sendEmail(payload: PlatformNotificationPayload): Promise<void> {

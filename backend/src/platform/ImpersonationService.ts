@@ -6,7 +6,7 @@ import { AppError } from '../middleware/errorHandler';
 import type { AuditLogEntry } from './types';
 import { platformSessionService } from '../services/platformSessionService';
 import { platformContext } from './bootstrap';
-import { platformDomainService } from './PlatformDomainService';
+import { platformDomainService, isLocalPlatformDomain } from './PlatformDomainService';
 
 export class ImpersonationService {
   constructor(private readonly audit: { log: (entry: AuditLogEntry) => Promise<void> }) {}

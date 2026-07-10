@@ -5,6 +5,7 @@ import type { PlatformContextData } from './tenant/types';
 export type PlatformSurface = 'www' | 'app' | 'reserved' | 'apex';
 
 export interface PlatformDomainConfig {
+  baseDomain?: string;
   platformDomain: string;
   wwwSubdomain: string;
   wwwDomain: string;

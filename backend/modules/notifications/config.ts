@@ -64,6 +64,12 @@ export const notificationsConfigSchema = z.object({
     }).default({}),
   }).default({}),
   smtp: channelEnabledSchema.extend({
+    host: z.string().optional(),
+    port: z.number().optional(),
+    user: z.string().optional(),
+    pass: z.string().optional(),
+    secure: z.boolean().optional(),
+    useTls: z.boolean().optional(),
     from: z.string().optional(),
     senderName: z.string().optional(),
     replyTo: z.string().optional(),

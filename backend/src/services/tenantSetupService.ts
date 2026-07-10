@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { Prisma } from '@prisma/client';
 import { requireTenantId } from '../platform/tenant/tenantScope';
 import { mailService } from '../platform/mail/MailService';
 import { tenantContext } from '../platform/bootstrap';
@@ -107,7 +108,7 @@ export const tenantSetupService = {
 
     await prisma.tenantSettings.update({
       where: { tenantId: row.tenantId },
-      data: { extraJson },
+      data: { extraJson: extraJson as Prisma.InputJsonValue },
     });
 
     return merged;
@@ -223,7 +224,7 @@ export const tenantSetupService = {
 
     await prisma.tenantSettings.update({
       where: { tenantId },
-      data: { extraJson },
+      data: { extraJson: extraJson as Prisma.InputJsonValue },
     });
 
     const tenant = tenantContext.current();
@@ -247,7 +248,7 @@ export const tenantSetupService = {
     };
     await prisma.tenantSettings.update({
       where: { tenantId: row.tenantId },
-      data: { extraJson },
+      data: { extraJson: extraJson as Prisma.InputJsonValue },
     });
     return reset;
   },
