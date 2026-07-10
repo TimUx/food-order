@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Typography, Grid, Card, CardActionArea, CardContent, Box, Alert, CircularProgress,
-  Chip, Paper, Stack, Button,
+  Chip, Paper, Stack, Button, Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import WarningIcon from '@mui/icons-material/Warning';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { AdminLayout } from '@/components/AdminLayout';
 import { RealtimeStatusPanel } from '@/components/RealtimeStatusPanel';
 import { useAdminUi } from '@/contexts/AdminUiContext';
@@ -42,7 +43,7 @@ export function AdminDashboardPage() {
   });
 
   const widgets = catalog?.widgets ?? [];
-  const health = catalog?.health ?? [];
+  const health = catalog?.technicalDetails?.health ?? [];
 
   return (
     <AdminLayout title="Administration">
@@ -69,8 +70,6 @@ export function AdminDashboardPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <RealtimeStatusPanel />
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress />
@@ -87,34 +86,7 @@ export function AdminDashboardPage() {
             </Grid>
           )}
 
-          {health.length > 0 && (
-            <Paper sx={{ p: 2, mb: 3 }}>
-              <Typography variant="h6" fontWeight={700} gutterBottom>Funktionsstatus</Typography>
-              <Stack spacing={1}>
-                {health.map((item) => (
-                  <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                    {healthIcons[item.status]}
-                    <Typography variant="body2" fontWeight={600}>{item.label}</Typography>
-                    <Chip
-                      size="small"
-                      label={
-                        item.status === 'healthy' ? 'In Ordnung'
-                          : item.status === 'degraded' ? 'Prüfen'
-                            : item.status === 'unhealthy' ? 'Fehler'
-                              : 'Unbekannt'
-                      }
-                      variant="outlined"
-                    />
-                    {item.description && (
-                      <Typography variant="caption" color="text.secondary">{item.description}</Typography>
-                    )}
-                  </Box>
-                ))}
-              </Stack>
-            </Paper>
-          )}
-
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ mb: 3 }}>
             {tiles.map((tile) => (
               <Grid key={tile.id} size={{ xs: 12, sm: 6, md: 4 }}>
                 <Card>
@@ -131,6 +103,43 @@ export function AdminDashboardPage() {
               </Grid>
             ))}
           </Grid>
+
+          <Accordion disableGutters elevation={0} sx={{ border: 1, borderColor: 'divider' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle2" fontWeight={600}>Erweitert</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={2}>
+                <RealtimeStatusPanel />
+                {health.length > 0 && (
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="subtitle2" fontWeight={600} gutterBottom>Funktionsstatus</Typography>
+                    <Stack spacing={1}>
+                      {health.map((item) => (
+                        <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          {healthIcons[item.status]}
+                          <Typography variant="body2" fontWeight={600}>{item.label}</Typography>
+                          <Chip
+                            size="small"
+                            label={
+                              item.status === 'healthy' ? 'In Ordnung'
+                                : item.status === 'degraded' ? 'Prüfen'
+                                  : item.status === 'unhealthy' ? 'Fehler'
+                                    : 'Unbekannt'
+                            }
+                            variant="outlined"
+                          />
+                          {item.description && (
+                            <Typography variant="caption" color="text.secondary">{item.description}</Typography>
+                          )}
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Paper>
+                )}
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
         </>
       )}
     </AdminLayout>

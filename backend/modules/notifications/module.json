@@ -36,10 +36,10 @@
       { "id": "branding", "label": "Branding & Absender" },
       { "id": "events", "label": "Ereignisse" },
       { "id": "content", "label": "E-Mail-Inhalt" },
-      { "id": "ntfy", "label": "ntfy" },
-      { "id": "discord", "label": "Discord" },
-      { "id": "slack", "label": "Slack" },
-      { "id": "teams", "label": "Microsoft Teams" }
+      { "id": "ntfy", "label": "ntfy", "advanced": true },
+      { "id": "discord", "label": "Discord", "advanced": true },
+      { "id": "slack", "label": "Slack", "advanced": true },
+      { "id": "teams", "label": "Microsoft Teams", "advanced": true }
     ],
     "fields": [
       { "key": "events.orderCreated.email", "group": "events", "label": "Neue Bestellung → E-Mail", "type": "boolean", "default": true },

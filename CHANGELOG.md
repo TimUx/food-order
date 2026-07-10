@@ -3,6 +3,21 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.2.2 - 2026-07-10
+
+### Geändert
+
+- **Volunteer-first Administration:** Dashboard und Navigation fokussieren auf Alltagsaufgaben; technische Details (Version, Funktionsstatus, Echtzeit) unter „Erweitert“.
+- **Einstellungen:** Navigation zeigt Veranstalter, Bestellung und Benachrichtigungen; erweiterte Kanäle (ntfy, Discord, Slack, Teams) unter „Erweitert“.
+- **Team:** Benutzerseite heißt konsistent „Team“ (wie in der Navigation).
+- **ADR 042:** Volunteer-first Administration.
+
+### Tests
+
+- E2E `admin-navigation.spec.ts` für volunteer-first Admin-Navigation.
+
+---
+
 ## 2.2.1 - 2026-07-10
 
 ### Neu

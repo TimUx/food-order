@@ -42,6 +42,8 @@ export interface SettingsGroupMetadata {
   id: string;
   label: string;
   description?: string;
+  /** Shown under "Erweitert" in volunteer-first admin forms */
+  advanced?: boolean;
 }
 
 export interface SettingsSchemaDefinition {
@@ -63,6 +65,7 @@ export interface SettingsFormGroup {
   id: string;
   label: string;
   description?: string;
+  advanced?: boolean;
   fields: SettingsFormField[];
 }
 

@@ -74,6 +74,7 @@ const settingsGroupSchema = z.object({
   id: z.string(),
   label: z.string(),
   description: z.string().optional(),
+  advanced: z.boolean().optional(),
 });
 
 const settingsMetadataSchema = z.object({

@@ -90,12 +90,17 @@ export interface AdminDeveloperPageDefinition {
   moduleId: string;
 }
 
+export interface AdminTechnicalDetails {
+  health: AdminHealthDefinition[];
+}
+
 export interface AdminUiCatalog {
   navigation: AdminNavItem[];
   pages: AdminPageDefinition[];
   dashboardTiles: AdminDashboardTile[];
   widgets: AdminWidgetDefinition[];
   health: AdminHealthDefinition[];
+  technicalDetails?: AdminTechnicalDetails;
   reports: AdminReportDefinition[];
   developerPages: AdminDeveloperPageDefinition[];
 }

@@ -13,7 +13,7 @@ import type {
   AdminUiCatalog,
   AdminWidgetDefinition,
 } from './adminUi/types';
-import { CORE_SETTINGS_PARENT } from '../core/admin/coreAdminMetadata';
+import { CORE_SETTINGS_PARENT, CORE_VOLUNTEER_DASHBOARD_PATHS, CORE_VOLUNTEER_SETTINGS_NAMESPACES } from '../core/admin/coreAdminMetadata';
 
 function sortByOrder<T extends { sortOrder?: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => (a.sortOrder ?? 100) - (b.sortOrder ?? 100));
@@ -62,7 +62,7 @@ export class AdminUiService {
     const settingsNav: AdminNavItem[] = settingsPages
       .filter((p) => {
         const ns = p.namespace ?? '';
-        return ['core.club', 'core.order', 'module.notifications'].includes(ns);
+        return (CORE_VOLUNTEER_SETTINGS_NAMESPACES as readonly string[]).includes(ns);
       })
       .map((p) => ({
         id: p.id,
@@ -88,6 +88,7 @@ export class AdminUiService {
     const dashboardTiles = sortByOrder([
       ...pages
         .filter((p) => p.pageType !== 'dashboard' && p.path !== '/admin/payment')
+        .filter((p) => CORE_VOLUNTEER_DASHBOARD_PATHS.has(p.path))
         .map((p) => ({
           id: p.id,
           label: p.label,
@@ -119,7 +120,8 @@ export class AdminUiService {
       pages,
       dashboardTiles,
       widgets,
-      health,
+      health: [],
+      technicalDetails: { health },
       reports,
       developerPages: devPages,
     };

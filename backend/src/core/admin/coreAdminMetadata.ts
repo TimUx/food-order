@@ -75,6 +75,25 @@ export const CORE_SETTINGS_SORT: Record<string, number> = {
 
 export const CORE_SETTINGS_PARENT = 'settings';
 
+/** Settings shown under Einstellungen for volunteer admins (no technical namespaces). */
+export const CORE_VOLUNTEER_SETTINGS_NAMESPACES = [
+  'core.club',
+  'core.order',
+  'module.notifications',
+] as const;
+
+/** Dashboard tiles for day-to-day tenant administration. */
+export const CORE_VOLUNTEER_DASHBOARD_PATHS = new Set([
+  '/admin/veranstaltungen',
+  '/admin/speisen',
+  '/admin/benutzer',
+  '/admin/module',
+  '/admin/verein',
+  '/admin/bestellung',
+  '/admin/settings/module.notifications',
+  '/mitarbeiter',
+]);
+
 export const CORE_STAFF_LINK: AdminDashboardTile = {
   id: 'staff-area',
   label: 'Mitarbeiterbereich',

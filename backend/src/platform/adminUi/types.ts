@@ -90,12 +90,18 @@ export interface AdminDeveloperPageDefinition {
   moduleId: string;
 }
 
+export interface AdminTechnicalDetails {
+  health: AdminHealthDefinition[];
+}
+
 export interface AdminUiCatalog {
   navigation: AdminNavItem[];
   pages: AdminPageDefinition[];
   dashboardTiles: AdminDashboardTile[];
   widgets: AdminWidgetDefinition[];
+  /** @deprecated Use technicalDetails.health – kept empty in volunteer-first catalog */
   health: AdminHealthDefinition[];
+  technicalDetails?: AdminTechnicalDetails;
   reports: AdminReportDefinition[];
   developerPages: AdminDeveloperPageDefinition[];
 }
