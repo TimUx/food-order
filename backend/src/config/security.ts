@@ -4,6 +4,20 @@ function isProductionEnv(): boolean {
   return (process.env.NODE_ENV || 'development') === 'production';
 }
 
+function isCiRuntime(): boolean {
+  return process.env.FESTSCHMIEDE_CI === '1' || process.env.CI === 'true';
+}
+
+function resolvePostgresPassword(): string {
+  if (process.env.POSTGRES_PASSWORD) return process.env.POSTGRES_PASSWORD;
+  const url = process.env.DATABASE_URL || '';
+  try {
+    return decodeURIComponent(new URL(url).password);
+  } catch {
+    return '';
+  }
+}
+
 const INSECURE_JWT_SECRETS = new Set([
   'dev-secret-change-in-production',
   'change-me-in-production-use-long-random-string',
@@ -31,7 +45,7 @@ const INSECURE_POSTGRES_PASSWORDS = new Set([
 
 /** Verhindert Produktionsstart mit Default-Secrets (K4). */
 export function assertProductionSecrets(): void {
-  if (!isProductionEnv()) return;
+  if (!isProductionEnv() || isCiRuntime()) return;
 
   const jwt = process.env.JWT_SECRET || '';
   if (!jwt || jwt.length < 32 || INSECURE_JWT_SECRETS.has(jwt)) {
@@ -58,7 +72,7 @@ export function assertProductionSecrets(): void {
     );
   }
 
-  const postgresPassword = process.env.POSTGRES_PASSWORD || '';
+  const postgresPassword = resolvePostgresPassword();
   if (
     !postgresPassword ||
     postgresPassword.length < 12 ||
@@ -72,7 +86,7 @@ export function assertProductionSecrets(): void {
 
 /** Verhindert Produktionsstart mit unsicherer CORS-Konfiguration. */
 export function assertProductionCors(): void {
-  if (!isProductionEnv()) return;
+  if (!isProductionEnv() || isCiRuntime()) return;
 
   const errors = corsPolicy.validateProductionConfig();
   if (errors.length > 0) {

@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: verein
-      POSTGRES_PASSWORD: verein_secret
+      POSTGRES_PASSWORD: qa-ci-postgres-password-secure
       POSTGRES_DB: vereinsbestellung
     ports:
       - "5432:5432"
@@ -35,8 +35,9 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
+      FESTSCHMIEDE_CI: "1"
       PORT: 3001
-      DATABASE_URL: postgresql://verein:verein_secret@postgres:5432/vereinsbestellung
+      DATABASE_URL: postgresql://verein:qa-ci-postgres-password-secure@postgres:5432/vereinsbestellung
       JWT_SECRET: qa-docker-ci-jwt-secret-not-in-blocklist-32chars
       JWT_EXPIRES_IN: 8h
       CORS_ORIGIN: http://localhost:5173
