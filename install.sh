@@ -1,5 +1,221 @@
 #!/usr/bin/env bash
-# FestSchmiede – Installations-Assistent starten
+# FestSchmiede – Installations-Bootstrap
+# Funktioniert lokal (Git-Clone) und online ohne Repository:
+#
+#   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+#
+# Umgebungsvariablen:
+#   FESTSCHMIEDE_INSTALL_DIR  – Zielverzeichnis
+#   FESTSCHMIEDE_VERSION      – Release-Tag (Standard: 2.2.1)
+#   FESTSCHMIEDE_GITHUB_REPO  – GitHub Repo (Standard: TimUx/FestSchmiede)
+#   FESTSCHMIEDE_REF          – Git-Ref statt Version (z.B. main)
+#   FESTSCHMIEDE_BOOTSTRAP_ONLY=1 – Nur Dateien herunterladen
+
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "${ROOT}/installer/install.sh" "$@"
+
+FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.2.1}"
+FESTSCHMIEDE_GITHUB_REPO="${FESTSCHMIEDE_GITHUB_REPO:-TimUx/FestSchmiede}"
+FESTSCHMIEDE_REF="${FESTSCHMIEDE_REF:-}"
+FESTSCHMIEDE_INSTALL_DIR="${FESTSCHMIEDE_INSTALL_DIR:-}"
+
+_log() { echo "[FestSchmiede] $*"; }
+_err() { echo "[FestSchmiede] FEHLER: $*" >&2; }
+
+_show_help() {
+  cat <<EOF
+FestSchmiede Installations-Assistent
+
+Verwendung:
+  ./install.sh                     Lokale Installation (nach Git-Clone)
+  curl -fsSL .../install.sh | bash Online-Installation ohne Git-Clone
+
+Umgebungsvariablen:
+  FESTSCHMIEDE_INSTALL_DIR   Zielverzeichnis
+  FESTSCHMIEDE_VERSION       Release-Version (Standard: ${FESTSCHMIEDE_VERSION})
+  FESTSCHMIEDE_REF           Git-Branch/Tag (überschreibt VERSION)
+  FESTSCHMIEDE_GITHUB_REPO   GitHub Repository
+  FESTSCHMIEDE_BOOTSTRAP_ONLY=1  Nur herunterladen, kein Wizard
+
+Online-Installation:
+  curl -fsSL https://raw.githubusercontent.com/${FESTSCHMIEDE_GITHUB_REPO}/v${FESTSCHMIEDE_VERSION}/install.sh | bash
+
+  FESTSCHMIEDE_INSTALL_DIR=/opt/festschmiede curl -fsSL .../install.sh | bash
+
+Optionen:
+  -h, --help       Diese Hilfe
+  -d, --dir PATH   Installationsverzeichnis
+  -v, --version    Installer-Version anzeigen
+  --bootstrap-only Nur Plattform-Dateien herunterladen
+EOF
+}
+
+_resolve_local_root() {
+  local src="${BASH_SOURCE[0]:-}"
+  [[ -n "$src" && "$src" != "bash" && -f "$src" ]] || return 1
+  local dir
+  dir="$(cd "$(dirname "$src")" && pwd)"
+  [[ -f "${dir}/installer/install.sh" && -f "${dir}/docker-compose.yml" ]] || return 1
+  echo "$dir"
+}
+
+_default_install_dir() {
+  if [[ $EUID -eq 0 ]]; then
+    echo "/opt/festschmiede"
+  else
+    echo "${HOME}/festschmiede"
+  fi
+}
+
+_parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help) _show_help; exit 0 ;;
+      -v|--version) echo "FestSchmiede Installer ${FESTSCHMIEDE_VERSION}"; exit 0 ;;
+      -d|--dir)
+        shift
+        FESTSCHMIEDE_INSTALL_DIR="${1:?--dir erfordert Pfad}"
+        ;;
+      --bootstrap-only) export FESTSCHMIEDE_BOOTSTRAP_ONLY=1 ;;
+      *)
+        _err "Unbekannte Option: $1"
+        _show_help
+        exit 1
+        ;;
+    esac
+    shift
+  done
+}
+
+_need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || { _err "Befehl '$1' nicht gefunden"; exit 1; }
+}
+
+_github_ref() {
+  if [[ -n "$FESTSCHMIEDE_REF" ]]; then
+    echo "$FESTSCHMIEDE_REF"
+  else
+    echo "v${FESTSCHMIEDE_VERSION}"
+  fi
+}
+
+_download_archive_url() {
+  echo "https://github.com/${FESTSCHMIEDE_GITHUB_REPO}/archive/refs/tags/$(_github_ref).tar.gz"
+}
+
+_download_archive_url_codeload() {
+  echo "https://codeload.github.com/${FESTSCHMIEDE_GITHUB_REPO}/tar.gz/$(_github_ref)"
+}
+
+_sync_tree() {
+  local src="$1"
+  local dest="$2"
+  mkdir -p "$dest"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a "${src}/" "${dest}/"
+  else
+    cp -a "${src}/." "${dest}/"
+  fi
+}
+
+_bootstrap_download() {
+  local install_dir="$1"
+  local url tmp archive top_dir
+
+  _need_cmd curl
+  _need_cmd tar
+
+  url="$(_download_archive_url)"
+  tmp="$(mktemp -d)"
+  archive="${tmp}/festschmiede-src.tar.gz"
+
+  _log "Lade FestSchmiede $(_github_ref) herunter..."
+  _log "URL: $url"
+
+  if ! curl -fsSL "$url" -o "$archive" 2>/dev/null; then
+    url="$(_download_archive_url_codeload)"
+    _log "Versuche alternativen Download: $url"
+    curl -fsSL "$url" -o "$archive"
+  fi
+
+  _log "Entpacke nach ${install_dir}..."
+  tar -xzf "$archive" -C "$tmp"
+  for d in "$tmp"/*/; do
+    top_dir="$(basename "$d")"
+    break
+  done
+  [[ -n "${top_dir:-}" ]] || { _err "Archiv konnte nicht gelesen werden"; exit 1; }
+  _sync_tree "${tmp}/${top_dir}" "$install_dir"
+
+  rm -rf "$tmp"
+  _log "Dateien installiert in: ${install_dir}"
+}
+
+_bootstrap_verify() {
+  local install_dir="$1"
+  local missing=0
+  for f in docker-compose.yml installer/install.sh .env.example; do
+    if [[ ! -f "${install_dir}/${f}" ]]; then
+      _err "Fehlende Datei nach Bootstrap: ${f}"
+      missing=1
+    fi
+  done
+  [[ $missing -eq 0 ]] || exit 1
+}
+
+_run_installer() {
+  local install_dir="$1"
+  shift
+  export INSTALL_DIR="$install_dir"
+  export FESTSCHMIEDE_ONLINE_INSTALL=1
+  exec "${install_dir}/installer/install.sh" "$@"
+}
+
+main() {
+  _parse_args "$@"
+
+  local local_root=""
+  local_root="$(_resolve_local_root 2>/dev/null || true)"
+
+  if [[ -n "$local_root" ]]; then
+    # Lokaler Modus: aus Git-Clone
+    local target="${FESTSCHMIEDE_INSTALL_DIR:-$local_root}"
+    _log "Lokale Installation aus: ${local_root}"
+    if [[ "$target" != "$local_root" ]]; then
+      _log "Kopiere nach ${target}..."
+      _sync_tree "$local_root" "$target"
+    fi
+    if [[ "${FESTSCHMIEDE_BOOTSTRAP_ONLY:-}" == "1" ]]; then
+      _log "Bootstrap abgeschlossen (lokal)"
+      exit 0
+    fi
+    _run_installer "$target" "$@"
+    return
+  fi
+
+  # Online-Modus
+  local target="${FESTSCHMIEDE_INSTALL_DIR:-$(_default_install_dir)}"
+  _log "Online-Installation (ohne Git-Clone)"
+  _log "Zielverzeichnis: ${target}"
+
+  if [[ -f "${target}/docker-compose.yml" && -f "${target}/installer/install.sh" ]]; then
+    _log "Bestehende Installation gefunden"
+    if [[ "${FESTSCHMIEDE_FORCE_DOWNLOAD:-}" == "1" ]]; then
+      _bootstrap_download "$target"
+    fi
+  else
+    _bootstrap_download "$target"
+  fi
+
+  _bootstrap_verify "$target"
+
+  if [[ "${FESTSCHMIEDE_BOOTSTRAP_ONLY:-}" == "1" ]]; then
+    _log "Bootstrap abgeschlossen. Assistent starten mit:"
+    _log "  ${target}/install.sh"
+    exit 0
+  fi
+
+  _run_installer "$target" "$@"
+}
+
+main "$@"

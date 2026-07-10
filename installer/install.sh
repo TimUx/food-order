@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # FestSchmiede – Professioneller interaktiver Installations-Assistent (TUI)
-# Version 2.2.0
+# Version 2.2.1
 
 set -euo pipefail
 
@@ -23,6 +23,9 @@ main() {
   log_info "=== FestSchmiede Installer v${INSTALLER_VERSION} gestartet ==="
   log_info "Installationsverzeichnis: $INSTALL_DIR"
   log_info "Protokoll: $LOG_FILE"
+  if [[ "${FESTSCHMIEDE_ONLINE_INSTALL:-}" == "1" ]]; then
+    log_info "Modus: Online-Installation (ohne Git-Clone)"
+  fi
 
   # Root-Check (optional warnen)
   if [[ $EUID -eq 0 ]]; then

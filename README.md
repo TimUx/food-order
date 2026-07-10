@@ -2,7 +2,7 @@
 
 Moderne Open-Source-Plattform für Verkauf, Bestellung und Organisation von Veranstaltungen – mit Vorausbestellungen, Branding des Veranstalters, Echtzeit-Updates und PWA-Unterstützung.
 
-> **Version 2.2.0** — Professioneller interaktiver Installations-Assistent (`./install.sh`). Siehe [Installationsanleitung](docs/INSTALLATION.md).
+> **Version 2.2.1** — Professioneller interaktiver Installations-Assistent (`./install.sh`). Siehe [Installationsanleitung](docs/INSTALLATION.md).
 
 Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisationen, Sport- und Musikvereine, Schulen, Firmen, Kommunen, Foodtrucks und private Feste.
 
@@ -135,15 +135,33 @@ Technische Details: [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) · Admin-An
 
 ## Schnellstart
 
-### Interaktiver Installer (empfohlen)
+### Online-Installation (empfohlen, ohne Git-Clone)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+```
+
+Alternativ mit `wget`:
+
+```bash
+wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+```
+
+Eigenes Zielverzeichnis (z. B. als root):
+
+```bash
+FESTSCHMIEDE_INSTALL_DIR=/opt/festschmiede curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+```
+
+Der Installer lädt automatisch das Release-Archiv von GitHub herunter und startet den TUI-Assistenten. Details: [INSTALLATION.md](docs/INSTALLATION.md).
+
+### Nach Git-Clone
 
 ```bash
 git clone https://github.com/TimUx/FestSchmiede.git
 cd FestSchmiede
 ./install.sh
 ```
-
-Der Assistent führt Sie durch Systemanalyse, Docker, Domain, Sicherheit und startet die Plattform automatisch. Details: [INSTALLATION.md](docs/INSTALLATION.md).
 
 ### Manuell (Docker Compose)
 

@@ -1,6 +1,6 @@
 # Docker Guide – FestSchmiede
 
-## Interaktiver Installer (v2.2.0)
+## Interaktiver Installer (v2.2.1)
 
 Der empfohlene Weg zur Installation ist der TUI-Assistent:
 
@@ -9,6 +9,20 @@ Der empfohlene Weg zur Installation ist der TUI-Assistent:
 ```
 
 Der Installer erzeugt automatisch `.env`, `installer/generated/compose.override.yml` und startet die passenden Compose-Dateien. Siehe [INSTALLATION.md](./INSTALLATION.md).
+
+### Online-Bootstrap
+
+Ohne Git-Clone lädt `install.sh` das Release-Archiv von GitHub und entpackt es ins Zielverzeichnis:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+```
+
+Nur Dateien herunterladen (ohne Wizard):
+
+```bash
+FESTSCHMIEDE_BOOTSTRAP_ONLY=1 curl -fsSL .../install.sh | bash
+```
 
 ## Compose-Dateien
 

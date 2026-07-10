@@ -3,6 +3,19 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.2.1 - 2026-07-10
+
+### Neu
+
+- **Online-Installation ohne Git-Clone:** `curl -fsSL .../install.sh | bash` lädt Release-Archiv von GitHub und startet den TUI-Assistenten.
+- Bootstrap-Tests (`installer/tests/bootstrap.test.sh`) für Online- und Lokalmodus.
+
+### Behoben
+
+- Tar-Entpacken im Online-Bootstrap: Exit-Code 141 durch `pipefail` und `tar | head` behoben.
+
+---
+
 ## 2.2.0 - 2026-07-10
 
 ### Neu

@@ -4,6 +4,14 @@ Professioneller interaktiver Installations-Assistent (TUI) für die FestSchmiede
 
 ## Starten
 
+### Online (ohne Git-Clone)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+```
+
+### Lokal (nach Git-Clone)
+
 ```bash
 ./install.sh
 ```

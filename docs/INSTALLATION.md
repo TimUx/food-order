@@ -1,8 +1,23 @@
 # FestSchmiede – Installationsanleitung
 
-> **Version 2.2.0** – Professioneller interaktiver Installations-Assistent (TUI)
+> **Version 2.2.1** – Professioneller interaktiver Installations-Assistent (TUI)
 
 ## Schnellstart
+
+### Online (ohne Git-Clone)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.1/install.sh | bash
+```
+
+Standard-Installationsverzeichnis:
+
+| Benutzer | Pfad |
+|----------|------|
+| normaler Benutzer | `~/festschmiede` |
+| root | `/opt/festschmiede` |
+
+### Nach Git-Clone
 
 ```bash
 git clone https://github.com/TimUx/FestSchmiede.git
