@@ -1,5 +1,4 @@
 import { prisma } from '../config/database';
-import { AppError } from '../middleware/errorHandler';
 import { requireTenantId } from '../platform/tenant/tenantScope';
 import { mailService } from '../platform/mail/MailService';
 import { tenantContext } from '../platform/bootstrap';
