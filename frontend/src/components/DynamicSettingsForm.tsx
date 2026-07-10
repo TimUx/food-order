@@ -1,4 +1,7 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   FormControl,
   FormControlLabel,
@@ -11,6 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { SettingsFormDefinition, SettingsFormField, SettingsFormGroup } from '@/types/settings';
 
 interface DynamicSettingsFormProps {
@@ -132,27 +136,50 @@ function renderField(
   }
 }
 
+function renderGroup(
+  group: SettingsFormGroup,
+  onFieldChange: (groupId: string, key: string, value: unknown) => void,
+  disabled?: boolean
+) {
+  return (
+    <Box key={group.id}>
+      <Typography variant="h6" fontWeight={600} gutterBottom>{group.label}</Typography>
+      {group.description && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{group.description}</Typography>
+      )}
+      <Stack spacing={2}>
+        {group.fields.map((field) => renderField(field, group.id, onFieldChange, disabled))}
+      </Stack>
+    </Box>
+  );
+}
+
 export function DynamicSettingsForm({ form, onChange, disabled }: DynamicSettingsFormProps) {
   const handleFieldChange = (groupId: string, key: string, value: unknown) => {
     onChange(updateField(form.groups, groupId, key, value));
   };
+
+  const primaryGroups = form.groups.filter((g) => !g.advanced);
+  const advancedGroups = form.groups.filter((g) => g.advanced);
 
   return (
     <Stack spacing={4}>
       {form.description && (
         <Typography variant="body2" color="text.secondary">{form.description}</Typography>
       )}
-      {form.groups.map((group) => (
-        <Box key={group.id}>
-          <Typography variant="h6" fontWeight={600} gutterBottom>{group.label}</Typography>
-          {group.description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{group.description}</Typography>
-          )}
-          <Stack spacing={2}>
-            {group.fields.map((field) => renderField(field, group.id, handleFieldChange, disabled))}
-          </Stack>
-        </Box>
-      ))}
+      {primaryGroups.map((group) => renderGroup(group, handleFieldChange, disabled))}
+      {advancedGroups.length > 0 && (
+        <Accordion disableGutters elevation={0} sx={{ border: 1, borderColor: 'divider' }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1" fontWeight={600}>Erweitert</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Stack spacing={4}>
+              {advancedGroups.map((group) => renderGroup(group, handleFieldChange, disabled))}
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+      )}
     </Stack>
   );
 }

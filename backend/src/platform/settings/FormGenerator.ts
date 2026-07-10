@@ -39,6 +39,7 @@ export class FormGenerator {
         id: groupId,
         label: meta?.label ?? groupId,
         description: meta?.description,
+        advanced: meta?.advanced,
         fields,
       };
     });

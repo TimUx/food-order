@@ -84,7 +84,7 @@ Neue Mandanten durchlaufen beim ersten Admin-Login automatisch den Einrichtungsa
 11. [Bestellungen überwachen](#bestellungen-überwachen)
 12. [Mitarbeiter & Rollen](#mitarbeiter--rollen)
 13. [Schalter & Einstellungen](#schalter--einstellungen)
-14. [Modulverwaltung](#modulverwaltung)
+14. [Funktionen](#funktionen)
 15. [Online-Zahlung (Payment)](#online-zahlung-payment)
 16. [Abholboard einrichten](#abholboard-einrichten)
 17. [Checkliste am Veranstaltungstag](#checkliste-am-veranstaltungstag)
@@ -587,12 +587,12 @@ Der **Administrationsbereich** (`/admin`) ist vom Mitarbeiterbereich getrennt un
 | `/admin/login` | Admin-Anmeldung |
 | `/admin` | Übersicht |
 | `/admin/verein` | Veranstalter: Name, Logo, Kontaktdaten |
-| `/admin/benutzer` | Benutzerverwaltung (anlegen, bearbeiten, deaktivieren) |
+| `/admin/benutzer` | Team: Administratoren und Mitarbeiter verwalten |
 | `/admin/veranstaltungen` | Veranstaltungen verwalten |
 | `/admin/speisen` | Speisekarte pflegen |
 | `/admin/bestellung` | Pflichtfelder & Stornierungsfrist |
 | `/admin/settings/module.notifications` | E-Mail & Benachrichtigungskanäle |
-| `/admin/module` | Modulverwaltung (installieren, aktivieren) |
+| `/admin/module` | Funktionen (Zahlung, Benachrichtigungen, Druck ein-/ausschalten) |
 | `/admin/payment` | Payment-Administration (Dashboard, Provider, Zahlungen) |
 | `/admin/legal` | Rechtliche Informationen (Impressum, Datenschutz, AGB, Widerruf) |
 
@@ -607,10 +607,10 @@ Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: 
 | Admin-Login | ![Admin-Login](screenshots/15-admin-login.png) |
 | Veranstalter | ![Verein](screenshots/13-vereinseinstellungen.png) |
 | Bestell-Einstellungen | ![Bestellung](screenshots/18-bestell-einstellungen.png) |
-| Benutzerverwaltung | ![Benutzer](screenshots/17-benutzerverwaltung.png) |
+| Team | ![Team](screenshots/17-benutzerverwaltung.png) |
 | Veranstaltungen | ![Veranstaltungen](screenshots/12-veranstaltungen.png) |
 | Speisen | ![Speisen](screenshots/11-speisenverwaltung.png) |
-| Modulverwaltung | ![Module](screenshots/20-modulverwaltung.png) |
+| Funktionen | ![Funktionen](screenshots/20-modulverwaltung.png) |
 | Payment-Admin | ![Payment-Admin](screenshots/21-payment-admin.png) |
 | Payment-Einstellungen | ![Payment-Einstellungen](screenshots/22-payment-einstellungen.png) |
 | Rechtliche Informationen | ![Legal-Admin](screenshots/23-legal-admin.png) |
@@ -829,55 +829,38 @@ Pro Veranstaltung drei Schalter:
 
 ---
 
-## Modulverwaltung
+## Funktionen
 
-Unter **Module** (`/admin/module`) verwalten Sie optionale Erweiterungen der Plattform. Module werden **mit dem Docker-Image ausgeliefert** – es gibt keine separaten Downloads.
+Unter **Funktionen** (`/admin/module`) schalten Sie optionale Erweiterungen für Ihren Veranstalter ein oder aus – z. B. Online-Zahlung, Benachrichtigungen oder Bondruck. Die Funktionen werden **mit dem Docker-Image ausgeliefert**; es gibt keine separaten Downloads.
 
-> **Multi-Tenant (Phase 4):** Module werden plattformweit bereitgestellt, aber **pro Veranstalter (Mandant)** installiert und aktiviert. Einstellungen und Daten (z. B. Zahlungen, E-Mails, rechtliche Texte) sind vollständig mandantenisoliert. Details: [Phase-4-Report](architecture/PHASE_4_COMPLETION_REPORT.md).
+> **Hinweis:** Technische Details (Version, Diagnose) finden Sie auf der Funktionen-Seite unter **Erweitert**. Auf der Admin-Übersicht sind Echtzeit-Verbindung und Funktionsstatus ebenfalls unter **Erweitert** erreichbar.
 
-![Modulverwaltung](screenshots/20-modulverwaltung.png)
+![Funktionen](screenshots/20-modulverwaltung.png)
 
-### Verfügbare Module
+### Verfügbare Funktionen
 
-| Modul | Status | Beschreibung |
-|-------|--------|--------------|
-| **Online-Zahlung** (`payment`) | Vollständig | Stripe-Checkout, Webhooks, Rückerstattungen |
-| Lagerverwaltung (`inventory`) | Geplant | Bestandsführung für Speisen |
-| Bondruck (`printer`) | Geplant | Automatischer Küchen- und Kassenbondruck |
-| Gutscheine (`voucher`) | Geplant | Gutscheinverwaltung (benötigt Payment) |
-| Rabatte (`discount`) | Geplant | Rabattaktionen und Sonderpreise |
-| **Benachrichtigungen** (`notifications`) | Vollständig | SMTP, ntfy, Discord, Slack, Teams |
-| **Rechtliche Informationen** (`legal`) | Vollständig | Impressum, Datenschutz, AGB, Widerruf |
-| Auswertungen (`analytics`) | Geplant | Statistiken und Berichte |
-| Treueprogramm (`loyalty`) | Geplant | Punkte und Belohnungen |
-| QR-Code Einlass (`checkin`) | Geplant | Einlasskontrolle per QR-Code |
-| Kassenanbindung (`cash-register`) | Geplant | Anbindung an Kassensysteme und TSE |
+| Funktion | Beschreibung |
+|----------|--------------|
+| **Online-Zahlung** | Stripe-Checkout, Webhooks, Rückerstattungen |
+| **Benachrichtigungen** | E-Mails und optionale Kanäle (ntfy, Discord, Slack, Teams unter *Erweitert*) |
+| **Bondruck** | Automatischer Küchen- und Kassenbondruck |
+| **Rechtliche Informationen** | Impressum, Datenschutz, AGB, Widerruf |
 
-### Lifecycle
+Weitere Funktionen (Lagerverwaltung, Gutscheine, Auswertungen …) sind geplant und erscheinen erst, wenn sie produktionsreif sind.
 
-| Status | Bedeutung |
-|--------|-----------|
-| **Verfügbar** | Im Image enthalten, noch nicht installiert |
-| **Installiert** | Datenbank initialisiert, noch nicht aktiv |
-| **Aktiviert** | Modul läuft, Menüs und Funktionen sichtbar |
-| **Deaktiviert** | Installiert, aber ausgeschaltet |
-| **Deinstalliert** | Zurückgesetzt, kann erneut installiert werden |
-
-### Aktionen
+### Bedienung
 
 | Aktion | Wirkung |
 |--------|---------|
-| **Installieren** | Führt Modul-Migrationen aus, speichert Standard-Konfiguration |
-| **Aktivieren** | Registriert Menüs, API-Routen und Extension Points |
-| **Deaktivieren** | Schaltet Modul ab, entfernt Menüs und aktive Funktionen |
-| **Deinstallieren** | Setzt Installationsstatus zurück (nur wenn deaktiviert) |
-| **Health Check** | Prüft Konfiguration und externe Verbindungen |
+| **Schalter An** | Funktion ist aktiv (z. B. Zahlung im Checkout, E-Mail bei neuer Bestellung) |
+| **Schalter Aus** | Funktion ist deaktiviert |
+| **Konfigurieren** | Öffnet die passenden Einstellungen (z. B. Zahlungsanbieter, Benachrichtigungen) |
 
-> **Wichtig für Vereine mit reiner Barzahlung:** Kein Modul muss installiert oder aktiviert werden. Ohne aktiviertes Payment-Modul verhält sich die Plattform exakt wie zuvor – Bestellungen gehen direkt an die Küche, Zahlung erfolgt an der Kasse.
+> **Wichtig für Vereine mit reiner Barzahlung:** Keine Funktion muss aktiviert werden. Ohne Online-Zahlung verhält sich die Plattform wie gewohnt – Bestellungen gehen direkt an die Küche, Zahlung erfolgt an der Kasse.
 
 ### Rechtliche Informationen
 
-Nach Installation und Aktivierung erscheint **Administration → Module → Rechtliche Informationen** (`/admin/legal`).
+Nach Aktivierung der Funktion **Rechtliche Informationen** konfigurieren Sie diese unter **Funktionen → Konfigurieren** oder direkt unter `/admin/legal`.
 
 ![Rechtliche Informationen – Übersicht](screenshots/23-legal-admin.png)
 

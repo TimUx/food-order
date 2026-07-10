@@ -115,8 +115,9 @@ describe('AdminUiService', () => {
     expect(catalog.pages.some((p) => p.id === 'core-users')).toBe(true);
     expect(catalog.pages.some((p) => p.namespace === 'core.club')).toBe(true);
     expect(catalog.widgets).toHaveLength(1);
-    expect(catalog.health.some((h) => h.moduleId === 'payment')).toBe(true);
-    expect(catalog.health.some((h) => h.moduleId === 'printer')).toBe(false);
+    expect(catalog.health).toHaveLength(0);
+    expect(catalog.technicalDetails?.health.some((h) => h.moduleId === 'payment')).toBe(true);
+    expect(catalog.technicalDetails?.health.some((h) => h.moduleId === 'printer')).toBe(false);
     expect(catalog.reports.some((r) => r.moduleId === 'printer')).toBe(false);
     expect(catalog.navigation.some((n) => n.path === '/admin/verein')).toBe(true);
   });

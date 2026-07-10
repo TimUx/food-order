@@ -27,6 +27,7 @@ export interface SettingsFormGroup {
   id: string;
   label: string;
   description?: string;
+  advanced?: boolean;
   fields: SettingsFormField[];
 }
 

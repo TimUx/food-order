@@ -21,6 +21,16 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 - **Module API v3:** Kanonische Runtime in `platform/`; `platform/module-api.ts` als einziger Modul-Import; `module-system/` nur noch deprecated Facade.
 - Preview-Module (`preview: true`) nur mit `SHOW_PREVIEW_MODULES=1`; Stub-Manifeste vereinfacht.
 - ADR 041; `MODULE_ARCHITECTURE.md` überarbeitet.
+### Geändert
+
+- **Volunteer-first Administration:** Dashboard und Navigation fokussieren auf Alltagsaufgaben; technische Details (Version, Funktionsstatus, Echtzeit) unter „Erweitert“.
+- **Einstellungen:** Navigation zeigt Veranstalter, Bestellung und Benachrichtigungen; erweiterte Kanäle (ntfy, Discord, Slack, Teams) unter „Erweitert“.
+- **Team:** Benutzerseite heißt konsistent „Team“ (wie in der Navigation).
+- **ADR 042:** Volunteer-first Administration.
+
+### Tests
+
+- E2E `admin-navigation.spec.ts` für volunteer-first Admin-Navigation.
 
 ---
 
