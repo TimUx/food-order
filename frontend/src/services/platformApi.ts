@@ -262,6 +262,28 @@ export const platformApi = {
 
   getDomains: (token: string) =>
     platformRequest<PlatformDomainsInfo>('/domains', {}, token),
+
+  getMailConfig: (token: string) =>
+    platformRequest<{ smtp: Record<string, unknown>; auth: Record<string, unknown> }>('/mail', {}, token),
+
+  updateMailSmtp: (token: string, data: Record<string, unknown>) =>
+    platformRequest<Record<string, unknown>>('/mail/smtp', { method: 'PUT', body: JSON.stringify(data) }, token),
+
+  updateMailAuth: (token: string, data: Record<string, unknown>) =>
+    platformRequest<Record<string, unknown>>('/mail/auth', { method: 'PUT', body: JSON.stringify(data) }, token),
+
+  testMailConnection: (token: string) =>
+    platformRequest<{ ok: boolean; message: string }>('/mail/test-connection', { method: 'POST' }, token),
+
+  sendTestMail: (token: string, recipient: string) =>
+    platformRequest<{ ok: boolean }>('/mail/test', { method: 'POST', body: JSON.stringify({ recipient }) }, token),
+
+  getMailQueueStatus: (token: string) =>
+    platformRequest<{ pending: number; sent: number; failed: number; total: number; lastSentAt: string | null }>(
+      '/mail/queue',
+      {},
+      token
+    ),
 };
 
 export const PLATFORM_TOKEN_KEY = 'fm_platform_token';

@@ -6,6 +6,7 @@ import {
 } from '../../middleware/platformAuth';
 import { PLATFORM_PERMISSIONS } from '../../platform/platformPermissions';
 import { platformAuthController, platformController } from '../../controllers/platformController';
+import { platformMailController } from '../../controllers/platformMailController';
 import { loginRateLimiter } from '../../middleware/rateLimit';
 import { validateBody, validateParams } from '../../middleware/validation';
 import {
@@ -13,6 +14,9 @@ import {
   approveTenantApplicationSchema,
   updatePlatformLegalPageSchema,
   applicationIdParamSchema,
+  platformSmtpUpdateSchema,
+  platformTestMailSchema,
+  authModeUpdateSchema,
 } from '../../validation/schemas';
 
 const router = Router();
@@ -118,6 +122,41 @@ router.put(
   '/settings',
   requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
   platformController.updateSettings
+);
+
+// E-Mail (zentraler Maildienst)
+router.get(
+  '/mail',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  platformMailController.getConfig
+);
+router.put(
+  '/mail/smtp',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  validateBody(platformSmtpUpdateSchema),
+  platformMailController.updateSmtp
+);
+router.put(
+  '/mail/auth',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  validateBody(authModeUpdateSchema),
+  platformMailController.updateAuth
+);
+router.post(
+  '/mail/test-connection',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  platformMailController.testConnection
+);
+router.post(
+  '/mail/test',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  validateBody(platformTestMailSchema),
+  platformMailController.sendTestMail
+);
+router.get(
+  '/mail/queue',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.SETTINGS_PLATFORM, PLATFORM_PERMISSIONS.ALL),
+  platformMailController.getQueueStatus
 );
 
 // Logs

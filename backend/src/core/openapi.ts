@@ -3,7 +3,7 @@ export const openApiDocument = {
   openapi: '3.0.3',
   info: {
     title: 'FestSchmiede API',
-    version: '2.0.1',
+    version: '2.1.0',
     description: 'REST-API für Online-Bestellungen, Mitarbeiter- und Admin-Bereich.',
   },
   servers: [{ url: '/api', description: 'API-Basis' }],

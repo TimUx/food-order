@@ -5,6 +5,58 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Passwort erforderlich'),
 });
 
+export const magicLinkRequestSchema = z.object({
+  email: z.string().email('Ungültige E-Mail-Adresse'),
+  loginPath: z.string().optional(),
+});
+
+export const loginCodeRequestSchema = z.object({
+  email: z.string().email('Ungültige E-Mail-Adresse'),
+});
+
+export const verifyMagicLinkSchema = z.object({
+  token: z.string().min(1, 'Token erforderlich'),
+});
+
+export const verifyLoginCodeSchema = z.object({
+  email: z.string().email('Ungültige E-Mail-Adresse'),
+  code: z.string().min(4, 'Code erforderlich'),
+});
+
+export const platformSmtpUpdateSchema = z.object({
+  enabled: z.boolean().optional(),
+  host: z.string().optional(),
+  port: z.number().int().min(1).max(65535).optional(),
+  user: z.string().optional(),
+  pass: z.string().optional(),
+  from: z.string().email().optional().or(z.literal('')),
+  senderName: z.string().optional(),
+  replyTo: z.string().email().optional().or(z.literal('')),
+  secure: z.boolean().optional(),
+  useTls: z.boolean().optional(),
+  timeout: z.number().int().min(1000).max(120000).optional(),
+});
+
+export const platformTestMailSchema = z.object({
+  recipient: z.string().email('Ungültige E-Mail-Adresse'),
+});
+
+export const authModeUpdateSchema = z.object({
+  mode: z.enum(['passwordless_only', 'password_only', 'password_or_magic', 'password_and_magic']).optional(),
+  magicLinkTtlMinutes: z.number().int().min(1).max(60).optional(),
+  loginCodeTtlMinutes: z.number().int().min(1).max(30).optional(),
+  loginCodeLength: z.number().int().min(4).max(8).optional(),
+});
+
+export const setupStepSchema = z.object({
+  step: z.number().int().min(0).max(7),
+  data: z.record(z.unknown()),
+});
+
+export const setupCompleteSchema = z.object({
+  data: z.record(z.unknown()),
+});
+
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh-Token erforderlich'),
 });
@@ -15,7 +67,7 @@ export const revokeAllSessionsSchema = z.object({
 
 export const createUserSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse'),
-  password: z.string().min(8, 'Mindestens 8 Zeichen'),
+  password: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
   firstName: z.string().min(1, 'Vorname erforderlich'),
   lastName: z.string().min(1, 'Nachname erforderlich'),
   role: z.enum(['ADMIN', 'STAFF']),

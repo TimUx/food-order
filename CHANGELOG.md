@@ -3,6 +3,29 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.1.0 - 2026-07-10
+
+### Neu
+
+- **Zentraler MailService:** SMTP-Konfiguration ausschließlich in der Plattformverwaltung (`/platform/email`); Verbindungstest, Testmail, Mail-Queue-Status.
+- **Initial-Setup-Assistent:** 7-stufiger Einrichtungsassistent für neue Mandanten mit optionaler erster Veranstaltung.
+- **Passwortlose Authentifizierung:** Magic Link und Login-Code; vier konfigurierbare Auth-Modi; Rate Limiting und Audit Logging.
+- **Mail-Templates:** Login-Code, Magic-Link, Initial-Setup, Testmail.
+- **ADRs 031–033:** Zentraler MailService, Setup Wizard, Passwortlose Authentifizierung.
+
+### Geaendert
+
+- Mandanten besitzen keine eigenen SMTP-Einstellungen mehr (nur Branding-Overrides).
+- `User.passwordHash` ist optional (passwortlose Konten).
+- Login-Seite zeigt je nach Plattformkonfiguration nur erlaubte Anmeldeverfahren.
+
+### Migration
+
+- Bestehende Mandanten werden bei Update als „eingerichtet“ markiert.
+- Auth-Modus standardmäßig `password_or_magic` für Abwärtskompatibilität.
+
+---
+
 ## 2.0.1 - 2026-07-10
 
 ### Geaendert (Rebranding)

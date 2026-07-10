@@ -19,6 +19,7 @@ Anleitung für Administratoren der FestSchmiede-Plattform mit Vollzugriff auf al
 | Domain & Routing | `/platform/domains` | Anzeige der kanonischen Domain- und Routing-Konfiguration (ENV) |
 | Rechtliches | `/platform/rechtliches` | Impressum, Datenschutz, Nutzungsbedingungen (Plattformebene) |
 | Einstellungen | `/platform/einstellungen` | Plattformweite Konfiguration inkl. Bewerbungen & Kontakt |
+| **E-Mail** | `/platform/email` | **Zentraler SMTP**, Testmail, Mail-Queue, Authentifizierungsmodi (v2.1) |
 | Monitoring | `/platform/monitoring` | CPU, RAM, Speicher |
 | Logs | `/platform/logs` | Audit-Log mit Mandanten-Filter |
 
@@ -38,6 +39,35 @@ Die Marketing-Homepage ist unter `www.<platform-domain>` erreichbar. Die Plattfo
 **Rechtliche Seiten:** Unter `/platform/rechtliches` pflegen Sie Impressum, Datenschutz und Nutzungsbedingungen. Es werden keine Mustertexte vorgegeben – Links erscheinen auf der Homepage nur bei veröffentlichtem Inhalt.
 
 **Domain & Routing:** Unter `/platform/domains` sehen Sie die aktive Konfiguration (WWW, APP, Wildcard, API, CORS, reservierte Subdomains). Technisch kritische Werte werden über Docker/ENV gesetzt (`PLATFORM_DOMAIN`, `WWW_SUBDOMAIN`, `APP_SUBDOMAIN`, …).
+
+### Zentrale E-Mail-Konfiguration (v2.1)
+
+Ab Version 2.1.0 wird SMTP **ausschließlich** in der Plattformverwaltung unter `/platform/email` konfiguriert. Mandanten haben keine eigenen SMTP-Einstellungen mehr.
+
+| Funktion | Beschreibung |
+|----------|--------------|
+| SMTP Host/Port/User/Pass | Zentrale Mailserver-Konfiguration |
+| TLS/SSL | STARTTLS oder SSL (Port 465) |
+| Absender & Reply-To | Plattformweite Standardwerte |
+| Verbindung testen | SMTP-Verbindung prüfen |
+| Testmail | Test an beliebige Adresse |
+| Mail-Queue | Status der letzten 24 Stunden |
+
+Mandanten können in den Benachrichtigungseinstellungen nur noch **Absendername** und **Reply-To** überschreiben.
+
+### Authentifizierung (v2.1)
+
+Der Plattformadministrator konfiguriert unter `/platform/email` den Authentifizierungsmodus:
+
+- **Nur passwortlos** – Magic Link und Login-Code
+- **Nur Passwort** – klassische Anmeldung
+- **Passwort oder Magic Link** – beides (Standard bei Migration)
+- **Passwort + optional Magic Link** – Passwort mit zusätzlicher passwortloser Option
+
+### Initial-Setup-Assistent (v2.1)
+
+Neue Mandanten durchlaufen beim ersten Admin-Login automatisch den Einrichtungsassistenten unter `/admin/einrichtung`. Der Assistent kann in der Administration über die API (`POST /api/setup/reset`) neu gestartet werden.
+
 
 ---
 

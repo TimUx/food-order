@@ -15,6 +15,7 @@ import BackupIcon from '@mui/icons-material/Backup';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GavelIcon from '@mui/icons-material/Gavel';
 import LanguageIcon from '@mui/icons-material/Language';
+import EmailIcon from '@mui/icons-material/Email';
 import MemoryIcon from '@mui/icons-material/Memory';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePlatformAuth } from '@/contexts/PlatformAuthContext';
@@ -33,6 +34,7 @@ const NAV = [
   { path: '/platform/backups', label: 'Backups', icon: <BackupIcon /> },
   { path: '/platform/rechtliches', label: 'Rechtliches', icon: <GavelIcon /> },
   { path: '/platform/domains', label: 'Domain & Routing', icon: <LanguageIcon /> },
+  { path: '/platform/email', label: 'E-Mail', icon: <EmailIcon /> },
   { path: '/platform/einstellungen', label: 'Einstellungen', icon: <SettingsIcon /> },
 ];
 

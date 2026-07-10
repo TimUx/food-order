@@ -145,4 +145,4 @@ export const MODULE_STATUS_LABELS: Record<ModuleStatus, string> = {
   FAILED: 'Fehler',
 };
 
-export const CORE_VERSION = '2.0.1';
+export const CORE_VERSION = '2.1.0';

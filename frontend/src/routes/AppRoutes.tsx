@@ -6,6 +6,7 @@ import { PlatformDashboardPage } from '@/pages/platform/PlatformDashboardPage';
 import { PlatformTenantsPage } from '@/pages/platform/PlatformTenantsPage';
 import { PlatformTenantDetailPage } from '@/pages/platform/PlatformTenantDetailPage';
 import { PlatformSettingsPage } from '@/pages/platform/PlatformSettingsPage';
+import { PlatformMailPage } from '@/pages/platform/PlatformMailPage';
 import { PlatformUsersPage } from '@/pages/platform/PlatformUsersPage';
 import { PlatformLogsPage } from '@/pages/platform/PlatformLogsPage';
 import { PlatformMonitoringPage } from '@/pages/platform/PlatformMonitoringPage';
@@ -39,6 +40,7 @@ export function AppRoutes() {
           <Route path="domains" element={<PlatformDomainsPage />} />
           <Route path="benutzer" element={<PlatformUsersPage />} />
           <Route path="einstellungen" element={<PlatformSettingsPage />} />
+          <Route path="email" element={<PlatformMailPage />} />
           <Route path="logs" element={<PlatformLogsPage />} />
           <Route path="monitoring" element={<PlatformMonitoringPage />} />
           <Route path="health" element={<PlatformHealthPage />} />

@@ -128,8 +128,20 @@ export const api = {
   getOrderSettings: () => request<import('@/types/club').OrderSettings>('/public/order-settings'),
 
   // Auth
+  getAuthConfig: () =>
+    request<{ mode: string; passwordEnabled: boolean; magicLinkEnabled: boolean; loginCodeEnabled: boolean }>(
+      '/public/auth-config'
+    ),
   login: (email: string, password: string) =>
     request<{ token: string; refreshToken?: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  requestMagicLink: (email: string, loginPath?: string) =>
+    request<{ sent: boolean }>('/auth/magic-link', { method: 'POST', body: JSON.stringify({ email, loginPath }) }),
+  requestLoginCode: (email: string) =>
+    request<{ sent: boolean }>('/auth/login-code', { method: 'POST', body: JSON.stringify({ email }) }),
+  verifyMagicLink: (token: string) =>
+    request<{ token: string; refreshToken?: string; user: User }>('/auth/verify-magic-link', { method: 'POST', body: JSON.stringify({ token }) }),
+  verifyLoginCode: (email: string, code: string) =>
+    request<{ token: string; refreshToken?: string; user: User }>('/auth/verify-login-code', { method: 'POST', body: JSON.stringify({ email, code }) }),
   refresh: (refreshToken: string) =>
     request<{ token: string; refreshToken?: string }>('/auth/refresh', { method: 'POST', body: JSON.stringify({ refreshToken }) }),
   logout: (refreshToken: string) =>
@@ -221,6 +233,29 @@ export const api = {
 
   getClubSettings: (token: string) =>
     request<import('@/types/club').ClubSettings>('/admin/club', {}, token),
+
+  // Initial Setup Wizard
+  getSetupStatus: (token: string) =>
+    request<{ completed: boolean; currentStep: number; data: Record<string, unknown> }>('/setup/status', {}, token),
+  saveSetupStep: (token: string, step: number, data: Record<string, unknown>) =>
+    request<{ completed: boolean; currentStep: number; data: Record<string, unknown> }>(
+      '/setup/step',
+      { method: 'POST', body: JSON.stringify({ step, data }) },
+      token
+    ),
+  completeSetup: (token: string, data: Record<string, unknown>) =>
+    request<{ completed: boolean; currentStep: number; data: Record<string, unknown> }>(
+      '/setup/complete',
+      { method: 'POST', body: JSON.stringify({ data }) },
+      token
+    ),
+  resetSetup: (token: string) =>
+    request<{ completed: boolean; currentStep: number; data: Record<string, unknown> }>(
+      '/setup/reset',
+      { method: 'POST' },
+      token
+    ),
+
   updateClubSettings: (token: string, data: Partial<import('@/types/club').ClubSettings>) =>
     request<import('@/types/club').ClubSettings>('/admin/club', { method: 'PUT', body: JSON.stringify(data) }, token),
   getEmailSettings: (token: string) =>

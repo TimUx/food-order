@@ -2,7 +2,7 @@
 
 Moderne Open-Source-Plattform für Verkauf, Bestellung und Organisation von Veranstaltungen – mit Vorausbestellungen, Branding des Veranstalters, Echtzeit-Updates und PWA-Unterstützung.
 
-> **Version 2.0.0** — FestSchmiede ist eine **mandantenfähige Multi-Tenant-Plattform**. Mehrere Veranstalter (Mandanten) teilen sich eine Installation; jeder Mandant hat eigenes Branding, eigene Daten und optionale Module. Plattformadministration unter `/platform`. Architektur: [Multi-Tenant ADRs](docs/architecture/README.md#version-20--multi-tenant).
+> **Version 2.1.0** — Zentrale Mail-Konfiguration, Initial-Setup-Assistent und passwortlose Authentifizierung. Siehe [Release Notes 2.1.0](docs/release-notes-2.1.0.md).
 
 Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisationen, Sport- und Musikvereine, Schulen, Firmen, Kommunen, Foodtrucks und private Feste.
 
@@ -46,7 +46,7 @@ Die Domain wird ausschließlich über ENV/Docker konfiguriert (`PLATFORM_DOMAIN`
 | **Bestellung** | Bestellungen vor Ort aufgeben (ohne Kundendaten) |
 | **Veranstalter** | Name, Logo, Kontaktdaten (Admin) |
 | **Bestell-Einstellungen** | Pflichtfelder & Stornierungsfrist (Admin) |
-| **Benachrichtigungen** | SMTP, ntfy, Discord, Slack, Teams (Admin) |
+| **Benachrichtigungen** | ntfy, Discord, Slack, Teams (Admin); E-Mail über zentralen Plattform-SMTP |
 | **Rechtliche Informationen** | Optionales Modul für Impressum, Datenschutz, AGB und Widerruf |
 | **Speisenverwaltung** | CRUD mit Bild-Upload (Admin) |
 | **Veranstaltungsverwaltung** | Mehrere Events, eine aktiv (Admin) |

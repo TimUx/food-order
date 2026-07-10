@@ -3,16 +3,82 @@ import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
 import { AuthPayload } from '../middleware/auth';
 import { parsePermissionKeys } from '../platform/permissions';
-import { hookSystem } from '../platform/bootstrap';
+import { hookSystem, tenantContext, platformContext } from '../platform/bootstrap';
 import { requireTenantId } from '../platform/tenant/tenantScope';
 import { CORE_HOOKS } from '../platform/types';
 import { sessionService } from './sessionService';
+import { authConfigService } from './authConfigService';
+import { authLoginTokenService } from './authLoginTokenService';
+import { mailService } from '../platform/mail/MailService';
+
+async function buildUserResponse(user: Awaited<ReturnType<typeof userRepository.findById>>) {
+  if (!user) throw new AppError(404, 'Benutzer nicht gefunden');
+  return {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role.name,
+    permissions: parsePermissionKeys(user.role.permissions),
+  };
+}
+
+async function createAuthSession(userId: string, userAgent?: string) {
+  const user = await userRepository.findById(userId);
+  if (!user || !user.active) {
+    throw new AppError(401, 'Benutzer nicht gefunden oder inaktiv');
+  }
+
+  const payload: Omit<AuthPayload, 'sessionId'> = {
+    userId: user.id,
+    email: user.email,
+    role: user.role.name,
+    scope: 'tenant',
+    tenantId: requireTenantId(),
+  };
+
+  const { accessToken, refreshToken } = await sessionService.createSession(
+    user.id,
+    payload,
+    userAgent
+  );
+
+  hookSystem.emitAsync(CORE_HOOKS.USER_LOGIN, {
+    userId: user.id,
+    email: user.email,
+    role: user.role.name,
+  });
+
+  return {
+    token: accessToken,
+    refreshToken,
+    user: await buildUserResponse(user),
+  };
+}
+
+function buildMagicLinkUrl(token: string, path: string): string {
+  const tenant = tenantContext.current();
+  const platform = platformContext.current();
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const host = tenant?.subdomain
+    ? `${tenant.subdomain}.${platform.baseDomain}`
+    : platform.baseDomain;
+  return `${protocol}://${host}${path}?token=${encodeURIComponent(token)}`;
+}
 
 export const authService = {
   async login(email: string, password: string, userAgent?: string) {
+    const config = await authConfigService.getConfig();
+    if (!config.passwordEnabled) {
+      throw new AppError(400, 'Passwort-Anmeldung ist nicht aktiviert');
+    }
+
     const user = await userRepository.findByEmail(email);
     if (!user || !user.active) {
       throw new AppError(401, 'Ungültige Anmeldedaten');
+    }
+    if (!user.passwordHash) {
+      throw new AppError(401, 'Für dieses Konto ist kein Passwort hinterlegt. Bitte Magic Link verwenden.');
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
@@ -20,38 +86,64 @@ export const authService = {
       throw new AppError(401, 'Ungültige Anmeldedaten');
     }
 
-    const payload: Omit<AuthPayload, 'sessionId'> = {
-      userId: user.id,
-      email: user.email,
-      role: user.role.name,
-      scope: 'tenant',
-      tenantId: requireTenantId(),
-    };
+    return createAuthSession(user.id, userAgent);
+  },
 
-    const { accessToken, refreshToken } = await sessionService.createSession(
-      user.id,
-      payload,
-      userAgent
-    );
+  async requestMagicLink(email: string, loginPath: string, userAgent?: string, ipAddress?: string) {
+    const config = await authConfigService.getConfig();
+    if (!config.magicLinkEnabled) {
+      throw new AppError(400, 'Magic-Link-Anmeldung ist nicht aktiviert');
+    }
 
-    hookSystem.emitAsync(CORE_HOOKS.USER_LOGIN, {
-      userId: user.id,
-      email: user.email,
-      role: user.role.name,
-    });
+    const user = await userRepository.findByEmail(email);
+    if (!user || !user.active) {
+      return { sent: true };
+    }
 
-    return {
-      token: accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role.name,
-        permissions: parsePermissionKeys(user.role.permissions),
-      },
-    };
+    const { token } = await authLoginTokenService.createMagicLink(user.id, ipAddress, userAgent);
+    const magicLink = buildMagicLinkUrl(token, loginPath);
+
+    await mailService.sendTemplate('magic-link', user.email, {
+      magicLink,
+      recipientName: user.firstName,
+      tenantName: tenantContext.current()?.name,
+      expiresMinutes: config.magicLinkTtlMinutes,
+    }, requireTenantId());
+
+    return { sent: true };
+  },
+
+  async requestLoginCode(email: string, userAgent?: string, ipAddress?: string) {
+    const config = await authConfigService.getConfig();
+    if (!config.loginCodeEnabled) {
+      throw new AppError(400, 'Login-Code-Anmeldung ist nicht aktiviert');
+    }
+
+    const user = await userRepository.findByEmail(email);
+    if (!user || !user.active) {
+      return { sent: true };
+    }
+
+    const { code } = await authLoginTokenService.createLoginCode(user.id, ipAddress, userAgent);
+
+    await mailService.sendTemplate('login-code', user.email, {
+      code,
+      recipientName: user.firstName,
+      tenantName: tenantContext.current()?.name,
+      expiresMinutes: config.loginCodeTtlMinutes,
+    }, requireTenantId());
+
+    return { sent: true };
+  },
+
+  async verifyMagicLink(token: string, userAgent?: string) {
+    const userId = await authLoginTokenService.verifyMagicLink(token);
+    return createAuthSession(userId, userAgent);
+  },
+
+  async verifyLoginCode(email: string, code: string, userAgent?: string) {
+    const userId = await authLoginTokenService.verifyLoginCode(email, code);
+    return createAuthSession(userId, userAgent);
   },
 
   async logout(refreshToken: string) {
@@ -77,7 +169,7 @@ export const authService = {
 
   async createUser(data: {
     email: string;
-    password: string;
+    password?: string;
     firstName: string;
     lastName: string;
     roleName: 'ADMIN' | 'STAFF';
@@ -87,7 +179,11 @@ export const authService = {
       throw new AppError(409, 'E-Mail bereits registriert');
     }
 
-    const passwordHash = await bcrypt.hash(data.password, 12);
+    let passwordHash: string | null = null;
+    if (data.password) {
+      passwordHash = await bcrypt.hash(data.password, 12);
+    }
+
     const role = await import('../config/database').then(({ prisma }) =>
       prisma.role.findUnique({ where: { name: data.roleName } })
     );

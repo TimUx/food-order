@@ -41,6 +41,11 @@ enum TenantApplicationStatus {
   ARCHIVED
 }
 
+enum AuthTokenType {
+  MAGIC_LINK
+  LOGIN_CODE
+}
+
 /// Plattformadministrator – gehört keinem Mandanten
 model PlatformUser {
   id           String                 @id @default(uuid())
@@ -106,6 +111,7 @@ model Tenant {
   legalPages    LegalPage[]
   modules       TenantModule[]
   clubSettings  ClubSettings[]
+  loginTokens   AuthLoginToken[]
 
   @@index([status])
   @@index([subdomain])
@@ -148,23 +154,44 @@ model Role {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  tenantId     String        @map("tenant_id")
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id           String           @id @default(uuid())
+  tenantId     String           @map("tenant_id")
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   email        String
-  passwordHash String
+  passwordHash String?          @map("password_hash")
   firstName    String
   lastName     String
-  active       Boolean       @default(true)
+  active       Boolean          @default(true)
   roleId       String
-  role         Role          @relation(fields: [roleId], references: [id])
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  role         Role             @relation(fields: [roleId], references: [id])
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   sessions     UserSession[]
+  loginTokens  AuthLoginToken[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([tenantId, email])
+}
+
+model AuthLoginToken {
+  id        String        @id @default(uuid())
+  tenantId  String        @map("tenant_id")
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String        @map("user_id")
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String        @unique @map("token_hash")
+  type      AuthTokenType
+  codeHash  String?       @map("code_hash")
+  expiresAt DateTime      @map("expires_at")
+  usedAt    DateTime?     @map("used_at")
+  ipAddress String?       @map("ip_address")
+  userAgent String?       @map("user_agent")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([tenantId, userId])
+  @@index([expiresAt])
+  @@map("auth_login_tokens")
 }
 
 model UserSession {

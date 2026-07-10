@@ -1,13 +1,11 @@
 /**
- * Plattform-Benachrichtigungen – System-E-Mails über Plattform-SMTP.
+ * Plattform-Benachrichtigungen – System-E-Mails über zentralen MailService.
  */
 
 import type { TenantApplication } from '@prisma/client';
 import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
-import { loadPlatformSmtp } from '../../../modules/notifications/services/smtpResolver';
-import { SmtpChannel } from '../../../modules/notifications/channels/SmtpChannel';
-import type { NotificationConfig } from '../../../modules/notifications/config';
+import { mailService } from '../mail/MailService';
 
 export type PlatformNotificationEvent =
   | 'tenant.created'
@@ -26,8 +24,6 @@ export interface PlatformNotificationPayload {
   metadata?: Record<string, unknown>;
 }
 
-const smtpChannel = new SmtpChannel();
-
 async function getAdminEmails(): Promise<string[]> {
   const users = await prisma.platformUser.findMany({
     where: { active: true },
@@ -37,8 +33,8 @@ async function getAdminEmails(): Promise<string[]> {
 }
 
 async function sendEmail(payload: PlatformNotificationPayload): Promise<void> {
-  const smtp = await loadPlatformSmtp();
-  if (!smtp?.host) {
+  const smtp = await mailService.loadConfig();
+  if (!smtp) {
     logger.warn('Plattform-SMTP nicht konfiguriert – Benachrichtigung nur geloggt', {
       event: payload.event,
       title: payload.title,
@@ -46,21 +42,17 @@ async function sendEmail(payload: PlatformNotificationPayload): Promise<void> {
     return;
   }
 
-  const config: NotificationConfig = {
-    smtp: { ...smtp, enabled: true, source: 'platform' },
-    channels: { email: true },
-  } as NotificationConfig;
-
   const recipients = payload.recipientEmail
     ? [payload.recipientEmail]
     : await getAdminEmails();
 
   for (const email of recipients) {
-    const result = await smtpChannel.send(config, {
-      title: payload.title,
-      body: payload.body,
+    const result = await mailService.send({
+      to: email,
+      subject: payload.title,
+      text: payload.body,
       html: payload.html,
-      recipientEmail: email,
+      template: payload.event,
     });
     if (!result.ok) {
       logger.error('Plattform-E-Mail fehlgeschlagen', { event: payload.event, email, error: result.error });

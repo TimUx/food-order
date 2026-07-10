@@ -382,6 +382,26 @@ Bei aktivem **Payment-Modul** erscheinen Online-Bestellungen erst in der Küche,
 - Öffentlicher Bereich: kein Token erforderlich
 - Token-Gültigkeit: konfigurierbar via `JWT_EXPIRES_IN` (Standard: 8h)
 
+### Passwortlose Anmeldung (v2.1)
+
+| Endpunkt | Beschreibung |
+|----------|-------------|
+| `GET /api/public/auth-config` | Öffentliche Auth-Modi |
+| `POST /api/auth/magic-link` | Magic Link anfordern |
+| `POST /api/auth/login-code` | Login-Code anfordern |
+| `POST /api/auth/verify-magic-link` | Magic Link einlösen |
+| `POST /api/auth/verify-login-code` | Code einlösen |
+
+Konfiguration: `platform.auth.*` in Plattform-Einstellungen. Tokens in `auth_login_tokens` (SHA-256 Hash, einmalig, TTL konfigurierbar). Siehe [ADR-033](architecture/033-passwordless-authentication.md).
+
+### Zentraler MailService (v2.1)
+
+Alle E-Mails über `backend/src/platform/mail/MailService.ts`. Keine direkten SMTP-Zugriffe in Modulen. Siehe [ADR-031](architecture/031-central-mail-service.md).
+
+### Initial Setup (v2.1)
+
+Setup-Status in `TenantSettings.extraJson.initialSetup`. API unter `/api/setup/*`. Siehe [ADR-032](architecture/032-initial-setup-wizard.md).
+
 ---
 
 ## Tests

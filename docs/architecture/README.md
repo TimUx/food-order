@@ -42,6 +42,9 @@ Technische Architektur der FestSchmiede-Plattform – Architecture Decision Reco
 | 028 | [notification-tenant.md](./028-notification-tenant.md) | Accepted (Phase 7) | Mandanten-SMTP, Branding, Webhooks |
 | 029 | [multi-tenant-security-hardening.md](./029-multi-tenant-security-hardening.md) | Accepted (Phase 8) | Security Review, Tenant-Härtung |
 | 030 | [performance-scalability.md](./030-performance-scalability.md) | Accepted (Phase 9) | Performance, Lasttests, Skalierung |
+| 031 | [central-mail-service.md](./031-central-mail-service.md) | Accepted (v2.1.0) | Zentraler MailService, Plattform-SMTP |
+| 032 | [initial-setup-wizard.md](./032-initial-setup-wizard.md) | Accepted (v2.1.0) | Mandanten-Einrichtungsassistent |
+| 033 | [passwordless-authentication.md](./033-passwordless-authentication.md) | Accepted (v2.1.0) | Magic Link, Login-Code, Auth-Modi |
 
 ### Version 2.0 – Multi-Tenant
 

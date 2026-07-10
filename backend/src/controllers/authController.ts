@@ -2,13 +2,72 @@ import { Response, NextFunction } from 'express';
 import { authService } from '../services/authService';
 import { AuthRequest } from '../middleware/auth';
 import { parsePermissionKeys } from '../platform/permissions';
+import { authConfigService } from '../services/authConfigService';
 
 export const authController = {
+  async getAuthConfig(_req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      res.json(await authConfigService.getPublicConfig());
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async login(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
       const userAgent = req.headers['user-agent'];
       const result = await authService.login(email, password, userAgent);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async requestMagicLink(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { email, loginPath } = req.body as { email: string; loginPath?: string };
+      const path = loginPath ?? '/admin/login';
+      const result = await authService.requestMagicLink(
+        email,
+        path,
+        req.headers['user-agent'],
+        req.ip
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async requestLoginCode(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body as { email: string };
+      const result = await authService.requestLoginCode(
+        email,
+        req.headers['user-agent'],
+        req.ip
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async verifyMagicLink(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { token } = req.body as { token: string };
+      const result = await authService.verifyMagicLink(token, req.headers['user-agent']);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async verifyLoginCode(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { email, code } = req.body as { email: string; code: string };
+      const result = await authService.verifyLoginCode(email, code, req.headers['user-agent']);
       res.json(result);
     } catch (err) {
       next(err);

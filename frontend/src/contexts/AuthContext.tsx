@@ -9,6 +9,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
+  setSession: (token: string, refreshToken: string | undefined, user: User) => void;
   logout: () => void;
   isAdmin: boolean;
 }
@@ -76,6 +77,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return result.user;
   }, [routing.scope, routing.tenantSlug]);
 
+  const setSession = useCallback((accessToken: string, refreshToken: string | undefined, sessionUser: User) => {
+    writeScopedItem(TOKEN_BASE, routing.scope, routing.tenantSlug, accessToken);
+    if (refreshToken) {
+      writeScopedItem(REFRESH_BASE, routing.scope, routing.tenantSlug, refreshToken);
+    }
+    setToken(accessToken);
+    setUser(sessionUser);
+  }, [routing.scope, routing.tenantSlug]);
+
   const logout = useCallback(() => {
     const refreshToken = readScopedItem(REFRESH_BASE, routing.scope, routing.tenantSlug);
     if (refreshToken) {
@@ -94,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         loading,
         login,
+        setSession,
         logout,
         isAdmin: user?.role === 'ADMIN',
       }}

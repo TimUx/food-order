@@ -13,6 +13,12 @@ import {
   loginSchema,
   refreshTokenSchema,
   revokeAllSessionsSchema,
+  magicLinkRequestSchema,
+  loginCodeRequestSchema,
+  verifyMagicLinkSchema,
+  verifyLoginCodeSchema,
+  setupStepSchema,
+  setupCompleteSchema,
   createEventSchema,
   updateEventSchema,
   updateClubSchema,
@@ -36,7 +42,8 @@ import {
 } from '../validation/schemas';
 
 import { uploadService } from '../services/uploadService';
-import { loginRateLimiter, publicOrderRateLimiter, lookupRateLimiter, authRefreshRateLimiter, uploadRateLimiter, paymentPublicRateLimiter, tenantApplicationRateLimiter } from '../middleware/rateLimit';
+import { loginRateLimiter, magicLinkRateLimiter, publicOrderRateLimiter, lookupRateLimiter, authRefreshRateLimiter, uploadRateLimiter, paymentPublicRateLimiter, tenantApplicationRateLimiter } from '../middleware/rateLimit';
+import { setupController } from '../controllers/setupController';
 import { config } from '../config';
 import { openApiDocument } from '../core/openapi';
 import moduleAdminRoutes from '../core/routes/modules';
@@ -104,11 +111,22 @@ router.get('/openapi.json', (_req, res) => {
 });
 
 // Auth
+router.get('/public/auth-config', authController.getAuthConfig);
 router.post('/auth/login', loginRateLimiter, validateBody(loginSchema), authController.login);
+router.post('/auth/magic-link', magicLinkRateLimiter, validateBody(magicLinkRequestSchema), authController.requestMagicLink);
+router.post('/auth/login-code', magicLinkRateLimiter, validateBody(loginCodeRequestSchema), authController.requestLoginCode);
+router.post('/auth/verify-magic-link', magicLinkRateLimiter, validateBody(verifyMagicLinkSchema), authController.verifyMagicLink);
+router.post('/auth/verify-login-code', magicLinkRateLimiter, validateBody(verifyLoginCodeSchema), authController.verifyLoginCode);
 router.post('/auth/logout', authRefreshRateLimiter, validateBody(refreshTokenSchema), authController.logout);
 router.post('/auth/refresh', authRefreshRateLimiter, validateBody(refreshTokenSchema), authController.refresh);
 router.post('/auth/revoke-all', authenticate, loadUser, requireRole('ADMIN'), validateBody(revokeAllSessionsSchema), authController.revokeAll);
 router.get('/auth/me', authenticate, loadUser, authController.me);
+
+// Initial Setup Wizard
+router.get('/setup/status', authenticate, loadUser, requireRole('ADMIN'), setupController.getStatus);
+router.post('/setup/step', authenticate, loadUser, requireRole('ADMIN'), validateBody(setupStepSchema), setupController.saveStep);
+router.post('/setup/complete', authenticate, loadUser, requireRole('ADMIN'), validateBody(setupCompleteSchema), setupController.complete);
+router.post('/setup/reset', authenticate, loadUser, requireRole('ADMIN'), setupController.reset);
 
 // Public
 router.get('/public/routing-config', tenantController.getRoutingConfig);

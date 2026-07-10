@@ -1,5 +1,14 @@
 import rateLimit from 'express-rate-limit';
 
+/** Magic-Link / Login-Code: max. 5 Anfragen pro 15 Minuten. */
+export const magicLinkRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Anmeldeanfragen. Bitte später erneut versuchen.' },
+});
+
 /** Login: max. 10 Versuche pro 15 Minuten (K3). */
 export const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

@@ -1,76 +1,67 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { defaultNotificationConfig } from '../config';
 
-vi.mock('../../../src/config/database', () => ({
-  prisma: {
-    platformSettings: {
-      findMany: vi.fn(),
-    },
+vi.mock('../../../src/platform/mail/MailService', () => ({
+  mailService: {
+    loadConfig: vi.fn(),
   },
 }));
 
-import { prisma } from '../../../src/config/database';
+import { mailService } from '../../../src/platform/mail/MailService';
 import { loadPlatformSmtp, resolveSmtpConfig } from './smtpResolver';
 
 describe('smtpResolver', () => {
   beforeEach(() => {
-    vi.mocked(prisma.platformSettings.findMany).mockReset();
+    vi.mocked(mailService.loadConfig).mockReset();
   });
 
-  it('returns null when platform SMTP is disabled', async () => {
-    vi.mocked(prisma.platformSettings.findMany).mockResolvedValue([
-      { key: 'platform.smtp.enabled', value: false, encrypted: false, updatedAt: new Date() },
-    ] as never);
+  it('returns null when platform SMTP is not configured', async () => {
+    vi.mocked(mailService.loadConfig).mockResolvedValue(null);
     expect(await loadPlatformSmtp()).toBeNull();
   });
 
-  it('loads platform SMTP when enabled', async () => {
-    vi.mocked(prisma.platformSettings.findMany).mockResolvedValue([
-      { key: 'platform.smtp.enabled', value: true, encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.host', value: 'smtp.platform.test', encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.port', value: 587, encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.from', value: 'noreply@platform.test', encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.senderName', value: 'Platform', encrypted: false, updatedAt: new Date() },
-    ] as never);
+  it('loads platform SMTP when configured', async () => {
+    vi.mocked(mailService.loadConfig).mockResolvedValue({
+      enabled: true,
+      host: 'smtp.platform.test',
+      port: 587,
+      user: '',
+      pass: '',
+      from: 'noreply@platform.test',
+      senderName: 'Platform',
+      replyTo: '',
+      secure: false,
+      useTls: true,
+      timeout: 30000,
+    });
 
     const smtp = await loadPlatformSmtp();
     expect(smtp?.host).toBe('smtp.platform.test');
     expect(smtp?.source).toBe('platform');
   });
 
-  it('prefers tenant SMTP when enabled with host', async () => {
+  it('uses platform SMTP exclusively with tenant branding overrides', async () => {
+    vi.mocked(mailService.loadConfig).mockResolvedValue({
+      enabled: true,
+      host: 'smtp.platform.test',
+      port: 587,
+      user: '',
+      pass: '',
+      from: 'noreply@platform.test',
+      senderName: 'Platform',
+      replyTo: '',
+      secure: false,
+      useTls: true,
+      timeout: 30000,
+    });
+
     const tenantConfig = {
       ...defaultNotificationConfig,
       smtp: {
         enabled: true,
-        host: 'smtp.tenant.test',
-        port: 587,
-        from: 'tenant@example.de',
-        source: 'tenant' as const,
-      },
-    };
-
-    const resolved = await resolveSmtpConfig(tenantConfig);
-    expect(resolved.host).toBe('smtp.tenant.test');
-    expect(resolved.source).toBe('tenant');
-    expect(prisma.platformSettings.findMany).not.toHaveBeenCalled();
-  });
-
-  it('falls back to platform SMTP when tenant SMTP is disabled', async () => {
-    vi.mocked(prisma.platformSettings.findMany).mockResolvedValue([
-      { key: 'platform.smtp.enabled', value: true, encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.host', value: 'smtp.platform.test', encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.port', value: 587, encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.from', value: 'noreply@platform.test', encrypted: false, updatedAt: new Date() },
-    ] as never);
-
-    const tenantConfig = {
-      ...defaultNotificationConfig,
-      smtp: {
-        enabled: false,
-        port: 587,
         from: 'custom@tenant.de',
-        source: 'tenant' as const,
+        senderName: 'Tenant Name',
+        source: 'platform' as const,
       },
     };
 
@@ -78,28 +69,14 @@ describe('smtpResolver', () => {
     expect(resolved.host).toBe('smtp.platform.test');
     expect(resolved.source).toBe('platform');
     expect(resolved.from).toBe('custom@tenant.de');
+    expect(resolved.senderName).toBe('Tenant Name');
   });
 
-  it('uses platform SMTP when tenant selects platform source', async () => {
-    vi.mocked(prisma.platformSettings.findMany).mockResolvedValue([
-      { key: 'platform.smtp.enabled', value: true, encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.host', value: 'smtp.platform.test', encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.port', value: 587, encrypted: false, updatedAt: new Date() },
-      { key: 'platform.smtp.from', value: 'noreply@platform.test', encrypted: false, updatedAt: new Date() },
-    ] as never);
+  it('returns disabled smtp when platform is not configured', async () => {
+    vi.mocked(mailService.loadConfig).mockResolvedValue(null);
 
-    const tenantConfig = {
-      ...defaultNotificationConfig,
-      smtp: {
-        enabled: true,
-        host: 'smtp.tenant.test',
-        port: 587,
-        source: 'platform' as const,
-      },
-    };
-
-    const resolved = await resolveSmtpConfig(tenantConfig);
-    expect(resolved.host).toBe('smtp.platform.test');
+    const resolved = await resolveSmtpConfig(defaultNotificationConfig);
+    expect(resolved.enabled).toBe(false);
     expect(resolved.source).toBe('platform');
   });
 });
