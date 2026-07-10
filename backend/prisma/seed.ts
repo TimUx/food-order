@@ -60,9 +60,15 @@ async function main() {
   });
 
   const staffPassword = await bcrypt.hash('staff123', 12);
+  const kuechePermissions = ['orders.view', 'orders.kitchen', 'printer.print'];
+  const kassePermissions = ['orders.view', 'orders.manage', 'payment.view'];
+
   await prisma.user.upsert({
     where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'kueche@verein.local' } },
-    update: {},
+    update: {
+      permissions: kuechePermissions,
+      roleTemplate: 'kueche',
+    },
     create: {
       tenantId: DEFAULT_TENANT_ID,
       email: 'kueche@verein.local',
@@ -70,6 +76,26 @@ async function main() {
       firstName: 'Küche',
       lastName: 'Mitarbeiter',
       roleId: staffRole.id,
+      permissions: kuechePermissions,
+      roleTemplate: 'kueche',
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'kasse@verein.local' } },
+    update: {
+      permissions: kassePermissions,
+      roleTemplate: 'kasse',
+    },
+    create: {
+      tenantId: DEFAULT_TENANT_ID,
+      email: 'kasse@verein.local',
+      passwordHash: staffPassword,
+      firstName: 'Kasse',
+      lastName: 'Mitarbeiter',
+      roleId: staffRole.id,
+      permissions: kassePermissions,
+      roleTemplate: 'kasse',
     },
   });
 
@@ -180,6 +206,7 @@ async function main() {
   console.log('Test-Zugangsdaten:');
   console.log('  Admin:  admin@verein.local / admin123');
   console.log('  Küche:  kueche@verein.local / staff123');
+  console.log('  Kasse:  kasse@verein.local / staff123');
 }
 
 main()

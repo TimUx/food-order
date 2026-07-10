@@ -3,6 +3,9 @@ import { RoleName } from '@prisma/client';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
 import { prisma } from '../config/database';
+import { resolveUserPermissions } from '../core/permissions';
+import { permissionService } from '../platform/bootstrap';
+import type { TenantRoleTemplateId } from '../core/permissions';
 
 function mapUser(user: {
   id: string;
@@ -10,7 +13,9 @@ function mapUser(user: {
   firstName: string;
   lastName: string;
   active: boolean;
-  role: { name: RoleName };
+  roleTemplate?: string | null;
+  permissions?: unknown;
+  role: { name: RoleName; permissions?: unknown };
   createdAt: Date;
 }) {
   return {
@@ -20,6 +25,8 @@ function mapUser(user: {
     lastName: user.lastName,
     active: user.active,
     role: user.role.name,
+    roleTemplate: user.roleTemplate ?? null,
+    permissions: resolveUserPermissions(user),
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -36,6 +43,8 @@ export const userService = {
     firstName: string;
     lastName: string;
     role: RoleName;
+    roleTemplate?: TenantRoleTemplateId | null;
+    permissions?: string[];
   }) {
     const existing = await userRepository.findByEmail(data.email);
     if (existing) {
@@ -45,6 +54,16 @@ export const userService = {
     const role = await prisma.role.findUnique({ where: { name: data.role } });
     if (!role) throw new AppError(500, 'Rolle nicht gefunden');
 
+    let permissions: string[] = [];
+    let roleTemplate: string | null = data.roleTemplate ?? null;
+    if (data.role === 'STAFF') {
+      if (data.roleTemplate) {
+        permissions = permissionService.resolveTemplatePermissions(data.roleTemplate);
+      } else if (data.permissions) {
+        permissions = permissionService.filterKnownPermissions(data.permissions);
+      }
+    }
+
     const passwordHash = await bcrypt.hash(data.password, 12);
     const user = await userRepository.create({
       email: data.email,
@@ -52,6 +71,8 @@ export const userService = {
       firstName: data.firstName,
       lastName: data.lastName,
       roleId: role.id,
+      permissions,
+      roleTemplate,
     });
     return mapUser(user);
   },
@@ -107,5 +128,27 @@ export const userService = {
     }
 
     return mapUser(updated);
+  },
+
+  async updatePermissions(
+    id: string,
+    data: { permissions: string[]; roleTemplate?: string | null },
+    actorId: string
+  ) {
+    const user = await userRepository.findById(id);
+    if (!user) throw new AppError(404, 'Benutzer nicht gefunden');
+    if (user.role.name === 'ADMIN') {
+      throw new AppError(400, 'Administrator-Rechte können nicht eingeschränkt werden');
+    }
+
+    const permissions = await permissionService.updateUserPermissions(
+      id,
+      data.permissions,
+      actorId,
+      data.roleTemplate
+    );
+    const updated = await userRepository.findById(id);
+    if (!updated) throw new AppError(404, 'Benutzer nicht gefunden');
+    return { ...mapUser(updated), permissions };
   },
 };

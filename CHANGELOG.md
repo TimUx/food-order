@@ -7,30 +7,21 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 ### Neu
 
-- **Tenant Guardrails:** CI-Script blockiert ungescopte `prisma.<tenantModel>`-Zugriffe außerhalb erlaubter Repository-/Platform-Schichten.
-- ADR 040: Tenant Access Policy; Developer Guide Tenant-Regeln.
+- **Tenant Guardrails:** CI blockiert ungescopte `prisma.<tenantModel>`-Zugriffe (ADR 040).
+- **Tenant Role Templates:** Vorlagen Küche, Abholung, Kasse, Speisenpflege, Finanzen, Rechtliches (ADR 043).
+- **Core Permissions:** `team.manage`, `food.edit`, `orders.kitchen`, `settings.club` u. a.
 
 ### Geändert
 
-- **Produktionsmigrationen:** `prisma migrate deploy` statt `db push` beim Backend-Start; Pre-Migration-Backup per Entrypoint und Installer.
-- Init-Migration unter `backend/prisma/migrations/`; Baseline für bestehende Installationen.
-- CI-Tests für frische DB und Upgrade von `db push`.
-- ADR 039: Produktionsmigrationen.
-- `auth.ts` und `userService` nutzen `userRepository` statt direktem `prisma.user`.
-- `sessionService` prüft Mandantenzugehörigkeit via `assertTenantOwnership`.
-- **Module API v3:** Kanonische Runtime in `platform/`; `platform/module-api.ts` als einziger Modul-Import; `module-system/` nur noch deprecated Facade.
-- Preview-Module (`preview: true`) nur mit `SHOW_PREVIEW_MODULES=1`; Stub-Manifeste vereinfacht.
-- ADR 041; `MODULE_ARCHITECTURE.md` überarbeitet.
-### Geändert
-
-- **Volunteer-first Administration:** Dashboard und Navigation fokussieren auf Alltagsaufgaben; technische Details (Version, Funktionsstatus, Echtzeit) unter „Erweitert“.
-- **Einstellungen:** Navigation zeigt Veranstalter, Bestellung und Benachrichtigungen; erweiterte Kanäle (ntfy, Discord, Slack, Teams) unter „Erweitert“.
-- **Team:** Benutzerseite heißt konsistent „Team“ (wie in der Navigation).
-- **ADR 042:** Volunteer-first Administration.
+- **Produktionsmigrationen:** `prisma migrate deploy` statt `db push` (ADR 039).
+- **Module API v3:** Kanonische Runtime in `platform/` (ADR 041).
+- **Volunteer-first Admin:** Dashboard/Navigation fokussiert Alltagsaufgaben (ADR 042).
+- Team-UI mit Rollenvorlagen; `auth.ts`/`userService` über Repositories.
+- Preview-Module nur mit `SHOW_PREVIEW_MODULES=1`.
 
 ### Tests
 
-- E2E `admin-navigation.spec.ts` für volunteer-first Admin-Navigation.
+- E2E `admin-navigation.spec.ts`, `authorization-matrix.test.ts`, Tenant-Guard CI.
 
 ---
 

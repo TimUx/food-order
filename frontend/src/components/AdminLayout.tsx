@@ -28,7 +28,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { useClub } from '@/contexts/ClubContext';
 import { getImageUrl } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { canAccessPermission } from '@/utils/permissions';
+import { canAccessPermission, hasDelegatedAdminAccess } from '@/utils/permissions';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAdminUi } from '@/contexts/AdminUiContext';
@@ -200,6 +200,6 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) return null;
   if (!user) return <Navigate to="/admin/login" replace />;
-  if (user.role !== 'ADMIN') return <Navigate to="/mitarbeiter" replace />;
+  if (!hasDelegatedAdminAccess(user)) return <Navigate to="/mitarbeiter" replace />;
   return <>{children}</>;
 }

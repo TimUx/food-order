@@ -2,6 +2,7 @@
 export const QA_USERS = {
   admin: { email: 'admin@verein.local', password: 'admin123' },
   kitchen: { email: 'kueche@verein.local', password: 'staff123' },
+  cashier: { email: 'kasse@verein.local', password: 'staff123' },
 } as const;
 
 export const QA_API_BASE = process.env.QA_API_BASE || 'http://localhost:3001/api';

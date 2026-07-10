@@ -3,8 +3,9 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { AppError } from './errorHandler';
 import { optionalTenantId } from '../platform/tenant/tenantScope';
-import { parsePermissionKeys } from '../platform/permissions';
+import { parsePermissionKeys, userHasPermission } from '../platform/permissions';
 import { userRepository } from '../repositories';
+import { resolveUserPermissions, hasDelegatedAdminAccess } from '../core/permissions';
 import type { AuthPayload } from './platformAuth';
 
 export type { AuthPayload, ImpersonationMeta } from './platformAuth';
@@ -97,6 +98,72 @@ export async function loadUser(req: AuthRequest, _res: Response, next: NextFunct
     return;
   }
   req.user.role = user.role.name;
-  req.user.permissions = parsePermissionKeys(user.role.permissions);
+  req.user.permissions = resolveUserPermissions(user);
+  (req.user as AuthPayload & { roleTemplate?: string | null }).roleTemplate = user.roleTemplate;
   next();
+}
+
+export function requireDelegatedAdmin() {
+  return (req: AuthRequest, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      next(new AppError(401, 'Nicht authentifiziert'));
+      return;
+    }
+    if (!hasDelegatedAdminAccess(req.user.role, req.user.permissions ?? [])) {
+      next(new AppError(403, 'Keine Berechtigung'));
+      return;
+    }
+    next();
+  };
+}
+
+export function requireStaffPermission(permissionKey: string) {
+  return (req: AuthRequest, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      next(new AppError(401, 'Nicht authentifiziert'));
+      return;
+    }
+    if (req.user.role === 'ADMIN') {
+      next();
+      return;
+    }
+    if (!(req.user.permissions ?? []).includes(permissionKey)) {
+      next(new AppError(403, 'Keine Berechtigung'));
+      return;
+    }
+    next();
+  };
+}
+
+export function requireAnyStaffPermission(...permissionKeys: string[]) {
+  return (req: AuthRequest, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      next(new AppError(401, 'Nicht authentifiziert'));
+      return;
+    }
+    if (req.user.role === 'ADMIN') {
+      next();
+      return;
+    }
+    const perms = req.user.permissions ?? [];
+    if (!permissionKeys.some((k) => perms.includes(k))) {
+      next(new AppError(403, 'Keine Berechtigung'));
+      return;
+    }
+    next();
+  };
+}
+
+export function requirePermissionKey(permissionKey: string) {
+  return (req: AuthRequest, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      next(new AppError(401, 'Nicht authentifiziert'));
+      return;
+    }
+    if (!userHasPermission(req.user.role, req.user.permissions, permissionKey)) {
+      next(new AppError(403, 'Keine Berechtigung'));
+      return;
+    }
+    next();
+  };
 }

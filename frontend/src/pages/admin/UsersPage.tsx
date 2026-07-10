@@ -23,32 +23,14 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
-  Checkbox,
-  FormGroup,
-  Divider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import SecurityIcon from '@mui/icons-material/Security';
 import { AdminLayout } from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
-import { User, UserRole } from '@/types';
-
-type RolePresetId = 'vorstand' | 'eventLeitung' | 'kueche' | 'kasse' | 'abholung' | 'nurLesen';
-
-const ROLE_PRESETS: {
-  id: RolePresetId;
-  label: string;
-  role: UserRole;
-  permissions: string[] | 'all';
-}[] = [
-  { id: 'vorstand', label: 'Vorstand', role: 'ADMIN', permissions: [] },
-  { id: 'eventLeitung', label: 'Event-Leitung', role: 'STAFF', permissions: 'all' },
-  { id: 'kueche', label: 'Küche', role: 'STAFF', permissions: ['orders.view', 'printer.print'] },
-  { id: 'kasse', label: 'Kasse', role: 'STAFF', permissions: ['orders.view', 'orders.manage'] },
-  { id: 'abholung', label: 'Abholung', role: 'STAFF', permissions: ['orders.view'] },
-  { id: 'nurLesen', label: 'Nur-Lesen', role: 'STAFF', permissions: [] },
-];
+import { User, UserRole, RoleTemplate, RoleTemplateId } from '@/types';
 
 interface UserForm {
   email: string;
@@ -57,6 +39,7 @@ interface UserForm {
   lastName: string;
   role: UserRole;
   active: boolean;
+  roleTemplate: RoleTemplateId | '';
 }
 
 const emptyForm: UserForm = {
@@ -66,24 +49,39 @@ const emptyForm: UserForm = {
   lastName: '',
   role: 'STAFF',
   active: true,
+  roleTemplate: 'kueche',
 };
+
+const TEMPLATE_LABELS: Record<string, string> = {
+  kueche: 'Küche',
+  abholung: 'Abholung',
+  kasse: 'Kasse',
+  speisenpflege: 'Speisenpflege',
+  finanzen: 'Finanzen',
+  rechtliches: 'Rechtliches',
+};
+
+function displayRole(user: User): string {
+  if (user.role === 'ADMIN') return 'Administrator';
+  if (user.roleTemplate && TEMPLATE_LABELS[user.roleTemplate]) {
+    return TEMPLATE_LABELS[user.roleTemplate];
+  }
+  return 'Mitarbeiter';
+}
 
 export function UsersPage() {
   const { token } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [templates, setTemplates] = useState<RoleTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [permDialogOpen, setPermDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [permUserId, setPermUserId] = useState<string | null>(null);
   const [form, setForm] = useState<UserForm>(emptyForm);
-  const [rolePreset, setRolePreset] = useState<RolePresetId | ''>('');
+  const [selectedTemplate, setSelectedTemplate] = useState<RoleTemplateId | ''>('kueche');
   const [saving, setSaving] = useState(false);
-
-  const [availablePermissions, setAvailablePermissions] = useState<Array<{ key: string; description: string }>>([]);
-  const [staffPermissions, setStaffPermissions] = useState<string[]>([]);
-  const [permLoading, setPermLoading] = useState(false);
-  const [permSaving, setPermSaving] = useState(false);
-  const [permError, setPermError] = useState('');
 
   const loadUsers = () => {
     if (!token) return;
@@ -94,42 +92,22 @@ export function UsersPage() {
       .finally(() => setLoading(false));
   };
 
-  const loadPermissions = () => {
+  const loadTemplates = () => {
     if (!token) return;
-    setPermLoading(true);
-    setPermError('');
     api.getPermissions(token)
-      .then((res) => {
-        setAvailablePermissions(res.available);
-        setStaffPermissions(res.staff);
-      })
-      .catch((err) => setPermError(err.message))
-      .finally(() => setPermLoading(false));
+      .then((res) => setTemplates(res.templates ?? []))
+      .catch((err) => setError(err.message));
   };
 
   useEffect(() => {
     loadUsers();
-    loadPermissions();
+    loadTemplates();
   }, [token]);
 
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
-    setRolePreset('');
     setDialogOpen(true);
-  };
-
-  const applyRolePreset = (presetId: RolePresetId) => {
-    const preset = ROLE_PRESETS.find((p) => p.id === presetId);
-    if (!preset) return;
-    setRolePreset(presetId);
-    setForm((prev) => ({ ...prev, role: preset.role }));
-    if (preset.role === 'STAFF') {
-      const perms = preset.permissions === 'all'
-        ? availablePermissions.map((p) => p.key)
-        : preset.permissions;
-      setStaffPermissions(perms);
-    }
   };
 
   const openEdit = (user: User) => {
@@ -141,8 +119,15 @@ export function UsersPage() {
       lastName: user.lastName,
       role: user.role,
       active: user.active ?? true,
+      roleTemplate: (user.roleTemplate as RoleTemplateId) ?? '',
     });
     setDialogOpen(true);
+  };
+
+  const openPermissions = (user: User) => {
+    setPermUserId(user.id);
+    setSelectedTemplate((user.roleTemplate as RoleTemplateId) ?? 'kueche');
+    setPermDialogOpen(true);
   };
 
   const handleSave = async () => {
@@ -159,20 +144,33 @@ export function UsersPage() {
           active: form.active,
           ...(form.password ? { password: form.password } : {}),
         });
+        if (form.role === 'STAFF' && form.roleTemplate) {
+          const template = templates.find((t) => t.id === form.roleTemplate);
+          if (template) {
+            await api.updateUserPermissions(token, editingId, {
+              permissions: template.permissions,
+              roleTemplate: template.id,
+            });
+          }
+        }
       } else {
-        await api.createUser(token, {
+        const created = await api.createUser(token, {
           email: form.email,
           password: form.password,
           firstName: form.firstName,
           lastName: form.lastName,
           role: form.role,
+          ...(form.role === 'STAFF' && form.roleTemplate
+            ? { roleTemplate: form.roleTemplate }
+            : {}),
         });
-        if (form.role === 'STAFF' && rolePreset) {
-          const preset = ROLE_PRESETS.find((p) => p.id === rolePreset);
-          if (preset && preset.permissions !== 'all' && preset.permissions.length > 0) {
-            await api.updateStaffPermissions(token, preset.permissions);
-          } else if (preset?.permissions === 'all') {
-            await api.updateStaffPermissions(token, availablePermissions.map((p) => p.key));
+        if (form.role === 'STAFF' && form.roleTemplate && !created.permissions?.length) {
+          const template = templates.find((t) => t.id === form.roleTemplate);
+          if (template) {
+            await api.updateUserPermissions(token, created.id, {
+              permissions: template.permissions,
+              roleTemplate: template.id,
+            });
           }
         }
       }
@@ -185,21 +183,23 @@ export function UsersPage() {
     }
   };
 
-  const toggleStaffPermission = (key: string) => {
-    setStaffPermissions((prev) => (prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key]));
-  };
-
   const handleSavePermissions = async () => {
-    if (!token) return;
-    setPermSaving(true);
-    setPermError('');
+    if (!token || !permUserId) return;
+    const template = templates.find((t) => t.id === selectedTemplate);
+    if (!template) return;
+    setSaving(true);
+    setError('');
     try {
-      await api.updateStaffPermissions(token, staffPermissions);
-      await loadPermissions();
+      await api.updateUserPermissions(token, permUserId, {
+        permissions: template.permissions,
+        roleTemplate: template.id,
+      });
+      setPermDialogOpen(false);
+      loadUsers();
     } catch (err) {
-      setPermError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
+      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
     } finally {
-      setPermSaving(false);
+      setSaving(false);
     }
   };
 
@@ -209,7 +209,7 @@ export function UsersPage() {
         <Box>
           <Typography variant="h5" fontWeight={700}>Team</Typography>
           <Typography variant="body2" color="text.secondary">
-            Administratoren und Mitarbeiter verwalten
+            Mitarbeiter mit Rollenvorlagen zuweisen — Küche, Kasse, Finanzen und mehr
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
@@ -241,7 +241,7 @@ export function UsersPage() {
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
                   <Chip
-                    label={user.role === 'ADMIN' ? 'Administrator' : 'Mitarbeiter'}
+                    label={displayRole(user)}
                     size="small"
                     color={user.role === 'ADMIN' ? 'primary' : 'default'}
                   />
@@ -254,9 +254,16 @@ export function UsersPage() {
                   />
                 </TableCell>
                 <TableCell align="right">
-                  <Button size="small" startIcon={<EditIcon />} onClick={() => openEdit(user)}>
-                    Bearbeiten
-                  </Button>
+                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    {user.role === 'STAFF' && (
+                      <Button size="small" startIcon={<SecurityIcon />} onClick={() => openPermissions(user)}>
+                        Vorlage
+                      </Button>
+                    )}
+                    <Button size="small" startIcon={<EditIcon />} onClick={() => openEdit(user)}>
+                      Bearbeiten
+                    </Button>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
@@ -264,81 +271,10 @@ export function UsersPage() {
         </Table>
       )}
 
-      <Divider sx={{ my: 4 }} />
-
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
-          Rechteverwaltung (STAFF)
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Vorlagen für typische Rollen im Team. Administratoren haben immer alle Rechte.
-        </Typography>
-      </Box>
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
-        <Button size="small" variant="outlined" onClick={() => setStaffPermissions(['printer.print'])}>
-          Küche
-        </Button>
-        <Button size="small" variant="outlined" onClick={() => setStaffPermissions(['payment.view'])}>
-          Kasse
-        </Button>
-        <Button size="small" variant="outlined" onClick={() => setStaffPermissions(availablePermissions.map((p) => p.key))}>
-          Alle Modul-Rechte
-        </Button>
-      </Stack>
-
-      {permError && <Alert severity="error" sx={{ mb: 2 }}>{permError}</Alert>}
-
-      {permLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <FormGroup sx={{ maxHeight: 320, overflow: 'auto', pl: 1 }}>
-            {availablePermissions.map((p) => (
-              <FormControlLabel
-                key={p.key}
-                control={
-                  <Checkbox
-                    checked={staffPermissions.includes(p.key)}
-                    onChange={() => toggleStaffPermission(p.key)}
-                  />
-                }
-                label={
-                  <Box>
-                    <Typography variant="body2" fontWeight={600}>{p.description || p.key}</Typography>
-                    <Typography variant="caption" color="text.secondary">{p.key}</Typography>
-                  </Box>
-                }
-              />
-            ))}
-          </FormGroup>
-          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-            <Button variant="contained" onClick={() => void handleSavePermissions()} disabled={permSaving}>
-              {permSaving ? 'Speichern…' : 'Rechte speichern'}
-            </Button>
-          </Stack>
-        </>
-      )}
-
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editingId ? 'Benutzer bearbeiten' : 'Neuer Benutzer'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            {!editingId && (
-              <FormControl fullWidth>
-                <InputLabel>Rollenvorlage</InputLabel>
-                <Select
-                  label="Rollenvorlage"
-                  value={rolePreset}
-                  onChange={(e) => applyRolePreset(e.target.value as RolePresetId)}
-                >
-                  {ROLE_PRESETS.map((preset) => (
-                    <MenuItem key={preset.id} value={preset.id}>{preset.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
             <TextField
               label="Vorname"
               fullWidth
@@ -380,6 +316,22 @@ export function UsersPage() {
                 <MenuItem value="ADMIN">Administrator</MenuItem>
               </Select>
             </FormControl>
+            {form.role === 'STAFF' && (
+              <FormControl fullWidth>
+                <InputLabel>Rollenvorlage</InputLabel>
+                <Select
+                  label="Rollenvorlage"
+                  value={form.roleTemplate}
+                  onChange={(e) => setForm({ ...form, roleTemplate: e.target.value as RoleTemplateId })}
+                >
+                  {templates.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.label} — {t.description}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
             {editingId && (
               <FormControlLabel
                 control={
@@ -397,6 +349,38 @@ export function UsersPage() {
           <Button onClick={() => setDialogOpen(false)}>Abbrechen</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving}>
             {saving ? 'Speichern…' : 'Speichern'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={permDialogOpen} onClose={() => setPermDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Rollenvorlage ändern</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Fachliche Vorlagen ersetzen technische Berechtigungslisten. Jeder Mitarbeiter erhält eigene Rechte.
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel>Vorlage</InputLabel>
+            <Select
+              label="Vorlage"
+              value={selectedTemplate}
+              onChange={(e) => setSelectedTemplate(e.target.value as RoleTemplateId)}
+            >
+              {templates.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  <Box>
+                    <Typography fontWeight={600}>{t.label}</Typography>
+                    <Typography variant="caption" color="text.secondary">{t.description}</Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPermDialogOpen(false)}>Abbrechen</Button>
+          <Button variant="contained" onClick={() => void handleSavePermissions()} disabled={saving}>
+            {saving ? 'Speichern…' : 'Vorlage zuweisen'}
           </Button>
         </DialogActions>
       </Dialog>

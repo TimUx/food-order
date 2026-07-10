@@ -1,11 +1,19 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { authenticate, loadUser, requireRole, AuthRequest } from '../../middleware/auth';
+import { authenticate, loadUser, requireDelegatedAdmin, requirePermissionKey, AuthRequest } from '../../middleware/auth';
 import { settingsService } from '../../platform/bootstrap';
 import { assertModuleSettingsAccessible, getInstalledModuleIds } from '../settings/assertModuleSettingsAccessible';
 
 const router = Router();
 
-router.use(authenticate, loadUser, requireRole('ADMIN'));
+router.use(authenticate, loadUser, requireDelegatedAdmin());
+
+function requireSettingsWrite(namespace: string) {
+  if (namespace === 'core.club') return requirePermissionKey('settings.club');
+  if (namespace === 'core.order') return requirePermissionKey('settings.order');
+  if (namespace === 'module.notifications') return requirePermissionKey('notifications.settings');
+  if (namespace.startsWith('module.payment')) return requirePermissionKey('payment.settings');
+  return requirePermissionKey('team.manage');
+}
 
 router.get('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
@@ -41,7 +49,10 @@ router.get('/:namespace', async (req: Request, res: Response, next: NextFunction
   }
 });
 
-router.put('/:namespace', async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:namespace', (req, res, next) => {
+  const namespace = decodeURIComponent(req.params.namespace as string);
+  requireSettingsWrite(namespace)(req as AuthRequest, res, next);
+}, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const namespace = decodeURIComponent(req.params.namespace as string);
     await assertModuleSettingsAccessible(namespace);

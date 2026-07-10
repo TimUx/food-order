@@ -2,15 +2,31 @@ export type OrderStatus = 'NEW' | 'IN_PROGRESS' | 'READY' | 'PICKED_UP' | 'CANCE
 export type OrderSource = 'ONLINE' | 'CASHIER';
 export type UserRole = 'ADMIN' | 'STAFF';
 
+export type RoleTemplateId =
+  | 'kueche'
+  | 'abholung'
+  | 'kasse'
+  | 'speisenpflege'
+  | 'finanzen'
+  | 'rechtliches';
+
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   role: UserRole;
+  roleTemplate?: RoleTemplateId | string | null;
   permissions?: string[];
   active?: boolean;
   createdAt?: string;
+}
+
+export interface RoleTemplate {
+  id: RoleTemplateId;
+  label: string;
+  description: string;
+  permissions: string[];
 }
 
 export interface Event {

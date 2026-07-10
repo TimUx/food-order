@@ -25,9 +25,12 @@ Anleitung für Mitarbeiter in Küche, Abholung und Service – ohne Administrato
 
 **Test-Zugangsdaten (Demo):**
 
-| Rolle | E-Mail | Passwort | Login |
-|-------|--------|----------|-------|
-| Küche / Service | kueche@verein.local | staff123 | `/mitarbeiter/login` |
+| Vorlage | E-Mail | Passwort | Login |
+|---------|--------|----------|-------|
+| Küche | kueche@verein.local | staff123 | `/mitarbeiter/login` |
+| Kasse | kasse@verein.local | staff123 | `/mitarbeiter/login` |
+
+Ihr Vorstand weist Ihnen eine **Rollenvorlage** zu (Küche, Abholung, Kasse …). Sie sehen nur die Bereiche, die zu Ihrer Aufgabe passen.
 
 > **Hinweis für Administratoren:** Veranstalterdaten, Benutzer und Veranstaltungen verwalten Sie im separaten [Administrationsbereich](/admin/login) – siehe [Admin Guide](ADMIN_GUIDE.md).
 

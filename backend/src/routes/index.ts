@@ -7,7 +7,7 @@ import { orderController } from '../controllers/orderController';
 import { realtimeController } from '../controllers/realtimeController';
 import { clubController } from '../controllers/clubController';
 import { userController } from '../controllers/userController';
-import { authenticate, requireRole, loadUser } from '../middleware/auth';
+import { authenticate, requireRole, loadUser, requireDelegatedAdmin, requireStaffPermission, requireAnyStaffPermission, requirePermissionKey } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validation';
 import {
   loginSchema,
@@ -36,6 +36,7 @@ import {
   idParamSchema,
   tokenParamSchema,
   createUserSchema,
+  updateUserPermissionsSchema,
   updateUserSchema,
   submitTenantApplicationSchema,
   legalSlugParamSchema,
@@ -155,18 +156,18 @@ router.get('/public/pickup-board', orderController.getReady);
 // Staff - Orders
 router.use('/staff', authenticate, loadUser);
 
-router.get('/staff/events', requireRole('ADMIN', 'STAFF'), eventController.getAll);
-router.get('/staff/events/active', requireRole('ADMIN', 'STAFF'), eventController.getActive);
-router.post('/staff/events', requireRole('ADMIN'), validateBody(createEventSchema), eventController.create);
-router.put('/staff/events/:id', requireRole('ADMIN'), validateParams(idParamSchema), validateBody(updateEventSchema), eventController.update);
-router.post('/staff/events/:id/activate', requireRole('ADMIN'), validateParams(idParamSchema), eventController.setActive);
+router.get('/staff/events', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup', 'food.view', 'food.edit', 'events.manage'), eventController.getAll);
+router.get('/staff/events/active', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup', 'food.view', 'food.edit', 'events.manage'), eventController.getActive);
+router.post('/staff/events', requirePermissionKey('events.manage'), validateBody(createEventSchema), eventController.create);
+router.put('/staff/events/:id', requirePermissionKey('events.manage'), validateParams(idParamSchema), validateBody(updateEventSchema), eventController.update);
+router.post('/staff/events/:id/activate', requirePermissionKey('events.manage'), validateParams(idParamSchema), eventController.setActive);
 
-router.get('/staff/events/:eventId/food-items', requireRole('ADMIN', 'STAFF'), foodItemController.getByEvent);
-router.post('/staff/events/:eventId/food-items', requireRole('ADMIN'), validateBody(createFoodItemSchema), foodItemController.create);
-router.put('/staff/food-items/:id', requireRole('ADMIN'), validateParams(idParamSchema), validateBody(updateFoodItemSchema), foodItemController.update);
-router.delete('/staff/food-items/:id', requireRole('ADMIN'), validateParams(idParamSchema), foodItemController.delete);
+router.get('/staff/events/:eventId/food-items', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'food.view', 'food.edit'), foodItemController.getByEvent);
+router.post('/staff/events/:eventId/food-items', requirePermissionKey('food.edit'), validateBody(createFoodItemSchema), foodItemController.create);
+router.put('/staff/food-items/:id', requirePermissionKey('food.edit'), validateParams(idParamSchema), validateBody(updateFoodItemSchema), foodItemController.update);
+router.delete('/staff/food-items/:id', requirePermissionKey('food.edit'), validateParams(idParamSchema), foodItemController.delete);
 
-router.post('/staff/food-items/:id/image', requireRole('ADMIN'), uploadRateLimiter, validateParams(idParamSchema), upload.single('image'), async (req, res, next) => {
+router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), uploadRateLimiter, validateParams(idParamSchema), upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -181,25 +182,25 @@ router.post('/staff/food-items/:id/image', requireRole('ADMIN'), uploadRateLimit
   }
 });
 
-router.get('/staff/events/:eventId/orders', requireRole('ADMIN', 'STAFF'), orderController.getByEvent);
-router.get('/staff/events/:eventId/stats', requireRole('ADMIN', 'STAFF'), orderController.getStats);
-router.post('/staff/orders/cashier', requireRole('ADMIN', 'STAFF'), validateBody(createCashierOrderSchema), orderController.createCashier);
-router.post('/staff/orders/:id/abort-payment', requireRole('ADMIN', 'STAFF'), validateParams(idParamSchema), validateBody(abortCashierPaymentSchema), orderController.abortCashierPayment);
-router.post('/staff/orders/lookup', requireRole('ADMIN', 'STAFF'), validateBody(lookupByNumberSchema), orderController.lookupByNumber);
-router.patch('/staff/orders/:id/status', requireRole('ADMIN', 'STAFF'), validateParams(idParamSchema), validateBody(updateOrderStatusSchema), orderController.updateStatus);
-router.post('/staff/orders/:id/advance', requireRole('ADMIN', 'STAFF'), validateParams(idParamSchema), orderController.advanceStatus);
+router.get('/staff/events/:eventId/orders', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.getByEvent);
+router.get('/staff/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage'), orderController.getStats);
+router.post('/staff/orders/cashier', requireStaffPermission('orders.manage'), validateBody(createCashierOrderSchema), orderController.createCashier);
+router.post('/staff/orders/:id/abort-payment', requireStaffPermission('orders.manage'), validateParams(idParamSchema), validateBody(abortCashierPaymentSchema), orderController.abortCashierPayment);
+router.post('/staff/orders/lookup', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), validateBody(lookupByNumberSchema), orderController.lookupByNumber);
+router.patch('/staff/orders/:id/status', requireAnyStaffPermission('orders.kitchen', 'orders.manage'), validateParams(idParamSchema), validateBody(updateOrderStatusSchema), orderController.updateStatus);
+router.post('/staff/orders/:id/advance', requireAnyStaffPermission('orders.kitchen', 'orders.pickup', 'orders.manage'), validateParams(idParamSchema), orderController.advanceStatus);
 
 // Realtime sync (delta/ETag) — für Polling-Fallback
-router.get('/realtime/events/:eventId/orders', requireRole('ADMIN', 'STAFF'), realtimeController.syncEventOrders);
-router.get('/realtime/events/:eventId/stats', requireRole('ADMIN', 'STAFF'), realtimeController.syncEventStats);
+router.get('/realtime/events/:eventId/orders', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), realtimeController.syncEventOrders);
+router.get('/realtime/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage'), realtimeController.syncEventStats);
 router.get('/realtime/pickup-board', realtimeController.syncPickupBoard);
 router.get('/realtime/orders/:token', realtimeController.syncOrder);
 router.get('/realtime/payment/:sessionId', realtimeController.syncPayment);
 router.get('/realtime/club', realtimeController.syncClub);
 
-router.get('/staff/club', requireRole('ADMIN'), clubController.get);
-router.put('/staff/club', requireRole('ADMIN'), validateBody(updateClubSchema), clubController.update);
-router.post('/staff/club/logo', requireRole('ADMIN'), uploadRateLimiter, upload.single('image'), async (req, res, next) => {
+router.get('/staff/club', requirePermissionKey('settings.club'), clubController.get);
+router.put('/staff/club', requirePermissionKey('settings.club'), validateBody(updateClubSchema), clubController.update);
+router.post('/staff/club/logo', requirePermissionKey('settings.club'), uploadRateLimiter, upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -214,11 +215,11 @@ router.post('/staff/club/logo', requireRole('ADMIN'), uploadRateLimiter, upload.
   }
 });
 
-// Admin – Verein, Benutzer
-router.use('/admin', authenticate, loadUser, requireRole('ADMIN'));
+// Admin – delegated access for STAFF with fachliche Rechte
+router.use('/admin', authenticate, loadUser, requireDelegatedAdmin());
 
-router.get('/admin/club', clubController.get);
-router.put('/admin/club', validateBody(updateClubSchema), clubController.update);
+router.get('/admin/club', requireAnyStaffPermission('settings.club', 'team.manage'), clubController.get);
+router.put('/admin/club', requirePermissionKey('settings.club'), validateBody(updateClubSchema), clubController.update);
 /** @deprecated Nutze /api/admin/settings/module.notifications */
 router.get('/admin/email-settings', (req, res, next) => {
   res.set('Deprecation', 'true');
@@ -230,7 +231,7 @@ router.put('/admin/email-settings', validateBody(updateEmailSettingsSchema), (re
   res.set('Link', '</api/admin/settings/module.notifications>; rel="successor-version"');
   return clubController.updateEmailSettings(req, res, next);
 });
-router.post('/admin/club/logo', upload.single('image'), async (req, res, next) => {
+router.post('/admin/club/logo', requirePermissionKey('settings.club'), upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -245,9 +246,10 @@ router.post('/admin/club/logo', upload.single('image'), async (req, res, next) =
   }
 });
 
-router.get('/admin/users', userController.list);
-router.post('/admin/users', validateBody(createUserSchema), userController.create);
-router.put('/admin/users/:id', validateParams(idParamSchema), validateBody(updateUserSchema), userController.update);
+router.get('/admin/users', requirePermissionKey('team.manage'), userController.list);
+router.post('/admin/users', requirePermissionKey('team.manage'), validateBody(createUserSchema), userController.create);
+router.put('/admin/users/:id', requirePermissionKey('team.manage'), validateParams(idParamSchema), validateBody(updateUserSchema), userController.update);
+router.put('/admin/users/:id/permissions', requirePermissionKey('team.manage'), validateParams(idParamSchema), validateBody(updateUserPermissionsSchema), userController.updatePermissions);
 
 router.use('/admin/modules', moduleAdminRoutes);
 router.use('/admin/permissions', permissionsRoutes);
