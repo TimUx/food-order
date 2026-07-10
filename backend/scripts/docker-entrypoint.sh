@@ -80,8 +80,26 @@ _baseline_existing_db_if_needed() {
   if grep -q "P3005" "$err_file" || grep -qi "not empty" "$err_file"; then
     _log "Bestehende Datenbank ohne Migrate-Historie – Baseline auf ${INIT_MIGRATION}"
     npx prisma migrate resolve --applied "$INIT_MIGRATION"
-    npx prisma migrate deploy
-    rm -f "$err_file" /tmp/migrate.out
+    if ! npx prisma migrate deploy > /tmp/migrate2.out 2>"$err_file"; then
+      if grep -qiE 'already exists|duplicate column' "$err_file"; then
+        _log "Schema entspricht bereits dem aktuellen Stand – verbleibende Migrationen markieren"
+        for dir in prisma/migrations/*/; do
+          [ -f "${dir}migration.sql" ] || continue
+          migration="$(basename "$dir")"
+          [ "$migration" = "$INIT_MIGRATION" ] && continue
+          npx prisma migrate resolve --applied "$migration" 2>/dev/null || true
+        done
+        npx prisma migrate deploy
+      else
+        cat /tmp/migrate2.out 2>/dev/null || true
+        cat "$err_file" >&2
+        rm -f "$err_file" /tmp/migrate.out /tmp/migrate2.out
+        exit 1
+      fi
+    else
+      cat /tmp/migrate2.out
+    fi
+    rm -f "$err_file" /tmp/migrate.out /tmp/migrate2.out
     return 0
   fi
 
