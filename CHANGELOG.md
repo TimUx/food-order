@@ -10,6 +10,8 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 - **Tenant Guardrails:** CI blockiert ungescopte `prisma.<tenantModel>`-Zugriffe (ADR 040).
 - **Tenant Role Templates:** Vorlagen Küche, Abholung, Kasse, Speisenpflege, Finanzen, Rechtliches (ADR 043).
 - **Core Permissions:** `team.manage`, `food.edit`, `orders.kitchen`, `settings.club` u. a.
+- **Geführte Betriebsabläufe:** `./install.sh --update`, `--repair`, `--backup`, `--validate` (ADR 044).
+- **Restore Dry-Run:** `DRY_RUN=1` für Backup-Integritätsprüfung.
 
 ### Geändert
 
@@ -19,10 +21,11 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 - Team-UI mit Rollenvorlagen; `auth.ts`/`userService` über Repositories.
 - Preview-Module nur mit `SHOW_PREVIEW_MODULES=1`.
 - **Performance:** Order-Stats per DB-Aggregation; gebündeltes `findByIds`; Realtime-Polling-Metriken; k6 `dashboard_stats`.
+- Wizard Upgrade/Migration nutzen geführte Update-Pipeline; Installer-Fehlermeldungen.
 
 ### Tests
 
-- E2E `admin-navigation.spec.ts`, `authorization-matrix.test.ts`, Tenant-Guard CI.
+- E2E `admin-navigation.spec.ts`, `authorization-matrix.test.ts`, Tenant-Guard CI, Installer-Ops-Tests.
 
 ---
 

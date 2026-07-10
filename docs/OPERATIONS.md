@@ -48,7 +48,39 @@ Ausführlichere Admin-Themen: [Admin Guide](ADMIN_GUIDE.md) · Einführung ohne 
 
 ## Update durchführen
 
-Reihenfolge einhalten — so bleiben Daten erhalten:
+**Empfohlen (ohne manuelle Docker-Befehle):**
+
+```bash
+cd ~/festschmiede   # oder Ihr Installationsverzeichnis
+./install.sh --update
+```
+
+Der Assistent führt automatisch aus:
+
+1. **Konfigurations-Backup** (`.installer-state/backups/`)
+2. **Datenbank-Backup** (`scripts/backup/postgres-backup.sh`)
+3. **Neue Images** (`docker compose pull`)
+4. **Container neu starten** (Schema-Sync beim Backend-Start)
+5. **Health-Check** (API muss `status: ok` melden)
+6. Bei Fehler: **Rollback** (Config + optional Datenbank)
+
+Vor dem Update nur prüfen (keine Änderungen):
+
+```bash
+./install.sh --validate
+```
+
+Weitere Betriebsbefehle:
+
+| Befehl | Zweck |
+|--------|--------|
+| `./install.sh --backup` | Nur Datenbank-Backup |
+| `./install.sh --repair` | Container neu starten + Health |
+| `./install.sh --validate` | Voraussetzungen prüfen |
+
+Details: [ADR-039 — Guided Operations](architecture/039-guided-operations.md)
+
+### Manuell (Experten)
 
 ```bash
 # 1. Backup (Pflicht!)
@@ -116,6 +148,14 @@ curl -s http://localhost:3001/api/health
 ```
 
 **Restore einmal pro Jahr testen** — z. B. auf einem zweiten Rechner mit Kopie der `.env` und eines Backups.
+
+Backup-Integrität ohne Datenbank zu überschreiben (Dry-Run):
+
+```bash
+DRY_RUN=1 ./scripts/backup/postgres-restore.sh backups/vereinsbestellung-20260709-120000.sql.gz
+```
+
+Erwartete Ausgabe: `DRY_RUN OK: … (gzip gültig)`.
 
 ---
 

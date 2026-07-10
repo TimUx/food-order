@@ -47,6 +47,10 @@ Optionen:
   -d, --dir PATH   Installationsverzeichnis
   -v, --version    Installer-Version anzeigen
   --bootstrap-only Nur Plattform-Dateien herunterladen
+  --update         Geführtes Update (Backup, Migration, Health, Rollback)
+  --repair         Reparatur (Neustart + Health)
+  --backup         Nur Datenbank-Backup
+  --validate       Update-Voraussetzungen prüfen (ohne Änderungen)
 EOF
 }
 
@@ -77,6 +81,10 @@ _parse_args() {
         FESTSCHMIEDE_INSTALL_DIR="${1:?--dir erfordert Pfad}"
         ;;
       --bootstrap-only) export FESTSCHMIEDE_BOOTSTRAP_ONLY=1 ;;
+      --validate-update) export FESTSCHMIEDE_GUIDED_OP=validate ;;
+      --update|--repair|--backup|--validate)
+        export FESTSCHMIEDE_GUIDED_OP="${1#--}"
+        ;;
       *)
         _err "Unbekannte Option: $1"
         _show_help
@@ -174,6 +182,12 @@ _run_installer() {
 main() {
   _parse_args "$@"
 
+  local guided_args=()
+  if [[ -n "${FESTSCHMIEDE_GUIDED_OP:-}" ]]; then
+    guided_args=(--"${FESTSCHMIEDE_GUIDED_OP}")
+    export FESTSCHMIEDE_NONINTERACTIVE="${FESTSCHMIEDE_NONINTERACTIVE:-1}"
+  fi
+
   local local_root=""
   local_root="$(_resolve_local_root 2>/dev/null || true)"
 
@@ -189,7 +203,7 @@ main() {
       _log "Bootstrap abgeschlossen (lokal)"
       exit 0
     fi
-    _run_installer "$target" "$@"
+    _run_installer "$target" "${guided_args[@]}"
     return
   fi
 
@@ -215,7 +229,7 @@ main() {
     exit 0
   fi
 
-  _run_installer "$target" "$@"
+  _run_installer "$target" "${guided_args[@]}"
 }
 
 main "$@"

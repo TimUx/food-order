@@ -5,6 +5,7 @@ set -euo pipefail
 if [[ $# -lt 1 ]]; then
   echo "Verwendung: $0 <backup.sql.gz>" >&2
   echo "Automatisierung: CONFIRM=1 $0 <backup.sql.gz>" >&2
+  echo "Dry-Run:       DRY_RUN=1 $0 <backup.sql.gz>" >&2
   exit 1
 fi
 
@@ -18,6 +19,21 @@ if [[ ! -f "$BACKUP_FILE" ]]; then
   exit 1
 fi
 
+if [[ "${DRY_RUN:-}" == "1" ]]; then
+  if ! gzip -t "$BACKUP_FILE" 2>/dev/null; then
+    echo "Fehler: Backup-Datei ist kein gültiges gzip-Archiv: $BACKUP_FILE" >&2
+    exit 1
+  fi
+  local_size=$(wc -c <"$BACKUP_FILE" | tr -d ' ')
+  if [[ "$local_size" -lt 100 ]]; then
+    echo "Fehler: Backup-Datei ist zu klein (${local_size} Bytes)" >&2
+    exit 1
+  fi
+  echo "DRY_RUN OK: $BACKUP_FILE (${local_size} Bytes, gzip gültig)"
+  echo "Ziel: Container=$CONTAINER DB=$POSTGRES_DB User=$POSTGRES_USER"
+  exit 0
+fi
+
 if [[ "${CONFIRM:-}" != "1" ]]; then
   echo "WARNUNG: Dies überschreibt die Datenbank '${POSTGRES_DB}' im Container '${CONTAINER}'."
   echo "Backup: ${BACKUP_FILE}"
@@ -26,6 +42,11 @@ if [[ "${CONFIRM:-}" != "1" ]]; then
     echo "Abgebrochen."
     exit 1
   fi
+fi
+
+if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
+  echo "Fehler: Postgres-Container '$CONTAINER' läuft nicht." >&2
+  exit 1
 fi
 
 echo "Stelle Datenbank wieder her aus: $BACKUP_FILE"

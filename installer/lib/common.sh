@@ -64,12 +64,16 @@ save_state() {
     echo "WIZARD_STEP=$WIZARD_STEP"
     echo "INSTALL_MODE=$INSTALL_MODE"
     for key in "${!CFG[@]}"; do
+      # Keine Secrets im State-File (nur in .env / credentials.txt)
+      case "$key" in
+        JWT_SECRET|APP_ENCRYPTION_KEY|POSTGRES_PASSWORD|PLATFORM_ADMIN_PASSWORD|*_SECRET|*_PASSWORD|*_KEY)
+          continue
+          ;;
+      esac
       printf 'CFG_%s=%q\n' "$key" "${CFG[$key]}"
     done
-    for key in "${!SECRETS[@]}"; do
-      printf 'SECRET_%s=%q\n' "$key" "${SECRETS[$key]}"
-    done
   } >"$STATE_FILE"
+  chmod 600 "$STATE_FILE" 2>/dev/null || true
 }
 
 load_state() {

@@ -38,7 +38,16 @@ perform_rollback() {
     cp "${backup_path}/compose.override.yml" "${INSTALL_DIR}/installer/generated/compose.override.yml"
 
   log_info "Rollback abgeschlossen – Konfiguration wiederhergestellt"
-  tui_msgbox "Rollback" "Die vorherige Konfiguration wurde wiederhergestellt.\n\nBackup: $backup_path"
+
+  # Stack mit wiederhergestellter Konfiguration starten
+  if [[ -f "${INSTALL_DIR}/.env" ]]; then
+    load_existing_env
+    build_compose_files 2>/dev/null || true
+    compose_up 2>/dev/null || log_warn "compose up nach Rollback fehlgeschlagen — manuell starten"
+  fi
+
+  tui_msgbox "Rollback" "Die vorherige Konfiguration wurde wiederhergestellt.\n\nBackup: $backup_path\n\nContainer wurden neu gestartet." 2>/dev/null || \
+    echo "Rollback abgeschlossen: $backup_path"
   return 0
 }
 
