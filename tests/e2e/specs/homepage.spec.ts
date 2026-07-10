@@ -15,8 +15,8 @@ test.describe('FestSchmiede Homepage (Plattform)', () => {
   });
 
   test('Screenshots-Seite ist responsive sichtbar', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/screenshots');
+    await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByRole('heading', { name: /screenshots/i })).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('img').first()).toBeVisible();
   });

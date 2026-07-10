@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { TENANT_BASE } from '../constants';
 
 test.describe('Authentication', () => {
+  test.use({ baseURL: TENANT_BASE });
   test('login page loads with email field', async ({ page }) => {
     await page.goto('/admin/login');
     await expect(page.getByLabel('E-Mail')).toBeVisible();
