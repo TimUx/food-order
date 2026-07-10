@@ -17,8 +17,10 @@ import { check, sleep } from 'k6';
 
 const API_BASE = __ENV.API_BASE || 'http://localhost:3001/api';
 const FOOD_ITEM_ID = __ENV.FOOD_ITEM_ID || '00000000-0000-0000-0001-000000000001';
-const STAFF_EMAIL = __ENV.STAFF_EMAIL || '';
-const STAFF_PASSWORD = __ENV.STAFF_PASSWORD || '';
+const EVENT_ID = __ENV.EVENT_ID || '00000000-0000-0000-0000-000000000001';
+const STAFF_EMAIL = __ENV.STAFF_EMAIL || 'admin@verein.local';
+const STAFF_PASSWORD = __ENV.STAFF_PASSWORD || 'admin123';
+const EVENT_STATS_THRESHOLD_MS = Number(__ENV.EVENT_STATS_THRESHOLD_MS || 500);
 
 export const options = {
   thresholds: {
@@ -26,6 +28,7 @@ export const options = {
     http_req_duration: ['p(95)<2000'],
     'http_req_duration{scenario:order_load}': ['p(95)<3000'],
     'http_req_duration{scenario:realtime_poll}': ['p(95)<1500'],
+    'http_req_duration{scenario:dashboard_stats}': [`p(95)<${EVENT_STATS_THRESHOLD_MS}`],
   },
   scenarios: {
     health_check: {
@@ -62,6 +65,14 @@ export const options = {
       exec: 'realtimePoll',
       startTime: '15s',
       tags: { scenario: 'realtime_poll' },
+    },
+    dashboard_stats: {
+      executor: 'constant-vus',
+      vus: 20,
+      duration: '1m',
+      exec: 'dashboardStatsPoll',
+      startTime: '20s',
+      tags: { scenario: 'dashboard_stats' },
     },
     login_burst: {
       executor: 'constant-vus',
@@ -129,6 +140,20 @@ export function orderBurst() {
 }
 
 let cachedEtag = '';
+let staffToken = '';
+let cachedStatsEtag = '';
+
+export function setup() {
+  const loginRes = http.post(
+    `${API_BASE}/auth/login`,
+    JSON.stringify({ email: STAFF_EMAIL, password: STAFF_PASSWORD }),
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+  if (loginRes.status === 200) {
+    return { token: loginRes.json('token') };
+  }
+  return { token: '' };
+}
 
 export function realtimePoll() {
   const url = cachedEtag
@@ -145,6 +170,35 @@ export function realtimePoll() {
     cachedEtag = body.etag;
   }
   sleep(1);
+}
+
+export function dashboardStatsPoll(data) {
+  const token = data?.token || staffToken;
+  if (!token) {
+    sleep(1);
+    return;
+  }
+  staffToken = token;
+
+  const url = cachedStatsEtag
+    ? `${API_BASE}/realtime/events/${EVENT_ID}/stats?etag=${encodeURIComponent(cachedStatsEtag)}`
+    : `${API_BASE}/realtime/events/${EVENT_ID}/stats`;
+
+  const res = http.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    tags: { name: 'event_stats' },
+  });
+
+  check(res, {
+    'dashboard stats ok': (r) => r.status === 200,
+    'dashboard stats bounded': (r) => (r.body && r.body.length < 4096) || r.status === 200,
+  });
+
+  const body = res.json();
+  if (body && body.etag) {
+    cachedStatsEtag = body.etag;
+  }
+  sleep(1.5);
 }
 
 export function loginAttempt() {

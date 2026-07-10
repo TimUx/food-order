@@ -10,23 +10,39 @@ Leitfaden für Performance, Lasttests und Skalierung (Phase 9).
 | Gleichzeitige Benutzer | ≥ 250 |
 | WebSocket-Verbindungen | ≥ 500 (Architektur vorbereitet) |
 | API p95 | < 2000 ms |
+| **Event-Dashboard Stats (1000 Orders)** | **< 500 ms** (`EVENT_STATS_THRESHOLD_MS`) |
 | Fehlerrate (Load Test) | < 5 % |
+
+### Eventtag-Dashboard (1000 Bestellungen)
+
+| Metrik | Vorher (geschätzt) | Nachher (Ziel) |
+|--------|-------------------|----------------|
+| `getStats` DB-Queries | 1× `findMany` + alle Items/Orders | 4 Aggregationen + max. 1 FoodItem-Lookup |
+| Payload Stats-Response | wächst mit Order×Items | **bounded** (~2 KB) |
+| Realtime Stats Poll p95 | ungemessen | **< 500 ms** |
+| `_createOrder` FoodItems | N Queries (`findById`) | **1** Batch (`findByIds`) |
+
+Akzeptanz: Nach QA-Seed mit ≥1000 Bestellungen bleibt `/api/realtime/events/:id/stats` unter `EVENT_STATS_THRESHOLD_MS` (Default 500ms).
 
 ## Benchmarks ausführen
 
 ### API-Baseline (Ist-Werte)
 
 ```bash
-# Stack muss laufen
+# Stack muss laufen; optional 1000 Orders seeden:
+cd backend && npx tsx ../scripts/qa/seed-performance-orders.ts 1000
+
 npm run qa:performance
+# Schwellenwert anpassen: EVENT_STATS_THRESHOLD_MS=500
 ```
 
 Ergebnis: `artifacts/performance.json` mit Vorher/Nachher-Vergleich.
 
 Gemessene Endpunkte:
-- `/api/health` (inkl. DB-Latenz)
+- `/api/health` (inkl. DB-Latenz, Realtime-Polling-Metriken)
 - `/api/public/menu`, `/club`, `/event`
 - `/api/realtime/pickup-board` (kalt + ETag)
+- `/api/realtime/events/:eventId/stats` (kalt + ETag, Schwellenwert `EVENT_STATS_THRESHOLD_MS`)
 
 ### k6 Lasttests
 
@@ -48,10 +64,22 @@ Szenarien:
 | `public_api` | 50 | 1m | Öffentliche APIs |
 | `order_load` | 100 | 2m | Bestellungen |
 | `realtime_poll` | 30 | 1m | Küche/Abholmonitor Polling |
+| `dashboard_stats` | 20 | 1m | Event-Dashboard Stats (p95 < 500ms) |
 | `login_burst` | 20 | 30s | Login |
 | `mixed_users` | 250 | 2m | Gemischte Last |
 
 ## Datenbank-Optimierungen
+
+### Order-Dashboard-Aggregationen (`orderStats.ts`)
+
+Statt alle Bestellungen inkl. Positionen zu laden:
+
+1. `groupBy status` — Zähler pro Status
+2. `aggregate _sum totalPrice` — Umsatz
+3. `orderItem.groupBy` — Top-5 Gerichte (LIMIT 5)
+4. `AVG(ready_at - created_at)` — SQL-Aggregat für Küchenzeit
+
+Bounded Response unabhängig von der Order-Anzahl.
 
 Migration `migratePerformanceSchema` (idempotent):
 
@@ -117,7 +145,12 @@ Polling-Intervalle:
 {
   "database": { "ok": true, "latencyMs": 3 },
   "websockets": { "active": 12, "peak": 45 },
-  "performance": { "topEndpoints": [...] }
+  "performance": {
+    "topEndpoints": [...],
+    "realtimePolling": [
+      { "endpoint": "event-stats", "polls": 120, "unchangedRate": 85, "avgMs": 42 }
+    ]
+  }
 }
 ```
 

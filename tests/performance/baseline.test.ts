@@ -11,3 +11,8 @@ test('k6 load test script exists', () => {
   const script = path.resolve(__dirname, '../../scripts/qa/load-test.k6.js');
   expect(fs.existsSync(script)).toBe(true);
 });
+
+test('performance order seed script exists', () => {
+  const script = path.resolve(__dirname, '../../scripts/qa/seed-performance-orders.ts');
+  expect(fs.existsSync(script)).toBe(true);
+});

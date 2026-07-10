@@ -421,8 +421,12 @@ export const orderService = {
       lineTotal: Prisma.Decimal;
     }[] = [];
 
+    const foodItemIds = [...new Set(items.map((i) => i.foodItemId))];
+    const foodItems = await foodItemRepository.findByIds(foodItemIds);
+    const foodItemMap = new Map(foodItems.map((f) => [f.id, f]));
+
     for (const item of items) {
-      const foodItem = await foodItemRepository.findById(item.foodItemId);
+      const foodItem = foodItemMap.get(item.foodItemId);
       if (!foodItem || foodItem.eventId !== eventId) {
         throw new AppError(400, 'Ungültiges Gericht');
       }

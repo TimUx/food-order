@@ -99,6 +99,7 @@ router.get('/health', async (req, res) => {
     performance: {
       slowApiThresholdMs: Number(process.env.SLOW_API_MS ?? 500),
       topEndpoints: performanceMetrics.getApiSummary(5),
+      realtimePolling: performanceMetrics.getRealtimeSummary(5),
     },
   });
 });

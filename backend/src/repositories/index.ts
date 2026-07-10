@@ -107,6 +107,13 @@ export const foodItemRepository = {
   findById: (id: string) =>
     prisma.foodItem.findFirst({ where: tenantWhere({ id }) }),
 
+  findByIds: (ids: string[]) => {
+    if (ids.length === 0) return Promise.resolve([]);
+    return prisma.foodItem.findMany({
+      where: tenantWhere({ id: { in: ids } }),
+    });
+  },
+
   create: (data: Prisma.FoodItemUncheckedCreateWithoutTenantInput) =>
     prisma.foodItem.create({
       data: {
@@ -236,51 +243,8 @@ export const orderRepository = {
   },
 
   getStats: async (eventId: string) => {
-    const orders = await prisma.order.findMany({
-      where: tenantWhere({ eventId, status: { not: StatusCode.CANCELLED } }),
-      include: { items: { include: { foodItem: true } } },
-    });
-
-    const totalOrders = orders.length;
-    const openOrders = orders.filter((o) => ['NEW', 'IN_PROGRESS'].includes(o.status)).length;
-    const readyOrders = orders.filter((o) => o.status === 'READY').length;
-    const pickedUpOrders = orders.filter((o) => o.status === 'PICKED_UP').length;
-    const revenue = orders.reduce((sum, o) => sum + Number(o.totalPrice), 0);
-
-    const foodCounts: Record<string, { name: string; count: number }> = {};
-    for (const order of orders) {
-      for (const item of order.items) {
-        const key = item.foodItemId;
-        if (!foodCounts[key]) {
-          foodCounts[key] = { name: item.foodItem.name, count: 0 };
-        }
-        foodCounts[key].count += item.quantity;
-      }
-    }
-
-    const popularDishes = Object.values(foodCounts)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    const completedOrders = orders.filter((o) => o.readyAt);
-    let avgProcessingMinutes = 0;
-    if (completedOrders.length > 0) {
-      const totalMs = completedOrders.reduce(
-        (sum, o) => sum + (o.readyAt!.getTime() - o.createdAt.getTime()),
-        0
-      );
-      avgProcessingMinutes = Math.round(totalMs / completedOrders.length / 60000);
-    }
-
-    return {
-      totalOrders,
-      openOrders,
-      readyOrders,
-      pickedUpOrders,
-      revenue,
-      popularDishes,
-      avgProcessingMinutes,
-    };
+    const { getOrderEventStats } = await import('./orderStats');
+    return getOrderEventStats(eventId);
   },
 };
 

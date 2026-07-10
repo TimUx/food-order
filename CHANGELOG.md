@@ -3,6 +3,17 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.1 - 2026-07-10
+
+### Performance
+
+- **Order-Dashboard:** `getStats` nutzt DB-Aggregationen statt vollständigem Order-Load (bounded Payload).
+- **Bestellung:** `_createOrder` lädt FoodItems gebündelt (`findByIds`).
+- **Realtime:** Polling-Metriken in `performanceMetrics` + Health-Endpoint.
+- k6-Szenario `dashboard_stats` mit Schwellenwert 500ms (1000 Orders).
+
+---
+
 ## 2.2.1 - 2026-07-10
 
 ### Neu

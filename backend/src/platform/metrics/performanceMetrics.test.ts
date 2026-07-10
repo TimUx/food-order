@@ -26,4 +26,15 @@ describe('performanceMetrics', () => {
     expect(performanceMetrics.isSlowApi(600)).toBe(true);
     expect(performanceMetrics.isSlowApi(100)).toBe(false);
   });
+
+  it('tracks realtime polling with unchanged rate', () => {
+    performanceMetrics.recordRealtimePoll('event-stats', 45, true);
+    performanceMetrics.recordRealtimePoll('event-stats', 120, false);
+    const summary = performanceMetrics.getRealtimeSummary();
+    expect(summary[0]?.endpoint).toBe('event-stats');
+    expect(summary[0]?.polls).toBe(2);
+    expect(summary[0]?.unchanged).toBe(1);
+    expect(summary[0]?.unchangedRate).toBe(50);
+    expect(summary[0]?.avgMs).toBe(83);
+  });
 });
