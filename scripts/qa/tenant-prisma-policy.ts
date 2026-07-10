@@ -27,6 +27,7 @@ export type TenantScopedModel = (typeof TENANT_SCOPED_MODELS)[number];
  */
 export const ALLOWLIST_REPOSITORIES = [
   'backend/src/repositories/index.ts',
+  'backend/src/repositories/orderStats.ts',
   'backend/src/repositories/clubRepository.ts',
   'backend/src/repositories/tenantModuleRepository.ts',
   'backend/modules/payment/repositories/paymentRepository.ts',

@@ -1,9 +1,9 @@
 import { prisma } from '../config/database';
-import { tenantWhere } from './tenant/tenantScope';
 import type { AuditService } from './AuditService';
 import type { ModulePermissionDefinition } from './types';
 import type { ModuleRegistry } from './ModuleRegistry';
 import { AppError } from '../middleware/errorHandler';
+import { userRepository } from '../repositories';
 import {
   CORE_PERMISSION_DEFINITIONS,
   TENANT_ROLE_TEMPLATES,
@@ -92,15 +92,16 @@ export class PermissionService {
   ): Promise<string[]> {
     const desired = this.filterKnownPermissions(permissions);
 
-    const result = await prisma.user.updateMany({
-      where: tenantWhere({ id: userId }),
-      data: {
+    try {
+      await userRepository.update(userId, {
         permissions: desired,
         ...(roleTemplate !== undefined ? { roleTemplate } : {}),
-      },
-    });
-    if (result.count === 0) {
-      throw new AppError(404, 'Benutzer nicht gefunden');
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'Benutzer nicht gefunden') {
+        throw new AppError(404, err.message);
+      }
+      throw err;
     }
 
     await this.auditService.log({
