@@ -45,6 +45,7 @@ services:
       PLATFORM_ADMIN_PASSWORD: qa-docker-ci-platform-admin-password
       MODULES_DIR: /app/modules
       PLUGINS_DIR: /app/plugins
+      MULTI_TENANT_ENABLED: "true"
     ports:
       - "3001:3001"
     healthcheck:
@@ -59,8 +60,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:3001
-        VITE_WS_URL: http://localhost:3001
+        VITE_API_URL: ""
+        VITE_WS_URL: ""
     depends_on:
       backend:
         condition: service_healthy

@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { TENANT_BASE } from '../constants';
 
 const admin = { email: 'admin@verein.local', password: 'admin123' };
 const kitchen = { email: 'kueche@verein.local', password: 'staff123' };
+
+test.use({ baseURL: TENANT_BASE });
 
 test.describe('Administrator', () => {
   test('anmelden und Funktionen-Seite öffnen', async ({ page }) => {
@@ -21,6 +24,7 @@ test.describe('Administrator', () => {
     await page.getByRole('button', { name: /anmelden/i }).click();
     await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 15_000 });
     await page.goto('/admin/benutzer');
+    await expect(page).toHaveURL(/\/admin\/benutzer/, { timeout: 15_000 });
     await expect(page.getByRole('heading', { name: /team/i }).first()).toBeVisible({ timeout: 30_000 });
     await page.goto('/admin/verein');
     await expect(page.getByText(/veranstalter|verein/i).first()).toBeVisible({ timeout: 30_000 });

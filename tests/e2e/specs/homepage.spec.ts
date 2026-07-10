@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('FestSchmiede Homepage (Plattform)', () => {
-  // CI nutzt Default-Mandant auf localhost; www.localhost liefert Plattform-Marketing.
-  test.use({ extraHTTPHeaders: { Host: 'www.localhost' } });
   test('Landingpage zeigt Hero und Navigation', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /veranstaltungen organisieren/i })).toBeVisible({ timeout: 30_000 });

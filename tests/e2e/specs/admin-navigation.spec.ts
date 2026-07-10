@@ -1,6 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
+import { TENANT_BASE } from '../constants';
 
 const admin = { email: 'admin@verein.local', password: 'admin123' };
+
+test.use({ baseURL: TENANT_BASE });
 
 function drawerLink(page: Page, name: string) {
   return page.locator('.MuiDrawer-paper').getByRole('link', { name, exact: true });
