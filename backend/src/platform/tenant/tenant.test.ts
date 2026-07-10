@@ -185,6 +185,11 @@ describe('TenantResolver', () => {
   });
 
   it('falls back to default tenant on localhost when multi-tenant is disabled', async () => {
+    platformContext.initialize({
+      ...DEFAULT_PLATFORM_CONTEXT,
+      baseDomain: 'localhost',
+      pathPrefixRoutingEnabled: false,
+    });
     resolver = new TenantResolver(tenantService, platformContext, {
       multiTenantEnabled: false,
       defaultTenantSlug: 'default',

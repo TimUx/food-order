@@ -66,7 +66,7 @@ export class TenantApplicationService {
     if (!subdomain || subdomain.length < 3) {
       throw new AppError(400, 'Bitte eine gültige Subdomain (mind. 3 Zeichen) angeben.');
     }
-    if (platform.reservedSubdomains.includes(subdomain)) {
+    if ((platform.reservedSubdomains ?? []).includes(subdomain)) {
       throw new AppError(400, 'Diese Subdomain ist reserviert.');
     }
 

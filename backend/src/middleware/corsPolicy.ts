@@ -2,6 +2,10 @@ import type { CorsOptions } from 'cors';
 import { config } from '../config';
 import type { PlatformContextData } from '../platform/tenant/types';
 
+function isProductionEnv(): boolean {
+  return (process.env.NODE_ENV || 'development') === 'production';
+}
+
 export interface CorsPolicySnapshot {
   explicitOrigins: string[];
   baseDomain: string;
@@ -36,7 +40,7 @@ function originHost(origin: string): string | null {
 class CorsPolicy {
   private explicitOrigins: string[] = [];
   private baseDomain = config.multiTenant.baseDomain;
-  private allowWildcardSubdomains = config.nodeEnv !== 'production';
+  private allowWildcardSubdomains = !isProductionEnv();
 
   constructor() {
     this.explicitOrigins = [config.corsOrigin];
@@ -54,7 +58,7 @@ class CorsPolicy {
     }
     if (typeof networkSettings?.allowWildcardSubdomains === 'boolean') {
       this.allowWildcardSubdomains = networkSettings.allowWildcardSubdomains;
-    } else if (config.nodeEnv === 'production') {
+    } else if (isProductionEnv()) {
       this.allowWildcardSubdomains = false;
     }
   }
@@ -69,7 +73,7 @@ class CorsPolicy {
 
   /** Produktionsfehlkonfigurationen — leeres Array = OK. */
   validateProductionConfig(): string[] {
-    if (config.nodeEnv !== 'production') return [];
+    if (!isProductionEnv()) return [];
 
     const errors: string[] = [];
     const { explicitOrigins, baseDomain, allowWildcardSubdomains } = this.snapshot();
@@ -119,7 +123,7 @@ class CorsPolicy {
     }
 
     if (this.explicitOrigins.includes('*')) {
-      return config.nodeEnv !== 'production';
+      return !isProductionEnv();
     }
 
     try {
@@ -127,7 +131,7 @@ class CorsPolicy {
       const host = url.hostname.toLowerCase();
 
       if (isLocalhostHost(host)) {
-        return config.nodeEnv !== 'production' || this.explicitOrigins.includes(origin);
+        return !isProductionEnv() || this.explicitOrigins.includes(origin);
       }
 
       if (this.allowWildcardSubdomains) {
@@ -153,7 +157,7 @@ class CorsPolicy {
 
   socketOrigins(): string[] | boolean {
     if (this.explicitOrigins.includes('*')) {
-      return config.nodeEnv !== 'production';
+      return !isProductionEnv();
     }
     return this.explicitOrigins;
   }

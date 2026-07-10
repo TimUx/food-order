@@ -1,5 +1,8 @@
-import { config } from './index';
 import { corsPolicy } from '../middleware/corsPolicy';
+
+function isProductionEnv(): boolean {
+  return (process.env.NODE_ENV || 'development') === 'production';
+}
 
 const INSECURE_JWT_SECRETS = new Set([
   'dev-secret-change-in-production',
@@ -28,7 +31,7 @@ const INSECURE_POSTGRES_PASSWORDS = new Set([
 
 /** Verhindert Produktionsstart mit Default-Secrets (K4). */
 export function assertProductionSecrets(): void {
-  if (config.nodeEnv !== 'production') return;
+  if (!isProductionEnv()) return;
 
   const jwt = process.env.JWT_SECRET || '';
   if (!jwt || jwt.length < 32 || INSECURE_JWT_SECRETS.has(jwt)) {
@@ -69,7 +72,7 @@ export function assertProductionSecrets(): void {
 
 /** Verhindert Produktionsstart mit unsicherer CORS-Konfiguration. */
 export function assertProductionCors(): void {
-  if (config.nodeEnv !== 'production') return;
+  if (!isProductionEnv()) return;
 
   const errors = corsPolicy.validateProductionConfig();
   if (errors.length > 0) {

@@ -286,8 +286,11 @@ export function applyDomainConfigToPlatformContext(
   };
 }
 
-export function getDomainPublicView(ctx: PlatformContextData): PlatformDomainConfig {
+export function getDomainPublicView(ctx: PlatformContextData | undefined): PlatformDomainConfig {
   const domains = loadDomainConfigFromEnv();
+  if (!ctx) {
+    return domains;
+  }
   return {
     ...domains,
     baseDomain: ctx.baseDomain,
