@@ -111,6 +111,24 @@ prisma.user.findMany({ where: tenantWhere({ active: true }) });
 prisma.event.create({ data: withTenantId({ name: 'Sommerfest', date: new Date() }) });
 ```
 
+### Tenant-Regeln (CI-Guard)
+
+**Nie** direkt `prisma.order`, `prisma.user`, `prisma.event`, … in Services oder Controllern – nutze die Repositories unter `src/repositories/` bzw. Modul-Repositories.
+
+```bash
+# CI prüft tenant-scoped Prisma-Zugriffe
+npm run qa:tenant-guard
+```
+
+| Erlaubt | Beispiel |
+|---------|----------|
+| Repository-Schicht | `orderRepository.findById(id)` |
+| Platform-Admin | `prisma.user.count({ where: { tenantId } })` in `PlatformTenantAdminService` |
+| Scoped Service (Allowlist) | `realtimeSyncService` mit `tenantWhere()` |
+| Entwicklung | `npx prisma db push` (nicht Produktion) |
+
+Neue Allowlist-Einträge nur mit Begründung in `scripts/qa/tenant-prisma-policy.ts` und ADR 040. Ungescopte Queries brechen CI – siehe `scripts/qa/fixtures/tenant-guard-violation.ts` (negative Fixture).
+
 Beim App-Start: `ensureDefaultTenant()` → `migrateMultiTenantSchema()` (idempotent, Marker in `platform_settings`).
 
 

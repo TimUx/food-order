@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import { RoleName } from '@prisma/client';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
-import { tenantWhere } from '../platform/tenant/tenantScope';
 import { prisma } from '../config/database';
 
 function mapUser(user: {
@@ -82,9 +81,7 @@ export const userService = {
     }
 
     if (data.role && data.role !== 'ADMIN' && user.role.name === 'ADMIN') {
-      const adminCount = await prisma.user.count({
-        where: tenantWhere({ active: true, role: { name: RoleName.ADMIN } }),
-      });
+      const adminCount = await userRepository.countActiveAdmins();
       if (adminCount <= 1) {
         throw new AppError(400, 'Der letzte Administrator kann nicht herabgestuft werden');
       }

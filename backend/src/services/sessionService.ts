@@ -4,6 +4,7 @@ import { config } from '../config';
 import { prisma } from '../config/database';
 import { AuthPayload } from '../middleware/platformAuth';
 import { AppError } from '../middleware/errorHandler';
+import { assertTenantOwnership, optionalTenantId } from '../platform/tenant/tenantScope';
 
 const REFRESH_TOKEN_BYTES = 32;
 const REFRESH_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
@@ -75,6 +76,8 @@ export const sessionService = {
     if (!session.user.active) {
       throw new AppError(401, 'Benutzer deaktiviert');
     }
+    const tenantId = optionalTenantId();
+    if (tenantId) assertTenantOwnership(session.user.tenantId);
 
     const newRefreshToken = crypto.randomBytes(REFRESH_TOKEN_BYTES).toString('hex');
     const newRefreshTokenHash = hashRefreshToken(newRefreshToken);
@@ -148,6 +151,8 @@ export const sessionService = {
     if (!session || session.revokedAt || session.expiresAt < new Date()) {
       return false;
     }
+    const tenantId = optionalTenantId();
+    if (tenantId) assertTenantOwnership(session.user.tenantId);
     return session.user.active;
   },
 };

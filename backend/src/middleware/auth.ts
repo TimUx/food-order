@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { prisma } from '../config/database';
 import { AppError } from './errorHandler';
-import { tenantWhere, optionalTenantId } from '../platform/tenant/tenantScope';
+import { optionalTenantId } from '../platform/tenant/tenantScope';
 import { parsePermissionKeys } from '../platform/permissions';
+import { userRepository } from '../repositories';
 import type { AuthPayload } from './platformAuth';
 
 export type { AuthPayload, ImpersonationMeta } from './platformAuth';
@@ -91,10 +91,7 @@ export async function loadUser(req: AuthRequest, _res: Response, next: NextFunct
     return;
   }
 
-  const user = await prisma.user.findFirst({
-    where: tenantWhere({ id: req.user.userId }),
-    include: { role: true },
-  });
+  const user = await userRepository.findById(req.user.userId);
   if (!user || !user.active) {
     next(new AppError(401, 'Benutzer nicht gefunden oder deaktiviert'));
     return;

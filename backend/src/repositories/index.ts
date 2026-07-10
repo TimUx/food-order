@@ -44,6 +44,11 @@ export const userRepository = {
     if (!user) throw new Error('Benutzer nicht gefunden');
     return user;
   },
+
+  countActiveAdmins: () =>
+    prisma.user.count({
+      where: tenantWhere({ active: true, role: { name: 'ADMIN' } }),
+    }),
 };
 
 export const eventRepository = {

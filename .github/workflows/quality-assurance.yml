@@ -46,6 +46,9 @@ jobs:
       - name: ESLint
         run: npm run qa:lint
 
+      - name: Tenant Prisma guard
+        run: npm run qa:tenant-guard
+
       - name: TypeScript Build
         run: npm run qa:typecheck
 
