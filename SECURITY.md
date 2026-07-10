@@ -74,10 +74,10 @@ Ausführlich: [OPERATIONS.md — Secret-Rotation](docs/OPERATIONS.md#secret-rota
 | Verschlüsselte Modul-Settings (AES-256-GCM) | ✅ |
 | Upload: MIME-Whitelist, Größenlimit, Tenant-Pfad, Re-Encoding | ✅ |
 | Helmet Security Headers | ✅ |
-| CORS Allowlist + Prod-Validierung | ✅ ADR-039 |
+| CORS Allowlist + Prod-Validierung | ✅ ADR-045 |
 | Audit-Log Redaction bei DB-Fallback | ✅ Phase 8 |
 | OpenAPI in Produktion deaktiviert | ✅ Phase 8 |
-| Impersonation: Session-Check, 30min TTL, Audit Start+Ende | ✅ ADR-039 |
+| Impersonation: Session-Check, 30min TTL, Audit Start+Ende | ✅ ADR-045 |
 
 ## Session & Token
 
@@ -96,8 +96,8 @@ Ausführlich: [OPERATIONS.md — Secret-Rotation](docs/OPERATIONS.md#secret-rota
 | Tenant-isolierter Speicherpfad | ✅ |
 | Cross-Tenant-Download blockiert | ✅ Phase 8 |
 | Bild-Re-Encoding (Metadaten-Stripping) | ✅ |
-| Content-Length-Prüfung vor Multer | ✅ ADR-039 |
-| Optionaler AV-Hook (`UPLOAD_AV_HOOK`) | ✅ ADR-039 |
+| Content-Length-Prüfung vor Multer | ✅ ADR-045 |
+| Optionaler AV-Hook (`UPLOAD_AV_HOOK`) | ✅ ADR-045 |
 
 ## OWASP Top 10 — Bewertung
 
@@ -118,6 +118,6 @@ Ausführlich: [OPERATIONS.md — Secret-Rotation](docs/OPERATIONS.md#secret-rota
 
 - [PHASE_8_COMPLETION_REPORT](docs/architecture/archive/PHASE_8_COMPLETION_REPORT.md)
 - [ADR-029](docs/architecture/029-multi-tenant-security-hardening.md)
-- [ADR-039](docs/architecture/039-security-hardening-baseline.md)
+- [ADR-045](docs/architecture/045-security-hardening-baseline.md)
 - [OPERATIONS.md](docs/OPERATIONS.md)
 - [NOTIFICATION_GUIDE](docs/NOTIFICATION_GUIDE.md)

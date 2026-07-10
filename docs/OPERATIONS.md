@@ -78,7 +78,7 @@ Weitere Betriebsbefehle:
 | `./install.sh --repair` | Container neu starten + Health |
 | `./install.sh --validate` | Voraussetzungen prüfen |
 
-Details: [ADR-039 — Guided Operations](architecture/039-guided-operations.md)
+Details: [ADR-044 — Guided Operations](architecture/044-guided-operations.md)
 
 ### Manuell (Experten)
 
