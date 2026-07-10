@@ -49,7 +49,19 @@ Bitte melden Sie Sicherheitslücken **nicht** öffentlich als Issue.
 | `POSTGRES_PASSWORD` | Stark, nicht `festschmiede` |
 | `TURNSTILE_SECRET_KEY` | Empfohlen für öffentliche Bestellungen |
 
-`assertProductionSecrets()` blockiert Start ohne gültige JWT/Encryption/Platform-Admin-Passwörter.
+`assertProductionSecrets()` blockiert Start ohne gültige JWT/Encryption/Platform-Admin-/Postgres-Passwörter.  
+`assertProductionCors()` blockiert Start bei Wildcard-CORS oder fehlenden HTTPS-Origins (nach Plattform-Bootstrap).
+
+### Secret-Rotation
+
+| Secret | Rotation | Hinweis |
+|--------|----------|---------|
+| `JWT_SECRET` | Alle Sessions invalidieren | Benutzer neu anmelden; geplantes Wartungsfenster |
+| `APP_ENCRYPTION_KEY` | Daten re-encrypt | Modul-Settings mit `migrateLegacySecrets`; Backup vorher |
+| `PLATFORM_ADMIN_PASSWORD` | Plattform-Login | In `.env` ändern, Container neu starten |
+| `POSTGRES_PASSWORD` | DB + `DATABASE_URL` | Backup, Passwort in Postgres + `.env`, Stack neu starten |
+
+Ausführlich: [OPERATIONS.md — Secret-Rotation](docs/OPERATIONS.md#secret-rotation)
 
 ## Schutzmaßnahmen
 
@@ -62,10 +74,10 @@ Bitte melden Sie Sicherheitslücken **nicht** öffentlich als Issue.
 | Verschlüsselte Modul-Settings (AES-256-GCM) | ✅ |
 | Upload: MIME-Whitelist, Größenlimit, Tenant-Pfad, Re-Encoding | ✅ |
 | Helmet Security Headers | ✅ |
-| CORS Allowlist + Wildcard-Subdomains | ✅ |
+| CORS Allowlist + Prod-Validierung | ✅ ADR-039 |
 | Audit-Log Redaction bei DB-Fallback | ✅ Phase 8 |
 | OpenAPI in Produktion deaktiviert | ✅ Phase 8 |
-| Impersonation: Session-Check, 30min TTL | ✅ Phase 8 |
+| Impersonation: Session-Check, 30min TTL, Audit Start+Ende | ✅ ADR-039 |
 
 ## Session & Token
 
@@ -84,6 +96,8 @@ Bitte melden Sie Sicherheitslücken **nicht** öffentlich als Issue.
 | Tenant-isolierter Speicherpfad | ✅ |
 | Cross-Tenant-Download blockiert | ✅ Phase 8 |
 | Bild-Re-Encoding (Metadaten-Stripping) | ✅ |
+| Content-Length-Prüfung vor Multer | ✅ ADR-039 |
+| Optionaler AV-Hook (`UPLOAD_AV_HOOK`) | ✅ ADR-039 |
 
 ## OWASP Top 10 — Bewertung
 
@@ -93,7 +107,7 @@ Bitte melden Sie Sicherheitslücken **nicht** öffentlich als Issue.
 | Cryptographic Failures | Secrets-Pflicht, bcrypt, AES-GCM |
 | Injection | Prisma ORM, Zod-Validierung, Template-Escaping |
 | Insecure Design | Tenant-First-Architektur |
-| Security Misconfiguration | Prod-Secret-Guards, OpenAPI off |
+| Security Misconfiguration | Prod-Secret- + CORS-Guards, Security-Header-Baseline |
 | Vulnerable Components | `npm audit` in CI |
 | Auth Failures | Sessions, Rate Limits, Passwort min. 8 |
 | Software/Data Integrity | Webhook-Signaturen |
@@ -104,5 +118,6 @@ Bitte melden Sie Sicherheitslücken **nicht** öffentlich als Issue.
 
 - [PHASE_8_COMPLETION_REPORT](docs/architecture/PHASE_8_COMPLETION_REPORT.md)
 - [ADR-029](docs/architecture/029-multi-tenant-security-hardening.md)
+- [ADR-039](docs/architecture/039-security-hardening-baseline.md)
 - [OPERATIONS.md](docs/OPERATIONS.md)
 - [NOTIFICATION_GUIDE](docs/NOTIFICATION_GUIDE.md)

@@ -4,12 +4,13 @@ import { config } from './config';
 import { disconnectPrisma } from './config/database';
 import { initSocket } from './socket';
 import { logger } from './utils/logger';
-import { assertProductionSecrets } from './config/security';
+import { assertProductionSecrets, assertProductionCors } from './config/security';
 import { moduleManager } from './platform/bootstrap';
 
 async function start() {
   assertProductionSecrets();
   await bootstrapApp();
+  assertProductionCors();
 
   const server = http.createServer(app);
   initSocket(server);

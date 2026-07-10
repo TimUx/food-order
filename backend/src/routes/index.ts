@@ -43,6 +43,7 @@ import {
 } from '../validation/schemas';
 
 import { uploadService } from '../services/uploadService';
+import { assertUploadContentLength } from '../middleware/uploadGuards';
 import { loginRateLimiter, magicLinkRateLimiter, publicOrderRateLimiter, lookupRateLimiter, authRefreshRateLimiter, uploadRateLimiter, paymentPublicRateLimiter, tenantApplicationRateLimiter } from '../middleware/rateLimit';
 import { setupController } from '../controllers/setupController';
 import { config } from '../config';
@@ -168,7 +169,7 @@ router.post('/staff/events/:eventId/food-items', requirePermissionKey('food.edit
 router.put('/staff/food-items/:id', requirePermissionKey('food.edit'), validateParams(idParamSchema), validateBody(updateFoodItemSchema), foodItemController.update);
 router.delete('/staff/food-items/:id', requirePermissionKey('food.edit'), validateParams(idParamSchema), foodItemController.delete);
 
-router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), uploadRateLimiter, validateParams(idParamSchema), upload.single('image'), async (req, res, next) => {
+router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), uploadRateLimiter, validateParams(idParamSchema), assertUploadContentLength(), upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -201,7 +202,7 @@ router.get('/realtime/club', realtimeController.syncClub);
 
 router.get('/staff/club', requirePermissionKey('settings.club'), clubController.get);
 router.put('/staff/club', requirePermissionKey('settings.club'), validateBody(updateClubSchema), clubController.update);
-router.post('/staff/club/logo', requirePermissionKey('settings.club'), uploadRateLimiter, upload.single('image'), async (req, res, next) => {
+router.post('/staff/club/logo', requirePermissionKey('settings.club'), uploadRateLimiter, assertUploadContentLength(), upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -232,7 +233,7 @@ router.put('/admin/email-settings', validateBody(updateEmailSettingsSchema), (re
   res.set('Link', '</api/admin/settings/module.notifications>; rel="successor-version"');
   return clubController.updateEmailSettings(req, res, next);
 });
-router.post('/admin/club/logo', requirePermissionKey('settings.club'), upload.single('image'), async (req, res, next) => {
+router.post('/admin/club/logo', requirePermissionKey('settings.club'), assertUploadContentLength(), upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });

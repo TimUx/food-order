@@ -1,38 +1,84 @@
-import { Alert, Button, Box } from '@mui/material';
+import { useState } from 'react';
+import { Alert, Button, Box, CircularProgress } from '@mui/material';
 import { useRouting } from '@/contexts/RoutingProvider';
 import {
   IMPERSONATION_META_KEY,
   PLATFORM_SESSION_BACKUP_KEY,
   PLATFORM_TOKEN_KEY,
   PLATFORM_REFRESH_KEY,
+  platformApi,
 } from '@/services/platformApi';
+
+interface ImpersonationMeta {
+  id?: string;
+  name?: string;
+  platformSessionId?: string;
+}
 
 export function ImpersonationBanner() {
   const { routing } = useRouting();
+  const [ending, setEnding] = useState(false);
   const metaRaw = localStorage.getItem(IMPERSONATION_META_KEY);
   if (!metaRaw) return null;
 
-  let tenantName = 'Mandant';
+  let meta: ImpersonationMeta = {};
   try {
-    const meta = JSON.parse(metaRaw) as { name?: string };
-    tenantName = meta.name ?? tenantName;
-  } catch { /* ignore */ }
+    meta = JSON.parse(metaRaw) as ImpersonationMeta;
+  } catch {
+    /* ignore */
+  }
 
-  const endImpersonation = () => {
-    const backupRaw = localStorage.getItem(PLATFORM_SESSION_BACKUP_KEY);
-    localStorage.removeItem(IMPERSONATION_META_KEY);
-    localStorage.removeItem('verein_token');
-    localStorage.removeItem('verein_refresh_token');
+  const tenantName = meta.name ?? 'Mandant';
 
-    if (backupRaw) {
-      try {
-        const backup = JSON.parse(backupRaw) as { platformToken?: string; platformRefresh?: string };
-        if (backup.platformToken) localStorage.setItem(PLATFORM_TOKEN_KEY, backup.platformToken);
-        if (backup.platformRefresh) localStorage.setItem(PLATFORM_REFRESH_KEY, backup.platformRefresh);
-      } catch { /* ignore */ }
+  const endImpersonation = async () => {
+    if (ending) return;
+    setEnding(true);
+
+    try {
+      const backupRaw = localStorage.getItem(PLATFORM_SESSION_BACKUP_KEY);
+      let platformToken = '';
+      let platformRefresh = '';
+      if (backupRaw) {
+        try {
+          const backup = JSON.parse(backupRaw) as {
+            platformToken?: string;
+            platformRefresh?: string;
+          };
+          platformToken = backup.platformToken ?? '';
+          platformRefresh = backup.platformRefresh ?? '';
+        } catch {
+          /* ignore */
+        }
+      }
+
+      if (platformToken && meta.platformSessionId) {
+        try {
+          const result = await platformApi.endImpersonation(
+            platformToken,
+            meta.platformSessionId
+          );
+          platformToken = result.token;
+        } catch {
+          // Audit-Ende optional bei abgelaufener Session — lokale Session trotzdem beenden
+        }
+      }
+
+      localStorage.removeItem(IMPERSONATION_META_KEY);
+      localStorage.removeItem('verein_token');
+      localStorage.removeItem('verein_refresh_token');
+
+      if (platformToken) {
+        localStorage.setItem(PLATFORM_TOKEN_KEY, platformToken);
+      }
+      if (platformRefresh) {
+        localStorage.setItem(PLATFORM_REFRESH_KEY, platformRefresh);
+      }
       localStorage.removeItem(PLATFORM_SESSION_BACKUP_KEY);
+
+      window.location.href = `${routing.platformUrl}/platform`;
+    } finally {
+      setEnding(false);
     }
-    window.location.href = `${routing.platformUrl}/platform`;
   };
 
   return (
@@ -40,12 +86,19 @@ export function ImpersonationBanner() {
       <Alert
         severity="warning"
         action={
-          <Button color="inherit" size="small" onClick={endImpersonation}>
+          <Button
+            color="inherit"
+            size="small"
+            onClick={() => void endImpersonation()}
+            disabled={ending}
+            startIcon={ending ? <CircularProgress size={14} color="inherit" /> : undefined}
+          >
             Impersonation beenden
           </Button>
         }
       >
-        Sie sind als Administrator von „{tenantName}" angemeldet (Impersonation aktiv).
+        Sie sind als Administrator von „{tenantName}" angemeldet (Impersonation aktiv — wird
+        protokolliert).
       </Alert>
     </Box>
   );

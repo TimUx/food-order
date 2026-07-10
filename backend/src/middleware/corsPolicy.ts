@@ -2,13 +2,41 @@ import type { CorsOptions } from 'cors';
 import { config } from '../config';
 import type { PlatformContextData } from '../platform/tenant/types';
 
+export interface CorsPolicySnapshot {
+  explicitOrigins: string[];
+  baseDomain: string;
+  allowWildcardSubdomains: boolean;
+}
+
+function isLocalhostHost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
+function isHttpsOrigin(origin: string): boolean {
+  try {
+    return new URL(origin).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function originHost(origin: string): string | null {
+  try {
+    return new URL(origin).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Zentrale CORS-Policy: Plattformsettings + Wildcard-Subdomains + Dev-Fallback.
+ * In Produktion: kein `*`, keine localhost-Freigabe ohne explizite Origin,
+ * Wildcard-Subdomains nur mit mindestens einer HTTPS-Origin.
  */
 class CorsPolicy {
   private explicitOrigins: string[] = [];
   private baseDomain = config.multiTenant.baseDomain;
-  private allowWildcardSubdomains = true;
+  private allowWildcardSubdomains = config.nodeEnv !== 'production';
 
   constructor() {
     this.explicitOrigins = [config.corsOrigin];
@@ -26,25 +54,86 @@ class CorsPolicy {
     }
     if (typeof networkSettings?.allowWildcardSubdomains === 'boolean') {
       this.allowWildcardSubdomains = networkSettings.allowWildcardSubdomains;
+    } else if (config.nodeEnv === 'production') {
+      this.allowWildcardSubdomains = false;
     }
+  }
+
+  snapshot(): CorsPolicySnapshot {
+    return {
+      explicitOrigins: [...this.explicitOrigins],
+      baseDomain: this.baseDomain,
+      allowWildcardSubdomains: this.allowWildcardSubdomains,
+    };
+  }
+
+  /** Produktionsfehlkonfigurationen — leeres Array = OK. */
+  validateProductionConfig(): string[] {
+    if (config.nodeEnv !== 'production') return [];
+
+    const errors: string[] = [];
+    const { explicitOrigins, baseDomain, allowWildcardSubdomains } = this.snapshot();
+
+    if (explicitOrigins.includes('*')) {
+      errors.push('CORS: Wildcard (*) ist in Produktion nicht erlaubt.');
+    }
+
+    const httpsOrigins = explicitOrigins.filter(isHttpsOrigin);
+    const localhostOnly =
+      explicitOrigins.length > 0 &&
+      explicitOrigins.every((o) => {
+        const host = originHost(o);
+        return host !== null && isLocalhostHost(host);
+      });
+
+    if (isLocalhostHost(baseDomain.toLowerCase())) {
+      errors.push('CORS: PLATFORM_DOMAIN darf in Produktion nicht localhost sein.');
+    }
+
+    if (localhostOnly) {
+      errors.push(
+        'CORS: Nur localhost-Origins konfiguriert — mindestens eine explizite https://-Origin erforderlich.'
+      );
+    }
+
+    if (allowWildcardSubdomains && httpsOrigins.length === 0) {
+      errors.push(
+        'CORS: Wildcard-Subdomains nur mit mindestens einer expliziten HTTPS-Origin erlaubt.'
+      );
+    }
+
+    if (httpsOrigins.length === 0 && !allowWildcardSubdomains) {
+      errors.push(
+        'CORS: Keine gültigen Produktions-Origins — platform.network.corsOrigins mit https://-URLs setzen.'
+      );
+    }
+
+    return errors;
   }
 
   isAllowed(origin: string | undefined): boolean {
     if (!origin) return true;
 
-    if (this.explicitOrigins.includes(origin) || this.explicitOrigins.includes('*')) {
+    if (this.explicitOrigins.includes(origin)) {
       return true;
+    }
+
+    if (this.explicitOrigins.includes('*')) {
+      return config.nodeEnv !== 'production';
     }
 
     try {
       const url = new URL(origin);
       const host = url.hostname.toLowerCase();
 
-      if (host === 'localhost' || host === '127.0.0.1') return true;
+      if (isLocalhostHost(host)) {
+        return config.nodeEnv !== 'production' || this.explicitOrigins.includes(origin);
+      }
 
       if (this.allowWildcardSubdomains) {
-        if (host === this.baseDomain.toLowerCase()) return true;
-        if (host.endsWith(`.${this.baseDomain.toLowerCase()}`)) return true;
+        const base = this.baseDomain.toLowerCase();
+        if (host === base) return true;
+        if (host.endsWith(`.${base}`)) return true;
       }
 
       return false;
@@ -63,7 +152,9 @@ class CorsPolicy {
   }
 
   socketOrigins(): string[] | boolean {
-    if (this.explicitOrigins.includes('*')) return true;
+    if (this.explicitOrigins.includes('*')) {
+      return config.nodeEnv !== 'production';
+    }
     return this.explicitOrigins;
   }
 }

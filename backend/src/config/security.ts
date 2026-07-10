@@ -1,4 +1,5 @@
 import { config } from './index';
+import { corsPolicy } from '../middleware/corsPolicy';
 
 const INSECURE_JWT_SECRETS = new Set([
   'dev-secret-change-in-production',
@@ -16,6 +17,13 @@ const INSECURE_PLATFORM_PASSWORDS = new Set([
   'change-me',
   'admin',
   'password',
+]);
+
+const INSECURE_POSTGRES_PASSWORDS = new Set([
+  'verein_secret',
+  'postgres',
+  'password',
+  'festschmiede',
 ]);
 
 /** Verhindert Produktionsstart mit Default-Secrets (K4). */
@@ -46,4 +54,33 @@ export function assertProductionSecrets(): void {
       'PLATFORM_ADMIN_PASSWORD muss in Produktion gesetzt sein (min. 16 Zeichen, keine Default-Werte).'
     );
   }
+
+  const postgresPassword = process.env.POSTGRES_PASSWORD || '';
+  if (
+    !postgresPassword ||
+    postgresPassword.length < 12 ||
+    INSECURE_POSTGRES_PASSWORDS.has(postgresPassword)
+  ) {
+    throw new Error(
+      'POSTGRES_PASSWORD muss in Produktion stark sein (min. 12 Zeichen, keine Default-Werte).'
+    );
+  }
+}
+
+/** Verhindert Produktionsstart mit unsicherer CORS-Konfiguration. */
+export function assertProductionCors(): void {
+  if (config.nodeEnv !== 'production') return;
+
+  const errors = corsPolicy.validateProductionConfig();
+  if (errors.length > 0) {
+    throw new Error(`Produktions-CORS ungültig:\n- ${errors.join('\n- ')}`);
+  }
+}
+
+/**
+ * Gesamte Produktions-Readiness nach Bootstrap (Secrets + CORS aus Plattformsettings).
+ */
+export function assertProductionConfig(): void {
+  assertProductionSecrets();
+  assertProductionCors();
 }

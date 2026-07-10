@@ -166,10 +166,28 @@ Erwartete Ausgabe: `DRY_RUN OK: … (gzip gültig)`.
 | `POSTGRES_PASSWORD` | Datenbank | Starkes Passwort, nicht `verein_secret` |
 | `JWT_SECRET` | Mitarbeiter-Login | Mind. 32 Zeichen, zufällig |
 | `APP_ENCRYPTION_KEY` | Zahlung/E-Mail in DB | Mind. 32 Zeichen, wenn Module genutzt |
-| `CORS_ORIGIN` | Öffentliche Frontend-URL | Exakt `https://…` in Produktion |
+| `CORS_ORIGIN` | Öffentliche Frontend-URL | In Produktion: `platform.network.corsOrigins` mit `https://…` (kein `*`) |
 | `TURNSTILE_*` | Bot-Schutz Bestellseite | Optional |
+| `UPLOAD_AV_HOOK` | Optionaler Virenscan für Uploads | Pfad zu Skript; Exit 0 = OK |
 
 Vorlage: `.env.example` · `.env` **niemals** committen oder öffentlich teilen.
+
+Der Server startet in Produktion **nicht**, wenn Secrets zu schwach sind oder CORS nur localhost/`*` erlaubt — Fehlermeldung im Backend-Log prüfen.
+
+---
+
+## Secret-Rotation
+
+Vor jeder Rotation: **Datenbank-Backup** (`./scripts/backup/postgres-backup.sh`).
+
+| Secret | Vorgehen |
+|--------|----------|
+| `JWT_SECRET` | Neues Secret in `.env`, `docker compose up -d backend` — alle Mitarbeiter müssen sich neu anmelden |
+| `APP_ENCRYPTION_KEY` | Nur mit Wartungsfenster; verschlüsselte Modul-Settings ggf. neu eingeben oder Migration ausführen |
+| `PLATFORM_ADMIN_PASSWORD` | In `.env` ändern, Backend neu starten |
+| `POSTGRES_PASSWORD` | In Postgres und `.env`/`DATABASE_URL` ändern, Stack neu starten |
+
+CORS-Origins nach Domain-Wechsel in der Plattformverwaltung unter Netzwerk-Einstellungen (`platform.network.corsOrigins`) anpassen — mindestens eine `https://`-URL.
 
 ---
 

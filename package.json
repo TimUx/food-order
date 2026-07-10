@@ -14,7 +14,7 @@
     "qa:seed:nightly": "NODE_PATH=backend/node_modules QA_ORDER_COUNT=1000 npx tsx tests/seeds/qa-seed.ts",
     "qa:module-scenarios": "npx tsx scripts/qa/run-module-scenarios.ts",
     "qa:module-tests": "npx tsx scripts/qa/run-module-tests.ts",
-    "qa:security": "npx tsx scripts/qa/security-audit.ts",
+    "qa:security": "npx tsx scripts/qa/security-audit.ts && vitest run --config tests/vitest.config.ts tests/security",
     "qa:performance": "npx tsx scripts/qa/performance-baseline.ts",
     "qa:load": "k6 run scripts/qa/load-test.k6.js",
     "qa:report": "npx tsx scripts/qa/generate-report.ts",

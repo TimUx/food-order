@@ -186,9 +186,17 @@ export const platformApi = {
   impersonate: (token: string, tenantId: string) =>
     platformRequest<{
       token: string;
-      tenant: { id: string; name: string; slug: string };
+      tenant: { id: string; name: string; slug: string; subdomain: string };
+      impersonation: { platformSessionId: string; tenantId: string; tenantName: string };
       redirectTo: string;
     }>(`/tenants/${tenantId}/impersonate`, { method: 'POST' }, token),
+
+  endImpersonation: (token: string, platformSessionId: string) =>
+    platformRequest<{ token: string }>(
+      '/impersonation/end',
+      { method: 'POST', body: JSON.stringify({ platformSessionId }) },
+      token
+    ),
 
   getSettings: (token: string) =>
     platformRequest<Record<string, unknown>>('/settings', {}, token),

@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
 import routes from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { corsPolicy } from './middleware/corsPolicy';
+import { createSecurityHeadersMiddleware } from './middleware/securityHeaders';
 import { requestContextMiddleware } from './middleware/requestContext';
 import { config } from './config';
 import { moduleManager, createTenantMiddlewareStack, initializeTenantInfrastructure, tenantContext, tenantService } from './platform/bootstrap';
@@ -18,7 +18,7 @@ const trustProxy =
 app.set('trust proxy', trustProxy);
 
 app.use(requestContextMiddleware);
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(createSecurityHeadersMiddleware());
 app.use(cors(corsPolicy.corsOptions()));
 app.use(express.json({
   verify: (req, _res, buf) => {

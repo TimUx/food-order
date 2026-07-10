@@ -51,7 +51,13 @@ export function PlatformTenantsPage() {
     const platformRefresh = localStorage.getItem(PLATFORM_REFRESH_KEY);
     const result = await platformApi.impersonate(token, tenantId);
     localStorage.setItem(PLATFORM_SESSION_BACKUP_KEY, JSON.stringify({ platformToken, platformRefresh }));
-    localStorage.setItem(IMPERSONATION_META_KEY, JSON.stringify(result.tenant));
+    localStorage.setItem(
+      IMPERSONATION_META_KEY,
+      JSON.stringify({
+        ...result.tenant,
+        platformSessionId: result.impersonation.platformSessionId,
+      })
+    );
     localStorage.setItem('verein_token', result.token);
     window.location.href = result.redirectTo;
   };

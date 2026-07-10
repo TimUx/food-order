@@ -5,6 +5,11 @@ import path from 'path';
 import multer from 'multer';
 import { config } from '../config';
 import { AppError } from '../middleware/errorHandler';
+import {
+  cleanupTempScanFile,
+  runOptionalAvScan,
+  writeTempScanFile,
+} from '../middleware/uploadGuards';
 
 const MAX_DIMENSION = 1920;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -63,12 +68,22 @@ export const uploadService = {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
+    let scanPath: string | null = null;
+    if (process.env.UPLOAD_AV_HOOK?.trim()) {
+      scanPath = await writeTempScanFile(file.buffer, prefix);
+      await runOptionalAvScan(scanPath);
+    }
+
     const { buffer, extension } = await this.processImage(file.buffer);
     const safePrefix = prefix.replace(/[^a-z0-9-]/gi, '').slice(0, 32) || 'img';
     const filename = `${safePrefix}-${crypto.randomBytes(8).toString('hex')}.${extension}`;
     const filepath = path.join(uploadDir, filename);
 
     await fs.promises.writeFile(filepath, buffer);
+
+    if (scanPath) {
+      await cleanupTempScanFile(scanPath);
+    }
 
     return {
       filename,

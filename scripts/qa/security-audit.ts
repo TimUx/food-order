@@ -57,6 +57,36 @@ function scanSecrets(): string[] {
   return hits;
 }
 
+function scanMisconfigPatterns(): string[] {
+  const hits: string[] = [];
+  const envExample = path.join(root, '.env.example');
+  if (fs.existsSync(envExample)) {
+    const content = fs.readFileSync(envExample, 'utf8');
+    if (/CORS_ORIGIN=\*/.test(content)) {
+      hits.push('.env.example: CORS_ORIGIN=* ist in Produktion verboten');
+    }
+  }
+
+  const required = [
+    'backend/src/middleware/corsPolicy.ts',
+    'backend/src/middleware/securityHeaders.ts',
+    'backend/src/middleware/uploadGuards.ts',
+    'backend/src/config/security.ts',
+  ];
+  for (const rel of required) {
+    if (!fs.existsSync(path.join(root, rel))) {
+      hits.push(`Fehlende Security-Datei: ${rel}`);
+    }
+  }
+
+  const corsPolicy = fs.readFileSync(path.join(root, 'backend/src/middleware/corsPolicy.ts'), 'utf8');
+  if (!corsPolicy.includes('validateProductionConfig')) {
+    hits.push('corsPolicy.ts: validateProductionConfig fehlt');
+  }
+
+  return hits;
+}
+
 function walk(dir: string, fn: (file: string) => void): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
@@ -72,10 +102,12 @@ function main(): void {
     runAudit(path.join(root, 'frontend'), 'frontend'),
   ];
   const secrets = scanSecrets();
+  const misconfig = scanMisconfigPatterns();
   const report = {
     audits,
     secrets,
-    failed: audits.some((a) => a.high > 0) || secrets.length > 0,
+    misconfig,
+    failed: audits.some((a) => a.high > 0) || secrets.length > 0 || misconfig.length > 0,
   };
   fs.writeFileSync(path.join(artifactsDir, 'security.json'), JSON.stringify(report, null, 2));
   fs.writeFileSync(
