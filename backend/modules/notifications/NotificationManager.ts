@@ -4,9 +4,12 @@ import { orderRepository } from '../../src/repositories';
 import { CORE_CLUB_NAMESPACE } from '../../src/platform/settings/SettingsNamespaces';
 import { formatOrderNumber, formatPrice } from '../../src/utils/helpers';
 import { logger } from '../../src/utils/logger';
+import { requireTenantId } from '../../src/platform/tenant/tenantScope';
 import type { NotificationConfig, NotificationEventType } from './config';
 import { isChannelEnabledForEvent, type NotificationMessage } from './NotificationChannel';
 import { notificationRegistry } from './NotificationRegistry';
+import { notificationDeliveryRepository } from './repositories/notificationDeliveryRepository';
+import { resolveSmtpConfig } from './services/smtpResolver';
 import {
   buildKitchenCompletedMessage,
   buildModuleActivatedMessage,
@@ -99,13 +102,22 @@ class NotificationManager {
     return context.getConfig<NotificationConfig>('notifications');
   }
 
+  private async resolveConfig(context: FeatureContext): Promise<NotificationConfig> {
+    const tenantConfig = await this.loadConfig(context);
+    const smtp = await resolveSmtpConfig(tenantConfig);
+    return {
+      ...tenantConfig,
+      smtp: { ...smtp, enabled: Boolean(smtp.host?.trim()) && smtp.enabled !== false ? true : smtp.enabled },
+    };
+  }
+
   async hasActiveChannel(context: FeatureContext): Promise<boolean> {
-    const config = await this.loadConfig(context);
+    const config = await this.resolveConfig(context);
     return notificationRegistry.getConfigured(config).length > 0;
   }
 
   async runHealthChecks(context: FeatureContext): Promise<Record<string, { ok: boolean; message?: string }>> {
-    const config = await this.loadConfig(context);
+    const config = await this.resolveConfig(context);
     const results: Record<string, { ok: boolean; message?: string }> = {};
     for (const channel of notificationRegistry.getAll()) {
       if (!channel.isConfigured(config)) {
@@ -126,7 +138,7 @@ class NotificationManager {
     if (!channel?.testConnection) {
       return { ok: false, message: 'Kanal nicht gefunden' };
     }
-    const config = await this.loadConfig(context);
+    const config = await this.resolveConfig(context);
     return channel.testConnection(config);
   }
 
@@ -135,16 +147,34 @@ class NotificationManager {
     event: NotificationEventType,
     message: NotificationMessage
   ): Promise<void> {
-    const config = await this.loadConfig(context);
-    const tasks = notificationRegistry.getAll()
+    const config = await this.resolveConfig(context);
+    const tenantId = requireTenantId();
+
+    const tasks = notificationRegistry
+      .getAll()
       .filter((channel) => isChannelEnabledForEvent(config, event, channel.id))
       .filter((channel) => channel.isConfigured(config))
       .map(async (channel) => {
         const result = await channel.send(config, message);
+        const recipient =
+          channel.id === 'email' ? message.recipientEmail ?? undefined : channel.id;
+
+        await notificationDeliveryRepository.log({
+          eventType: event,
+          channelId: channel.id,
+          recipient,
+          status: result.ok ? 'sent' : 'failed',
+          errorMessage: result.ok ? undefined : result.error,
+          smtpSource: channel.id === 'email' ? config.smtp.source : undefined,
+        });
+
         if (result.ok) {
-          logger.info(`Benachrichtigung [${event}/${channel.id}]: ${message.title}`);
+          logger.info(`Benachrichtigung [${event}/${channel.id}]`, { tenant_id: tenantId });
         } else {
-          logger.warn(`Benachrichtigung fehlgeschlagen [${event}/${channel.id}]: ${result.error}`);
+          logger.warn(`Benachrichtigung fehlgeschlagen [${event}/${channel.id}]`, {
+            tenant_id: tenantId,
+            error: result.error,
+          });
         }
       });
     await Promise.allSettled(tasks);
@@ -155,10 +185,11 @@ class NotificationManager {
     if (!email) return;
 
     const club = await loadClubContact(context);
-    const config = await this.loadConfig(context);
+    const config = await this.resolveConfig(context);
     const template = await buildOrderConfirmationMessage(
       toOrderEmailData(payload),
       club,
+      config,
       config.emailCustomText
     );
     await this.dispatch(context, 'orderCreated', {
@@ -174,10 +205,11 @@ class NotificationManager {
     if (!email) return;
 
     const club = await loadClubContact(context);
-    const config = await this.loadConfig(context);
+    const config = await this.resolveConfig(context);
     const template = await buildOrderCancellationMessage(
       toOrderEmailData(payload),
       club,
+      config,
       { initiatedByStaff: Boolean(payload.initiatedByStaff) },
       config.emailCustomText
     );

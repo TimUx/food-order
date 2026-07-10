@@ -34,4 +34,7 @@ USER app
 
 EXPOSE 3001
 
+HEALTHCHECK --interval=15s --timeout=5s --start-period=40s --retries=5 \
+  CMD wget -q --spider http://localhost:3001/api/health || exit 1
+
 CMD ["sh", "-c", "npx prisma db push && node dist/src/index.js"]

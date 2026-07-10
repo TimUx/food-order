@@ -1,17 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
-import { AppError } from './errorHandler';
 import { prisma } from '../config/database';
+import { AppError } from './errorHandler';
+import { tenantWhere, optionalTenantId } from '../platform/tenant/tenantScope';
 import { parsePermissionKeys } from '../platform/permissions';
+import type { AuthPayload } from './platformAuth';
 
-export interface AuthPayload {
-  userId: string;
-  email: string;
-  role: string;
-  permissions?: string[];
-  sessionId?: string;
-}
+export type { AuthPayload, ImpersonationMeta } from './platformAuth';
 
 export interface AuthRequest extends Request {
   user?: AuthPayload;
@@ -28,7 +24,20 @@ export function authenticate(req: AuthRequest, _res: Response, next: NextFunctio
   void (async () => {
     try {
       const payload = jwt.verify(token, config.jwt.secret) as AuthPayload;
-      if (payload.sessionId) {
+      if (payload.scope === 'platform') {
+        next(new AppError(403, 'Plattform-Token nicht für Mandanten-APIs gültig'));
+        return;
+      }
+      if (payload.impersonation) {
+        const { platformSessionService } = await import('../services/platformSessionService');
+        const valid = await platformSessionService.validateSession(
+          payload.impersonation.platformSessionId
+        );
+        if (!valid) {
+          next(new AppError(401, 'Impersonation-Sitzung ungültig oder abgelaufen'));
+          return;
+        }
+      } else if (payload.sessionId) {
         const { sessionService } = await import('../services/sessionService');
         const valid = await sessionService.validateSession(payload.sessionId);
         if (!valid) {
@@ -36,7 +45,18 @@ export function authenticate(req: AuthRequest, _res: Response, next: NextFunctio
           return;
         }
       }
-      req.user = payload;
+
+      const resolvedTenantId = optionalTenantId();
+      if (
+        resolvedTenantId &&
+        payload.tenantId &&
+        payload.tenantId !== resolvedTenantId &&
+        !payload.impersonation
+      ) {
+        next(new AppError(403, 'Token gehört zu einem anderen Mandanten'));
+        return;
+      }
+      req.user = { ...payload, scope: payload.scope ?? 'tenant' };
       next();
     } catch {
       next(new AppError(401, 'Ungültiges oder abgelaufenes Token'));
@@ -63,8 +83,16 @@ export async function loadUser(req: AuthRequest, _res: Response, next: NextFunct
     next();
     return;
   }
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.userId },
+
+  if (req.user.impersonation) {
+    req.user.role = 'ADMIN';
+    req.user.permissions = ['*'];
+    next();
+    return;
+  }
+
+  const user = await prisma.user.findFirst({
+    where: tenantWhere({ id: req.user.userId }),
     include: { role: true },
   });
   if (!user || !user.active) {

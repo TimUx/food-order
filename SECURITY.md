@@ -4,8 +4,8 @@
 
 | Version | Supported |
 |---------|-----------|
+| 2.0.x   | Yes       |
 | 1.5.x   | Yes       |
-| 1.4.x   | Yes       |
 
 ## Reporting a Vulnerability
 
@@ -15,54 +15,94 @@ Bitte melden Sie Sicherheitslücken **nicht** öffentlich als Issue.
 2. Beschreibung, Schritte zur Reproduktion, Auswirkung
 3. Antwort innerhalb von 7 Werktagen
 
-## Sicherheitshinweise für Betreiber
+## Sicherheitsmodell (Multi-Tenant v2.0)
 
-- Setzen Sie `JWT_SECRET` und `APP_ENCRYPTION_KEY` (jeweils min. 32 Zeichen) in Produktion
-- Postgres nicht öffentlich exponieren (Standard in `docker-compose.yml`: nur intern)
-- HTTPS vor der Anwendung terminieren
-- Regelmäßige Backups (`scripts/backup/postgres-backup.sh`) und getestete Wiederherstellung (`scripts/backup/postgres-restore.sh`)
-- `npm audit` und Dependency-Review-Workflow nutzen
-- Demo-Zugangsdaten nach dem Seed **sofort** durch eigene Passwörter ersetzen
-- Betriebshandbuch: [docs/OPERATIONS.md](docs/OPERATIONS.md)
+### Tenant Isolation
 
-## Bekannte Schutzmaßnahmen
+- Alle Datenzugriffe über `tenantWhere()` / `requireTenantId()`
+- Mandanten-Kontext aus Host (Subdomain/Pfad-Präfix) — kein Fallback auf Default-Tenant auf Plattform-Host
+- JWT enthält `tenantId`; Cross-Tenant-Tokens werden abgewiesen
+- Uploads nur bei übereinstimmendem Mandanten-Kontext
+- WebSocket-Räume: `tenant:{id}:…`
 
-- Rate Limiting auf Login und öffentliche Bestellungen
-- Bot-Schutz auf Bestellungen (Honeypot, Timing, optional Cloudflare Turnstile)
-- Socket.IO-Authentifizierung für Mitarbeiter-Räume
-- Stripe-Webhook-Signaturprüfung
-- Verschlüsselte Modul-Settings (AES-256-GCM)
-- Upload-Filter: MIME-Typ-Whitelist, Größenlimit (5 MB), zufällige Dateinamen
+### Plattform vs. Mandant
 
-## Upload-Härtung (Logo & Speisenbilder)
+| Ebene | Auth | APIs |
+|-------|------|------|
+| Plattformadmin | `scope: platform` | `/api/platform/*` |
+| Mandant | `scope: tenant` | `/api/staff/*`, `/api/admin/*` |
+| Öffentlich | Keine / Lookup-Token | `/api/public/*` |
+
+### Host Validation
+
+- `X-Forwarded-Host` nur bei `TRUSTED_PROXY_HOPS > 0`
+- Reverse Proxy muss `X-Forwarded-Host` aus `$host` setzen (nicht client-supplied)
+- Ungültige Hosts → 400
+
+## Pflicht-Secrets in Produktion
+
+| Variable | Anforderung |
+|----------|-------------|
+| `JWT_SECRET` | min. 32 Zeichen, keine Defaults |
+| `APP_ENCRYPTION_KEY` | min. 32 Zeichen, keine Defaults |
+| `PLATFORM_ADMIN_PASSWORD` | min. 16 Zeichen, keine Defaults |
+| `POSTGRES_PASSWORD` | Stark, nicht `festmanager` |
+| `TURNSTILE_SECRET_KEY` | Empfohlen für öffentliche Bestellungen |
+
+`assertProductionSecrets()` blockiert Start ohne gültige JWT/Encryption/Platform-Admin-Passwörter.
+
+## Schutzmaßnahmen
 
 | Maßnahme | Status |
 |----------|--------|
-| MIME-Whitelist (JPEG, PNG, WebP, GIF) | Implementiert |
-| Maximale Dateigröße | 5 MB |
-| Zufällige Speichernamen (UUID) | Implementiert |
-| Bild-Re-Encoding / Stripping von Metadaten | Geplant (M4) |
-| Restriktive `Content-Disposition` / CSP für `/uploads` | Geplant (M4) |
-| Keine Ausführung aus Upload-Verzeichnis | Container läuft als Nicht-Root-User |
+| Rate Limiting (Login, Orders, Lookup, Auth, Upload, Payment, Webhooks) | ✅ |
+| Bot-Schutz (Honeypot, Timing, optional Turnstile) | ✅ |
+| Socket.IO Tenant-Isolation + Session-Validierung | ✅ Phase 8 |
+| Stripe-Webhook-Signaturprüfung | ✅ |
+| Verschlüsselte Modul-Settings (AES-256-GCM) | ✅ |
+| Upload: MIME-Whitelist, Größenlimit, Tenant-Pfad, Re-Encoding | ✅ |
+| Helmet Security Headers | ✅ |
+| CORS Allowlist + Wildcard-Subdomains | ✅ |
+| Audit-Log Redaction bei DB-Fallback | ✅ Phase 8 |
+| OpenAPI in Produktion deaktiviert | ✅ Phase 8 |
+| Impersonation: Session-Check, 30min TTL | ✅ Phase 8 |
 
-**Empfehlung:** Nur vertrauenswürdige Admins dürfen Bilder hochladen; Server nicht ohne HTTPS betreiben.
+## Session & Token
 
-## Session & Token-Lebenszyklus
+- Mitarbeiter-Login: JWT + Refresh-Token (serverseitige Sessions)
+- Session-Revocation über `revoke-all` (tenant-scoped)
+- Impersonation: Plattform-Session muss gültig sein
+- Deaktivierte Benutzer: `loadUser` + Session-Validierung
 
-- Mitarbeiter-Login nutzt **JWT** mit konfigurierbarer Laufzeit (`JWT_EXPIRES_IN`, Standard 8h).
-- Deaktivierte Benutzer werden bei geschützten Routen mit `loadUser` abgewiesen (401), solange ein neuer Request mit gültigem Token erfolgt — **bereits ausgestellte Tokens** bleiben bis Ablauf gültig (Revocation geplant, M3).
-- **Logout** im Frontend entfernt das Token lokal; serverseitige Sperrliste folgt in einer späteren Version.
-- Für sofortigen Entzug bis dahin: Benutzer deaktivieren **und** `JWT_SECRET` rotieren (alle Sessions ungültig — alle müssen sich neu anmelden).
+## Upload-Härtung
 
-## Bestell- und Status-Privacy
+| Maßnahme | Status |
+|----------|--------|
+| MIME-Whitelist (JPEG, PNG, WebP, GIF) | ✅ |
+| Maximale Dateigröße 5 MB | ✅ |
+| Zufällige Speichernamen | ✅ |
+| Tenant-isolierter Speicherpfad | ✅ |
+| Cross-Tenant-Download blockiert | ✅ Phase 8 |
+| Bild-Re-Encoding (Metadaten-Stripping) | ✅ |
 
-- Öffentliche Bestell-URLs und Statusabfragen können personenbezogene Daten enthalten (Name, Bestellinhalt).
-- Lookup per Bestellnummer + Nachname ist rate-limitiert.
-- **Geplant (M2):** Lookup-Token statt erratbarer Order-ID in Kundenlinks.
-- Bestell- und Zahlungs-IDs nicht in öffentlichen Logs oder Screenshots teilen.
-- Abholboard zeigt nur Nummern und Kurzinfo — keine vollständigen Kundendaten.
+## OWASP Top 10 — Bewertung
+
+| Risiko | Status |
+|--------|--------|
+| Broken Access Control | Gehärtet (Phase 8) |
+| Cryptographic Failures | Secrets-Pflicht, bcrypt, AES-GCM |
+| Injection | Prisma ORM, Zod-Validierung, Template-Escaping |
+| Insecure Design | Tenant-First-Architektur |
+| Security Misconfiguration | Prod-Secret-Guards, OpenAPI off |
+| Vulnerable Components | `npm audit` in CI |
+| Auth Failures | Sessions, Rate Limits, Passwort min. 8 |
+| Software/Data Integrity | Webhook-Signaturen |
+| Logging Failures | Redaction, keine Passwörter in Logs |
+| SSRF | Keine User-controlled outbound URLs |
 
 ## Weitere Dokumentation
 
-- [OPERATIONS.md](docs/OPERATIONS.md) — Backup, Restore, Secrets
-- [ROADMAP.md](docs/ROADMAP.md) — geplante Sicherheitsmaßnahmen
+- [PHASE_8_COMPLETION_REPORT](docs/architecture/PHASE_8_COMPLETION_REPORT.md)
+- [ADR-029](docs/architecture/029-multi-tenant-security-hardening.md)
+- [OPERATIONS.md](docs/OPERATIONS.md)
+- [NOTIFICATION_GUIDE](docs/NOTIFICATION_GUIDE.md)

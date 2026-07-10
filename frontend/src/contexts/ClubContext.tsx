@@ -1,46 +1,25 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ClubSettings, DEFAULT_CLUB } from '@/types/club';
-import { api } from '@/services/api';
-import { subscribeClubUpdates } from '@/services/realtime/channels';
+import { useTenant } from '@/contexts/TenantProvider';
 
-interface ClubContextType {
-  club: ClubSettings;
-  loading: boolean;
-  refresh: () => Promise<void>;
-}
-
-const ClubContext = createContext<ClubContextType | null>(null);
-
-export function ClubProvider({ children }: { children: ReactNode }) {
-  const [club, setClub] = useState<ClubSettings>(DEFAULT_CLUB);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = async () => {
-    try {
-      const data = await api.getClub();
-      setClub({ ...DEFAULT_CLUB, ...data });
-    } catch {
-      setClub(DEFAULT_CLUB);
-    }
+function mapTenantToClub(tenant: ReturnType<typeof useTenant>['tenant']): ClubSettings {
+  return {
+    ...DEFAULT_CLUB,
+    clubName: tenant.name,
+    description: tenant.description ?? undefined,
+    contactName: tenant.contactName ?? undefined,
+    email: tenant.email ?? undefined,
+    phone: tenant.phone ?? undefined,
+    address: tenant.address ?? undefined,
+    website: tenant.website ?? undefined,
+    logoUrl: tenant.logoUrl,
   };
-
-  useEffect(() => {
-    refresh().finally(() => setLoading(false));
-    const unsub = subscribeClubUpdates((data) => {
-      setClub({ ...DEFAULT_CLUB, ...data });
-    });
-    return unsub;
-  }, []);
-
-  return (
-    <ClubContext.Provider value={{ club, loading, refresh }}>
-      {children}
-    </ClubContext.Provider>
-  );
 }
 
 export function useClub() {
-  const ctx = useContext(ClubContext);
-  if (!ctx) throw new Error('useClub muss innerhalb von ClubProvider verwendet werden');
-  return ctx;
+  const tenantCtx = useTenant();
+  return {
+    club: mapTenantToClub(tenantCtx.tenant),
+    loading: tenantCtx.loading,
+    refresh: tenantCtx.refresh,
+  };
 }

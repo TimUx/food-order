@@ -1,0 +1,121 @@
+# Produktions-Compose mit Traefik (Wildcard-TLS) – Phase 6
+# Nutzung: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Voraussetzungen:
+# - DNS: <PLATFORM_DOMAIN> + *.<PLATFORM_DOMAIN> → Server-IP (Beispiel: plattform.de)
+# - .env: ACME_EMAIL, PLATFORM_DOMAIN, JWT_SECRET, …
+
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: festmanager-traefik
+    restart: unless-stopped
+    command:
+      - --api.dashboard=false
+      - --ping=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=festmanager_public
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --log.level=INFO
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt_data:/letsencrypt
+    networks:
+      - public
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    networks:
+      - internal
+
+  backend:
+    ports: []
+    expose:
+      - "3001"
+    environment:
+      MULTI_TENANT_ENABLED: ${MULTI_TENANT_ENABLED:-true}
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-localhost}
+      PLATFORM_BASE_DOMAIN: ${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}
+      PLATFORM_WWW_DOMAIN: ${PLATFORM_WWW_DOMAIN:-}
+      PLATFORM_WILDCARD_DOMAIN: ${PLATFORM_WILDCARD_DOMAIN:-}
+      PLATFORM_API_DOMAIN: ${PLATFORM_API_DOMAIN:-}
+      PLATFORM_ALLOWED_ORIGINS: ${PLATFORM_ALLOWED_ORIGINS:-}
+      DEFAULT_TENANT_SLUG: ${DEFAULT_TENANT_SLUG:-default}
+      TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-2}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+      REDIS_URL: ${REDIS_URL:-}
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  frontend:
+    ports: []
+    expose:
+      - "80"
+    networks:
+      - internal
+      - public
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=festmanager_public
+      - traefik.http.routers.festmanager.rule=Host(`${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}`) || HostRegexp(`^[a-z0-9-]+\\.${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}$$`)
+      - traefik.http.routers.festmanager.entrypoints=websecure
+      - traefik.http.routers.festmanager.tls.certresolver=letsencrypt
+      - traefik.http.routers.festmanager.tls.domains[0].main=${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}
+      - traefik.http.routers.festmanager.tls.domains[0].sans=*.${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}
+      - traefik.http.services.festmanager.loadbalancer.server.port=80
+      - traefik.http.middlewares.festmanager-headers.headers.sslredirect=true
+      - traefik.http.middlewares.festmanager-headers.headers.stsSeconds=31536000
+      - traefik.http.routers.festmanager.middlewares=festmanager-headers
+
+  redis:
+    image: redis:7-alpine
+    container_name: festmanager-redis
+    restart: unless-stopped
+    profiles:
+      - redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  public:
+    name: festmanager_public
+  internal:
+    name: festmanager_internal
+    internal: true
+
+volumes:
+  letsencrypt_data:
+  redis_data:

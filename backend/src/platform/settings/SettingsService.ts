@@ -22,6 +22,7 @@ import {
 } from './SettingsEncryption';
 import { CORE_HOOKS } from '../types';
 import type { HookSystem } from '../HookSystem';
+import { tenantCacheKey } from '../tenant/tenantModuleHelpers';
 
 export class SettingsService {
   constructor(
@@ -56,15 +57,16 @@ export class SettingsService {
   }
 
   async getValues(namespace: string, options: SettingsGetOptions = {}): Promise<Record<string, unknown>> {
+    const cacheKey = tenantCacheKey(namespace);
     if (!options.fresh) {
-      const cached = this.cache.get(namespace);
+      const cached = this.cache.get(cacheKey);
       if (cached) return this.sanitizeForOutput(namespace, structuredClone(cached), options);
     }
 
     const store = this.getStore(namespace);
     const raw = await store.load(namespace);
     const withDefaults = this.applyDefaults(namespace, raw);
-    this.cache.set(namespace, withDefaults);
+    this.cache.set(cacheKey, withDefaults);
     return this.sanitizeForOutput(namespace, withDefaults, options);
   }
 
@@ -89,7 +91,7 @@ export class SettingsService {
     this.validation.validate(schema, merged);
 
     await store.save(namespace, this.toStorageShape(namespace, merged));
-    this.cache.invalidate(namespace);
+    this.cache.invalidate(tenantCacheKey(namespace));
 
     await this.auditService.log({
       action: 'settings.updated',

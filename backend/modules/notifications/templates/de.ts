@@ -77,7 +77,7 @@ export const notificationTemplates: Record<NotificationLocale, {
   {{legalNoticeHtml}}
   {{cancellationNoteHtml}}
   <p style="margin-top: 24px;">
-    <a href="{{statusUrl}}" style="display: inline-block; padding: 12px 24px; background: #1976d2; color: #fff; text-decoration: none; border-radius: 4px;">
+    <a href="{{statusUrl}}" style="display: inline-block; padding: 12px 24px; background: {{primaryColor}}; color: #fff; text-decoration: none; border-radius: 4px;">
       Bestellstatus anzeigen / stornieren
     </a>
   </p>
@@ -117,7 +117,7 @@ export const notificationTemplates: Record<NotificationLocale, {
   <h3>Hinweise</h3>
   {{cancellationLegalHtml}}
   <p style="margin-top: 24px;">
-    <a href="{{statusUrl}}" style="display: inline-block; padding: 12px 24px; background: #1976d2; color: #fff; text-decoration: none; border-radius: 4px;">
+    <a href="{{statusUrl}}" style="display: inline-block; padding: 12px 24px; background: {{primaryColor}}; color: #fff; text-decoration: none; border-radius: 4px;">
       Bestellstatus anzeigen
     </a>
   </p>

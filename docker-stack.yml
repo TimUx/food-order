@@ -1,0 +1,138 @@
+# Docker Swarm Stack – FestManager Multi-Tenant (Phase 6)
+# Nutzung: docker stack deploy -c docker-stack.yml festmanager
+#
+# Secrets vorher anlegen:
+#   echo "..." | docker secret create festmanager_jwt_secret -
+#   echo "..." | docker secret create festmanager_db_password -
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: verein
+      POSTGRES_DB: vereinsbestellung
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verein -d vereinsbestellung"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/festmanager}/backend:${IMAGE_TAG:-latest}
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://verein@postgres:5432/vereinsbestellung
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      MULTI_TENANT_ENABLED: "true"
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-localhost}
+      PLATFORM_BASE_DOMAIN: ${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}
+      PLATFORM_WWW_DOMAIN: ${PLATFORM_WWW_DOMAIN:-}
+      PLATFORM_WILDCARD_DOMAIN: ${PLATFORM_WILDCARD_DOMAIN:-}
+      PLATFORM_API_DOMAIN: ${PLATFORM_API_DOMAIN:-}
+      PLATFORM_ALLOWED_ORIGINS: ${PLATFORM_ALLOWED_ORIGINS:-}
+      TRUSTED_PROXY_HOPS: "2"
+      LOG_FORMAT: json
+    secrets:
+      - jwt_secret
+      - db_password
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - internal
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  frontend:
+    image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/festmanager}/frontend:${IMAGE_TAG:-latest}
+    networks:
+      - internal
+      - public
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.festmanager.rule=Host(`${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}`) || HostRegexp(`^[a-z0-9-]+\\.${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}$$`)
+        - traefik.http.routers.festmanager.entrypoints=websecure
+        - traefik.http.routers.festmanager.tls.certresolver=letsencrypt
+        - traefik.http.services.festmanager.loadbalancer.server.port=80
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  traefik:
+    image: traefik:v3.3
+    command:
+      - --providers.swarm=true
+      - --providers.swarm.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+    volumes:
+      - letsencrypt_data:/letsencrypt
+    networks:
+      - public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  public:
+    driver: overlay
+  internal:
+    driver: overlay
+    internal: true
+
+volumes:
+  postgres_data:
+  uploads_data:
+  letsencrypt_data:
+
+secrets:
+  jwt_secret:
+    external: true
+    name: festmanager_jwt_secret
+  db_password:
+    external: true
+    name: festmanager_db_password

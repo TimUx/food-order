@@ -1,5 +1,6 @@
 import { prisma } from '../../../src/config/database';
 import { v4 as uuidv4 } from 'uuid';
+import { requireTenantId } from '../../../src/platform/tenant/tenantScope';
 import type { PaymentStatus } from '../types';
 import { legacyStatusToPaymentStatus, resolvePaymentStatus } from '../types';
 
@@ -42,14 +43,15 @@ export const paymentRepository = {
     metadata?: Record<string, unknown>;
   }): Promise<string> {
     const id = uuidv4();
+    const tenantId = requireTenantId();
     await prisma.$executeRaw`
       INSERT INTO payments (
-        id, resource_type, resource_id, provider_id, external_session_id,
+        id, tenant_id, resource_type, resource_id, provider_id, external_session_id,
         amount_cents, currency, status, payment_status, expires_at,
         payment_reference, metadata
       )
       VALUES (
-        ${id}::uuid, ${data.resourceType}, ${data.resourceId}, ${data.providerId},
+        ${id}::uuid, ${tenantId}, ${data.resourceType}, ${data.resourceId}, ${data.providerId},
         ${data.externalSessionId ?? null}, ${data.amountCents}, ${data.currency},
         'pending', 'CREATED', ${data.expiresAt ?? null},
         ${data.paymentReference ?? null}, ${JSON.stringify(data.metadata ?? {})}::jsonb
@@ -82,29 +84,30 @@ export const paymentRepository = {
     paidAt: Date;
     expiresAt: Date;
   }>): Promise<void> {
+    const tenantId = requireTenantId();
     if (data.status) {
-      await prisma.$executeRaw`UPDATE payments SET status = ${data.status}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET status = ${data.status}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
     if (data.paymentStatus) {
-      await prisma.$executeRaw`UPDATE payments SET payment_status = ${data.paymentStatus}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET payment_status = ${data.paymentStatus}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
     if (data.externalSessionId) {
-      await prisma.$executeRaw`UPDATE payments SET external_session_id = ${data.externalSessionId}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET external_session_id = ${data.externalSessionId}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
     if (data.checkoutReference) {
-      await prisma.$executeRaw`UPDATE payments SET checkout_reference = ${data.checkoutReference}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET checkout_reference = ${data.checkoutReference}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
     if (data.paymentReference) {
-      await prisma.$executeRaw`UPDATE payments SET payment_reference = ${data.paymentReference}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET payment_reference = ${data.paymentReference}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
     if (data.releasedToKitchen !== undefined) {
-      await prisma.$executeRaw`UPDATE payments SET released_to_kitchen = ${data.releasedToKitchen}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET released_to_kitchen = ${data.releasedToKitchen}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
     if (data.paidAt) {
-      await prisma.$executeRaw`UPDATE payments SET paid_at = ${data.paidAt}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET paid_at = ${data.paidAt}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
     if (data.expiresAt) {
-      await prisma.$executeRaw`UPDATE payments SET expires_at = ${data.expiresAt}, updated_at = NOW() WHERE id = ${id}::uuid`;
+      await prisma.$executeRaw`UPDATE payments SET expires_at = ${data.expiresAt}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
     }
   },
 
@@ -122,34 +125,38 @@ export const paymentRepository = {
   },
 
   async findById(id: string): Promise<PaymentRow | null> {
+    const tenantId = requireTenantId();
     const rows = await prisma.$queryRaw<PaymentRow[]>`
       SELECT id, resource_type, resource_id, provider_id, external_session_id,
              amount_cents, currency, status, payment_status, released_to_kitchen,
              paid_at, expires_at, payment_reference, checkout_reference, metadata,
              created_at, updated_at
-      FROM payments WHERE id = ${id}::uuid LIMIT 1
+      FROM payments WHERE id = ${id}::uuid AND tenant_id = ${tenantId} LIMIT 1
     `;
     return rows[0] ?? null;
   },
 
   async findByExternalSessionId(externalId: string): Promise<PaymentRow | null> {
+    const tenantId = requireTenantId();
     const rows = await prisma.$queryRaw<PaymentRow[]>`
       SELECT id, resource_type, resource_id, provider_id, external_session_id,
              amount_cents, currency, status, payment_status, released_to_kitchen,
              paid_at, expires_at, payment_reference, checkout_reference, metadata,
              created_at, updated_at
-      FROM payments WHERE external_session_id = ${externalId} LIMIT 1
+      FROM payments WHERE external_session_id = ${externalId} AND tenant_id = ${tenantId} LIMIT 1
     `;
     return rows[0] ?? null;
   },
 
   async findByResource(resourceType: string, resourceId: string): Promise<PaymentRow | null> {
+    const tenantId = requireTenantId();
     const rows = await prisma.$queryRaw<PaymentRow[]>`
       SELECT id, resource_type, resource_id, provider_id, external_session_id,
              amount_cents, currency, status, payment_status, released_to_kitchen,
              paid_at, expires_at, payment_reference, checkout_reference, metadata,
              created_at, updated_at
       FROM payments WHERE resource_type = ${resourceType} AND resource_id = ${resourceId}
+        AND tenant_id = ${tenantId}
       ORDER BY created_at DESC LIMIT 1
     `;
     return rows[0] ?? null;
@@ -158,11 +165,13 @@ export const paymentRepository = {
   async getReleasedResourceIds(resourceType: string, ids: string[]): Promise<string[]> {
     if (ids.length === 0) return [];
 
+    const tenantId = requireTenantId();
     const rows = await prisma.$queryRaw<Pick<PaymentRow, 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>[]>`
       SELECT DISTINCT ON (resource_id) resource_id, status, payment_status, released_to_kitchen
       FROM payments
       WHERE resource_type = ${resourceType}
         AND resource_id = ANY(${ids})
+        AND tenant_id = ${tenantId}
       ORDER BY resource_id, created_at DESC
     `;
 
@@ -177,10 +186,12 @@ export const paymentRepository = {
   },
 
   async markTimedOutIfPending(id: string): Promise<boolean> {
+    const tenantId = requireTenantId();
     const rows = await prisma.$queryRaw<{ id: string }[]>`
       UPDATE payments
       SET status = 'cancelled', payment_status = 'PAYMENT_TIMEOUT', updated_at = NOW()
       WHERE id = ${id}::uuid
+        AND tenant_id = ${tenantId}
         AND (
           payment_status IN ('CREATED', 'PAYMENT_PENDING')
           OR (payment_status IS NULL AND status = 'pending')
@@ -200,8 +211,11 @@ export const paymentRepository = {
   },
 
   async hasWebhookEvent(externalEventId: string): Promise<boolean> {
+    const tenantId = requireTenantId();
     const rows = await prisma.$queryRaw<{ id: string }[]>`
-      SELECT id FROM payment_events WHERE external_event_id = ${externalEventId} LIMIT 1
+      SELECT id FROM payment_events
+      WHERE external_event_id = ${externalEventId} AND tenant_id = ${tenantId}
+      LIMIT 1
     `;
     return rows.length > 0;
   },
@@ -212,17 +226,19 @@ export const paymentRepository = {
     externalEventId: string;
     payload?: Record<string, unknown>;
   }): Promise<boolean> {
+    const tenantId = requireTenantId();
     const id = uuidv4();
     const rows = await prisma.$queryRaw<{ id: string }[]>`
-      INSERT INTO payment_events (id, payment_id, event_type, external_event_id, payload)
+      INSERT INTO payment_events (id, tenant_id, payment_id, event_type, external_event_id, payload)
       VALUES (
         ${id}::uuid,
+        ${tenantId},
         ${data.paymentId ?? null}::uuid,
         ${data.eventType},
         ${data.externalEventId},
         ${JSON.stringify(data.payload ?? {})}::jsonb
       )
-      ON CONFLICT (external_event_id) DO NOTHING
+      ON CONFLICT (tenant_id, external_event_id) WHERE external_event_id IS NOT NULL DO NOTHING
       RETURNING id
     `;
     return rows.length > 0;
@@ -267,18 +283,19 @@ export const paymentRepository = {
     sandboxReachable?: boolean;
     details?: Record<string, unknown>;
   }): Promise<void> {
+    const tenantId = requireTenantId();
     await prisma.$executeRaw`
       INSERT INTO payment_provider_config (
-        provider_id, enabled, config_valid, api_reachable, webhook_valid,
+        tenant_id, provider_id, enabled, config_valid, api_reachable, webhook_valid,
         sandbox_reachable, last_checked_at, details
       )
       VALUES (
-        ${data.providerId}, ${data.enabled}, ${data.configValid},
+        ${tenantId}, ${data.providerId}, ${data.enabled}, ${data.configValid},
         ${data.apiReachable ?? null}, ${data.webhookValid ?? null},
         ${data.sandboxReachable ?? null}, NOW(),
         ${JSON.stringify(data.details ?? {})}::jsonb
       )
-      ON CONFLICT (provider_id) DO UPDATE SET
+      ON CONFLICT (tenant_id, provider_id) DO UPDATE SET
         enabled = EXCLUDED.enabled,
         config_valid = EXCLUDED.config_valid,
         api_reachable = EXCLUDED.api_reachable,

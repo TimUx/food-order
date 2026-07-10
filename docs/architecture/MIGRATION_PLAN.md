@@ -213,18 +213,57 @@ graph TD
 
 ---
 
-## Nicht-Ziele (explizit)
+## Version 2.0 – Multi-Tenant-Plattform
 
-- Multi-Tenant (mehrere Vereine pro Instanz)
+> **Branch:** `feature/v2-multi-tenant-platform`  
+> **ADRs:** [020](./020-multi-tenant-platform.md) – [027](./027-multi-tenant-deployment.md)  
+> **Abschlussbericht:** [PHASE_0_COMPLETION_REPORT.md](./PHASE_0_COMPLETION_REPORT.md)
+
+### Zielbild v2.0
+
+```
+Eine Installation → beliebig viele Veranstalter → beliebig viele Veranstaltungen → beliebig viele Benutzer
+```
+
+### Phasenplan v2.0
+
+| Phase | Inhalt | Status |
+|-------|--------|--------|
+| **Phase 0** | Architektur, ADRs, Dokumentation | ✅ Abgeschlossen |
+| **Phase 1** | TenantContext, Resolver, Datenmodell, Standard-Mandant-Migration | ✅ Abgeschlossen |
+| **Phase 2** | Plattform-Administration, PlatformSettings, CORS dynamisch | Geplant |
+| **Phase 3** | Subdomain-Routing, Traefik, Wildcard-TLS, TenantProvider | Geplant |
+| **Phase 4** | Modul-Anpassungen, Security-Härtung, Redis-Cache | Geplant |
+| **Phase 5** | Self-Service-Registrierung, Custom Domains, Monitoring | Geplant |
+
+### Phase 1 – Foundation (nächster Schritt)
+
+| # | Maßnahme | ADR | Aufwand |
+|---|----------|-----|---------|
+| 1.1 | `Tenant`, `TenantSettings`, `PlatformSettings` Schema | 024 | M |
+| 1.2 | Standard-Mandant-Migration aus `ClubSettings` | 024 | M |
+| 1.3 | `tenant_id` auf Core-Tabellen | 024 | L |
+| 1.4 | `TenantContext` + Middleware (`AsyncLocalStorage`) | 021 | M |
+| 1.5 | `PlatformContext` + Boot-Cache | 021 | S |
+| 1.6 | `TenantResolver` (Subdomain + Default-Fallback) | 023 | M |
+| 1.7 | Repository-Basisklasse mit `tenant_id`-Filter | 024, 026 | M |
+| 1.8 | Feature-Flag `MULTI_TENANT_ENABLED` | 020 | S |
+
+**Erfolgskriterien:** Bestehende Installation funktioniert unverändert; Standard-Mandant enthält alle Daten; keine Cross-Tenant-Leaks in Tests.
+
+---
+
+## Nicht-Ziele (v1.x, historisch)
+
+- ~~Multi-Tenant (mehrere Vereine pro Instanz)~~ → **v2.0 Ziel**
 - Mobile Native Apps
 - Vollständige PCI-Zertifizierung als Plattform
-- Implementierung in PROMPT 0
 
 ---
 
 ## Nächster empfohlener Schritt
 
-**Phase 1 starten** – insbesondere Entfernung von `backend/src/features/` und Docker-Env-Vervollständigung. Keine funktionalen Änderungen für Endnutzer.
+**v2.0 Phase 1 starten** – TenantContext, Datenmodell und Standard-Mandant-Migration. Siehe [PHASE_0_COMPLETION_REPORT.md](./PHASE_0_COMPLETION_REPORT.md).
 
 ---
 

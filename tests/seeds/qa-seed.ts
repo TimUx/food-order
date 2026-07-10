@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 const prisma = new PrismaClient();
+const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000010';
 
 /**
  * Umfangreicher QA-Seed: Verein, Sommerfest, Benutzer, Speisekarte, Bestellungen, Module.
@@ -25,9 +26,10 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
 
   const adminHash = await bcrypt.hash('admin123', 12);
   await prisma.user.upsert({
-    where: { email: 'admin@verein.local' },
+    where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'admin@verein.local' } },
     update: {},
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       email: 'admin@verein.local',
       passwordHash: adminHash,
       firstName: 'Admin',
@@ -38,9 +40,10 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
 
   const staffHash = await bcrypt.hash('staff123', 12);
   await prisma.user.upsert({
-    where: { email: 'kueche@verein.local' },
+    where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'kueche@verein.local' } },
     update: {},
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       email: 'kueche@verein.local',
       passwordHash: staffHash,
       firstName: 'Küche',
@@ -51,9 +54,10 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
 
   const verkaufHash = await bcrypt.hash('staff123', 12);
   await prisma.user.upsert({
-    where: { email: 'verkauf@verein.local' },
+    where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'verkauf@verein.local' } },
     update: {},
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       email: 'verkauf@verein.local',
       passwordHash: verkaufHash,
       firstName: 'Verkauf',
@@ -68,6 +72,7 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
     update: { isActive: true, onlineOrdersActive: true, cashierActive: true },
     create: {
       id: '00000000-0000-0000-0000-000000000001',
+      tenantId: DEFAULT_TENANT_ID,
       name: 'Sommerfest 2026',
       description: 'Jährliches Vereins-Sommerfest – QA Testdaten',
       date: eventDate,
@@ -94,6 +99,7 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
       update: { active: true, soldOut: false },
       create: {
         id: dish.id,
+        tenantId: DEFAULT_TENANT_ID,
         eventId: event.id,
         name: dish.name,
         description: `${dish.name} – QA`,
@@ -106,10 +112,11 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
   }
 
   await prisma.clubSettings.upsert({
-    where: { id: 'default' },
+    where: { tenantId: DEFAULT_TENANT_ID },
     update: { clubName: 'SV Musterstadt e.V.' },
     create: {
-      id: 'default',
+      id: `club-${DEFAULT_TENANT_ID}`,
+      tenantId: DEFAULT_TENANT_ID,
       clubName: 'SV Musterstadt e.V.',
       description: 'Sportverein Musterstadt – QA',
       contactName: 'Vereinsverwaltung',
@@ -131,6 +138,7 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
     if (i % 3 !== 0) {
       const customer = await prisma.customer.create({
         data: {
+          tenantId: DEFAULT_TENANT_ID,
           firstName: 'Test',
           lastName: `Kunde${i}`,
           email: i % 2 === 0 ? `kunde${i}@example.test` : null,
@@ -141,6 +149,7 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
     await prisma.order.create({
       data: {
         id: orderId,
+        tenantId: DEFAULT_TENANT_ID,
         lookupToken: crypto.randomBytes(32).toString('hex'),
         eventId: event.id,
         orderNumber: i,

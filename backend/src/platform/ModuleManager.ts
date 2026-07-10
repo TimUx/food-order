@@ -1,7 +1,7 @@
 import { Router, RequestHandler } from 'express';
-import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/errorHandler';
+import { tenantModuleRepository } from '../repositories/tenantModuleRepository';
 import type { AuditService } from './AuditService';
 import type { DependencyResolver } from './DependencyResolver';
 import type { FeatureContext } from './types';
@@ -46,23 +46,20 @@ export class ModuleManager {
   }
 
   private async setLifecycleStatus(moduleId: string, status: string | null): Promise<void> {
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { lifecycleStatus: status },
-    });
+    await tenantModuleRepository.update(moduleId, { lifecycleStatus: status });
   }
 
   private async setLastError(moduleId: string, message: string): Promise<void> {
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { lastError: message, lifecycleStatus: 'FAILED' },
+    await tenantModuleRepository.update(moduleId, {
+      lastError: message,
+      lifecycleStatus: 'FAILED',
     });
   }
 
   private async clearLifecycleError(moduleId: string): Promise<void> {
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { lastError: null, lifecycleStatus: null },
+    await tenantModuleRepository.update(moduleId, {
+      lastError: null,
+      lifecycleStatus: null,
     });
   }
 
@@ -76,7 +73,7 @@ export class ModuleManager {
     for (const manifest of manifests) {
       if (!this.deps.moduleRegistry.satisfiesCoreVersion(manifest)) {
         logger.warn(
-          `Modul ${manifest.id} benötigt Core ${manifest.minimumCoreVersion}, aktuell ${process.env.CORE_VERSION ?? '1.0.0'}`
+          `Modul ${manifest.id} benötigt Core ${manifest.minimumCoreVersion}, aktuell ${process.env.CORE_VERSION ?? '2.0.0'}`
         );
         continue;
       }
@@ -90,17 +87,16 @@ export class ModuleManager {
   }
 
   private async ensureDbRow(moduleId: string, version: string): Promise<void> {
-    await prisma.installedModule.upsert({
-      where: { moduleId },
-      create: {
-        moduleId,
+    await tenantModuleRepository.upsert(
+      moduleId,
+      {
         moduleVersion: version,
         imageVersion: version,
         installed: false,
         enabled: false,
       },
-      update: { imageVersion: version },
-    });
+      { imageVersion: version }
+    );
   }
 
   async initialize(): Promise<void> {
@@ -110,8 +106,8 @@ export class ModuleManager {
     await this.logAvailableUpgrades();
 
     for (const mod of this.deps.moduleRegistry.getModules()) {
-      const row = await this.deps.moduleRegistry.getDbRow(mod.id);
-      if (row?.installed && row.enabled && row.lifecycleStatus !== 'FAILED') {
+      if (this.activatedIds.has(mod.id)) continue;
+      if (await tenantModuleRepository.isEnabledForAnyTenant(mod.id)) {
         await this.activateModuleInternal(mod.id, false);
       }
     }
@@ -162,21 +158,15 @@ export class ModuleManager {
         hookSystem.unsubscribe(moduleId);
         this.activatedIds.delete(moduleId);
         featureFlags.set(moduleId, { enabled: false, disabled: true, visible: false });
-        await prisma.installedModule.update({
-          where: { moduleId },
-          data: { enabled: false },
-        });
+        await tenantModuleRepository.update(moduleId, { enabled: false });
       }
 
       await mod.upgrade(featureContext, fromVersion, toVersion);
       await migrationService.runForModule(moduleId);
 
-      await prisma.installedModule.update({
-        where: { moduleId },
-        data: {
-          moduleVersion: toVersion,
-          imageVersion: toVersion,
-        },
+      await tenantModuleRepository.update(moduleId, {
+        moduleVersion: toVersion,
+        imageVersion: toVersion,
       });
 
       if (wasEnabled) {
@@ -189,12 +179,9 @@ export class ModuleManager {
           await this.mountModuleRoutes(moduleId);
         }
         const health = await this.deps.healthService.checkModule(moduleId, mod, featureContext);
-        await prisma.installedModule.update({
-          where: { moduleId },
-          data: {
-            lastHealthStatus: health.status,
-            lastHealthCheck: new Date(),
-          },
+        await tenantModuleRepository.update(moduleId, {
+          lastHealthStatus: health.status,
+          lastHealthCheck: new Date(),
         });
       }
 
@@ -226,8 +213,7 @@ export class ModuleManager {
   private async mountInstalledConfigRoutes(): Promise<void> {
     const { moduleRegistry } = this.deps;
     for (const mod of moduleRegistry.getModules()) {
-      const row = await moduleRegistry.getDbRow(mod.id);
-      if (row?.installed) {
+      if (await tenantModuleRepository.isInstalledForAnyTenant(mod.id)) {
         await this.mountModuleConfigRoutes(mod.id);
       }
     }
@@ -235,11 +221,18 @@ export class ModuleManager {
 
   private moduleGuard(moduleId: string): RequestHandler {
     return (_req, res, next) => {
-      if (!this.activatedIds.has(moduleId)) {
-        res.status(404).json({ error: 'Modul nicht aktiviert' });
-        return;
-      }
-      next();
+      void (async () => {
+        if (!this.activatedIds.has(moduleId)) {
+          res.status(404).json({ error: 'Modul nicht aktiviert' });
+          return;
+        }
+        const row = await tenantModuleRepository.findUnique(moduleId);
+        if (!row?.installed || !row?.enabled) {
+          res.status(404).json({ error: 'Modul für diesen Veranstalter nicht aktiviert' });
+          return;
+        }
+        next();
+      })().catch(next);
     };
   }
 
@@ -306,10 +299,9 @@ export class ModuleManager {
         });
       }
 
-      await prisma.installedModule.upsert({
-        where: { moduleId },
-        create: {
-          moduleId,
+      await tenantModuleRepository.upsert(
+        moduleId,
+        {
           moduleVersion: manifest.version,
           imageVersion: manifest.version,
           installed: true,
@@ -317,14 +309,14 @@ export class ModuleManager {
           installedAt: new Date(),
           everInstalled: true,
         },
-        update: {
+        {
           installed: true,
           installedAt: new Date(),
           everInstalled: true,
           moduleVersion: manifest.version,
           imageVersion: manifest.version,
-        },
-      });
+        }
+      );
 
       await this.clearLifecycleError(moduleId);
       await this.deps.auditService.log({ action: 'module.installed', moduleId });
@@ -350,9 +342,9 @@ export class ModuleManager {
 
     await mod.uninstall(this.deps.featureContext);
 
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { installed: false, enabled: false },
+    await tenantModuleRepository.update(moduleId, {
+      installed: false,
+      enabled: false,
     });
 
     await this.deps.auditService.log({ action: 'module.uninstalled', moduleId });
@@ -370,12 +362,13 @@ export class ModuleManager {
     const manifest = moduleRegistry.getManifest(moduleId);
     if (!mod || !manifest) throw new AppError(404, 'Modul nicht gefunden');
 
-    const row = await moduleRegistry.getDbRow(moduleId);
-    if (!row?.installed) throw new AppError(400, 'Modul muss zuerst installiert werden');
+    const row = persist ? await moduleRegistry.getDbRow(moduleId) : await tenantModuleRepository.findFirstInstalled(moduleId);
+    const installed = persist ? Boolean(row?.installed) : await tenantModuleRepository.isInstalledForAnyTenant(moduleId);
+    if (!installed) throw new AppError(400, 'Modul muss zuerst installiert werden');
 
     const deps = await dependencyResolver.checkRequiredActivated(
       manifest,
-      (id) => moduleRegistry.isActivated(id)
+      async (id) => this.activatedIds.has(id) || tenantModuleRepository.isEnabledForAnyTenant(id)
     );
     if (!deps.ok) {
       const parts: string[] = [];
@@ -384,7 +377,7 @@ export class ModuleManager {
       throw new AppError(400, `Abhängigkeiten nicht erfüllt (${parts.join('; ')})`);
     }
 
-    if (compareVersions(manifest.version, row.moduleVersion) > 0) {
+    if (row && compareVersions(manifest.version, row.moduleVersion) > 0) {
       throw new AppError(400, 'Upgrade erforderlich – bitte zuerst aktualisieren');
     }
 
@@ -402,14 +395,11 @@ export class ModuleManager {
       const health = await healthService.checkModule(moduleId, mod, featureContext);
 
       if (persist) {
-        await prisma.installedModule.update({
-          where: { moduleId },
-          data: {
-            enabled: true,
-            everActivated: true,
-            lastHealthStatus: health.status,
-            lastHealthCheck: new Date(),
-          },
+        await tenantModuleRepository.update(moduleId, {
+          enabled: true,
+          everActivated: true,
+          lastHealthStatus: health.status,
+          lastHealthCheck: new Date(),
         });
         await this.clearLifecycleError(moduleId);
         await auditService.log({ action: 'module.enabled', moduleId, details: { health: health.status } });
@@ -444,10 +434,7 @@ export class ModuleManager {
     this.activatedIds.delete(moduleId);
     featureFlags.set(moduleId, { ...featureFlags.get(moduleId), enabled: false, disabled: true, visible: false });
 
-    await prisma.installedModule.update({
-      where: { moduleId },
-      data: { enabled: false },
-    });
+    await tenantModuleRepository.update(moduleId, { enabled: false });
 
     await auditService.log({ action: 'module.deactivated', moduleId });
     await hookSystem.emit(CORE_HOOKS.MODULE_DEACTIVATED, { moduleId });

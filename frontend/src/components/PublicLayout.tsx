@@ -107,7 +107,7 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
                 <Typography
                   key={link.pageType}
                   component={Link}
-                  to={link.path}
+                  to={`/recht/${link.slug}`}
                   sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                 >
                   {link.title}

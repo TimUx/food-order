@@ -52,4 +52,10 @@ export const PLATFORM_TOKENS = {
   FeatureContext: Symbol('platform.FeatureContext'),
   FeatureFlags: Symbol('platform.FeatureFlags'),
   SettingsService: Symbol('platform.SettingsService'),
+  TenantService: Symbol('platform.TenantService'),
+  TenantContext: Symbol('platform.TenantContext'),
+  TenantResolver: Symbol('platform.TenantResolver'),
+  PlatformContext: Symbol('platform.PlatformContext'),
+  PlatformSettingsService: Symbol('platform.PlatformSettingsService'),
+  TenantSettingsService: Symbol('platform.TenantSettingsService'),
 } as const;

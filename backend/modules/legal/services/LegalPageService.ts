@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { prisma } from '../../../src/config/database';
 import { settingsService } from '../../../src/platform/bootstrap';
+import { requireTenantId } from '../../../src/platform/tenant/tenantScope';
 import { AppError } from '../../../src/middleware/errorHandler';
 import type { PublicLegalLink, PublicLegalPage } from '../../../src/platform/extension-points';
 import { CORE_CLUB_NAMESPACE } from '../../../src/platform/settings/SettingsNamespaces';
@@ -165,13 +166,15 @@ async function queryOne(sql: string, params: unknown[] = []): Promise<LegalPageR
 
 export const legalPageService = {
   async ensureDefaults(): Promise<void> {
+    const tenantId = requireTenantId();
     for (const pageType of LEGAL_PAGE_TYPES) {
       const defaults = LEGAL_PAGE_DEFAULTS[pageType];
       await prisma.$executeRawUnsafe(
-        `INSERT INTO legal_pages (id, page_type, title, slug, enabled, published, content_html, updated_at, created_at)
-         VALUES ($1, $2, $3, $4, false, false, '', NOW(), NOW())
-         ON CONFLICT (page_type) DO NOTHING`,
+        `INSERT INTO legal_pages (id, tenant_id, page_type, title, slug, enabled, published, content_html, updated_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, false, false, '', NOW(), NOW())
+         ON CONFLICT (tenant_id, page_type) DO NOTHING`,
         randomUUID(),
+        tenantId,
         pageType,
         defaults.title,
         defaults.slug
@@ -181,7 +184,8 @@ export const legalPageService = {
 
   async listAdminPages(): Promise<AdminLegalPage[]> {
     await this.ensureDefaults();
-    const rows = await queryRows('SELECT * FROM legal_pages ORDER BY created_at ASC');
+    const tenantId = requireTenantId();
+    const rows = await queryRows('SELECT * FROM legal_pages WHERE tenant_id = $1 ORDER BY created_at ASC', [tenantId]);
     const config = await getConfig();
     return rows
       .filter((row) => isLegalPageType(row.pageType))
@@ -190,7 +194,8 @@ export const legalPageService = {
 
   async updatePage(pageType: LegalPageType, input: UpdateLegalPageInput): Promise<AdminLegalPage> {
     await this.ensureDefaults();
-    const existing = await queryOne('SELECT * FROM legal_pages WHERE page_type = $1', [pageType]);
+    const tenantId = requireTenantId();
+    const existing = await queryOne('SELECT * FROM legal_pages WHERE tenant_id = $1 AND page_type = $2', [tenantId, pageType]);
     if (!existing) throw new AppError(404, 'Rechtliche Seite nicht gefunden');
 
     const nextSlug = input.slug !== undefined ? normalizeSlug(input.slug) : existing.slug;
@@ -200,8 +205,8 @@ export const legalPageService = {
     if (!nextTitle) throw new AppError(400, 'Bitte einen Titel angeben');
 
     const duplicate = await queryOne(
-      'SELECT * FROM legal_pages WHERE slug = $1 AND page_type <> $2',
-      [nextSlug, pageType]
+      'SELECT * FROM legal_pages WHERE tenant_id = $1 AND slug = $2 AND page_type <> $3',
+      [tenantId, nextSlug, pageType]
     );
     if (duplicate) throw new AppError(400, 'Diese URL wird bereits von einer anderen Seite verwendet');
 
@@ -211,15 +216,16 @@ export const legalPageService = {
 
     const row = await queryOne(
       `UPDATE legal_pages
-       SET title = $2,
-           slug = $3,
-           enabled = $4,
-           published = $5,
-           content_html = $6,
+       SET title = $3,
+           slug = $4,
+           enabled = $5,
+           published = $6,
+           content_html = $7,
            updated_at = NOW()
-       WHERE page_type = $1
+       WHERE tenant_id = $1 AND page_type = $2
        RETURNING *`,
       [
+        tenantId,
         pageType,
         nextTitle,
         nextSlug,
@@ -249,8 +255,10 @@ export const legalPageService = {
     const config = await getConfig();
     if (!config.showFooterLinks) return [];
 
+    const tenantId = requireTenantId();
     const rows = await queryRows(
-      'SELECT * FROM legal_pages WHERE enabled = true AND published = true ORDER BY created_at ASC'
+      'SELECT * FROM legal_pages WHERE tenant_id = $1 AND enabled = true AND published = true ORDER BY created_at ASC',
+      [tenantId]
     );
 
     return rows
@@ -259,12 +267,13 @@ export const legalPageService = {
         pageType: row.pageType as LegalPageType,
         title: row.title,
         slug: row.slug,
-        path: `/${row.slug}`,
+        path: `/recht/${row.slug}`,
       }));
   },
 
   async getPublicPageBySlug(slug: string): Promise<PublicLegalPage | null> {
-    const row = await queryOne('SELECT * FROM legal_pages WHERE slug = $1', [normalizeSlug(slug)]);
+    const tenantId = requireTenantId();
+    const row = await queryOne('SELECT * FROM legal_pages WHERE tenant_id = $1 AND slug = $2', [tenantId, normalizeSlug(slug)]);
     if (!row || !isLegalPageType(row.pageType)) return null;
     if (!row.enabled || !row.published || !hasContent(row.contentHtml)) return null;
 
@@ -275,7 +284,7 @@ export const legalPageService = {
       pageType: row.pageType,
       title: row.title,
       slug: row.slug,
-      path: `/${row.slug}`,
+      path: `/recht/${row.slug}`,
       html,
       updatedAt: row.updatedAt.toISOString(),
     };

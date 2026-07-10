@@ -88,7 +88,7 @@ Keine Migration nötig – beschreibt den aktuellen und angestrebten Gesamtrahme
 
 ## Offene Punkte
 
-- [ ] Multi-Tenant-Fähigkeit (mehrere Vereine pro Instanz) – nicht geplant
+- [x] Multi-Tenant-Fähigkeit (mehrere Vereine pro Instanz) – **v2.0 geplant, siehe ADR-020–027**
 - [ ] Community-Plugins aus `/app/plugins` – vorbereitet, nicht aktiv
 - [ ] Horizontale Skalierung (mehrere Backend-Instanzen + Redis Adapter für Socket.IO)
 - [ ] `package.json`-Versionen (1.0.0) vs. Release-Tags (v1.2.0) angleichen

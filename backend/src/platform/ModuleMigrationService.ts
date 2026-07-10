@@ -3,6 +3,8 @@ import path from 'path';
 import { config } from '../config';
 import { prisma } from '../config/database';
 import { logger } from '../utils/logger';
+import { requireTenantId } from './tenant/tenantScope';
+import { tenantModuleRepository } from '../repositories/tenantModuleRepository';
 
 /**
  * Runs SQL migrations shipped with modules in the Docker image.
@@ -19,12 +21,15 @@ export class ModuleMigrationService {
       return 0;
     }
 
+    const tenantId = requireTenantId();
     const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
     let applied = 0;
 
     for (const file of files) {
       const existing = await prisma.moduleMigration.findUnique({
-        where: { moduleId_migration: { moduleId, migration: file } },
+        where: {
+          tenantId_moduleId_migration: { tenantId, moduleId, migration: file },
+        },
       });
       if (existing) continue;
 
@@ -46,20 +51,17 @@ export class ModuleMigrationService {
         }
 
         await tx.moduleMigration.create({
-          data: { moduleId, migration: file },
+          data: { tenantId, moduleId, migration: file },
         });
       });
 
       applied++;
-      logger.info(`Modul-Migration ausgeführt: ${moduleId}/${file}`);
+      logger.info(`Modul-Migration ausgeführt: ${moduleId}/${file}`, undefined, tenantId);
     }
 
     if (applied > 0) {
       const latest = files[files.length - 1]?.replace(/\.sql$/, '') ?? '0';
-      await prisma.installedModule.update({
-        where: { moduleId },
-        data: { schemaVersion: latest },
-      });
+      await tenantModuleRepository.update(moduleId, { schemaVersion: latest });
     }
 
     return applied;
@@ -67,9 +69,9 @@ export class ModuleMigrationService {
 
   async getAppliedMigrations(moduleId: string): Promise<string[]> {
     const rows = await prisma.moduleMigration.findMany({
-      where: { moduleId },
+      where: { tenantId: requireTenantId(), moduleId },
       orderBy: { migration: 'asc' },
     });
-    return rows.map((r: { migration: string }) => r.migration);
+    return rows.map((r) => r.migration);
   }
 }

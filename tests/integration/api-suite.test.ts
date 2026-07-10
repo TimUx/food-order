@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import request from 'supertest';
-import { createTestApp } from '../api/setup';
+import { createTestApp, tenantApi } from '../api/setup';
 import { QA_USERS, QA_EVENT_ID } from '../fixtures/constants';
 import type { Express } from 'express';
 
@@ -12,12 +11,12 @@ describe.skipIf(!hasDb)('API integration', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
-    const login = await request(app).post('/api/auth/login').send(QA_USERS.admin);
+    const login = await tenantApi(app).post('/api/auth/login').send(QA_USERS.admin);
     adminToken = login.body.token;
   });
 
   it('lists events for staff', async () => {
-    const res = await request(app)
+    const res = await tenantApi(app)
       .get('/api/staff/events')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
@@ -25,14 +24,14 @@ describe.skipIf(!hasDb)('API integration', () => {
   });
 
   it('returns public menu', async () => {
-    const res = await request(app).get('/api/public/menu');
+    const res = await tenantApi(app).get('/api/public/menu');
     expect(res.status).toBe(200);
     expect(res.body.event).toBeDefined();
     expect(Array.isArray(res.body.items)).toBe(true);
   });
 
   it('admin modules endpoint is reachable', async () => {
-    const res = await request(app)
+    const res = await tenantApi(app)
       .get('/api/admin/modules')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
@@ -40,7 +39,7 @@ describe.skipIf(!hasDb)('API integration', () => {
   });
 
   it('settings namespaces are listed', async () => {
-    const res = await request(app)
+    const res = await tenantApi(app)
       .get('/api/admin/settings')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
@@ -51,5 +50,9 @@ describe.skipIf(!hasDb)('API integration', () => {
 describe('API constants', () => {
   it('uses stable QA event id', () => {
     expect(QA_EVENT_ID).toMatch(/^[0-9a-f-]{36}$/i);
+  });
+
+  it('exposes tenant-scoped API helper', () => {
+    expect(typeof tenantApi).toBe('function');
   });
 });

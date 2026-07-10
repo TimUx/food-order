@@ -108,6 +108,45 @@ export function subscribePaymentStatus(
   );
 }
 
+export function subscribeTenantUpdates(
+  onData: (tenant: import('@/types/tenant').TenantPublicData) => void
+): () => void {
+  const mapTenant = async (): Promise<import('@/types/tenant').TenantPublicData | null> => {
+    try {
+      return await api.getTenant();
+    } catch {
+      return null;
+    }
+  };
+
+  return realtimeService.subscribe(
+    'tenant',
+    (msg) => {
+      if (msg.type === 'club:updated') {
+        void mapTenant().then((data) => {
+          if (data) onData(data);
+        });
+      }
+    },
+    {
+      wsEvents: ['club:updated'],
+      activity: 'idle',
+      poll: async () => {
+        const data = await mapTenant();
+        return {
+          changed: true,
+          etag: data ? `tenant-${data.slug}` : 'tenant-missing',
+          serverTime: new Date().toISOString(),
+          data,
+        };
+      },
+      onPollData: (data) => {
+        if (data) onData(data as import('@/types/tenant').TenantPublicData);
+      },
+    }
+  );
+}
+
 export function subscribeClubUpdates(onData: (club: ClubSettings) => void): () => void {
   return realtimeService.subscribe(
     'club',

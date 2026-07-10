@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { prisma } from '../config/database';
-import { AuthPayload } from '../middleware/auth';
+import { AuthPayload } from '../middleware/platformAuth';
 import { AppError } from '../middleware/errorHandler';
 
 const REFRESH_TOKEN_BYTES = 32;
@@ -93,6 +93,8 @@ export const sessionService = {
       userId: session.user.id,
       email: session.user.email,
       role: session.user.role.name,
+      scope: 'tenant',
+      tenantId: session.user.tenantId,
     };
 
     const accessToken = jwt.sign(

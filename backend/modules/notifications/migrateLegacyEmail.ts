@@ -23,6 +23,9 @@ export async function migrateLegacyEmailSettings(context: FeatureContext): Promi
       user: String(legacy.smtpUser ?? ''),
       pass: typeof legacy.smtpPass === 'string' ? legacy.smtpPass : '',
       from: String(legacy.smtpFrom ?? 'noreply@verein.local'),
+      secure: Number(legacy.smtpPort ?? 587) === 465,
+      useTls: true,
+      source: 'tenant',
     },
     emailCustomText: String(legacy.emailCustomText ?? current?.emailCustomText ?? ''),
   };

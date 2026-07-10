@@ -114,6 +114,17 @@ export const api = {
     }),
   getPickupBoard: () => request<PickupBoardOrder[]>('/public/pickup-board'),
   getClub: () => request<import('@/types/club').ClubSettings>('/public/club'),
+  getTenant: () => request<import('@/types/tenant').TenantPublicData>('/public/tenant'),
+  getPlatform: () =>
+    request<import('@/types/tenant').PlatformPublicData>('/public/platform'),
+  getPlatformLegalLinks: () =>
+    request<{ items: import('@/types/tenant').PlatformLegalLink[] }>('/public/platform/legal-links'),
+  getPlatformLegalPage: (slug: string) =>
+    request<import('@/types/tenant').PlatformLegalPage>(`/public/platform/legal/${encodeURIComponent(slug)}`),
+  submitTenantApplication: (data: import('@/types/tenant').TenantApplicationInput) =>
+    request<{ id: string }>('/public/tenant-applications', { method: 'POST', body: JSON.stringify(data) }),
+  getRoutingConfig: () =>
+    request<import('@/types/routing').RoutingConfig>('/public/routing-config'),
   getOrderSettings: () => request<import('@/types/club').OrderSettings>('/public/order-settings'),
 
   // Auth

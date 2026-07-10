@@ -1,6 +1,12 @@
-import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode, useEffect } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme, PaletteMode } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
+import { useRouting } from '@/contexts/RoutingProvider';
+import { useTenant } from '@/contexts/TenantProvider';
+import { usePlatform } from '@/contexts/PlatformProvider';
+import { scopedStorageKey } from '@/utils/storageScope';
+import { isPlatformSurfaceScope } from '@/types/routing';
+import { resolvePlatformColors, resolveTenantColors } from '@/utils/themeColors';
 
 interface ThemeContextType {
   mode: PaletteMode;
@@ -9,29 +15,47 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
-const STORAGE_KEY = 'verein_theme';
+export function AppThemeProvider({ children }: { children: ReactNode }) {
+  const { routing } = useRouting();
+  const { tenant } = useTenant();
+  const { platform } = usePlatform();
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+  const themeStorageKey = scopedStorageKey('verein_theme', routing.scope, routing.tenantSlug);
+
   const [mode, setMode] = useState<PaletteMode>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(themeStorageKey);
     return (stored as PaletteMode) || 'light';
   });
+
+  useEffect(() => {
+    const stored = localStorage.getItem(themeStorageKey);
+    if (stored === 'light' || stored === 'dark') {
+      setMode(stored);
+    }
+  }, [themeStorageKey]);
 
   const toggleMode = useCallback(() => {
     setMode((prev) => {
       const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem(STORAGE_KEY, next);
+      localStorage.setItem(themeStorageKey, next);
       return next;
     });
-  }, []);
+  }, [themeStorageKey]);
+
+  const colors = useMemo(() => {
+    if (isPlatformSurfaceScope(routing.scope)) {
+      return resolvePlatformColors(platform.primaryColor);
+    }
+    return resolveTenantColors(tenant.theme);
+  }, [routing.scope, tenant.theme, platform.primaryColor]);
 
   const theme = useMemo(
     () =>
       createTheme({
         palette: {
           mode,
-          primary: { main: mode === 'light' ? '#1976d2' : '#90caf9' },
-          secondary: { main: mode === 'light' ? '#f57c00' : '#ffb74d' },
+          primary: { main: mode === 'light' ? colors.primary : colors.primary },
+          secondary: { main: mode === 'light' ? colors.secondary : colors.secondary },
           success: { main: '#2e7d32' },
         },
         typography: {
@@ -66,7 +90,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           },
         },
       }),
-    [mode]
+    [mode, colors]
   );
 
   return (
@@ -79,8 +103,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** @deprecated Use AppThemeProvider – alias für Abwärtskompatibilität */
+export const ThemeProvider = AppThemeProvider;
+
 export function useThemeMode() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useThemeMode muss innerhalb von ThemeProvider verwendet werden');
+  if (!ctx) throw new Error('useThemeMode muss innerhalb von AppThemeProvider verwendet werden');
   return ctx;
 }

@@ -31,36 +31,98 @@ import {
   tokenParamSchema,
   createUserSchema,
   updateUserSchema,
+  submitTenantApplicationSchema,
+  legalSlugParamSchema,
 } from '../validation/schemas';
 
 import { uploadService } from '../services/uploadService';
-import { loginRateLimiter, publicOrderRateLimiter, lookupRateLimiter } from '../middleware/rateLimit';
+import { loginRateLimiter, publicOrderRateLimiter, lookupRateLimiter, authRefreshRateLimiter, uploadRateLimiter, paymentPublicRateLimiter, tenantApplicationRateLimiter } from '../middleware/rateLimit';
+import { config } from '../config';
 import { openApiDocument } from '../core/openapi';
 import moduleAdminRoutes from '../core/routes/modules';
 import settingsRoutes from '../core/routes/settings';
 import permissionsRoutes from '../core/routes/permissions';
 import adminUiRoutes from '../core/routes/adminUi';
+import { tenantController, healthService, tenantService } from '../platform/bootstrap';
+import platformRoutes from '../core/routes/platform';
+import { platformPublicController } from '../controllers/platformPublicController';
 
 const upload = uploadService.memory;
 
 const router = Router();
 
+// Plattform-Administration (kein Mandanten-Kontext)
+router.use('/platform', platformRoutes);
+
 // Health & API-Dokumentation
-router.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+router.get('/health', async (req, res) => {
+  const defaultTenantExists = await tenantService.exists({ slug: 'default' });
+  const tenantHealth = await healthService.checkTenantInfrastructure(defaultTenantExists);
+  let resolverOk = true;
+  try {
+    const { tenantResolver } = await import('../platform/bootstrap');
+    await tenantResolver.resolve(req);
+  } catch {
+    resolverOk = false;
+  }
+
+  const { prisma } = await import('../config/database');
+  const dbStart = performance.now();
+  let dbLatencyMs = -1;
+  let dbOk = false;
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbLatencyMs = Math.round(performance.now() - dbStart);
+    dbOk = true;
+  } catch {
+    dbOk = false;
+  }
+
+  const { getSocketStats } = await import('../socket');
+  const { performanceMetrics } = await import('../platform/metrics/performanceMetrics');
+
+  const ok = tenantHealth.tenantContextReady && tenantHealth.defaultTenantAvailable && resolverOk && dbOk;
+  res.json({
+    status: ok ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    tenant: tenantHealth,
+    resolver: { ok: resolverOk },
+    database: { ok: dbOk, latencyMs: dbLatencyMs },
+    websockets: getSocketStats(),
+    performance: {
+      slowApiThresholdMs: Number(process.env.SLOW_API_MS ?? 500),
+      topEndpoints: performanceMetrics.getApiSummary(5),
+    },
+  });
 });
 router.get('/openapi.json', (_req, res) => {
+  if (config.nodeEnv === 'production') {
+    res.status(404).json({ error: 'Nicht gefunden' });
+    return;
+  }
   res.json(openApiDocument);
 });
 
 // Auth
 router.post('/auth/login', loginRateLimiter, validateBody(loginSchema), authController.login);
-router.post('/auth/logout', validateBody(refreshTokenSchema), authController.logout);
-router.post('/auth/refresh', loginRateLimiter, validateBody(refreshTokenSchema), authController.refresh);
+router.post('/auth/logout', authRefreshRateLimiter, validateBody(refreshTokenSchema), authController.logout);
+router.post('/auth/refresh', authRefreshRateLimiter, validateBody(refreshTokenSchema), authController.refresh);
 router.post('/auth/revoke-all', authenticate, loadUser, requireRole('ADMIN'), validateBody(revokeAllSessionsSchema), authController.revokeAll);
 router.get('/auth/me', authenticate, loadUser, authController.me);
 
 // Public
+router.get('/public/routing-config', tenantController.getRoutingConfig);
+router.get('/public/health', tenantController.getPublicHealth);
+router.get('/public/platform', platformPublicController.getPlatform);
+router.get('/public/platform/legal-links', platformPublicController.listLegalLinks);
+router.get('/public/platform/legal/:slug', validateParams(legalSlugParamSchema), platformPublicController.getLegalPage);
+router.post(
+  '/public/tenant-applications',
+  tenantApplicationRateLimiter,
+  validateBody(submitTenantApplicationSchema),
+  platformPublicController.submitApplication
+);
+router.get('/public/tenant', tenantController.getPublic);
 router.get('/public/club', clubController.getPublic);
 router.get('/public/order-settings', clubController.getOrderSettings);
 router.get('/public/event', eventController.getActive);
@@ -68,7 +130,7 @@ router.get('/public/menu', foodItemController.getPublic);
 router.post('/public/orders', publicOrderRateLimiter, validateBody(createOnlineOrderSchema), orderController.createOnline);
 router.post('/public/orders/lookup', lookupRateLimiter, validateBody(lookupOrderSchema), orderController.lookup);
 router.post('/public/orders/:id/checkout', publicOrderRateLimiter, validateParams(idParamSchema), validateBody(createOrderCheckoutSchema), orderController.createCheckout);
-router.get('/public/orders/status/:token', validateParams(tokenParamSchema), orderController.getByLookupToken);
+router.get('/public/orders/status/:token', lookupRateLimiter, validateParams(tokenParamSchema), orderController.getByLookupToken);
 router.post('/public/orders/:token/cancel', lookupRateLimiter, validateParams(tokenParamSchema), validateBody(cancelOrderSchema), orderController.cancelOnline);
 router.get('/public/pickup-board', orderController.getReady);
 
@@ -86,7 +148,7 @@ router.post('/staff/events/:eventId/food-items', requireRole('ADMIN'), validateB
 router.put('/staff/food-items/:id', requireRole('ADMIN'), validateParams(idParamSchema), validateBody(updateFoodItemSchema), foodItemController.update);
 router.delete('/staff/food-items/:id', requireRole('ADMIN'), validateParams(idParamSchema), foodItemController.delete);
 
-router.post('/staff/food-items/:id/image', requireRole('ADMIN'), validateParams(idParamSchema), upload.single('image'), async (req, res, next) => {
+router.post('/staff/food-items/:id/image', requireRole('ADMIN'), uploadRateLimiter, validateParams(idParamSchema), upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -119,7 +181,7 @@ router.get('/realtime/club', realtimeController.syncClub);
 
 router.get('/staff/club', requireRole('ADMIN'), clubController.get);
 router.put('/staff/club', requireRole('ADMIN'), validateBody(updateClubSchema), clubController.update);
-router.post('/staff/club/logo', requireRole('ADMIN'), upload.single('image'), async (req, res, next) => {
+router.post('/staff/club/logo', requireRole('ADMIN'), uploadRateLimiter, upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -222,9 +284,10 @@ router.get('/public/payment/methods', async (_req, res) => {
   });
 });
 
-router.get('/public/payment/checkout/:sessionId/status', async (req, res, next) => {
+router.get('/public/payment/checkout/:sessionId/status', paymentPublicRateLimiter, async (req, res, next) => {
   try {
-    const status = await getPaymentServiceRegistry().getPaymentStatus(req.params.sessionId);
+    const sessionId = String(req.params.sessionId);
+    const status = await getPaymentServiceRegistry().getPaymentStatus(sessionId);
     if (!status) {
       res.status(404).json({ error: 'Zahlung nicht gefunden' });
       return;
@@ -235,9 +298,10 @@ router.get('/public/payment/checkout/:sessionId/status', async (req, res, next) 
   }
 });
 
-router.post('/public/payment/checkout/:sessionId/retry', async (req, res, next) => {
+router.post('/public/payment/checkout/:sessionId/retry', paymentPublicRateLimiter, async (req, res, next) => {
   try {
-    const result = await getPaymentServiceRegistry().retryCheckout(req.params.sessionId);
+    const sessionId = String(req.params.sessionId);
+    const result = await getPaymentServiceRegistry().retryCheckout(sessionId);
     if (!result) {
       res.status(404).json({ error: 'Zahlung kann nicht wiederholt werden' });
       return;

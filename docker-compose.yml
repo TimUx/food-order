@@ -17,6 +17,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          memory: 256M
 
   backend:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/festmanager}/backend:${IMAGE_TAG:-latest}
@@ -33,12 +40,35 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production-use-long-random-string}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      MULTI_TENANT_ENABLED: ${MULTI_TENANT_ENABLED:-false}
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-localhost}
+      PLATFORM_BASE_DOMAIN: ${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}
+      PLATFORM_WWW_DOMAIN: ${PLATFORM_WWW_DOMAIN:-}
+      PLATFORM_WILDCARD_DOMAIN: ${PLATFORM_WILDCARD_DOMAIN:-}
+      PLATFORM_API_DOMAIN: ${PLATFORM_API_DOMAIN:-}
+      PLATFORM_ALLOWED_ORIGINS: ${PLATFORM_ALLOWED_ORIGINS:-}
+      DEFAULT_TENANT_SLUG: ${DEFAULT_TENANT_SLUG:-default}
+      TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-1}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+      LOG_FORMAT: ${LOG_FORMAT:-text}
     ports:
       - "3001:3001"
     volumes:
       - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512M
+        reservations:
+          memory: 128M
 
   frontend:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/festmanager}/frontend:${IMAGE_TAG:-latest}
@@ -46,9 +76,22 @@ services:
     restart: unless-stopped
     pull_policy: always
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "5173:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 256M
+        reservations:
+          memory: 64M
 
 volumes:
   postgres_data:

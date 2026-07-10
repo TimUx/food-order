@@ -11,6 +11,13 @@ const INSECURE_ENCRYPTION_KEYS = new Set([
   'ci-test-encryption-key-32chars',
 ]);
 
+const INSECURE_PLATFORM_PASSWORDS = new Set([
+  'platform-admin-change-me',
+  'change-me',
+  'admin',
+  'password',
+]);
+
 /** Verhindert Produktionsstart mit Default-Secrets (K4). */
 export function assertProductionSecrets(): void {
   if (config.nodeEnv !== 'production') return;
@@ -26,6 +33,17 @@ export function assertProductionSecrets(): void {
   if (!enc || enc.length < 32 || INSECURE_ENCRYPTION_KEYS.has(enc)) {
     throw new Error(
       'APP_ENCRYPTION_KEY muss in Produktion gesetzt sein (min. 32 Zeichen, keine Default-Werte).'
+    );
+  }
+
+  const platformPassword = process.env.PLATFORM_ADMIN_PASSWORD || '';
+  if (
+    !platformPassword ||
+    platformPassword.length < 16 ||
+    INSECURE_PLATFORM_PASSWORDS.has(platformPassword)
+  ) {
+    throw new Error(
+      'PLATFORM_ADMIN_PASSWORD muss in Produktion gesetzt sein (min. 16 Zeichen, keine Default-Werte).'
     );
   }
 }

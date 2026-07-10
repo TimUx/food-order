@@ -1,15 +1,25 @@
 import type { EventBus } from './EventBus';
 import type { CoreHookName, HookHandler, HookSubscription } from './types';
+import { isModuleEnabledForCurrentTenant } from './tenant/tenantModuleHelpers';
 
 /**
  * Domain hook layer on top of EventBus.
  * Core emits hooks; modules subscribe via lifecycle registration.
+ * Handler werden nur ausgeführt, wenn das Modul für den aktuellen Mandanten aktiviert ist.
  */
 export class HookSystem {
   constructor(private readonly eventBus: EventBus) {}
 
   subscribe(subscription: HookSubscription): void {
-    this.eventBus.on(subscription.hook, subscription.handler, {
+    const handler: HookHandler = async (payload) => {
+      if (subscription.moduleId) {
+        const enabled = await isModuleEnabledForCurrentTenant(subscription.moduleId);
+        if (!enabled) return;
+      }
+      await subscription.handler(payload);
+    };
+
+    this.eventBus.on(subscription.hook, handler, {
       priority: subscription.priority,
       source: subscription.moduleId,
     });

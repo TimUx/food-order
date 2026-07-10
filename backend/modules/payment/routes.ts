@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { paymentManager } from './PaymentManager';
 import { AppError } from '../../src/middleware/errorHandler';
+import { webhookRateLimiter } from '../../src/middleware/rateLimit';
 import type { FeatureContext } from '../../src/module-system/types';
 import { createPaymentService } from './services/PaymentServiceImpl';
 
@@ -63,7 +64,7 @@ export function createPaymentPublicRoutes(context: FeatureContext): Router {
     }
   });
 
-  router.post('/webhooks/:providerId', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/webhooks/:providerId', webhookRateLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const rawBody = (req as Request & { rawBody?: Buffer }).rawBody;
       if (!rawBody) {

@@ -2,7 +2,44 @@
 
 Anleitung für Administratoren der FestManager-Plattform mit Vollzugriff auf alle Funktionen – von der Installation bis zum Veranstaltungstag.
 
-## Inhaltsverzeichnis
+> **Version 2.0:** FestManager ist mandantenfähig. Es gibt zwei Verwaltungsebenen:
+> - **Plattform-Administration** unter `/platform` – Mandanten verwalten, System konfigurieren (nur Plattformadministratoren)
+> - **Veranstalter-Administration** unter `/admin` – mandantenspezifisch (normale Administratoren)
+>
+> Standard-Plattformlogin: `platform@festmanager.local` (Passwort via `PLATFORM_ADMIN_PASSWORD` in `.env`). Details: [ADR-022](architecture/022-platform-administration.md), [Phase-3-Report](architecture/PHASE_3_COMPLETION_REPORT.md).
+
+## Plattform-Administration (Phase 3)
+
+| Bereich | URL | Beschreibung |
+|---------|-----|--------------|
+| Login | `/platform/login` | Separater Einstieg für Plattformadministratoren |
+| Dashboard | `/platform` | Kennzahlen, Systemstatus |
+| Mandanten | `/platform/mandanten` | Anlegen, Bearbeiten, Sperren, Impersonation |
+| Mandantenanträge | `/platform/bewerbungen` | Bewerbungen prüfen, genehmigen, Mandant anlegen |
+| Domain & Routing | `/platform/domains` | Anzeige der kanonischen Domain- und Routing-Konfiguration (ENV) |
+| Rechtliches | `/platform/rechtliches` | Impressum, Datenschutz, Nutzungsbedingungen (Plattformebene) |
+| Einstellungen | `/platform/einstellungen` | Plattformweite Konfiguration inkl. Bewerbungen & Kontakt |
+| Monitoring | `/platform/monitoring` | CPU, RAM, Speicher |
+| Logs | `/platform/logs` | Audit-Log mit Mandanten-Filter |
+
+**Impersonation:** Plattformadmins können sich temporär als Mandanten-Administrator anmelden. Ein gelbes Banner zeigt den aktiven Impersonation-Modus an.
+
+### Öffentliche Homepage & Mandantenbewerbungen
+
+Die Marketing-Homepage ist unter `www.<platform-domain>` erreichbar. Die Plattformadministration liegt unter `app.<platform-domain>`. Bewerbungen können über `/mandant-beantragen` eingereicht werden, sofern `platform.registration.enabled` aktiv ist.
+
+**Workflow:**
+
+1. Antragsteller füllt das Formular aus (Organisation, Kontakt, Subdomain, Begründung).
+2. System speichert den Antrag und versendet E-Mails an Plattformadministratoren und den Antragsteller (sofern SMTP konfiguriert).
+3. Plattformadministrator prüft unter `/platform/bewerbungen` – Status: Neu, In Prüfung, Rückfrage, Genehmigt, Abgelehnt, Archiviert.
+4. Bei Genehmigung kann optional automatisch ein Mandant mit der gewünschten Subdomain angelegt werden.
+
+**Rechtliche Seiten:** Unter `/platform/rechtliches` pflegen Sie Impressum, Datenschutz und Nutzungsbedingungen. Es werden keine Mustertexte vorgegeben – Links erscheinen auf der Homepage nur bei veröffentlichtem Inhalt.
+
+**Domain & Routing:** Unter `/platform/domains` sehen Sie die aktive Konfiguration (WWW, APP, Wildcard, API, CORS, reservierte Subdomains). Technisch kritische Werte werden über Docker/ENV gesetzt (`PLATFORM_DOMAIN`, `WWW_SUBDOMAIN`, `APP_SUBDOMAIN`, …).
+
+---
 
 1. [Installation](#installation)
 2. [Konfiguration](#konfiguration)
@@ -125,7 +162,10 @@ CORS_ORIGIN=http://localhost:5173    # Öffentliche Frontend-URL (auch für E-Ma
 
 | Variable | Beschreibung |
 |----------|--------------|
-| `JWT_SECRET` | Geheimer Schlüssel für Mitarbeiter-Login – **in Produktion unbedingt ändern** |
+| `JWT_SECRET` | Geheimer Schlüssel für Mitarbeiter-Login – **in Produktion unbedingt ändern** (min. 32 Zeichen) |
+| `APP_ENCRYPTION_KEY` | Verschlüsselung für SMTP/Payment-Settings (min. 32 Zeichen) |
+| `PLATFORM_ADMIN_PASSWORD` | Initiales Plattformadmin-Passwort – **Pflicht in Produktion** (min. 16 Zeichen) |
+| `TRUSTED_PROXY_HOPS` | Anzahl Reverse-Proxy-Hops (z. B. `1` hinter Traefik/nginx) |
 | `JWT_EXPIRES_IN` | Gültigkeitsdauer des Login-Tokens (z. B. `8h`, `24h`) |
 | `CORS_ORIGIN` | Erlaubte Frontend-URL; wird auch für Links in Bestätigungs-E-Mails verwendet (bei HTTPS: `https://bestellung.sv-musterstadt.de` – siehe [Reverse Proxy](#reverse-proxy-https)) |
 
@@ -594,10 +634,16 @@ Tragen Sie die Zugangsdaten Ihres SMTP-Servers ein. Das Passwort wird in der Dat
 | Port | Üblich: 587 (STARTTLS) oder 465 (SSL) |
 | Benutzername / Passwort | Falls der Server Authentifizierung verlangt |
 | Absender-Adresse | z. B. `noreply@ihr-verein.de` |
+| Absendername | Anzeigename in E-Mails |
+| Reply-To | Antwortadresse für Kunden |
+| SMTP-Quelle | Eigener Server oder Plattform-SMTP (Fallback) |
+| SSL / STARTTLS | Port 465 (SSL) oder 587 (STARTTLS) |
+
+Unter **Branding & Absender** konfigurieren Sie Logo, Primärfarbe, Footer und Signatur für E-Mails.
 
 Weitere Kanäle (ntfy, Discord, Slack, Teams) konfigurieren Sie auf derselben Seite.
 
-Die Links in Bestätigungs-E-Mails verwenden die in `CORS_ORIGIN` hinterlegte öffentliche Frontend-URL.
+Die Links in Bestätigungs-E-Mails verwenden die mandantenspezifische öffentliche URL (Subdomain oder Pfad-Präfix).
 
 ### Inhalt der E-Mails
 
@@ -758,6 +804,8 @@ Pro Veranstaltung drei Schalter:
 ## Modulverwaltung
 
 Unter **Module** (`/admin/module`) verwalten Sie optionale Erweiterungen der Plattform. Module werden **mit dem Docker-Image ausgeliefert** – es gibt keine separaten Downloads.
+
+> **Multi-Tenant (Phase 4):** Module werden plattformweit bereitgestellt, aber **pro Veranstalter (Mandant)** installiert und aktiviert. Einstellungen und Daten (z. B. Zahlungen, E-Mails, rechtliche Texte) sind vollständig mandantenisoliert. Details: [Phase-4-Report](architecture/PHASE_4_COMPLETION_REPORT.md).
 
 ![Modulverwaltung](screenshots/20-modulverwaltung.png)
 

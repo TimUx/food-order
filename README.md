@@ -2,9 +2,36 @@
 
 Moderne Open-Source-Plattform für Verkauf, Bestellung und Organisation von Veranstaltungen – mit Vorausbestellungen, Branding des Veranstalters, Echtzeit-Updates und PWA-Unterstützung.
 
+> **Version 2.0.0** — FestManager ist eine **mandantenfähige Multi-Tenant-Plattform**. Mehrere Veranstalter (Mandanten) teilen sich eine Installation; jeder Mandant hat eigenes Branding, eigene Daten und optionale Module. Plattformadministration unter `/platform`. Architektur: [Multi-Tenant ADRs](docs/architecture/README.md#version-20--multi-tenant).
+
 Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisationen, Sport- und Musikvereine, Schulen, Firmen, Kommunen, Foodtrucks und private Feste.
 
 ![Bestellseite](docs/screenshots/01-bestellseite-monitor.png)
+
+## Multi-Tenant-Plattform (v2.0)
+
+| Ebene | Beschreibung |
+|-------|--------------|
+| **Plattform** | Zentrale Verwaltung: Mandanten anlegen, Monitoring, globale Einstellungen (`/platform`) |
+| **Mandant (Tenant)** | Eigenständiger Veranstalter mit Branding, Speisekarte, Bestellungen, Team |
+| **Module** | Pro Mandant aktivierbar: Zahlung, Benachrichtigungen, Rechtliches, Druck |
+| **Routing** | Subdomain (`feuerwehr.fest.example`) oder Pfad-Präfix (`fest.example/feuerwehr`) |
+| **Homepage** | Öffentliche Marketing-Seite unter `www.<domain>` bzw. Apex-Domain – Landingpage, FAQ, Mandantenbewerbung |
+| **Isolation** | Shared Database mit `tenantId`; APIs, JWT, Uploads und WebSockets mandantengebunden |
+
+Technische Details: [Tenant Context ADR](docs/architecture/021-tenant-context.md) · [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) · [Security](SECURITY.md)
+
+### Öffentliche Homepage & kanonisches Routing
+
+| Host | Bereich |
+|------|---------|
+| `www.<platform-domain>` | Öffentliche Homepage (Landingpage, FAQ, Bewerbung, Rechtliches) |
+| `app.<platform-domain>` | Plattformadministration (`/platform`) |
+| `<tenant>.<platform-domain>` | Mandantenportal des Veranstalters |
+
+Lokal (ohne Subdomains): Marketing unter `/`, Plattform unter `/platform/*`.
+
+Die Domain wird ausschließlich über ENV/Docker konfiguriert (`PLATFORM_DOMAIN`, `WWW_SUBDOMAIN`, `APP_SUBDOMAIN`, …). Konkrete Domainnamen im Quellcode sind nicht hinterlegt.
 
 ## Funktionen auf einen Blick
 
@@ -180,7 +207,10 @@ Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prism
 | [Developer Guide](docs/DEVELOPER_GUIDE.md) | Entwickler |
 | [Roadmap](docs/ROADMAP.md) | Stabil vs. geplant |
 | [Modul-Architektur](docs/MODULE_ARCHITECTURE.md) | Entwickler (Module, Payment, PayableResource) |
-| [Architektur & ADRs](docs/architecture/README.md) | Entwickler (ADR, Analyse, Migrationsplan) |
+| [Architektur & ADRs](docs/architecture/README.md) | Entwickler (ADR, Multi-Tenant v2.0) |
+| [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) | Multi-Tenant-Betrieb (Docker, Traefik) |
+| [Performance Guide](docs/architecture/PERFORMANCE_GUIDE.md) | Lasttests, Monitoring, Skalierung |
+| [Notification Guide](docs/architecture/NOTIFICATION_GUIDE.md) | Mandanten-SMTP, Branding, Webhooks |
 
 ## Technologie-Stack
 

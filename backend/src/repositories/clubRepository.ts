@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { requireTenantId } from '../platform/tenant/tenantScope';
 
 export const DEFAULT_CLUB = {
   clubName: 'FestManager',
@@ -12,10 +13,11 @@ export const DEFAULT_CLUB = {
 
 export const clubRepository = {
   get: async () => {
-    let settings = await prisma.clubSettings.findUnique({ where: { id: 'default' } });
+    const tenantId = requireTenantId();
+    let settings = await prisma.clubSettings.findFirst({ where: { tenantId } });
     if (!settings) {
       settings = await prisma.clubSettings.create({
-        data: { id: 'default', ...DEFAULT_CLUB },
+        data: { id: `club-${tenantId}`, tenantId, ...DEFAULT_CLUB },
       });
     }
     return settings;
@@ -41,10 +43,12 @@ export const clubRepository = {
     smtpPass?: string | null;
     smtpFrom?: string | null;
     emailCustomText?: string | null;
-  }) =>
-    prisma.clubSettings.upsert({
-      where: { id: 'default' },
-      create: { id: 'default', clubName: data.clubName || DEFAULT_CLUB.clubName, ...data },
+  }) => {
+    const tenantId = requireTenantId();
+    return prisma.clubSettings.upsert({
+      where: { tenantId },
+      create: { id: `club-${tenantId}`, tenantId, clubName: data.clubName || DEFAULT_CLUB.clubName, ...data },
       update: data,
-    }),
+    });
+  },
 };

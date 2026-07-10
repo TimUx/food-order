@@ -9,8 +9,12 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 
 describe.skipIf(!hasDb)('Module scenario runner', () => {
   beforeAll(async () => {
-    const { moduleManager } = await import('../../backend/src/platform/bootstrap');
-    await moduleManager.initialize();
+    const { moduleManager, tenantContext, tenantService } = await import('../../backend/src/platform/bootstrap');
+    const defaultTenant = await tenantService.getDefaultTenant();
+    const contextData = await tenantService.resolveContextData(defaultTenant);
+    await tenantContext.runAsync(contextData, async () => {
+      await moduleManager.initialize();
+    });
   });
 
   it('runs none scenario successfully', async () => {
@@ -20,6 +24,8 @@ describe.skipIf(!hasDb)('Module scenario runner', () => {
       moduleRegistry,
       healthService,
       featureContext,
+      tenantContext,
+      tenantService,
     } = await import('../../backend/src/platform/bootstrap');
     const { QaRegistry, ModuleScenarioRunner } = await import('../../backend/src/platform/qa');
     const runner = new ModuleScenarioRunner(
@@ -31,7 +37,9 @@ describe.skipIf(!hasDb)('Module scenario runner', () => {
     );
     const scenario = runner.buildScenarios().find((s) => s.id === 'none');
     expect(scenario).toBeDefined();
-    const result = await runner.runScenario(scenario!);
+    const defaultTenant = await tenantService.getDefaultTenant();
+    const contextData = await tenantService.resolveContextData(defaultTenant);
+    const result = await tenantContext.runAsync(contextData, () => runner.runScenario(scenario!));
     expect(result.ok).toBe(true);
   }, 120_000);
 });

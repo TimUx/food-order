@@ -35,6 +35,8 @@ export type {
 export {
   platformContainer,
   bootstrapPlatform,
+  initializeTenantInfrastructure,
+  createTenantMiddlewareStack,
   moduleDiscovery,
   moduleLoader,
   eventBus,
@@ -53,6 +55,12 @@ export {
   adminUiService,
   settingsService,
   schemaRegistry,
+  tenantContext,
+  platformContext,
+  tenantService,
+  tenantResolver,
+  platformSettingsService,
+  tenantController,
 } from './bootstrap';
 export {
   BaseModule,

@@ -2,7 +2,7 @@
 
 Technische Architektur der FestManager-Plattform – Architecture Decision Records (ADRs), Projektanalyse und Migrationsplan.
 
-> **Stand:** Plattform v1.4.0 – Payment-Modul, Notifications-Modul, Legal-Modul, metadata-first Admin-UI.
+> **Stand:** Plattform **v2.0.0** — Multi-Tenant produktionsbereit (Phasen 0–10 abgeschlossen). v1.4.0 – Payment, Notifications, Legal, metadata-first Admin-UI.
 
 ## Dokumente
 
@@ -31,6 +31,34 @@ Technische Architektur der FestManager-Plattform – Architecture Decision Recor
 | 012 | [architecture-consolidation-review.md](./012-architecture-consolidation-review.md) | Accepted | Konsolidierungsreview: UX vs. Architektur |
 | 013 | [realtime-communication.md](./013-realtime-communication.md) | Accepted | RealtimeService, WS-Fallback, intelligentes Polling |
 | 014 | [legal-module.md](./014-legal-module.md) | Accepted | Optionales Modul für rechtliche Seiten, Footer-Links und Notification-Anbindung |
+| 020 | [multi-tenant-platform.md](./020-multi-tenant-platform.md) | Accepted (Phase 0) | Gesamtzielbild Multi-Tenant-Plattform |
+| 021 | [tenant-context.md](./021-tenant-context.md) | Accepted (Phase 0) | TenantContext & PlatformContext |
+| 022 | [platform-administration.md](./022-platform-administration.md) | Accepted (Phase 0) | Plattform-Administration |
+| 023 | [tenant-routing.md](./023-tenant-routing.md) | Accepted (Phase 0) | TenantResolver & Routing |
+| 024 | [tenant-data-model.md](./024-tenant-data-model.md) | Accepted (Phase 0) | Shared DB, Tenant-Entity, Migration |
+| 025 | [platform-settings.md](./025-platform-settings.md) | Accepted (Phase 0) | Plattform- vs. Mandanteneinstellungen |
+| 026 | [multi-tenant-security.md](./026-multi-tenant-security.md) | Accepted (Phase 0) | Sicherheitskonzept Multi-Tenant |
+| 027 | [multi-tenant-deployment.md](./027-multi-tenant-deployment.md) | Accepted (Phase 0) | Docker, Traefik, Wildcard-TLS |
+| 028 | [notification-tenant.md](./028-notification-tenant.md) | Accepted (Phase 7) | Mandanten-SMTP, Branding, Webhooks |
+| 029 | [multi-tenant-security-hardening.md](./029-multi-tenant-security-hardening.md) | Accepted (Phase 8) | Security Review, Tenant-Härtung |
+| 030 | [performance-scalability.md](./030-performance-scalability.md) | Accepted (Phase 9) | Performance, Lasttests, Skalierung |
+
+### Version 2.0 – Multi-Tenant
+
+| Dokument | Inhalt |
+|----------|--------|
+| [PHASE_0_COMPLETION_REPORT.md](./PHASE_0_COMPLETION_REPORT.md) | Abschlussbericht Phase 0 |
+| [PHASE_1_COMPLETION_REPORT.md](./PHASE_1_COMPLETION_REPORT.md) | Abschlussbericht Phase 1 (Tenant Core) |
+| [PHASE_2_COMPLETION_REPORT.md](./PHASE_2_COMPLETION_REPORT.md) | Abschlussbericht Phase 2 (Tenant Data) |
+| [PHASE_3_COMPLETION_REPORT.md](./PHASE_3_COMPLETION_REPORT.md) | Abschlussbericht Phase 3 (Platform Admin) |
+| [PHASE_4_COMPLETION_REPORT.md](./PHASE_4_COMPLETION_REPORT.md) | Abschlussbericht Phase 4 (Tenant-Aware Modules) |
+| [PHASE_5_COMPLETION_REPORT.md](./PHASE_5_COMPLETION_REPORT.md) | Abschlussbericht Phase 5 (Frontend & Routing) |
+| [PHASE_6_COMPLETION_REPORT.md](./PHASE_6_COMPLETION_REPORT.md) | Abschlussbericht Phase 6 (Deployment) |
+| [PHASE_7_COMPLETION_REPORT.md](./PHASE_7_COMPLETION_REPORT.md) | Abschlussbericht Phase 7 (Notifications) |
+| [PHASE_8_COMPLETION_REPORT.md](./PHASE_8_COMPLETION_REPORT.md) | Abschlussbericht Phase 8 (Security) |
+| [PHASE_9_COMPLETION_REPORT.md](./PHASE_9_COMPLETION_REPORT.md) | Abschlussbericht Phase 9 (Performance) |
+| [PHASE_10_COMPLETION_REPORT.md](./PHASE_10_COMPLETION_REPORT.md) | Abschlussbericht Phase 10 (QA & Release) |
+| [030-performance-scalability.md](./030-performance-scalability.md) | ADR Performance & Skalierung |
 
 Siehe auch: [architecture-consolidation-report.md](../audits/architecture-consolidation-report.md) – Abschlussbericht mit Bewertung aller Kritikpunkte.
 
@@ -46,8 +74,10 @@ Jede ADR enthält:
 ## Verwandte Dokumentation
 
 - [MODULE_ARCHITECTURE.md](../MODULE_ARCHITECTURE.md) – operative Modul-Doku
+- [FRONTEND_GUIDE.md](../FRONTEND_GUIDE.md) – mandantenfähiges Frontend (Phase 5)
 - [DEVELOPER_GUIDE.md](../DEVELOPER_GUIDE.md) – Entwicklerhandbuch
-- [ADMIN_GUIDE.md](../ADMIN_GUIDE.md) – Administratorhandbuch
+- [NOTIFICATION_GUIDE.md](./NOTIFICATION_GUIDE.md) – mandantenfähige Benachrichtigungen (Phase 7)
+- [PERFORMANCE_GUIDE.md](./PERFORMANCE_GUIDE.md) – Performance & Lasttests (Phase 9)
 
 ## Prinzip
 

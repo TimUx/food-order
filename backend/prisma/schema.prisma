@@ -25,17 +25,133 @@ enum StatusCode {
   CANCELLED
 }
 
+enum TenantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum TenantApplicationStatus {
+  NEW
+  UNDER_REVIEW
+  CLARIFICATION
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+/// Plattformadministrator – gehört keinem Mandanten
+model PlatformUser {
+  id           String                 @id @default(uuid())
+  email        String                 @unique
+  passwordHash String                 @map("password_hash")
+  firstName    String                 @map("first_name")
+  lastName     String                 @map("last_name")
+  active       Boolean                @default(true)
+  permissions  Json                   @default("[]")
+  mfaEnabled   Boolean                @default(false) @map("mfa_enabled")
+  lastLoginAt  DateTime?              @map("last_login_at")
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
+  sessions     PlatformUserSession[]
+
+  @@map("platform_users")
+}
+
+model PlatformUserSession {
+  id               String       @id @default(uuid())
+  userId           String       @map("user_id")
+  user             PlatformUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String       @unique @map("refresh_token_hash")
+  expiresAt        DateTime     @map("expires_at")
+  revokedAt        DateTime?    @map("revoked_at")
+  userAgent        String?      @map("user_agent")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("platform_user_sessions")
+}
+
+model Tenant {
+  id            String       @id @default(uuid())
+  name          String
+  shortName     String?      @map("short_name")
+  slug          String       @unique
+  subdomain     String       @unique
+  status        TenantStatus @default(ACTIVE)
+  contactName   String?      @map("contact_name")
+  email         String?
+  phone         String?
+  logoUrl       String?      @map("logo_url")
+  locale        String       @default("de-DE")
+  timezone      String       @default("Europe/Berlin")
+  currency      String       @default("EUR")
+  theme         String       @default("default")
+  description   String?
+  address       String?
+  website       String?
+  activatedAt   DateTime?    @map("activated_at")
+  archivedAt    DateTime?    @map("archived_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  settings      TenantSettings?
+  users         User[]
+  events        Event[]
+  customers     Customer[]
+  foodItems     FoodItem[]
+  orders        Order[]
+  dailyCounters DailyOrderCounter[]
+  legalPages    LegalPage[]
+  modules       TenantModule[]
+  clubSettings  ClubSettings[]
+
+  @@index([status])
+  @@index([subdomain])
+  @@index([slug])
+  @@map("tenants")
+}
+
+model TenantSettings {
+  tenantId                    String   @id @map("tenant_id")
+  tenant                      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderFieldFirstNameRequired Boolean  @default(true) @map("order_field_first_name_required")
+  orderFieldLastNameRequired  Boolean  @default(true) @map("order_field_last_name_required")
+  orderFieldEmailRequired     Boolean  @default(false) @map("order_field_email_required")
+  orderFieldPhoneRequired     Boolean  @default(false) @map("order_field_phone_required")
+  cancellationDeadlineHours   Int      @default(24) @map("cancellation_deadline_hours")
+  dataRetentionDays           Int      @default(365) @map("data_retention_days")
+  extraJson                   Json     @default("{}") @map("extra_json")
+  updatedAt                   DateTime @updatedAt @map("updated_at")
+
+  @@map("tenant_settings")
+}
+
+model PlatformSettings {
+  key       String   @id
+  value     Json
+  encrypted Boolean  @default(false)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  @@map("platform_settings")
+}
+
+/// Plattformweite Rollendefinitionen (ADMIN, STAFF) – nicht mandantenspezifisch
 model Role {
-  id        String   @id @default(uuid())
-  name      RoleName @unique
+  id          String   @id @default(uuid())
+  name        RoleName @unique
   permissions Json     @default("[]")
-  createdAt DateTime @default(now())
-  users     User[]
+  createdAt   DateTime @default(now())
+  users       User[]
 }
 
 model User {
   id           String        @id @default(uuid())
-  email        String        @unique
+  tenantId     String        @map("tenant_id")
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email        String
   passwordHash String
   firstName    String
   lastName     String
@@ -45,6 +161,10 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   sessions     UserSession[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([tenantId, email])
 }
 
 model UserSession {
@@ -62,6 +182,8 @@ model UserSession {
 
 model Event {
   id                  String     @id @default(uuid())
+  tenantId            String     @map("tenant_id")
+  tenant              Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name                String
   description         String?
   date                DateTime   @db.Date
@@ -77,31 +199,42 @@ model Event {
   orders              Order[]
   dailyCounters       DailyOrderCounter[]
 
-  @@index([isActive])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([tenantId, createdAt])
 }
 
 model DailyOrderCounter {
   id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   eventId   String
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   date      DateTime @db.Date
   counter   Int      @default(0)
 
   @@unique([eventId, date])
+  @@index([tenantId])
 }
 
 model Customer {
   id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   firstName String
   lastName  String
   email     String?
   phone     String?
   createdAt DateTime @default(now())
   orders    Order[]
+
+  @@index([tenantId])
 }
 
 model FoodItem {
   id          String      @id @default(uuid())
+  tenantId    String      @map("tenant_id")
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   eventId     String
   event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
   name        String
@@ -116,11 +249,15 @@ model FoodItem {
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
 
+  @@index([tenantId])
+  @@index([tenantId, eventId])
   @@index([eventId])
 }
 
 model Order {
   id              String        @id @default(uuid())
+  tenantId        String        @map("tenant_id")
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   eventId         String
   event           Event         @relation(fields: [eventId], references: [id])
   customerId      String?
@@ -140,8 +277,15 @@ model Order {
   statusHistory   OrderStatus[]
 
   @@unique([eventId, orderDate, orderNumber])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, eventId])
+  @@index([tenantId, createdAt])
   @@index([eventId, status])
-  @@index([eventId, orderDate])
+  @@index([tenantId, eventId, status])
+  @@index([tenantId, updatedAt])
+  @@index([eventId, status, readyAt])
+  @@index([tenantId, lookupToken])
 }
 
 model OrderItem {
@@ -153,6 +297,8 @@ model OrderItem {
   quantity   Int
   unitPrice  Decimal  @db.Decimal(10, 2)
   lineTotal  Decimal  @db.Decimal(10, 2)
+
+  @@index([orderId])
 }
 
 model OrderStatus {
@@ -166,8 +312,11 @@ model OrderStatus {
   @@index([orderId])
 }
 
+/// Legacy – wird schrittweise durch TenantSettings ersetzt
 model ClubSettings {
   id                          String   @id @default("default")
+  tenantId                    String?  @unique @map("tenant_id")
+  tenant                      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   clubName                    String   @default("FestManager")
   description                 String?
   contactName                 String?
@@ -193,21 +342,28 @@ model ClubSettings {
 
 model LegalPage {
   id          String   @id @default(uuid())
-  pageType    String   @unique @map("page_type")
+  tenantId    String   @map("tenant_id")
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pageType    String   @map("page_type")
   title       String
-  slug        String   @unique
+  slug        String
   enabled     Boolean  @default(false)
   published   Boolean  @default(false)
   contentHtml String   @default("") @map("content_html")
   updatedAt   DateTime @updatedAt @map("updated_at")
   createdAt   DateTime @default(now()) @map("created_at")
 
+  @@unique([tenantId, pageType])
+  @@unique([tenantId, slug])
+  @@index([tenantId])
   @@map("legal_pages")
 }
 
-/// Zentrale Modulverwaltung – Status und Konfiguration offizieller Module
-model InstalledModule {
-  moduleId         String    @id @map("module_id")
+/// Mandantenscharfe Modulverwaltung
+model TenantModule {
+  tenantId         String    @map("tenant_id")
+  moduleId         String    @map("module_id")
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   moduleVersion    String    @default("0.0.0") @map("module_version")
   installed        Boolean   @default(false)
   enabled          Boolean   @default(false)
@@ -225,30 +381,91 @@ model InstalledModule {
 
   migrations ModuleMigration[]
 
+  @@id([tenantId, moduleId])
+  @@index([tenantId])
   @@map("modules")
 }
 
-/// Ausgeführte Modul-Migrationen (SQL aus modules/{id}/migrations/)
+/// Ausgeführte Modul-Migrationen pro Mandant
 model ModuleMigration {
-  moduleId   String   @map("module_id")
+  tenantId   String       @map("tenant_id")
+  moduleId   String       @map("module_id")
   migration  String
-  appliedAt  DateTime @default(now()) @map("applied_at")
-  module     InstalledModule @relation(fields: [moduleId], references: [moduleId], onDelete: Cascade)
+  appliedAt  DateTime     @default(now()) @map("applied_at")
+  module     TenantModule @relation(fields: [tenantId, moduleId], references: [tenantId, moduleId], onDelete: Cascade)
 
-  @@id([moduleId, migration])
+  @@id([tenantId, moduleId, migration])
+  @@index([tenantId])
   @@map("module_migrations")
 }
 
-/// Plattform-Audit-Log für Modul-Lifecycle und Konfigurationsänderungen
+/// Plattform-Audit-Log – tenant_id optional für mandantenbezogene Aktionen
 model PlatformAuditLog {
   id        String   @id @default(cuid())
   action    String
   actorId   String?  @map("actor_id")
+  tenantId  String?  @map("tenant_id")
   moduleId  String?  @map("module_id")
   details   Json     @default("{}")
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([moduleId])
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
   @@index([createdAt])
   @@map("platform_audit_log")
+}
+
+/// Mandantenbewerbung über die öffentliche Homepage (Plattformebene)
+model TenantApplication {
+  id                    String                  @id @default(uuid())
+  organization          String
+  organizationType      String                  @map("organization_type")
+  contactName           String                  @map("contact_name")
+  street                String
+  postalCode            String                  @map("postal_code")
+  city                  String
+  country               String                  @default("Deutschland")
+  email                 String
+  phone                 String?
+  website               String?
+  memberCount           Int?                    @map("member_count")
+  eventsPerYear         Int?                    @map("events_per_year")
+  reason                String
+  desiredFeatures       String                  @map("desired_features")
+  freeTierJustification String                  @map("free_tier_justification")
+  plannedUsage          String                  @map("planned_usage")
+  notes                 String?
+  requestedSubdomain    String                  @map("requested_subdomain")
+  status                TenantApplicationStatus @default(NEW)
+  adminComment          String?                 @map("admin_comment")
+  reviewedBy            String?                 @map("reviewed_by")
+  reviewedAt            DateTime?               @map("reviewed_at")
+  tenantId              String?                 @map("tenant_id")
+  privacyAccepted       Boolean                 @default(true) @map("privacy_accepted")
+  termsAccepted         Boolean                 @default(true) @map("terms_accepted")
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+
+  @@unique([requestedSubdomain])
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@map("tenant_applications")
+}
+
+/// Rechtliche Seiten auf Plattformebene (www / apex)
+model PlatformLegalPage {
+  id          String   @id @default(uuid())
+  pageType    String   @map("page_type")
+  title       String
+  slug        String   @unique
+  enabled     Boolean  @default(true)
+  published   Boolean  @default(false)
+  contentHtml String   @map("content_html") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([pageType])
+  @@map("platform_legal_pages")
 }

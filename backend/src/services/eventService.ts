@@ -6,7 +6,7 @@ import { CORE_HOOKS } from '../platform/types';
 
 export const eventService = {
   async getAll() {
-    return eventRepository.findAll();
+    return eventRepository.findForTenant();
   },
 
   async getActive() {

@@ -2,8 +2,8 @@
 
 | Feld | Wert |
 |------|------|
-| **Status** | Accepted (implementiert) |
-| **Datum** | 2026-07-08 |
+| **Status** | Accepted (Phase 7 – mandantenfähig) |
+| **Datum** | 2026-07-08 (aktualisiert 2026-07-09) |
 
 ## Ziel
 
@@ -28,12 +28,16 @@ Core (orderService, orderPayableAdapter, PaymentManager, ModuleManager)
         ▼
 notifications/hooks.ts
         ▼
-NotificationManager → MessageTemplateService → templates/de.ts
+NotificationManager → resolveSmtpConfig() → MessageTemplateService → notificationBranding
         ▼
 NotificationRegistry → Kanäle
+        ▼
+notification_deliveries (tenant-scoped Logging)
 ```
 
 Der Core ruft **keine** Kanäle direkt auf. Benachrichtigungen laufen ausschließlich über Hooks → `NotificationManager`.
+
+**Phase 7:** SMTP-Auflösung Mandant → Plattform-Fallback. Branding, Templates und Delivery-Logging sind tenantbezogen. Siehe [ADR-028](./028-notification-tenant.md).
 
 Zusätzlich reagiert das Modul per Hook auf:
 
@@ -49,7 +53,10 @@ Wenn das optionale Legal-Modul aktiv ist, ergaenzt `MessageTemplateService` Kund
 | Komponente | Datei | Verantwortung |
 |------------|-------|---------------|
 | `NotificationService` | `services/NotificationServiceImpl.ts` | Extension-Point-Implementierung |
-| `NotificationManager` | `NotificationManager.ts` | Dispatch, Templates, Health |
+| `NotificationManager` | `NotificationManager.ts` | Dispatch, SMTP-Auflösung, Templates, Health, Delivery-Log |
+| `smtpResolver` | `services/smtpResolver.ts` | Mandant/Plattform-SMTP-Fallback |
+| `notificationBranding` | `services/notificationBranding.ts` | Logo, Farben, Footer, Signatur |
+| `notificationDeliveryRepository` | `repositories/notificationDeliveryRepository.ts` | Versandprotokoll pro Mandant |
 | `NotificationRegistry` | `NotificationRegistry.ts` | Kanal-Registry |
 | Settings | `module.json` → `module.notifications` | SMTP, Webhooks, Ereignisse |
 | Hooks | `hooks.ts` | `ORDER_PAID`, `KITCHEN_COMPLETED` |
@@ -59,7 +66,7 @@ Wenn das optionale Legal-Modul aktiv ist, ergaenzt `MessageTemplateService` Kund
 
 | Kanal | ID | Konfiguration |
 |-------|-----|---------------|
-| E-Mail (SMTP) | `email` | `smtp.*` in WebUI, verschlüsseltes Passwort |
+| E-Mail (SMTP) | `email` | `smtp.*` (Mandant) oder `platform.smtp.*` (Fallback) |
 | ntfy | `ntfy` | Server-URL, Topic, optional Token |
 | Discord | `discord` | Webhook-URL (verschlüsselt) |
 | Slack | `slack` | Webhook-URL (verschlüsselt) |
@@ -137,6 +144,9 @@ Pfad: **Administration → Module → Notifications → SMTP → Verbindung test
 | Hook-Subscriber | ✅ |
 | Admin Settings + SMTP-Test | ✅ auch bei installiertem Modul (`requireActivation: false`) |
 | Legacy-Migration | ✅ |
+| Mandanten-SMTP + Plattform-Fallback | ✅ Phase 7 |
+| Tenant-Branding in E-Mails | ✅ Phase 7 |
+| Delivery-Logging | ✅ Phase 7 |
 | Web Push | ⏳ offen |
 
 ## Offene Punkte

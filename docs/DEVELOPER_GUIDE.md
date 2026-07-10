@@ -2,19 +2,22 @@
 
 Technische Dokumentation für Entwickler, die an der FestManager-Plattform mitarbeiten oder sie erweitern.
 
+> **Version 2.0:** Multi-Tenant-Unterstützung wird mit v2.0 eingeführt. Phase 0 definiert die Architektur (ADRs 020–027). Module und Services müssen künftig ausschließlich über `TenantContext` arbeiten – niemals Hostname, URL oder `tenant_id`-Parameter selbst auswerten. Details: [Architektur-Dokumentation](architecture/README.md).
+
 ## Inhaltsverzeichnis
 
 1. [Architekturübersicht](#architekturübersicht)
-2. [Projektstruktur](#projektstruktur)
-3. [Lokale Entwicklung](#lokale-entwicklung)
-4. [Datenbank & Prisma](#datenbank--prisma)
-5. [API-Design](#api-design)
-6. [Realtime (Socket.IO)](#realtime-socketio)
-7. [Vorausbestellungen](#vorausbestellungen)
-8. [Authentifizierung](#authentifizierung)
-9. [Tests](#tests)
-10. [Deployment](#deployment)
-11. [Erweiterungspunkte](#erweiterungspunkte)
+2. [Multi-Tenant (v2.0)](#multi-tenant-v20)
+3. [Projektstruktur](#projektstruktur)
+4. [Lokale Entwicklung](#lokale-entwicklung)
+5. [Datenbank & Prisma](#datenbank--prisma)
+6. [API-Design](#api-design)
+7. [Realtime (Socket.IO)](#realtime-socketio)
+8. [Vorausbestellungen](#vorausbestellungen)
+9. [Authentifizierung](#authentifizierung)
+10. [Tests](#tests)
+11. [Deployment](#deployment)
+12. [Erweiterungspunkte](#erweiterungspunkte)
 
 ---
 
@@ -27,6 +30,107 @@ Technische Dokumentation für Entwickler, die an der FestManager-Plattform mitar
 └─────────────┘                  └─────────────┘                └────────────┘
        │                                │
        └──────── Socket.IO ─────────────┘
+```
+
+### Multi-Tenant (v2.0)
+
+Ab Version 2.0 arbeitet die Plattform mandantenfähig. Kernbausteine:
+
+| Baustein | Verantwortung |
+|----------|---------------|
+| `TenantContext` | Aktueller Mandant pro Request (serverseitig) |
+| `PlatformContext` | Plattformweite Konfiguration |
+| `TenantResolver` | Einzige Stelle für Host-/URL-Auflösung |
+| `TenantProvider` | React-Provider (ersetzt `ClubContext`) |
+| `TenantSettingsService` | Mandantenspezifische Einstellungen (`tenant.order`, `tenant.organization`, `tenant.module.*`) |
+| `PlatformSettingsService` | Plattformweite Einstellungen (`platform.*`) |
+
+**Verbindliche Regeln für Entwickler:**
+
+- Kein `tenant_id` in API-Requests (weder Query, Body noch Path)
+- Kein Hostname-/URL-Parsing in Modulen oder React-Komponenten
+- Alle Datenbankzugriffe mandantenbezogener Tabellen filtern über `tenant_id` aus `TenantContext`
+- UI-Begriff bleibt **Veranstalter**; intern **Mandant**
+
+ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1–6: [Reports](architecture/README.md#version-20--multi-tenant) · [Frontend Guide](FRONTEND_GUIDE.md) · [Deployment Guide](DEPLOYMENT.md) · [Docker Guide](DOCKER.md)
+
+### Plattform-API (Phase 3)
+
+| Endpoint | Beschreibung |
+|----------|--------------|
+| `POST /api/platform/auth/login` | Plattform-Login |
+| `GET /api/platform/dashboard` | Plattform-Dashboard |
+| `GET/POST/PUT/DELETE /api/platform/tenants` | Mandantenverwaltung |
+| `POST /api/platform/tenants/:id/impersonate` | Mandanten-Impersonation |
+| `GET/PUT /api/platform/settings` | Plattformsettings |
+| `GET /api/platform/applications` | Mandantenbewerbungen auflisten |
+| `POST /api/platform/applications/:id/approve` | Bewerbung genehmigen (+ optional Mandant anlegen) |
+| `GET/PUT /api/platform/legal-pages/:pageType` | Rechtliche Plattformseiten verwalten |
+
+Öffentliche Homepage-APIs (ohne Mandanten-Kontext):
+
+| Endpoint | Beschreibung |
+|----------|--------------|
+| `GET /api/public/platform` | Plattforminfo inkl. Kontakt, `registrationEnabled` |
+| `GET /api/public/platform/legal-links` | Veröffentlichte Rechtslinks |
+| `GET /api/public/platform/legal/:slug` | Rechtsseiten-Inhalt |
+| `POST /api/public/tenant-applications` | Mandantenbewerbung einreichen |
+| `GET /api/platform/domains` | Domain-Konfiguration (Anzeige) |
+
+### Domain-Konfiguration (kanonische Architektur)
+
+Zentrale Verwaltung: `backend/src/platform/PlatformDomainService.ts` · Anzeige in der Plattformverwaltung unter **Domain & Routing**.
+
+| ENV | Beschreibung |
+|-----|--------------|
+| `PLATFORM_DOMAIN` | Basis-Domain (z. B. `example.org`) |
+| `WWW_SUBDOMAIN` | WWW-Subdomain (Default: `www`) |
+| `APP_SUBDOMAIN` | APP-Subdomain (Default: `app`) |
+| `API_SUBDOMAIN` | API-Subdomain (Default: `api`) |
+| `DOCS_SUBDOMAIN` / `STATUS_SUBDOMAIN` | Optionale Dienste |
+| `PLATFORM_RESERVED_SUBDOMAINS` | Zusätzlich reservierte Subdomains (kommagetrennt) |
+| `PLATFORM_WWW_DOMAIN` / `PLATFORM_APP_DOMAIN` | Optionale vollständige Host-Overrides |
+| `COOKIE_DOMAIN` / `SESSION_DOMAIN` | Cookie-/Session-Domain |
+| `ALLOWED_ORIGINS` / `PLATFORM_ALLOWED_ORIGINS` | CORS |
+
+Linkgenerierung (QR, E-Mails, Routing, SEO) nutzt ausschließlich `PlatformDomainService`. Details: [Canonical Domain Report](architecture/CANONICAL_DOMAIN_COMPLETION_REPORT.md).
+
+Plattform-APIs erfordern JWT mit `scope: "platform"`. Mandanten-APIs lehnen Plattform-Tokens ab.
+
+### Repository-Filter (Phase 2)
+
+Mandantenbezogene Repositories nutzen `backend/src/platform/tenant/tenantScope.ts`:
+
+```typescript
+import { tenantWhere, withTenantId, requireTenantId } from '../platform/tenant/tenantScope';
+
+// Lesen – tenantId wird automatisch ergänzt
+prisma.user.findMany({ where: tenantWhere({ active: true }) });
+
+// Schreiben
+prisma.event.create({ data: withTenantId({ name: 'Sommerfest', date: new Date() }) });
+```
+
+Beim App-Start: `ensureDefaultTenant()` → `migrateMultiTenantSchema()` (idempotent, Marker in `platform_settings`).
+
+
+### Implementierte APIs (Phase 1)
+
+| Endpoint | Beschreibung |
+|----------|--------------|
+| `GET /api/public/tenant` | Öffentliche Mandantendaten (host-aufgelöst) |
+| `GET /api/public/platform` | Plattforminformationen (Kontakt, Bewerbungen, SEO) |
+| `POST /api/public/tenant-applications` | Mandantenbewerbung |
+
+### Backend-Nutzung in Modulen
+
+```typescript
+// Über FeatureContext (bevorzugt in Modulen)
+const tenantId = context.getTenantId();
+
+// Über DI (Services, Middleware)
+const tenantContext = platformContainer.get<TenantContext>(PLATFORM_TOKENS.TenantContext);
+const id = tenantContext.require().id;
 ```
 
 ### Schichten im Backend
@@ -282,6 +386,8 @@ Bei aktivem **Payment-Modul** erscheinen Online-Bestellungen erst in der Küche,
 
 ## Tests
 
+> **v2.0:** Multi-Tenant-Tests werden erst ab Phase 1 implementiert. Geplante Testebenen: Resolver-Unit-Tests, API-Isolation (Cross-Tenant), Security (Host-Spoofing, CORS), Migrations-Tests. Bestehende Tests (`tests/api/*`, `tests/integration/*`, `tests/e2e/*`) werden in Phase 1 um Standard-Mandant-Fixtures ergänzt. Details: [ADR-020](architecture/020-multi-tenant-platform.md#teststrategie-zukunft).
+
 ```bash
 # Backend
 cd backend && npm test
@@ -416,6 +522,38 @@ Das Legal-Modul registriert den Extension Point `legalContentRegistry`. Der Core
 - Footer-Links in E-Mail-Benachrichtigungen
 
 Wichtig: Ohne aktiviertes Modul bleibt die Plattform unverändert; der Registry-Zugriff liefert dann keine öffentlichen Seiten.
+
+### Notification-Modul (Phase 7)
+
+Mandantenfähige Kommunikation über `modules/notifications/`:
+
+- SMTP: Mandant zuerst, Plattform-Fallback (`resolveSmtpConfig`)
+- Branding: `notificationBranding.ts`, Tenant-URLs via `notificationTenantContext.ts`
+- Delivery-Log: `notification_deliveries` (tenant-scoped)
+- Keine direkten Sends aus anderen Modulen – nur Hooks
+
+→ **[NOTIFICATION_GUIDE.md](./NOTIFICATION_GUIDE.md)**
+
+### Security (Phase 8)
+
+Multi-Tenant-Härtung und OWASP-Review:
+
+- Host-Validation: `TenantResolver` + Trust Proxy
+- Upload-Zugriff: `uploadAccess` Middleware
+- WebSocket-Isolation: `socket/index.ts`
+- JWT `tenantId`-Binding
+
+→ **[SECURITY.md](../SECURITY.md)** · **[ADR-029](./architecture/029-multi-tenant-security-hardening.md)**
+
+### Performance (Phase 9)
+
+Lasttests, DB-Indizes, Monitoring, Frontend Code Splitting:
+
+- `npm run qa:performance` — API-Baseline
+- `npm run qa:load` — k6 Lasttests
+- `performanceMetrics` + erweiterter Health-Check
+
+→ **[PERFORMANCE_GUIDE.md](./PERFORMANCE_GUIDE.md)** · **[ADR-030](./architecture/030-performance-scalability.md)**
 
 ### Payment & PayableResource
 

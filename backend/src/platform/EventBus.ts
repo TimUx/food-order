@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger';
+import type { TenantContext } from './tenant/TenantContext';
 
 export type EventHandler<T = unknown> = (payload: T) => void | Promise<void>;
 
@@ -13,6 +14,8 @@ export interface EventSubscription {
 export class EventBus {
   private subscriptions = new Map<string, EventSubscription[]>();
   private subscriptionCounter = 0;
+
+  constructor(private readonly tenantContext?: TenantContext) {}
 
   on<T>(event: string, handler: EventHandler<T>, options?: { priority?: number; source?: string }): string {
     const id = `sub-${++this.subscriptionCounter}`;
@@ -47,14 +50,25 @@ export class EventBus {
   }
 
   async emit<T>(event: string, payload: T): Promise<void> {
+    const enriched = this.enrichWithTenantContext(payload);
     const handlers = this.subscriptions.get(event) ?? [];
+    const tenantId = this.tenantContext?.id();
     for (const { id, handler, source } of handlers) {
       try {
-        await handler(payload);
+        await handler(enriched);
       } catch (err) {
-        logger.error(`EventBus: handler failed for "${event}" (${source ?? id})`, err);
+        logger.error(`EventBus: handler failed for "${event}" (${source ?? id})`, err, tenantId);
       }
     }
+  }
+
+  private enrichWithTenantContext<T>(payload: T): T {
+    const tenantId = this.tenantContext?.id();
+    if (!tenantId) return payload;
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      return { ...(payload as Record<string, unknown>), tenantId } as T;
+    }
+    return payload;
   }
 
   emitAsync<T>(event: string, payload: T): void {

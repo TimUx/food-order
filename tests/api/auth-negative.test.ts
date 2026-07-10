@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import request from 'supertest';
-import { createTestApp } from './setup';
+import { createTestApp, tenantApi } from './setup';
 import { QA_USERS } from '../fixtures/constants';
 import type { Express } from 'express';
 
@@ -11,7 +10,7 @@ describe('API auth — negative cases', () => {
 
   beforeAll(async () => {
     app = await createTestApp();
-    const login = await request(app)
+    const login = await tenantApi(app)
       .post('/api/auth/login')
       .send(QA_USERS.kitchen);
     staffToken = login.body.token;
@@ -19,12 +18,12 @@ describe('API auth — negative cases', () => {
   });
 
   it('protected route without token returns 401', async () => {
-    const res = await request(app).get('/api/auth/me');
+    const res = await tenantApi(app).get('/api/auth/me');
     expect(res.status).toBe(401);
   });
 
   it('staff route with wrong role returns 403', async () => {
-    const res = await request(app)
+    const res = await tenantApi(app)
       .get('/api/staff/club')
       .set('Authorization', `Bearer ${staffToken}`);
     expect(res.status).toBe(403);
@@ -32,11 +31,11 @@ describe('API auth — negative cases', () => {
 
   it('revoked session returns 401', async () => {
     expect(refreshToken).toBeTruthy();
-    await request(app)
+    await tenantApi(app)
       .post('/api/auth/logout')
       .send({ refreshToken });
 
-    const res = await request(app)
+    const res = await tenantApi(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${staffToken}`);
     expect(res.status).toBe(401);

@@ -2,6 +2,8 @@
 
 Technische Dokumentation für das Feature-Modulsystem und die Modulverwaltung der FestManager-Plattform.
 
+> **Version 2.0:** Module müssen künftig ausschließlich über `TenantContext` arbeiten. Kein Hostname-Parsing, keine `tenant_id`-Requestparameter. Modul-Tabellen und `InstalledModule` werden mandantenscharf. Analyse der erforderlichen Änderungen: [ADR-020](architecture/020-multi-tenant-platform.md#modulanalyse-erforderliche-änderungen).
+
 ## Inhaltsverzeichnis
 
 1. [Architekturprinzip](#architekturprinzip)
@@ -348,6 +350,20 @@ Externe Entwickler können später Plugins nach gleichem Manifest-Schema bereits
 ---
 
 ## Best Practices
+
+### Multi-Tenant (v2.0)
+
+| Regel | Beschreibung |
+|-------|--------------|
+| `context.getTenantId()` | Mandanten-ID aus `FeatureContext` / `TenantContext` |
+| Kein Host-Parsing | Weder im Modul-Backend noch im Modul-Frontend |
+| `tenant_id` in Modul-Tabellen | Alle neuen SQL-Migrationen mit `tenant_id` |
+| Settings | Namespace `tenant.module.{id}` statt globaler Config |
+| Webhooks | Tenant aus Metadaten oder Signatur auflösen |
+
+---
+
+## Best Practices (allgemein)
 
 - Module niemals aus dem Internet laden – nur aus `/modules` im Image
 - Config mit Zod validieren (`getConfigContract()`)

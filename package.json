@@ -16,6 +16,7 @@
     "qa:module-tests": "npx tsx scripts/qa/run-module-tests.ts",
     "qa:security": "npx tsx scripts/qa/security-audit.ts",
     "qa:performance": "npx tsx scripts/qa/performance-baseline.ts",
+    "qa:load": "k6 run scripts/qa/load-test.k6.js",
     "qa:report": "npx tsx scripts/qa/generate-report.ts",
     "screenshots": "npx tsx scripts/capture-screenshots.ts",
     "qa:e2e": "playwright test --config tests/e2e/playwright.config.ts",

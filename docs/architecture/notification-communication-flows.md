@@ -11,8 +11,10 @@
 | **Hook** | Plattform-Hook |
 | **Empfänger** | Zielgruppe |
 | **Kanal** | Standard (konfigurierbar) |
-| **Wiederholung** | Keine automatischen Retries |
-| **Fehler** | Log-Warnung, Bestellablauf wird nicht blockiert |
+| **Wiederholung** | Keine automatischen Retries (synchroner Versand) |
+| **Fehler** | Log-Warnung + `notification_deliveries`, Bestellablauf wird nicht blockiert |
+| **SMTP** | Mandant → Plattform-Fallback |
+| **Logging** | Tenant-scoped in `notification_deliveries` |
 
 ---
 
