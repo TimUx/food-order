@@ -105,6 +105,8 @@ flowchart TD
 | Reparatur | Container neu starten |
 | Nur Config | `.env` aktualisieren ohne Neuaufbau |
 
+Bei **Upgrade** und **Migration** erstellt der Installer vor dem Container-Start automatisch ein Datenbank-Backup (`backups/`). Das Backend wendet Schema-Änderungen per `prisma migrate deploy` an — nicht per `db push`.
+
 ## Rollback
 
 Bei Fehlern bietet der Installer:

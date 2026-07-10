@@ -3,6 +3,17 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.2.2 - 2026-07-10
+
+### Geändert
+
+- **Produktionsmigrationen:** `prisma migrate deploy` statt `db push` beim Backend-Start; Pre-Migration-Backup per Entrypoint und Installer.
+- Init-Migration unter `backend/prisma/migrations/`; Baseline für bestehende Installationen.
+- CI-Tests für frische DB und Upgrade von `db push`.
+- ADR 039: Produktionsmigrationen.
+
+---
+
 ## 2.2.1 - 2026-07-10
 
 ### Neu

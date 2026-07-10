@@ -8,7 +8,7 @@ Der empfohlene Weg zur Installation ist der TUI-Assistent:
 ./install.sh
 ```
 
-Der Installer erzeugt automatisch `.env`, `installer/generated/compose.override.yml` und startet die passenden Compose-Dateien. Siehe [INSTALLATION.md](./INSTALLATION.md).
+Der Installer erzeugt automatisch `.env`, `installer/generated/compose.override.yml` und startet die passenden Compose-Dateien. Schema-Änderungen erfolgen per `prisma migrate deploy` (nicht `db push`). Siehe [INSTALLATION.md](./INSTALLATION.md).
 
 ### Online-Bootstrap
 

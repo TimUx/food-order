@@ -79,7 +79,7 @@ wait_for_health() {
 
 run_installation() {
   local step=0
-  local total=5
+  local total=6
 
   tui_gauge "Installation" 0 "Vorbereitung..."
   install_docker_if_missing || return 1
@@ -94,6 +94,10 @@ run_installation() {
 
     tui_gauge "Installation" $((step*100/total)) "Lade Images..."
     compose_pull || return 1
+    step=$((step+1))
+
+    tui_gauge "Installation" $((step*100/total)) "Datenbank-Backup..."
+    run_pre_migration_backup || return 1
     step=$((step+1))
 
     tui_gauge "Installation" $((step*100/total)) "Starte Container..."

@@ -2,7 +2,7 @@
 
 Moderne Open-Source-Plattform für Verkauf, Bestellung und Organisation von Veranstaltungen – mit Vorausbestellungen, Branding des Veranstalters, Echtzeit-Updates und PWA-Unterstützung.
 
-> **Version 2.2.1** — Professioneller interaktiver Installations-Assistent (`./install.sh`). Siehe [Installationsanleitung](docs/INSTALLATION.md).
+> **Version 2.2.2** — Professioneller interaktiver Installations-Assistent (`./install.sh`). Siehe [Installationsanleitung](docs/INSTALLATION.md).
 
 Ursprünglich für Vereine entwickelt, geeignet für Feuerwehren, Hilfsorganisationen, Sport- und Musikvereine, Schulen, Firmen, Kommunen, Foodtrucks und private Feste.
 
@@ -174,7 +174,7 @@ docker compose up -d
 docker compose exec backend npm run seed
 ```
 
-Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prisma db push`. Betrieb, Backup und Updates: [OPERATIONS.md](docs/OPERATIONS.md).
+Das Backend wendet beim Start versionierte Prisma-Migrationen an (`prisma migrate deploy`). Betrieb, Backup und Updates: [OPERATIONS.md](docs/OPERATIONS.md).
 
 | Dienst | URL |
 |--------|-----|

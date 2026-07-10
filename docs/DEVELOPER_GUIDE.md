@@ -237,14 +237,18 @@ Modul-spezifische Tabellen (z. B. `payment_sessions`) werden ausschließlich in 
 
 ### Datenbankschema
 
-Schema-Änderungen werden direkt aus `schema.prisma` per `db push` synchronisiert:
+Schema-Änderungen werden über Prisma Migrate versioniert:
 
 ```bash
-# Schema anwenden (Entwicklung & Docker-Start)
-npx prisma db push
+# Neue Migration erstellen (Entwicklung)
+cd backend
+npx prisma migrate dev --name beschreibung
 
-# Im Docker-Container startet das Backend automatisch mit prisma db push
+# Nur lokale Schnell-Synchronisation (Entwicklung)
+npx prisma db push
 ```
+
+In Produktion/Docker: `prisma migrate deploy` via Entrypoint — **kein** `db push`.
 
 Betrieb (Backup vor Update): [OPERATIONS.md](OPERATIONS.md).
 

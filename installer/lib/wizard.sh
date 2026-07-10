@@ -8,6 +8,7 @@ source "${INSTALLER_DIR}/lib/detect.sh"
 source "${INSTALLER_DIR}/lib/validate.sh"
 source "${INSTALLER_DIR}/lib/secrets.sh"
 source "${INSTALLER_DIR}/lib/config.sh"
+source "${INSTALLER_DIR}/lib/migrate.sh"
 source "${INSTALLER_DIR}/lib/docker.sh"
 
 wizard_step_welcome() {

@@ -19,7 +19,7 @@ echo "=== Bootstrap Tests ==="
 
 # Version
 out=$("${ROOT}/install.sh" --version 2>&1)
-echo "$out" | grep -q "2.2.1" && pass "--version" || fail "--version"
+echo "$out" | grep -q "2.2.2" && pass "--version" || fail "--version"
 
 # Lokaler Modus erkennt Repository
 [[ -f "${ROOT}/installer/install.sh" ]] && pass "local installer exists" || fail "local installer exists"

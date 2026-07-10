@@ -63,6 +63,9 @@ jobs:
       - name: Installer unit tests
         run: npm run qa:installer
 
+      - name: Migration tests (fresh DB + upgrade)
+        run: bash scripts/qa/test-migrations.sh
+
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         if: always()

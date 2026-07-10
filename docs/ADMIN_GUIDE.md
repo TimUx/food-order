@@ -122,9 +122,7 @@ docker compose exec backend npm run seed
 Standard-Images: `ghcr.io/timux/festschmiede/backend:latest` und `ghcr.io/timux/festschmiede/frontend:latest`  
 Tag ändern über `IMAGE_TAG` in `.env` (z. B. Release-Version).
 
-Das Backend synchronisiert das Datenbankschema beim Start automatisch per `prisma db push`.
-
-Ausführliche Checklisten, Backup und Wiederherstellung: **[OPERATIONS.md](OPERATIONS.md)**.
+Das Backend wendet beim Start versionierte Prisma-Migrationen an (`prisma migrate deploy`). Vor Upgrades ist ein Datenbank-Backup Pflicht — siehe [OPERATIONS.md](OPERATIONS.md).
 
 ### Prüfen, ob alles läuft
 

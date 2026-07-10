@@ -57,7 +57,7 @@ Reihenfolge einhalten — so bleiben Daten erhalten:
 # 2. Neue Images holen
 docker compose pull
 
-# 3. Container neu starten (Schema-Sync läuft beim Backend-Start automatisch)
+# 3. Container neu starten (Migrationen laufen beim Backend-Start automatisch)
 docker compose up -d
 
 # 4. Prüfen
@@ -65,9 +65,22 @@ docker compose ps
 curl -s http://localhost:3001/api/health
 ```
 
-Das Backend synchronisiert das Datenbankschema mit `prisma db push` — **kein** manuelles Schema-Kommando nötig.
+Das Backend wendet beim Start **versionierte Prisma-Migrationen** an (`prisma migrate deploy`). Vor Schema-Änderungen erstellt der Container automatisch ein Pre-Migration-Backup (sofern bereits Daten vorhanden). Der Installer erstellt bei Upgrades zusätzlich ein Backup über `scripts/backup/postgres-backup.sh`.
+
+**Wichtig:** `prisma db push` wird in Produktion **nicht** verwendet.
 
 Bei Fehlern nach dem Update: Abschnitt [Wiederherstellung aus Backup](#wiederherstellung-aus-backup).
+
+### Schema-Migrationen (Prisma)
+
+| Schritt | Beschreibung |
+|---------|--------------|
+| Backup | `./scripts/backup/postgres-backup.sh` (Pflicht vor Updates) |
+| Update | `docker compose pull && docker compose up -d` |
+| Migration | Backend führt `prisma migrate deploy` aus — startet bei Fehler **nicht** |
+| Rollback | Backup mit `postgres-restore.sh` wiederherstellen |
+
+Pre-Migration-Backups im Container: `/app/backups/pre-migrate-*.sql.gz` (wenn Daten vorhanden).
 
 ---
 
