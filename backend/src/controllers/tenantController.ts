@@ -113,11 +113,10 @@ export function createTenantController(
           typeof req.query.frontendPath === 'string' && req.query.frontendPath.startsWith('/')
             ? req.query.frontendPath
             : req.path;
-        const resolveReq = Object.assign(req, { path: frontendPath });
 
         let result: ResolveResult;
         try {
-          result = await tenantResolver.resolve(resolveReq);
+          result = await tenantResolver.resolve(req, frontendPath);
         } catch (error) {
           if (error instanceof TenantNotFoundError) {
             const urls = buildRoutingUrls(req, platform, null);

@@ -44,7 +44,7 @@ export class TenantResolver {
     private readonly config: TenantResolverConfig
   ) {}
 
-  async resolve(req: Request): Promise<ResolveResult> {
+  async resolve(req: Request, pathOverride?: string): Promise<ResolveResult> {
     const host = this.extractHost(req);
     if (!host) {
       throw new TenantInvalidHostError();
@@ -53,11 +53,12 @@ export class TenantResolver {
     this.validateHost(host);
 
     const platform = this.platformContext.current();
-    const cacheKey = this.buildCacheKey(host, req.path, platform.pathPrefixRoutingEnabled);
+    const path = pathOverride ?? req.path;
+    const cacheKey = this.buildCacheKey(host, path, platform.pathPrefixRoutingEnabled);
     const cached = this.getFromCache(cacheKey);
     if (cached) return cached;
 
-    const result = await this.resolveInternal(host, req.path, platform);
+    const result = await this.resolveInternal(host, path, platform);
     this.setCache(cacheKey, result);
     return result;
   }
