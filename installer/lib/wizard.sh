@@ -117,6 +117,29 @@ Bitte installieren Sie Docker manuell und starten Sie den Assistenten erneut."
   return 0
 }
 
+wizard_pick_existing_proxy_type() {
+  local default="traefik"
+  [[ "${SYS_DETECT[proxy_detected]:-none}" != "none" ]] && default="${SYS_DETECT[proxy_detected]}"
+
+  local choice
+  choice=$(tui_radiolist "Schritt 4b: Proxy-Typ" "Welchen Reverse Proxy verwenden Sie?
+
+Der Assistent erzeugt passende Docker-Labels (Traefik)
+oder Konfigurationsvorlagen (nginx, Caddy, …)." \
+    "traefik" "Traefik (Docker-Labels im Compose-File)" "$([[ "$default" == "traefik" ]] && echo on || echo off)" \
+    "nginx" "nginx" "$([[ "$default" == "nginx" ]] && echo on || echo off)" \
+    "caddy" "Caddy" "$([[ "$default" == "caddy" ]] && echo on || echo off)" \
+    "apache" "Apache httpd" "$([[ "$default" == "apache" ]] && echo on || echo off)" \
+    "haproxy" "HAProxy" "$([[ "$default" == "haproxy" ]] && echo on || echo off)" \
+    "other" "Sonstiger Proxy (nur Netzwerk-Anbindung)" "$([[ "$default" == "other" ]] && echo on || echo off)" \
+  ) || return 1
+
+  CFG[PROXY_MODE]="$choice"
+  CFG[PROXY_DEPLOYMENT]="external"
+  log_info "Externer Proxy-Typ: $choice"
+  return 0
+}
+
 wizard_step_proxy() {
   local detected="${SYS_DETECT[proxy_detected]}"
   local proxy_list
@@ -131,30 +154,40 @@ Caddy:   ${SYS_DETECT[proxy_caddy]}"
 
 Reverse Proxy konfigurieren:" \
     "none" "Keiner (lokale Ports nach außen)" "on" \
-    "traefik" "Traefik (mit Let's Encrypt)" "off" \
+    "traefik" "Traefik (mit Let's Encrypt, im Stack)" "off" \
     "existing" "Vorhandenen Proxy verwenden" "off" \
-    "nginx" "NGINX (manuell konfigurieren)" "off" \
+    "nginx_manual" "NGINX auf dem Host (manuell)" "off" \
   ) || return 1
 
-  CFG[PROXY_MODE]="$choice"
   case "$choice" in
     none)
+      CFG[PROXY_MODE]="none"
+      CFG[PROXY_DEPLOYMENT]="none"
       CFG[USES_REVERSE_PROXY]="no"
       CFG[INSTALL_PROFILE]="local"
       CFG[HTTPS_ENABLED]="no"
       log_info "Kein Reverse Proxy: Host-Ports nach außen, kein zusätzliches Proxy-Netzwerk"
       ;;
     traefik)
+      CFG[PROXY_MODE]="traefik"
+      CFG[PROXY_DEPLOYMENT]="bundled"
       CFG[USES_REVERSE_PROXY]="yes"
       CFG[INSTALL_PROFILE]="production"
       CFG[HTTPS_ENABLED]="yes"
       ;;
-    existing|nginx)
+    existing)
+      CFG[USES_REVERSE_PROXY]="yes"
+      CFG[INSTALL_PROFILE]="production"
+      wizard_pick_existing_proxy_type || return 1
+      ;;
+    nginx_manual)
+      CFG[PROXY_MODE]="nginx"
+      CFG[PROXY_DEPLOYMENT]="manual"
       CFG[USES_REVERSE_PROXY]="yes"
       CFG[INSTALL_PROFILE]="production"
       ;;
   esac
-  log_info "Reverse Proxy: $choice (internes Netz: festschmiede_internal)"
+  log_info "Reverse Proxy: ${CFG[PROXY_MODE]} (${CFG[PROXY_DEPLOYMENT]:-none}), internes Netz: festschmiede_internal"
   return 0
 }
 
@@ -210,10 +243,15 @@ wizard_step_domain() {
   CFG[PLATFORM_WILDCARD_DOMAIN]="*.${CFG[PLATFORM_DOMAIN]}"
 
   local https_prompt
-  if [[ "${CFG[PROXY_MODE]:-}" == "traefik" ]]; then
+  if [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ]]; then
     https_prompt="Let's Encrypt (HTTPS) aktivieren?
 
 Erfordert gültige DNS-Einträge für ${CFG[PLATFORM_DOMAIN]} und *.${CFG[PLATFORM_DOMAIN]}"
+  elif [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "external" ]]; then
+    https_prompt="Traefik TLS-Labels im Compose-File setzen?
+
+Der vorhandene Traefik muss den Cert-Resolver kennen
+(oder TLS wird ohne Resolver gesetzt)."
   else
     https_prompt="HTTPS aktivieren?
 
@@ -222,8 +260,10 @@ URLs und CORS werden auf https:// gesetzt (Zertifikat konfigurieren Sie am Rever
 
   if tui_yesno "HTTPS" "$https_prompt"; then
     CFG[HTTPS_ENABLED]="yes"
-    if [[ "${CFG[PROXY_MODE]:-}" == "traefik" ]]; then
+    if [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ]]; then
       prompt_until_valid "ACME E-Mail" "E-Mail für Let's Encrypt:" validate_email "admin@${CFG[PLATFORM_DOMAIN]}" ACME_EMAIL || return 1
+    elif [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "external" ]]; then
+      CFG[TRAEFIK_CERT_RESOLVER]=$(tui_input "Traefik Cert-Resolver" "Name des Certificate Resolvers auf Ihrem Traefik (leer = tls ohne Resolver):" "${CFG[TRAEFIK_CERT_RESOLVER]:-letsencrypt}") || return 1
     fi
   fi
   return 0
@@ -354,6 +394,21 @@ Backup:       ${BACKUP_DIR}
 
 Tipp: Regelmäßige Backups mit scripts/backup/postgres-backup.sh"
 
+  if proxy_generates_config_files || proxy_generates_traefik_labels; then
+    body="${body}
+
+--- Reverse Proxy ---
+Vorlagen/Labels: ${INSTALL_DIR}/installer/generated/"
+    if proxy_generates_traefik_labels; then
+      body="${body}
+Traefik-Labels in compose.override.yml"
+    fi
+    if proxy_generates_config_files; then
+      body="${body}
+Konfiguration: installer/generated/proxy/"
+    fi
+  fi
+
   tui_success "$body"
 
   # Credentials sicher speichern
@@ -369,7 +424,8 @@ Tipp: Regelmäßige Backups mit scripts/backup/postgres-backup.sh"
 }
 
 wizard_should_skip_step() {
-  [[ "$1" == "wizard_step_network" && "${CFG[USES_REVERSE_PROXY]:-no}" != "yes" ]]
+  [[ "$1" == "wizard_step_network" && "${CFG[USES_REVERSE_PROXY]:-no}" != "yes" ]] \
+    || [[ "$1" == "wizard_step_network" && "${CFG[PROXY_DEPLOYMENT]:-}" == "manual" ]]
 }
 
 run_wizard() {

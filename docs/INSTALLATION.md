@@ -1,13 +1,13 @@
 # FestSchmiede – Installationsanleitung
 
-> **Version 2.3.5** – Professioneller interaktiver Installations-Assistent (TUI)
+> **Version 2.3.6** – Professioneller interaktiver Installations-Assistent (TUI)
 
 ## Schnellstart
 
 ### Online (ohne Git-Clone)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.5/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.6/install.sh | bash
 ```
 
 **Installationspfad angeben** (Priorität: `--dir` > `FESTSCHMIEDE_INSTALL_DIR` > interaktive Abfrage > Default):
@@ -87,8 +87,8 @@ flowchart TD
 2. **Systemanalyse** – Distribution, CPU, RAM, Docker, Netzwerke, Ports, Reverse Proxy
 3. **Installationsmodus** – Neuinstallation, Upgrade, Migration, Reparatur, Nur Config
 4. **Docker** – Erkennung oder automatische Installation
-5. **Reverse Proxy** – Keiner (lokale Host-Ports), Traefik, vorhandener Proxy oder NGINX (manuell)
-6. **Proxy-Netzwerk** – **Nur wenn ein Reverse Proxy gewählt wurde:** Docker-Netzwerk für den Frontend-Container wählen oder erstellen. Ohne Proxy entfällt dieser Schritt; es wird nur das interne Netz `festschmiede_internal` verwendet.
+5. **Reverse Proxy** – Keiner (lokale Host-Ports), Traefik (im Stack), vorhandener Proxy (Typ: Traefik/nginx/Caddy/…) oder NGINX auf dem Host
+6. **Proxy-Netzwerk** – **Nur bei externem Reverse Proxy:** Docker-Netzwerk für den Frontend-Container. Bei gebündeltem Traefik oder Host-NGINX entfällt dieser Schritt
 7. **Domain** – Basisdomain, WWW/APP-Subdomains, HTTPS/Let's Encrypt
 8. **Plattform** – Name, Zeitzone, Sprache
 9. **Datenbank** – Intern (PostgreSQL-Container) oder extern
@@ -124,7 +124,8 @@ Beim Online-Install (`curl … \| bash`) werden nur die für den Betrieb nötige
 | `.env` | Umgebungsvariablen (chmod 600) |
 | `installer/` | Installations-Assistent (ohne Quellcode von Backend/Frontend) |
 | `scripts/backup/` | Datenbank-Backup und Restore |
-| `installer/generated/compose.override.yml` | Docker-Compose-Erweiterung |
+| `installer/generated/compose.override.yml` | Docker-Compose-Erweiterung (inkl. Traefik-Labels bei externem Traefik) |
+| `installer/generated/proxy/` | Reverse-Proxy-Vorlagen (nginx, Caddy, Apache, HAProxy) |
 | `installer/logs/install-*.log` | Installationsprotokoll |
 | `.installer-state/` | Wizard-Status und Backups |
 | `.installer-state/credentials.txt` | Admin-Zugangsdaten (chmod 600) |

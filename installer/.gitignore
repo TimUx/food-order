@@ -6,6 +6,7 @@ installer/logs/*.log
 
 # Generierte Konfiguration
 generated/compose.override.yml
+generated/proxy/
 
 # Credentials (lokal)
 .installer-state/credentials.txt

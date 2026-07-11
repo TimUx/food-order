@@ -3,6 +3,20 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.6 - 2026-07-11
+
+### Neu
+
+- **Installer:** Bei „Vorhandenen Proxy verwenden“ Auswahl des Proxy-Typs (Traefik, nginx, Caddy, Apache, HAProxy).
+- **Installer:** Traefik-Labels werden bei externem Traefik direkt in `compose.override.yml` erzeugt; für andere Proxies Konfigurationsvorlagen unter `installer/generated/proxy/`.
+
+### Geändert
+
+- **Installer:** Unterscheidung `PROXY_DEPLOYMENT` (bundled/external/manual) und `PROXY_MODE` (Proxy-Technologie).
+- **Installer:** Proxy-Netzwerk-Schritt entfällt bei gebündeltem Traefik und Host-NGINX.
+
+---
+
 ## 2.3.5 - 2026-07-11
 
 ### Behoben

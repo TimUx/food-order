@@ -76,7 +76,8 @@ grep -q "festschmiede_internal" "${INSTALL_DIR}/installer/generated/compose.over
   && pass "local keeps host ports" || fail "local keeps host ports"
 
 CFG[USES_REVERSE_PROXY]="yes"
-CFG[PROXY_MODE]="existing"
+CFG[PROXY_MODE]="nginx"
+CFG[PROXY_DEPLOYMENT]="external"
 CFG[INSTALL_PROFILE]="production"
 CFG[PLATFORM_DOMAIN]="festschmiede.example.de"
 CFG[DOCKER_PROXY_NETWORK]="traefik_net"
@@ -92,12 +93,27 @@ grep -q "proxy" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
   && pass "proxy network defined" || fail "proxy network defined"
 grep -q "external: true" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
   && pass "external proxy network" || fail "external proxy network"
+[[ -f "${INSTALL_DIR}/installer/generated/proxy/nginx-site.conf" ]] \
+  && pass "nginx proxy config generated" || fail "nginx proxy config generated"
 
 CFG[PROXY_MODE]="traefik"
+CFG[PROXY_DEPLOYMENT]="external"
+CFG[HTTPS_ENABLED]="yes"
+CFG[TRAEFIK_CERT_RESOLVER]="letsencrypt"
+generate_compose_override
+grep -q "traefik.enable=true" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "external traefik labels" || fail "external traefik labels"
+grep -q "traefik.docker.network=traefik_net" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "external traefik network label" || fail "external traefik network label"
+
+CFG[PROXY_MODE]="traefik"
+CFG[PROXY_DEPLOYMENT]="bundled"
 CFG[DOCKER_NETWORK_CREATE]="yes"
 generate_compose_override
 grep -q "public" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
   && pass "traefik uses public network" || fail "traefik uses public network"
+! grep -q "traefik.enable=true" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "bundled traefik labels only in prod overlay" || fail "bundled traefik labels only in prod overlay"
 
 echo ""
 echo "Ergebnis: $PASS bestanden, $FAIL fehlgeschlagen"

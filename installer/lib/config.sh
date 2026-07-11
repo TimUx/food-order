@@ -17,9 +17,24 @@ apply_defaults() {
   CFG[DOCKER_PROXY_NETWORK]="${CFG[DOCKER_PROXY_NETWORK]:-${CFG[DOCKER_NETWORK]:-festschmiede_public}}"
   CFG[USES_REVERSE_PROXY]="${CFG[USES_REVERSE_PROXY]:-no}"
 
-  # Legacy .env ohne PROXY_MODE: Produktionsprofil → Traefik annehmen
+  # Legacy: PROXY_MODE=existing → externer Proxy ohne Typ
+  if [[ "${CFG[PROXY_MODE]:-}" == "existing" ]]; then
+    CFG[PROXY_DEPLOYMENT]="external"
+    CFG[PROXY_MODE]="${CFG[EXISTING_PROXY_TYPE]:-other}"
+  fi
+  if [[ -z "${CFG[PROXY_DEPLOYMENT]:-}" ]]; then
+    case "${CFG[PROXY_MODE]:-none}" in
+      none) CFG[PROXY_DEPLOYMENT]="none" ;;
+      traefik) CFG[PROXY_DEPLOYMENT]="bundled" ;;
+      nginx) CFG[PROXY_DEPLOYMENT]="manual" ;;
+      *) CFG[PROXY_DEPLOYMENT]="external" ;;
+    esac
+  fi
+
+  # Legacy .env ohne PROXY_MODE: Produktionsprofil → gebündelter Traefik
   if [[ -z "${CFG[PROXY_MODE]:-}" && "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
     CFG[PROXY_MODE]="traefik"
+    CFG[PROXY_DEPLOYMENT]="bundled"
   fi
   if [[ "${CFG[PROXY_MODE]:-none}" != "none" ]]; then
     CFG[USES_REVERSE_PROXY]="yes"
@@ -50,13 +65,222 @@ build_compose_files() {
   COMPOSE_FILES=("-f" "${INSTALL_DIR}/docker-compose.yml")
 
   apply_defaults
-  if [[ "${CFG[PROXY_MODE]:-none}" == "traefik" ]]; then
+  if [[ "${CFG[PROXY_MODE]:-none}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ]]; then
     COMPOSE_FILES+=("-f" "${INSTALL_DIR}/docker-compose.prod.yml")
   fi
 
   if [[ -f "${INSTALL_DIR}/installer/generated/compose.override.yml" ]]; then
     COMPOSE_FILES+=("-f" "${INSTALL_DIR}/installer/generated/compose.override.yml")
   fi
+}
+
+proxy_uses_traefik_network() {
+  [[ "${CFG[PROXY_MODE]:-none}" == "traefik" ]]
+}
+
+proxy_generates_traefik_labels() {
+  [[ "${CFG[PROXY_MODE]:-none}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "external" ]]
+}
+
+proxy_generates_config_files() {
+  local mode="${CFG[PROXY_MODE]:-none}"
+  [[ "${CFG[USES_REVERSE_PROXY]:-no}" == "yes" ]] || return 1
+  [[ "$mode" =~ ^(nginx|caddy|apache|haproxy)$ ]]
+}
+
+_write_traefik_frontend_labels() {
+  local domain="${CFG[PLATFORM_DOMAIN]}"
+  local proxy_net="${CFG[DOCKER_PROXY_NETWORK]}"
+  local resolver="${CFG[TRAEFIK_CERT_RESOLVER]:-}"
+
+  cat <<EOF
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${proxy_net}
+      - traefik.http.routers.festschmiede.rule=Host(\`${domain}\`) || HostRegexp(\`^[a-z0-9-]+\\\\.${domain}$\`)
+      - traefik.http.routers.festschmiede.entrypoints=websecure
+EOF
+  if [[ -n "$resolver" && "${CFG[HTTPS_ENABLED]:-no}" == "yes" ]]; then
+    cat <<EOF
+      - traefik.http.routers.festschmiede.tls.certresolver=${resolver}
+      - traefik.http.routers.festschmiede.tls.domains[0].main=${domain}
+      - traefik.http.routers.festschmiede.tls.domains[0].sans=*.${domain}
+EOF
+  else
+    echo "      - traefik.http.routers.festschmiede.tls=true"
+  fi
+  cat <<EOF
+      - traefik.http.services.festschmiede.loadbalancer.server.port=80
+      - traefik.http.middlewares.festschmiede-headers.headers.sslredirect=true
+      - traefik.http.middlewares.festschmiede-headers.headers.stsSeconds=31536000
+      - traefik.http.routers.festschmiede.middlewares=festschmiede-headers
+EOF
+}
+
+generate_proxy_config_files() {
+  apply_defaults
+  proxy_generates_config_files || return 0
+
+  local out="${INSTALL_DIR}/installer/generated/proxy"
+  local domain="${CFG[PLATFORM_DOMAIN]}"
+  local proxy_net="${CFG[DOCKER_PROXY_NETWORK]}"
+  local mode="${CFG[PROXY_MODE]}"
+  mkdir -p "$out"
+
+  cat >"${out}/README.md" <<EOF
+# Reverse-Proxy-Konfiguration (automatisch generiert)
+
+- Proxy-Typ: **${mode}**
+- Domain: **${domain}**
+- Docker-Netzwerk (Frontend): **${proxy_net}**
+- Frontend-Container: **festschmiede-frontend:80**
+
+Die Dateien in diesem Ordner sind Vorlagen. Prüfen Sie Pfade, Zertifikate
+und Netzwerk-Anbindung an Ihre Umgebung, bevor Sie sie aktivieren.
+EOF
+
+  case "$mode" in
+    nginx)
+      if [[ "${CFG[PROXY_DEPLOYMENT]:-}" == "manual" ]]; then
+        cat >"${out}/nginx-site.conf" <<EOF
+# FestSchmiede – nginx auf dem Host (Vorlage)
+# Frontend über veröffentlichten Port (Standard: localhost:5173)
+
+upstream festschmiede_frontend {
+    server 127.0.0.1:5173;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name ${domain} *.${domain};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name ${domain} *.${domain};
+
+    # ssl_certificate     /pfad/zu/fullchain.pem;
+    # ssl_certificate_key /pfad/zu/privkey.pem;
+
+    location / {
+        proxy_pass http://festschmiede_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /socket.io/ {
+        proxy_pass http://festschmiede_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_read_timeout 86400;
+    }
+}
+EOF
+      else
+        cat >"${out}/nginx-site.conf" <<EOF
+# FestSchmiede – nginx (Vorlage)
+# Frontend im Docker-Netzwerk ${proxy_net}: festschmiede-frontend:80
+
+upstream festschmiede_frontend {
+    server festschmiede-frontend:80;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name ${domain} *.${domain};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name ${domain} *.${domain};
+
+    # ssl_certificate     /pfad/zu/fullchain.pem;
+    # ssl_certificate_key /pfad/zu/privkey.pem;
+
+    location / {
+        proxy_pass http://festschmiede_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /socket.io/ {
+        proxy_pass http://festschmiede_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 86400;
+    }
+}
+EOF
+      fi
+      ;;
+    caddy)
+      cat >"${out}/Caddyfile" <<EOF
+# FestSchmiede – Caddy (Vorlage)
+# nginx/Caddy muss im Docker-Netzwerk ${proxy_net} erreichbar sein.
+
+${domain}, *.${domain} {
+    reverse_proxy festschmiede-frontend:80 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+EOF
+      ;;
+    apache)
+      cat >"${out}/apache-vhost.conf" <<EOF
+# FestSchmiede – Apache (Vorlage)
+# VirtualHost für ${domain}
+
+<VirtualHost *:443>
+    ServerName ${domain}
+    ServerAlias *.${domain}
+
+    # SSLEngine on
+    # SSLCertificateFile /pfad/zu/cert.pem
+    # SSLCertificateKeyFile /pfad/zu/key.pem
+
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto "https"
+    ProxyPass / http://festschmiede-frontend:80/
+    ProxyPassReverse / http://festschmiede-frontend:80/
+</VirtualHost>
+EOF
+      ;;
+    haproxy)
+      cat >"${out}/haproxy.cfg.snippet" <<EOF
+# FestSchmiede – HAProxy (Vorlage)
+# Backend muss festschmiede-frontend:80 im Netz ${proxy_net} erreichen.
+
+frontend festschmiede_https
+    bind *:443 ssl crt /pfad/zu/combined.pem
+    use_backend festschmiede_frontend
+
+backend festschmiede_frontend
+    server frontend1 festschmiede-frontend:80 check
+EOF
+      ;;
+  esac
+
+  log_info "Proxy-Konfigurationsvorlagen erzeugt: ${out}/"
 }
 
 generate_compose_override() {
@@ -80,7 +304,7 @@ generate_compose_override() {
     smtp_env="      INSTALL_SMTP_HOST: ${CFG[SMTP_HOST]:-}
       INSTALL_SMTP_PORT: ${CFG[SMTP_PORT]:-587}"
   fi
-  if [[ "$use_redis" == "internal" && "$proxy_mode" != "traefik" ]]; then
+  if [[ "$use_redis" == "internal" && ! ( "$proxy_mode" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ) ]]; then
     redis_service="
   redis:
     image: redis:7-alpine
@@ -115,7 +339,7 @@ networks:
     driver: bridge
 EOF
 
-  if [[ "$use_proxy" == "yes" && "$proxy_mode" == "traefik" && "$proxy_create" == "no" ]]; then
+  if [[ "$use_proxy" == "yes" ]] && proxy_uses_traefik_network && [[ "$proxy_create" == "no" ]]; then
     cat >>"$file" <<EOF
   public:
     name: ${proxy_net}
@@ -123,7 +347,7 @@ EOF
 EOF
   fi
 
-  if [[ "$use_proxy" == "yes" && "$proxy_mode" != "traefik" ]]; then
+  if [[ "$use_proxy" == "yes" ]] && ! proxy_uses_traefik_network; then
     if [[ "$proxy_create" == "yes" ]]; then
       cat >>"$file" <<EOF
   proxy:
@@ -140,7 +364,7 @@ EOF
   fi
 
   if [[ "$use_proxy" == "yes" ]]; then
-    if [[ "$proxy_mode" == "traefik" ]]; then
+    if proxy_uses_traefik_network; then
       cat >>"$file" <<EOF
 
 services:
@@ -170,6 +394,39 @@ ${smtp_env}
       interval: 15s
       timeout: 5s
       retries: 5
+EOF
+      if proxy_generates_traefik_labels; then
+        _write_traefik_frontend_labels >>"$file"
+      fi
+      if [[ -n "$redis_service" ]]; then
+        cat >>"$file" <<EOF
+${redis_service}
+${volumes_block}
+EOF
+      fi
+    elif [[ "${CFG[PROXY_DEPLOYMENT]:-}" == "manual" ]]; then
+      cat >>"$file" <<EOF
+
+services:
+  postgres:
+    networks:
+      - internal
+  backend:
+    networks:
+      - internal
+    ports: !reset []
+    expose:
+      - "3001"
+    environment:
+      PLATFORM_ADMIN_EMAIL: ${CFG[PLATFORM_ADMIN_EMAIL]:-platform@festschmiede.local}
+      PLATFORM_ADMIN_PASSWORD: \${PLATFORM_ADMIN_PASSWORD}
+${redis_env}
+${smtp_env}
+  frontend:
+    networks:
+      - internal
+${redis_service}
+${volumes_block}
 EOF
     else
       cat >>"$file" <<EOF
@@ -229,6 +486,7 @@ EOF
   fi
 
   log_info "Compose-Override erzeugt: $file"
+  generate_proxy_config_files
 }
 
 generate_env_file() {
@@ -281,6 +539,8 @@ REDIS_URL=${CFG[REDIS_URL]:-}
 FESTSCHMIEDE_INTERNAL_NETWORK=${CFG[DOCKER_INTERNAL_NETWORK]}
 FESTSCHMIEDE_PROXY_NETWORK=${CFG[DOCKER_PROXY_NETWORK]}
 PROXY_MODE=${CFG[PROXY_MODE]:-none}
+PROXY_DEPLOYMENT=${CFG[PROXY_DEPLOYMENT]:-none}
+TRAEFIK_CERT_RESOLVER=${CFG[TRAEFIK_CERT_RESOLVER]:-}
 
 # Installer-Metadaten
 INSTALLER_VERSION=${INSTALLER_VERSION}
@@ -300,10 +560,15 @@ format_config_summary() {
   s+=$'\n'"Domain:            ${CFG[PLATFORM_DOMAIN]}"
   s+=$'\n'"Datenbank:         ${CFG[DB_MODE]:-internal} (PostgreSQL)"
   s+=$'\n'"Redis:             ${CFG[USE_REDIS]:-no}"
-  s+=$'\n'"Reverse Proxy:     ${CFG[PROXY_MODE]:-none}"
+  s+=$'\n'"Reverse Proxy:     ${CFG[PROXY_MODE]:-none} (${CFG[PROXY_DEPLOYMENT]:-none})"
   s+=$'\n'"Internes Netz:     ${CFG[DOCKER_INTERNAL_NETWORK]:-festschmiede_internal} (immer)"
   if [[ "${CFG[USES_REVERSE_PROXY]:-no}" == "yes" ]]; then
     s+=$'\n'"Proxy-Netz:        ${CFG[DOCKER_PROXY_NETWORK]:-festschmiede_public} (nur Frontend)"
+    if proxy_generates_traefik_labels; then
+      s+=$'\n'"Traefik-Labels:    compose.override.yml (Frontend)"
+    elif proxy_generates_config_files; then
+      s+=$'\n'"Proxy-Vorlagen:    installer/generated/proxy/"
+    fi
   fi
   s+=$'\n'"SMTP:              ${CFG[SMTP_ENABLED]:-no}"
   s+=$'\n\n'"$(format_secrets_summary)"
