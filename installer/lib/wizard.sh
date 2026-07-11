@@ -50,21 +50,28 @@ wizard_step_mode() {
 
 wizard_step_docker() {
   if [[ "${SYS_DETECT[docker_installed]}" == "yes" ]]; then
-    local info="Docker ist installiert:\n\n${SYS_DETECT[docker_version]}\n${SYS_DETECT[compose_version]}\n"
     if docker info >/dev/null 2>&1; then
-      info+="Status: läuft\n"
-      info+="Container: ${#DOCKER_CONTAINERS[@]}\n"
+      log_info "Docker: ${SYS_DETECT[docker_version]} – läuft (${#DOCKER_CONTAINERS[@]} Container)"
     else
-      info+="Status: installiert, aber Daemon nicht erreichbar\n"
-      info+="Tipp: sudo systemctl start docker\n"
+      if ! tui_yesno "Schritt 3: Docker" "Docker ist installiert, aber der Daemon läuft nicht.
+
+Tipp: sudo systemctl start docker
+
+Trotzdem fortfahren?"; then
+        WIZARD_CANCELLED=1
+        return 1
+      fi
     fi
-    tui_msgbox "Schritt 3: Docker" "$info"
   else
-    if tui_yesno "Schritt 3: Docker" "Docker ist nicht installiert.\n\nJetzt installieren?"; then
+    if tui_yesno "Schritt 3: Docker" "Docker ist nicht installiert.
+
+Jetzt installieren?"; then
       install_docker_if_missing || return 1
       detect_docker
     else
-      tui_msgbox "Hinweis" "Docker wird für die Installation benötigt.\nBitte installieren Sie Docker manuell und starten Sie den Assistenten erneut."
+      tui_msgbox "Hinweis" "Docker wird für die Installation benötigt.
+
+Bitte installieren Sie Docker manuell und starten Sie den Assistenten erneut."
       WIZARD_CANCELLED=1
       return 1
     fi
@@ -72,11 +79,57 @@ wizard_step_docker() {
   return 0
 }
 
+wizard_step_proxy() {
+  local detected="${SYS_DETECT[proxy_detected]}"
+  local proxy_list
+  proxy_list="Erkannt: ${detected}
+
+Traefik: ${SYS_DETECT[proxy_traefik]}
+NGINX:   ${SYS_DETECT[proxy_nginx]}
+Caddy:   ${SYS_DETECT[proxy_caddy]}"
+
+  local choice
+  choice=$(tui_radiolist "Schritt 4: Reverse Proxy" "${proxy_list}
+
+Reverse Proxy konfigurieren:" \
+    "none" "Keiner (lokale Ports nach außen)" "on" \
+    "traefik" "Traefik (mit Let's Encrypt)" "off" \
+    "existing" "Vorhandenen Proxy verwenden" "off" \
+    "nginx" "NGINX (manuell konfigurieren)" "off" \
+  ) || return 1
+
+  CFG[PROXY_MODE]="$choice"
+  case "$choice" in
+    none)
+      CFG[USES_REVERSE_PROXY]="no"
+      CFG[INSTALL_PROFILE]="local"
+      CFG[HTTPS_ENABLED]="no"
+      ;;
+    traefik)
+      CFG[USES_REVERSE_PROXY]="yes"
+      CFG[INSTALL_PROFILE]="production"
+      CFG[HTTPS_ENABLED]="yes"
+      ;;
+    existing|nginx)
+      CFG[USES_REVERSE_PROXY]="yes"
+      ;;
+  esac
+  log_info "Reverse Proxy: $choice (internes Netz: festschmiede_internal)"
+  return 0
+}
+
 wizard_step_network() {
+  CFG[DOCKER_INTERNAL_NETWORK]="festschmiede_internal"
+
+  if [[ "${CFG[USES_REVERSE_PROXY]:-no}" != "yes" ]]; then
+    log_info "Kein Reverse Proxy – nur internes Netz ${CFG[DOCKER_INTERNAL_NETWORK]}"
+    return 0
+  fi
+
   local menu_items=()
   local net
 
-  menu_items+=("new" "Neues Netzwerk erstellen (festschmiede_public)")
+  menu_items+=("new" "Neues Proxy-Netzwerk erstellen (festschmiede_public)")
   for net in "${DOCKER_NETWORKS[@]}"; do
     local name="${net%%|*}"
     local driver="${net#*|}"
@@ -86,48 +139,31 @@ wizard_step_network() {
   done
 
   local choice
-  choice=$(tui_menu "Schritt 4: Docker-Netzwerk" "Netzwerk für FestSchmiede wählen:" "${menu_items[@]}") || return 1
+  choice=$(tui_menu "Schritt 5: Proxy-Netzwerk" "Reverse-Proxy-Netzwerk wählen:
+
+Internes Netz festschmiede_internal wird immer automatisch erstellt
+(Backend, DB, Redis, Frontend kommunizieren darüber).
+
+Nur der Frontend-Container wird zusätzlich an das
+Proxy-Netzwerk angeschlossen." "${menu_items[@]}") || return 1
 
   if [[ "$choice" == "new" ]]; then
+    CFG[DOCKER_PROXY_NETWORK]="festschmiede_public"
     CFG[DOCKER_NETWORK]="festschmiede_public"
     CFG[DOCKER_NETWORK_CREATE]="yes"
   else
+    CFG[DOCKER_PROXY_NETWORK]="$choice"
     CFG[DOCKER_NETWORK]="$choice"
     CFG[DOCKER_NETWORK_CREATE]="no"
   fi
-  return 0
-}
-
-wizard_step_proxy() {
-  local detected="${SYS_DETECT[proxy_detected]}"
-  local proxy_list="Erkannt: ${detected}\n\n"
-  proxy_list+="Traefik: ${SYS_DETECT[proxy_traefik]}\n"
-  proxy_list+="NGINX:   ${SYS_DETECT[proxy_nginx]}\n"
-  proxy_list+="Caddy:   ${SYS_DETECT[proxy_caddy]}\n"
-
-  local choice
-  choice=$(tui_radiolist "Schritt 5: Reverse Proxy" "$proxy_list\nReverse Proxy konfigurieren:" \
-    "none" "Keiner (lokale Ports)" "on" \
-    "traefik" "Traefik (mit Let's Encrypt)" "off" \
-    "existing" "Vorhandenen Proxy verwenden" "off" \
-    "nginx" "NGINX (manuell konfigurieren)" "off" \
-  ) || return 1
-
-  CFG[PROXY_MODE]="$choice"
-  if [[ "$choice" == "traefik" ]]; then
-    CFG[INSTALL_PROFILE]="production"
-    CFG[HTTPS_ENABLED]="yes"
-  elif [[ "$choice" == "none" ]]; then
-    CFG[INSTALL_PROFILE]="local"
-    CFG[HTTPS_ENABLED]="no"
-  fi
+  log_info "Proxy-Netzwerk: ${CFG[DOCKER_PROXY_NETWORK]} (Frontend), intern: ${CFG[DOCKER_INTERNAL_NETWORK]}"
   return 0
 }
 
 wizard_step_domain() {
   if [[ "${CFG[INSTALL_PROFILE]:-local}" == "local" ]]; then
     CFG[PLATFORM_DOMAIN]="localhost"
-    tui_msgbox "Schritt 6: Domain" "Lokales Profil gewählt.\n\nDomain: localhost\nKein HTTPS erforderlich."
+    log_info "Lokales Profil: Domain localhost, kein HTTPS"
     return 0
   fi
 
@@ -137,7 +173,9 @@ wizard_step_domain() {
   CFG[APP_SUBDOMAIN]=$(tui_input "APP-Subdomain" "Subdomain für Plattform-Admin:" "${CFG[APP_SUBDOMAIN]:-app}") || return 1
   CFG[PLATFORM_WILDCARD_DOMAIN]="*.${CFG[PLATFORM_DOMAIN]}"
 
-  if tui_yesno "HTTPS" "Let's Encrypt (HTTPS) aktivieren?\n\nErfordert gültige DNS-Einträge für ${CFG[PLATFORM_DOMAIN]} und *.${CFG[PLATFORM_DOMAIN]}"; then
+  if tui_yesno "HTTPS" "Let's Encrypt (HTTPS) aktivieren?
+
+Erfordert gültige DNS-Einträge für ${CFG[PLATFORM_DOMAIN]} und *.${CFG[PLATFORM_DOMAIN]}"; then
     CFG[HTTPS_ENABLED]="yes"
     prompt_until_valid "ACME E-Mail" "E-Mail für Let's Encrypt:" validate_email "admin@${CFG[PLATFORM_DOMAIN]}" ACME_EMAIL || return 1
   fi
@@ -181,7 +219,8 @@ wizard_step_redis() {
 }
 
 wizard_step_mail() {
-  if ! tui_yesno "Schritt 10: Mail" "SMTP für E-Mail-Versand jetzt konfigurieren?\n(Kann später unter /platform/email erfolgen)"; then
+  if ! tui_yesno "Schritt 10: Mail" "SMTP für E-Mail-Versand jetzt konfigurieren?
+(Kann später unter /platform/email erfolgen)"; then
     CFG[SMTP_ENABLED]="no"
     return 0
   fi
@@ -205,9 +244,13 @@ wizard_step_security() {
 
   local summary
   summary=$(format_secrets_summary)
-  summary+="\nSichere Zufallswerte wurden generiert."
+  summary="${summary}
 
-  if tui_yesno "Schritt 11: Sicherheit" "$summary\n\nÜbernehmen?"; then
+Sichere Zufallswerte wurden generiert."
+
+  if tui_yesno "Schritt 11: Sicherheit" "${summary}
+
+Übernehmen?"; then
     return 0
   fi
 
@@ -241,8 +284,13 @@ wizard_step_summary() {
   apply_defaults
   local summary
   summary=$(format_config_summary)
-  summary+="\nInstallationsverzeichnis:\n  $INSTALL_DIR\n"
-  summary+="\nProtokoll:\n  $LOG_FILE"
+  summary="${summary}
+
+Installationsverzeichnis:
+  ${INSTALL_DIR}
+
+Protokoll:
+  ${LOG_FILE}"
 
   if tui_summary_confirm "$summary"; then
     return 0
@@ -253,21 +301,28 @@ wizard_step_summary() {
 
 wizard_step_success() {
   apply_defaults
-  local body=""
-  body+="FestSchmiede wurde erfolgreich installiert!\n\n"
-  body+="═══ Zugang ═══\n"
-  body+="$(get_access_urls)\n\n"
-  body+="═══ Administrator ═══\n"
-  body+="E-Mail:    ${CFG[PLATFORM_ADMIN_EMAIL]:-platform@festschmiede.local}\n"
-  body+="Passwort:  ${CFG[PLATFORM_ADMIN_PASSWORD]}\n"
-  body+="(Bitte sicher aufbewahren!)\n\n"
-  body+="═══ Docker ═══\n"
-  body+="$(docker_status_report)\n"
-  body+="═══ Pfade ═══\n"
-  body+="Installiert:  $INSTALL_DIR\n"
-  body+="Protokoll:    $LOG_FILE\n"
-  body+="Backup:       $BACKUP_DIR\n\n"
-  body+="Tipp: Regelmäßige Backups mit scripts/backup/postgres-backup.sh"
+  local body access docker_report
+  access=$(get_access_urls)
+  docker_report=$(docker_status_report)
+
+  body="FestSchmiede wurde erfolgreich installiert!
+
+--- Zugang ---
+${access}
+
+--- Administrator ---
+E-Mail:    ${CFG[PLATFORM_ADMIN_EMAIL]:-platform@festschmiede.local}
+Passwort:  ${CFG[PLATFORM_ADMIN_PASSWORD]}
+(Bitte sicher aufbewahren!)
+
+--- Docker ---
+${docker_report}
+--- Pfade ---
+Installiert:  ${INSTALL_DIR}
+Protokoll:    ${LOG_FILE}
+Backup:       ${BACKUP_DIR}
+
+Tipp: Regelmäßige Backups mit scripts/backup/postgres-backup.sh"
 
   tui_success "$body"
 
@@ -284,13 +339,14 @@ wizard_step_success() {
 }
 
 run_wizard() {
+  _detect_tui_backend
   local steps=(
     wizard_step_welcome
     wizard_step_system
     wizard_step_mode
     wizard_step_docker
-    wizard_step_network
     wizard_step_proxy
+    wizard_step_network
     wizard_step_domain
     wizard_step_platform
     wizard_step_database
@@ -319,8 +375,8 @@ run_wizard() {
     continue
   fi
 
-  # Navigation (außer Willkommen und Zusammenfassung)
-  if [[ $i -gt 0 && $i -lt $((total-1)) ]]; then
+  # Navigation nur im Plain-Modus (dialog/gum: Schritte haben eigene Buttons)
+  if [[ $i -gt 0 && $i -lt $((total-1)) ]] && [[ "${TUI_BACKEND:-}" == "plain" ]]; then
     tui_nav "$step_name"
     local nav=$?
     case $nav in

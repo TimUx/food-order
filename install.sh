@@ -2,22 +2,25 @@
 # FestSchmiede – Installations-Bootstrap
 # Funktioniert lokal (Git-Clone) und online ohne Repository:
 #
-#   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.3/install.sh | bash
-#   wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.3/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.0/install.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.0/install.sh | bash
 #
 # Umgebungsvariablen:
-#   FESTSCHMIEDE_INSTALL_DIR  – Zielverzeichnis
-#   FESTSCHMIEDE_VERSION      – Release-Tag (Standard: 2.2.3)
-#   FESTSCHMIEDE_GITHUB_REPO  – GitHub Repo (Standard: TimUx/FestSchmiede)
-#   FESTSCHMIEDE_REF          – Git-Ref statt Version (z.B. main)
-#   FESTSCHMIEDE_BOOTSTRAP_ONLY=1 – Nur Dateien herunterladen
+#   FESTSCHMIEDE_INSTALL_DIR          – Zielverzeichnis (höchste Priorität)
+#   FESTSCHMIEDE_DEFAULT_INSTALL_DIR  – Standard-Zielverzeichnis (wenn INSTALL_DIR leer)
+#   FESTSCHMIEDE_VERSION              – Release-Tag (Standard: 2.3.0)
+#   FESTSCHMIEDE_GITHUB_REPO          – GitHub Repo (Standard: TimUx/FestSchmiede)
+#   FESTSCHMIEDE_REF                  – Git-Ref statt Version (z.B. main)
+#   FESTSCHMIEDE_BOOTSTRAP_ONLY=1     – Nur Dateien herunterladen
 
 set -euo pipefail
 
-FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.2.3}"
+FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.3.0}"
 FESTSCHMIEDE_GITHUB_REPO="${FESTSCHMIEDE_GITHUB_REPO:-TimUx/FestSchmiede}"
 FESTSCHMIEDE_REF="${FESTSCHMIEDE_REF:-}"
 FESTSCHMIEDE_INSTALL_DIR="${FESTSCHMIEDE_INSTALL_DIR:-}"
+# Standard-Installationspfad (leer = automatisch: /opt/festschmiede als root, ~/festschmiede sonst)
+FESTSCHMIEDE_DEFAULT_INSTALL_DIR="${FESTSCHMIEDE_DEFAULT_INSTALL_DIR:-}"
 
 _log() { echo "[FestSchmiede] $*"; }
 _err() { echo "[FestSchmiede] FEHLER: $*" >&2; }
@@ -30,8 +33,12 @@ Verwendung:
   ./install.sh                     Lokale Installation (nach Git-Clone)
   curl -fsSL .../install.sh | bash Online-Installation ohne Git-Clone
 
-Umgebungsvariablen:
-  FESTSCHMIEDE_INSTALL_DIR   Zielverzeichnis
+Installationspfad (Priorität: --dir > FESTSCHMIEDE_INSTALL_DIR > Default):
+  -d, --dir PATH                 Zielverzeichnis
+  FESTSCHMIEDE_INSTALL_DIR       Zielverzeichnis (Umgebungsvariable)
+  FESTSCHMIEDE_DEFAULT_INSTALL_DIR  Standard-Pfad (Standard: /opt/festschmiede als root, ~/festschmiede sonst)
+
+Weitere Umgebungsvariablen:
   FESTSCHMIEDE_VERSION       Release-Version (Standard: ${FESTSCHMIEDE_VERSION})
   FESTSCHMIEDE_REF           Git-Branch/Tag (überschreibt VERSION)
   FESTSCHMIEDE_GITHUB_REPO   GitHub Repository
@@ -40,11 +47,13 @@ Umgebungsvariablen:
 Online-Installation:
   curl -fsSL https://raw.githubusercontent.com/${FESTSCHMIEDE_GITHUB_REPO}/v${FESTSCHMIEDE_VERSION}/install.sh | bash
 
+  ./install.sh -d /opt/festschmiede
   FESTSCHMIEDE_INSTALL_DIR=/opt/festschmiede curl -fsSL .../install.sh | bash
+  curl -fsSL .../install.sh | bash -s -- -d /opt/festschmiede
 
 Optionen:
   -h, --help       Diese Hilfe
-  -d, --dir PATH   Installationsverzeichnis
+  -d, --dir PATH   Installationsverzeichnis (siehe oben)
   -v, --version    Installer-Version anzeigen
   --bootstrap-only Nur Plattform-Dateien herunterladen
   --update         Geführtes Update (Backup, Migration, Health, Rollback)
@@ -64,11 +73,39 @@ _resolve_local_root() {
 }
 
 _default_install_dir() {
+  if [[ -n "$FESTSCHMIEDE_DEFAULT_INSTALL_DIR" ]]; then
+    echo "$FESTSCHMIEDE_DEFAULT_INSTALL_DIR"
+    return
+  fi
   if [[ $EUID -eq 0 ]]; then
     echo "/opt/festschmiede"
   else
     echo "${HOME}/festschmiede"
   fi
+}
+
+# Pfad auflösen (~, relative Pfade → absolut)
+_resolve_install_dir() {
+  local path="$1"
+  [[ -z "$path" ]] && return 1
+
+  case "$path" in
+    "~") path="$HOME" ;;
+    "~/"*) path="${HOME}/${path#~/}" ;;
+  esac
+
+  if [[ "$path" != /* ]]; then
+    path="$(pwd)/$path"
+  fi
+
+  mkdir -p "$path"
+  cd "$path" && pwd
+}
+
+_resolve_target_dir() {
+  local fallback="$1"
+  local raw="${FESTSCHMIEDE_INSTALL_DIR:-$fallback}"
+  _resolve_install_dir "$raw"
 }
 
 _parse_args() {
@@ -77,8 +114,9 @@ _parse_args() {
       -h|--help) _show_help; exit 0 ;;
       -v|--version) echo "FestSchmiede Installer ${FESTSCHMIEDE_VERSION}"; exit 0 ;;
       -d|--dir)
+        [[ $# -ge 2 ]] || { _err "--dir erfordert Pfad"; exit 1; }
+        FESTSCHMIEDE_INSTALL_DIR="$2"
         shift
-        FESTSCHMIEDE_INSTALL_DIR="${1:?--dir erfordert Pfad}"
         ;;
       --bootstrap-only) export FESTSCHMIEDE_BOOTSTRAP_ONLY=1 ;;
       --validate-update) export FESTSCHMIEDE_GUIDED_OP=validate ;;
@@ -193,7 +231,8 @@ main() {
 
   if [[ -n "$local_root" ]]; then
     # Lokaler Modus: aus Git-Clone
-    local target="${FESTSCHMIEDE_INSTALL_DIR:-$local_root}"
+    local target
+    target="$(_resolve_target_dir "$local_root")"
     _log "Lokale Installation aus: ${local_root}"
     if [[ "$target" != "$local_root" ]]; then
       _log "Kopiere nach ${target}..."
@@ -208,7 +247,8 @@ main() {
   fi
 
   # Online-Modus
-  local target="${FESTSCHMIEDE_INSTALL_DIR:-$(_default_install_dir)}"
+  local target
+  target="$(_resolve_target_dir "$(_default_install_dir)")"
   _log "Online-Installation (ohne Git-Clone)"
   _log "Zielverzeichnis: ${target}"
 

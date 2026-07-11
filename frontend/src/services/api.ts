@@ -164,6 +164,8 @@ export const api = {
     request<FoodItem>(`/staff/events/${eventId}/food-items`, { method: 'POST', body: JSON.stringify(data) }, token),
   updateFoodItem: (token: string, id: string, data: Partial<FoodItem>) =>
     request<FoodItem>(`/staff/food-items/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
+  setFoodSoldOut: (token: string, id: string, soldOut: boolean) =>
+    request<FoodItem>(`/staff/food-items/${id}/sold-out`, { method: 'PATCH', body: JSON.stringify({ soldOut }) }, token),
   deleteFoodItem: (token: string, id: string) =>
     request<void>(`/staff/food-items/${id}`, { method: 'DELETE' }, token),
   uploadFoodImage: async (token: string, id: string, file: File) => {
@@ -186,6 +188,19 @@ export const api = {
     const query = status ? `?status=${status}` : '';
     return request<Order[]>(`/staff/events/${eventId}/orders${query}`, {}, token);
   },
+  getOrdersExport: (token: string, eventId: string) =>
+    request<import('@/types/ordersExport').EventOrdersExport>(`/staff/events/${eventId}/orders/export`, {}, token),
+  downloadOrdersExport: async (token: string, eventId: string, filename: string) => {
+    const url = `${API_URL}/api/staff/events/${eventId}/orders/export.xlsx`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new ApiError(res.status, 'Export fehlgeschlagen');
+    const blob = await res.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  },
   getStats: (token: string, eventId: string) =>
     request<DashboardStats>(`/staff/events/${eventId}/stats`, {}, token),
   createCashierOrder: (token: string, items: { foodItemId: string; quantity: number }[], paymentMethodId?: string) =>
@@ -196,6 +211,8 @@ export const api = {
     request<Order>('/staff/orders/lookup', { method: 'POST', body: JSON.stringify({ orderNumber, lastName }) }, token),
   updateOrderStatus: (token: string, id: string, status: OrderStatus) =>
     request<Order>(`/staff/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }, token),
+  updateOrderItems: (token: string, id: string, items: { foodItemId: string; quantity: number }[]) =>
+    request<Order>(`/staff/orders/${id}/items`, { method: 'PATCH', body: JSON.stringify({ items }) }, token),
   advanceOrder: (token: string, id: string) =>
     request<Order>(`/staff/orders/${id}/advance`, { method: 'POST' }, token),
 

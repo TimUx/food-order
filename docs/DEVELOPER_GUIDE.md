@@ -52,7 +52,7 @@ Ab Version 2.0 arbeitet die Plattform mandantenfähig. Kernbausteine:
 - Alle Datenbankzugriffe mandantenbezogener Tabellen filtern über `tenant_id` aus `TenantContext`
 - UI-Begriff bleibt **Veranstalter**; intern **Mandant**
 
-ADRs: [020–027](architecture/README.md#version-20--multi-tenant) · Phase 1–6: [Reports](architecture/README.md#version-20--multi-tenant) · [Frontend Guide](FRONTEND_GUIDE.md) · [Deployment Guide](DEPLOYMENT.md) · [Docker Guide](DOCKER.md)
+ADRs: [architecture/README.md](architecture/README.md) · Multi-Tenant: [020–027](architecture/README.md) · Frontend: [ADR-023](architecture/023-tenant-routing.md) · Deployment: [INSTALLATION.md](INSTALLATION.md#produktions-deployment)
 
 ### Plattform-API (Phase 3)
 
@@ -93,7 +93,7 @@ Zentrale Verwaltung: `backend/src/platform/PlatformDomainService.ts` · Anzeige 
 | `COOKIE_DOMAIN` / `SESSION_DOMAIN` | Cookie-/Session-Domain |
 | `ALLOWED_ORIGINS` / `PLATFORM_ALLOWED_ORIGINS` | CORS |
 
-Linkgenerierung (QR, E-Mails, Routing, SEO) nutzt ausschließlich `PlatformDomainService`. Details: [Canonical Domain Report](architecture/archive/CANONICAL_DOMAIN_COMPLETION_REPORT.md).
+Linkgenerierung (QR, E-Mails, Routing, SEO) nutzt ausschließlich `PlatformDomainService`. Siehe [ADR-023](architecture/023-tenant-routing.md).
 
 Plattform-APIs erfordern JWT mit `scope: "platform"`. Mandanten-APIs lehnen Plattform-Tokens ab.
 
@@ -187,7 +187,7 @@ FestSchmiede/
 │   ├── screenshots/      # UI-Screenshots
 │   ├── DEVELOPER_GUIDE.md
 │   ├── ADMIN_GUIDE.md
-│   ├── MODULE_ARCHITECTURE.md
+│   ├── architecture/     # ADRs
 │   └── USER_GUIDE.md
 ├── scripts/
 │   └── capture-screenshots.ts
@@ -200,9 +200,25 @@ FestSchmiede/
 
 ### Voraussetzungen
 
-- Node.js 22+
+- **Node.js 20 LTS** (empfohlen) oder 22+ — Node 18 wird nicht unterstützt (Vitest/Vite ESM-Fehler)
 - PostgreSQL 16+
-- npm
+- npm (optional: [nvm](https://github.com/nvm-sh/nvm) für mehrere Node-Versionen)
+
+```bash
+# Beispiel mit nvm
+nvm install 20
+nvm use 20
+node --version   # v20.x
+```
+
+**Prisma Client lokal erzeugen:** Wurde der Client im Docker-Container (Alpine/`linux-musl`) generiert, schlägt die lokale Entwicklung auf Debian/Ubuntu fehl. Einmalig nach `npm install`:
+
+```bash
+cd backend
+npm run prisma:generate
+```
+
+Symptom: `Prisma Client could not locate the Query Engine for runtime "debian-openssl-3.0.x"`.
 
 ### Backend starten
 
@@ -211,6 +227,7 @@ cd backend
 cp ../.env.example .env
 # DATABASE_URL in .env anpassen
 npm install
+npm run prisma:generate
 npx prisma db push
 npm run seed
 npm run dev
@@ -227,6 +244,8 @@ npm run dev
 ```
 
 Frontend läuft auf `http://localhost:5173` mit Proxy zu `/api` und `/socket.io`.
+
+**Multi-Tenant-Routing:** Das Frontend wertet Hostname/URL nicht selbst aus — Mandantenerkennung über `GET /api/public/routing-config`. Hooks: `useRouting()`, `useTenant()`, `usePlatform()`. Tokens mandantenbezogen in `localStorage`. Details: [ADR-023](architecture/023-tenant-routing.md).
 
 ### Mit Docker
 
@@ -324,7 +343,7 @@ Basis-URL: `/api`
 | POST | `/modules/features/payment/webhooks/:providerId` | Webhook-Eingang |
 | GET/PUT | `/modules/features/payment/admin/config` | Stripe-Keys, Provider |
 
-Vollständige Modul-API: siehe [MODULE_ARCHITECTURE.md](./MODULE_ARCHITECTURE.md#api-endpunkte).
+Vollständige Modul-API: siehe [ADR-003](architecture/003-module-system.md) und [ADR-041](architecture/041-module-api-v3.md).
 
 ### Mitarbeiter-Endpunkte (JWT)
 
@@ -431,11 +450,17 @@ Setup-Status in `TenantSettings.extraJson.initialSetup`. API unter `/api/setup/*
 > **v2.0:** Multi-Tenant-Tests werden erst ab Phase 1 implementiert. Geplante Testebenen: Resolver-Unit-Tests, API-Isolation (Cross-Tenant), Security (Host-Spoofing, CORS), Migrations-Tests. Bestehende Tests (`tests/api/*`, `tests/integration/*`, `tests/e2e/*`) werden in Phase 1 um Standard-Mandant-Fixtures ergänzt. Details: [ADR-020](architecture/020-multi-tenant-platform.md#teststrategie-zukunft).
 
 ```bash
-# Backend
-cd backend && npm test
+# Backend (Node 20+ aktivieren, z. B. nvm use 20)
+cd backend && npm run prisma:generate && npm test
 
 # Frontend
 cd frontend && npm test
+```
+
+Installer (Shell, ohne Node):
+
+```bash
+./installer/tests/run-tests.sh
 ```
 
 ### Screenshots generieren
@@ -535,7 +560,7 @@ Optionale Repository-Variablen für den Frontend-Build:
 
 Die Architektur nutzt ein **Feature-Modulsystem**. Vollständige Dokumentation:
 
-→ **[MODULE_ARCHITECTURE.md](./MODULE_ARCHITECTURE.md)** (operative Modul-Doku)
+→ **[ADR-003](architecture/003-module-system.md)** · **[ADR-041](architecture/041-module-api-v3.md)**
 
 → **[architecture/README.md](./architecture/README.md)** (ADRs, Projektanalyse, Migrationsplan)
 
@@ -574,7 +599,7 @@ Mandantenfähige Kommunikation über `modules/notifications/`:
 - Delivery-Log: `notification_deliveries` (tenant-scoped)
 - Keine direkten Sends aus anderen Modulen – nur Hooks
 
-→ **[NOTIFICATION_GUIDE.md](./NOTIFICATION_GUIDE.md)**
+→ **[ADR-008](architecture/008-notification-module.md)** · Admin: [ADMIN_GUIDE](ADMIN_GUIDE.md)
 
 ### Security (Phase 8)
 
@@ -595,7 +620,7 @@ Lasttests, DB-Indizes, Monitoring, Frontend Code Splitting:
 - `npm run qa:load` — k6 Lasttests
 - `performanceMetrics` + erweiterter Health-Check
 
-→ **[PERFORMANCE_GUIDE.md](./PERFORMANCE_GUIDE.md)** · **[ADR-030](./architecture/030-performance-scalability.md)**
+→ **[ADR-030](architecture/030-performance-scalability.md)** · Lasttests: `npm run qa:perf`
 
 ### Payment & PayableResource
 
@@ -610,6 +635,6 @@ Das Payment-Modul arbeitet ausschließlich mit `PayableResource` – es kennt ke
 2. In `registerPayables()` oder im eigenen Modul bei `enable()` registrieren
 3. Im Domänen-Service `paymentServiceRegistry.isAvailable()` prüfen und ggf. `createCheckout()` aufrufen
 
-**Neuen Payment-Provider hinzufügen:** siehe [Payment-Modul in MODULE_ARCHITECTURE.md](./MODULE_ARCHITECTURE.md#payment-modul).
+**Neuen Payment-Provider hinzufügen:** siehe [ADR-007](architecture/007-payment-module.md).
 
 **Umgebungsvariable:** `APP_ENCRYPTION_KEY` (min. 32 Zeichen empfohlen) für verschlüsselte API-Keys und Passwörter in der Datenbank.

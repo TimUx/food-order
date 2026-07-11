@@ -1,26 +1,18 @@
 # Screenshots
 
-Aktuelle UI-Vorschau (Light Theme, Beispieldaten *Feuerwehr Musterstadt*).
+UI-Vorschau (Light Theme, Beispieldaten *Feuerwehr Musterstadt*).
 
-## Öffentlich & Gäste
+Die wichtigsten Ansichten sind auch in der [README](../README.md) eingebunden.
 
-| Bestellseite | Kundenstatus | Abholboard |
+## Galerie
+
+| Öffentlich | Mitarbeiter | Admin |
 |:---:|:---:|:---:|
-| ![Bestellseite](01-bestellseite-monitor.png) | ![Status](02-kundenstatus.png) | ![Abholboard](04-abholboard-monitor.png) |
+| ![Bestellseite](01-bestellseite-monitor.png) | ![Dashboard](06-dashboard.png) | ![Admin](16-admin-uebersicht.png) |
+| ![Status](02-kundenstatus.png) | ![Küche](07-kuechenansicht-tablet.png) | ![Veranstaltungen](12-veranstaltungen.png) |
+| ![Abholboard](04-abholboard-monitor.png) | ![Abholung](08-abholung.png) | ![Speisen](11-speisenverwaltung.png) |
 
-## Mitarbeiter
-
-| Dashboard | Küche | Abholung |
-|:---:|:---:|:---:|
-| ![Dashboard](06-dashboard.png) | ![Küche](07-kuechenansicht-tablet.png) | ![Abholung](08-abholung.png) |
-
-## Administration
-
-| Übersicht | Veranstaltungen | Speisen |
-|:---:|:---:|:---:|
-| ![Admin](16-admin-uebersicht.png) | ![Events](12-veranstaltungen.png) | ![Speisen](11-speisenverwaltung.png) |
-
-Weitere Dateien: `01`–`25` in diesem Ordner.
+Weitere Dateien (`01`–`25`) liegen in diesem Ordner.
 
 ## Neu erzeugen
 

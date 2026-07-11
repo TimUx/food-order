@@ -1188,5 +1188,5 @@ docker compose exec backend npm run seed
 - [Volunteer Guide](VOLUNTEER_GUIDE.md)
 - [Betriebshandbuch](OPERATIONS.md)
 - [Entwicklerhandbuch](DEVELOPER_GUIDE.md)
-- [Modul-Architektur](MODULE_ARCHITECTURE.md)
+- [Modul-System (ADR-003)](architecture/003-module-system.md) · [ADR-041](architecture/041-module-api-v3.md)
 - [README](../README.md)

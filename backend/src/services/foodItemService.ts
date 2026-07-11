@@ -21,9 +21,13 @@ export const foodItemService = {
         ...event,
         eventDateLabel: formatEventDate(event.date),
       },
-      items: items.filter((i) => !i.soldOut),
+      items,
       preOrderInfo: 'Vorbestellung möglich',
     };
+  },
+
+  async setSoldOut(id: string, soldOut: boolean) {
+    return this.update(id, { soldOut });
   },
 
   async getById(id: string) {

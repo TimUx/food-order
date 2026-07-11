@@ -17,18 +17,42 @@ echo "=== Bootstrap Tests ==="
 # Hilfe
 "${ROOT}/install.sh" --help >/dev/null 2>&1 && pass "--help" || fail "--help"
 
+# --dir Option (lokal, bootstrap-only)
+TMPDIR=$(mktemp -d)
+"${ROOT}/install.sh" --dir "$TMPDIR" --bootstrap-only >/dev/null 2>&1 \
+  && [[ -f "$TMPDIR/docker-compose.yml" ]] \
+  && pass "--dir bootstrap" || fail "--dir bootstrap"
+rm -rf "$TMPDIR"
+
+# Default-Installationspfad
+default_dir=$(
+  FESTSCHMIEDE_DEFAULT_INSTALL_DIR=/custom/default bash -c '
+    source /dev/null 2>/dev/null || true
+    FESTSCHMIEDE_DEFAULT_INSTALL_DIR=/custom/default
+    _default_install_dir() {
+      if [[ -n "$FESTSCHMIEDE_DEFAULT_INSTALL_DIR" ]]; then
+        echo "$FESTSCHMIEDE_DEFAULT_INSTALL_DIR"
+        return
+      fi
+      echo "/fallback"
+    }
+    _default_install_dir
+  '
+)
+[[ "$default_dir" == "/custom/default" ]] && pass "default install dir override" || fail "default install dir override"
+
 # Version
 out=$("${ROOT}/install.sh" --version 2>&1)
-echo "$out" | grep -q "2.2.3" && pass "--version" || fail "--version"
+echo "$out" | grep -q "2.3.0" && pass "--version" || fail "--version"
 
 # Lokaler Modus erkennt Repository
 [[ -f "${ROOT}/installer/install.sh" ]] && pass "local installer exists" || fail "local installer exists"
 
 # URL-Generierung (inline test via bash)
-REF=$(FESTSCHMIEDE_VERSION=2.2.3 bash -c '
+REF=$(FESTSCHMIEDE_VERSION=2.3.0 bash -c '
   source /dev/null 2>/dev/null
   FESTSCHMIEDE_GITHUB_REPO=TimUx/FestSchmiede
-  FESTSCHMIEDE_VERSION=2.2.3
+  FESTSCHMIEDE_VERSION=2.3.0
   echo "https://github.com/${FESTSCHMIEDE_GITHUB_REPO}/archive/refs/tags/v${FESTSCHMIEDE_VERSION}.tar.gz"
 ')
 echo "$REF" | grep -q "FestSchmiede" && pass "archive URL format" || fail "archive URL format"

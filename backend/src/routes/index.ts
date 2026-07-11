@@ -24,11 +24,13 @@ import {
   updateClubSchema,
   createFoodItemSchema,
   updateFoodItemSchema,
+  setFoodSoldOutSchema,
   createOnlineOrderSchema,
   createOrderCheckoutSchema,
   createCashierOrderSchema,
   abortCashierPaymentSchema,
   updateOrderStatusSchema,
+  updateOrderItemsSchema,
   lookupOrderSchema,
   lookupByNumberSchema,
   cancelOrderSchema,
@@ -167,6 +169,7 @@ router.post('/staff/events/:id/activate', requirePermissionKey('events.manage'),
 router.get('/staff/events/:eventId/food-items', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'food.view', 'food.edit'), foodItemController.getByEvent);
 router.post('/staff/events/:eventId/food-items', requirePermissionKey('food.edit'), validateBody(createFoodItemSchema), foodItemController.create);
 router.put('/staff/food-items/:id', requirePermissionKey('food.edit'), validateParams(idParamSchema), validateBody(updateFoodItemSchema), foodItemController.update);
+router.patch('/staff/food-items/:id/sold-out', requireAnyStaffPermission('food.edit', 'orders.kitchen', 'orders.manage'), validateParams(idParamSchema), validateBody(setFoodSoldOutSchema), foodItemController.setSoldOut);
 router.delete('/staff/food-items/:id', requirePermissionKey('food.edit'), validateParams(idParamSchema), foodItemController.delete);
 
 router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), uploadRateLimiter, validateParams(idParamSchema), assertUploadContentLength(), upload.single('image'), async (req, res, next) => {
@@ -185,11 +188,14 @@ router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), up
 });
 
 router.get('/staff/events/:eventId/orders', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.getByEvent);
+router.get('/staff/events/:eventId/orders/export', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.exportEventOrdersJson);
+router.get('/staff/events/:eventId/orders/export.xlsx', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.exportEventOrdersXlsx);
 router.get('/staff/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage'), orderController.getStats);
 router.post('/staff/orders/cashier', requireStaffPermission('orders.manage'), validateBody(createCashierOrderSchema), orderController.createCashier);
 router.post('/staff/orders/:id/abort-payment', requireStaffPermission('orders.manage'), validateParams(idParamSchema), validateBody(abortCashierPaymentSchema), orderController.abortCashierPayment);
 router.post('/staff/orders/lookup', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), validateBody(lookupByNumberSchema), orderController.lookupByNumber);
 router.patch('/staff/orders/:id/status', requireAnyStaffPermission('orders.kitchen', 'orders.manage'), validateParams(idParamSchema), validateBody(updateOrderStatusSchema), orderController.updateStatus);
+router.patch('/staff/orders/:id/items', requireAnyStaffPermission('orders.kitchen', 'orders.manage'), validateParams(idParamSchema), validateBody(updateOrderItemsSchema), orderController.updateItems);
 router.post('/staff/orders/:id/advance', requireAnyStaffPermission('orders.kitchen', 'orders.pickup', 'orders.manage'), validateParams(idParamSchema), orderController.advanceStatus);
 
 // Realtime sync (delta/ETag) — für Polling-Fallback

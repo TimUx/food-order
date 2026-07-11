@@ -4,6 +4,8 @@
 TUI_BACKEND=""
 DIALOG_HEIGHT=20
 DIALOG_WIDTH=78
+DIALOG_MIN_WIDTH=70
+DIALOG_MAX_WIDTH=85
 
 _detect_tui_backend() {
   if [[ -n "$TUI_BACKEND" ]]; then return 0; fi
@@ -21,6 +23,73 @@ _detect_tui_backend() {
 
 _tui_backtitle() {
   echo "${PRODUCT_NAME} Installer v${INSTALLER_VERSION}"
+}
+
+# Text für Dialoge aufbereiten: Escapes, Unicode, lange Zeilen
+_tui_format_body() {
+  local text="$1"
+  text="${text//\\n/$'\n'}"
+  text="${text//═══/---}"
+  text="${text//•/-}"
+  _tui_wrap_text "$text" $((DIALOG_WIDTH - 4))
+}
+
+_tui_wrap_text() {
+  local text="$1"
+  local width="${2:-74}"
+  local line chunk
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    while [[ ${#line} -gt $width ]]; do
+      # Bevorzugt an Leerzeichen umbrechen
+      chunk="${line:0:$width}"
+      if [[ "$chunk" == *" "* ]]; then
+        chunk="${chunk%% *}"
+        echo "$chunk"
+        line="${line:${#chunk}}"
+        line="${line# }"
+      else
+        echo "${line:0:$width}"
+        line="${line:$width}"
+      fi
+    done
+    echo "$line"
+  done <<< "$text"
+}
+
+# Dialoggröße an Inhalt anpassen
+_tui_dialog_dims() {
+  local body="$1"
+  local line_count max_line_len line len
+  line_count=$(printf '%s\n' "$body" | wc -l)
+  max_line_len=0
+  while IFS= read -r line; do
+    len=${#line}
+    [[ $len -gt $max_line_len ]] && max_line_len=$len
+  done <<< "$body"
+
+  local width=$DIALOG_WIDTH
+  if [[ $max_line_len -gt $((width - 4)) ]]; then
+    width=$((max_line_len + 6))
+    [[ $width -gt $DIALOG_MAX_WIDTH ]] && width=$DIALOG_MAX_WIDTH
+    [[ $width -lt $DIALOG_MIN_WIDTH ]] && width=$DIALOG_MIN_WIDTH
+  fi
+
+  local height=$((line_count + 7))
+  [[ $height -lt 10 ]] && height=10
+  [[ $height -gt 30 ]] && height=30
+
+  echo "$height $width"
+}
+
+_tui_scroll_args() {
+  local body="$1"
+  local height="$2"
+  local line_count
+  line_count=$(printf '%s\n' "$body" | wc -l)
+  if [[ $line_count -gt $((height - 6)) ]]; then
+    echo "--scrolltext"
+  fi
 }
 
 tui_welcome() {
@@ -45,6 +114,9 @@ Vorhandene Einstellungen werden erkannt und übernommen.
 Protokoll: $(basename "$LOG_FILE")
 EOF
 )
+  body=$(_tui_format_body "$body")
+  local height width
+  read -r height width < <(_tui_dialog_dims "$body")
   case "$TUI_BACKEND" in
     gum)
       gum style --border double --padding "1 2" --align center "$body"
@@ -52,9 +124,15 @@ EOF
       ;;
     dialog|whiptail)
       local cmd=$TUI_BACKEND
+      local scroll
+      scroll=$(_tui_scroll_args "$body" "$height")
+      # shellcheck disable=SC2086
       $cmd --backtitle "$(_tui_backtitle)" \
         --title "Willkommen" \
-        --yesno "$body\n\nInstallation starten?" "$DIALOG_HEIGHT" "$DIALOG_WIDTH"
+        $scroll \
+        --yesno "$body
+
+Installation starten?" "$height" "$width"
       ;;
     *)
       echo "$body"
@@ -67,10 +145,16 @@ EOF
 tui_msgbox() {
   local title="$1" body="$2"
   _detect_tui_backend
+  body=$(_tui_format_body "$body")
+  local height width scroll
+  read -r height width < <(_tui_dialog_dims "$body")
+  scroll=$(_tui_scroll_args "$body" "$height")
   case "$TUI_BACKEND" in
     gum) gum style "$body"; read -r -p "Enter..." _ ;;
     dialog|whiptail)
-      $TUI_BACKEND --backtitle "$(_tui_backtitle)" --title "$title" --msgbox "$body" "$DIALOG_HEIGHT" "$DIALOG_WIDTH"
+      # shellcheck disable=SC2086
+      $TUI_BACKEND --backtitle "$(_tui_backtitle)" --title "$title" \
+        $scroll --msgbox "$body" "$height" "$width"
       ;;
     *) echo "=== $title ==="; echo "$body"; ;;
   esac
@@ -79,10 +163,16 @@ tui_msgbox() {
 tui_yesno() {
   local title="$1" body="$2"
   _detect_tui_backend
+  body=$(_tui_format_body "$body")
+  local height width scroll
+  read -r height width < <(_tui_dialog_dims "$body")
+  scroll=$(_tui_scroll_args "$body" "$height")
   case "$TUI_BACKEND" in
     gum) gum confirm "$body" ;;
     dialog|whiptail)
-      $TUI_BACKEND --backtitle "$(_tui_backtitle)" --title "$title" --yesno "$body" "$DIALOG_HEIGHT" "$DIALOG_WIDTH"
+      # shellcheck disable=SC2086
+      $TUI_BACKEND --backtitle "$(_tui_backtitle)" --title "$title" \
+        $scroll --yesno "$body" "$height" "$width"
       ;;
     *)
       read -r -p "$body [j/N] " ans
@@ -135,6 +225,7 @@ tui_menu() {
   shift 2
   local items=("$@")
   _detect_tui_backend
+  prompt=$(_tui_format_body "$prompt")
   case "$TUI_BACKEND" in
     gum)
       local -a choices=()
@@ -175,6 +266,7 @@ tui_checklist() {
   shift 2
   local items=("$@")
   _detect_tui_backend
+  prompt=$(_tui_format_body "$prompt")
   case "$TUI_BACKEND" in
     dialog)
       local checklist_args=()
@@ -216,6 +308,7 @@ tui_radiolist() {
   shift 2
   local items=("$@")
   _detect_tui_backend
+  prompt=$(_tui_format_body "$prompt")
   case "$TUI_BACKEND" in
     dialog)
       local args=()
@@ -248,26 +341,12 @@ tui_gauge() {
   esac
 }
 
-# Navigation: 0=back, 1=next, 2=cancel
+# Navigation (nur Plain-Modus; Dialog-Schritte haben eigene OK/Abbruch-Buttons)
 tui_nav() {
   local step_name="$1"
   _detect_tui_backend
   case "$TUI_BACKEND" in
-    dialog)
-      local choice
-      choice=$(dialog --backtitle "$(_tui_backtitle)" --title "Navigation" \
-        --menu "Schritt: $step_name" 12 60 3 \
-        "next" "Weiter" \
-        "back" "Zurück" \
-        "cancel" "Abbrechen" \
-        3>&1 1>&2 2>&3) || { WIZARD_CANCELLED=1; return 2; }
-      case "$choice" in
-        back) return 0 ;;
-        next) return 1 ;;
-        cancel) WIZARD_CANCELLED=1; return 2 ;;
-      esac
-      ;;
-    *)
+    plain)
       echo ""; echo "[$step_name] (b)=Zurück  (w)=Weiter  (a)=Abbrechen"
       read -r -p "> " nav
       case "$nav" in
@@ -276,12 +355,18 @@ tui_nav() {
         *) return 1 ;;
       esac
       ;;
+    *)
+      return 1
+      ;;
   esac
 }
 
 tui_summary_confirm() {
   local body="$1"
-  tui_yesno "Zusammenfassung" "$body\n\nInstallation jetzt starten?"
+  body=$(_tui_format_body "${body}
+
+Installation jetzt starten?")
+  tui_yesno "Zusammenfassung" "$body"
 }
 
 tui_success() {

@@ -84,7 +84,7 @@ Wenn das optionale Legal-Modul aktiv ist, ergaenzt `MessageTemplateService` Kund
 | `paymentRefunded` | optional | Hook `PAYMENT_REFUNDED` |
 | `moduleActivated` / `moduleDeactivated` | optional | Hook `MODULE_*` |
 
-Ablaufdetails: [notification-communication-flows.md](./notification-communication-flows.md)
+Ablaufdetails: siehe Abschnitt „Hooks & Kanäle“ in diesem ADR.
 
 ### Admin-UI
 

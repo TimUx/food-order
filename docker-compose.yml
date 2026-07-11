@@ -17,6 +17,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - internal
     deploy:
       resources:
         limits:
@@ -56,6 +58,8 @@ services:
       - "3001:3001"
     volumes:
       - uploads_data:/app/uploads
+    networks:
+      - internal
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/health"]
       interval: 15s
@@ -80,6 +84,8 @@ services:
         condition: service_healthy
     ports:
       - "5173:80"
+    networks:
+      - internal
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
       interval: 15s
@@ -96,3 +102,8 @@ services:
 volumes:
   postgres_data:
   uploads_data:
+
+networks:
+  internal:
+    name: ${FESTSCHMIEDE_INTERNAL_NETWORK:-festschmiede_internal}
+    driver: bridge

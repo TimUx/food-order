@@ -113,7 +113,7 @@ Ein SDK definiert die **öffentliche Vertragsfläche** des Cores.
 - Offizielle Module migrieren auf `@vereinsbestellung/module-sdk`
 - `backend/modules/_shared/createStubModule.ts` wandert ins SDK
 - CI: SDK-Package separat versionieren und publishen
-- `MODULE_ARCHITECTURE.md` verweist auf SDK-Docs
+- `docs/DEVELOPER_GUIDE.md` und ADR-003 verweisen auf SDK-Docs
 
 ## Migrationsstrategie
 

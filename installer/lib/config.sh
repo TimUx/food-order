@@ -13,6 +13,17 @@ apply_defaults() {
   CFG[PLATFORM_NAME]="${CFG[PLATFORM_NAME]:-FestSchmiede}"
   CFG[PLATFORM_LOCALE]="${CFG[PLATFORM_LOCALE]:-de-DE}"
   CFG[PLATFORM_TIMEZONE]="${CFG[PLATFORM_TIMEZONE]:-Europe/Berlin}"
+  CFG[DOCKER_INTERNAL_NETWORK]="${CFG[DOCKER_INTERNAL_NETWORK]:-festschmiede_internal}"
+  CFG[DOCKER_PROXY_NETWORK]="${CFG[DOCKER_PROXY_NETWORK]:-${CFG[DOCKER_NETWORK]:-festschmiede_public}}"
+  CFG[USES_REVERSE_PROXY]="${CFG[USES_REVERSE_PROXY]:-no}"
+
+  # Legacy .env ohne PROXY_MODE: Produktionsprofil → Traefik annehmen
+  if [[ -z "${CFG[PROXY_MODE]:-}" && "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+    CFG[PROXY_MODE]="traefik"
+  fi
+  if [[ "${CFG[PROXY_MODE]:-none}" != "none" ]]; then
+    CFG[USES_REVERSE_PROXY]="yes"
+  fi
 
   if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
     CFG[MULTI_TENANT_ENABLED]="true"
@@ -38,7 +49,8 @@ apply_defaults() {
 build_compose_files() {
   COMPOSE_FILES=("-f" "${INSTALL_DIR}/docker-compose.yml")
 
-  if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+  apply_defaults
+  if [[ "${CFG[PROXY_MODE]:-none}" == "traefik" ]]; then
     COMPOSE_FILES+=("-f" "${INSTALL_DIR}/docker-compose.prod.yml")
   fi
 
@@ -48,37 +60,165 @@ build_compose_files() {
 }
 
 generate_compose_override() {
+  apply_defaults
   local out="${INSTALL_DIR}/installer/generated"
   mkdir -p "$out"
 
-  local network_name="${CFG[DOCKER_NETWORK]:-festschmiede_public}"
+  local internal_net="${CFG[DOCKER_INTERNAL_NETWORK]}"
+  local proxy_net="${CFG[DOCKER_PROXY_NETWORK]}"
+  local proxy_create="${CFG[DOCKER_NETWORK_CREATE]:-yes}"
+  local use_proxy="${CFG[USES_REVERSE_PROXY]}"
+  local proxy_mode="${CFG[PROXY_MODE]:-none}"
   local use_redis="${CFG[USE_REDIS]:-no}"
+  local file="${out}/compose.override.yml"
+  local redis_env="" smtp_env="" redis_service="" volumes_block=""
 
-  cat >"${out}/compose.override.yml" <<EOF
+  if [[ "$use_redis" == "internal" ]]; then
+    redis_env="      REDIS_URL: redis://:\${REDIS_PASSWORD:-}@redis:6379"
+  fi
+  if [[ "${CFG[SMTP_ENABLED]:-no}" == "yes" ]]; then
+    smtp_env="      INSTALL_SMTP_HOST: ${CFG[SMTP_HOST]:-}
+      INSTALL_SMTP_PORT: ${CFG[SMTP_PORT]:-587}"
+  fi
+  if [[ "$use_redis" == "internal" && "$proxy_mode" != "traefik" ]]; then
+    redis_service="
+  redis:
+    image: redis:7-alpine
+    container_name: festschmiede-redis
+    restart: unless-stopped
+    profiles:
+      - redis
+    command: [\"redis-server\", \"--appendonly\", \"yes\"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: [\"CMD\", \"redis-cli\", \"ping\"]
+      interval: 10s
+      timeout: 3s
+      retries: 5"
+    volumes_block="
+volumes:
+  redis_data:"
+  fi
+
+  cat >"$file" <<EOF
 # Automatisch generiert vom FestSchmiede Installer v${INSTALLER_VERSION}
 # $(date -Iseconds)
+# Internes Netz: ${internal_net} (Backend, DB, Redis, Frontend)
+# Proxy-Netz:    ${proxy_net} (nur Frontend, wenn Reverse Proxy aktiv)
+
+networks:
+  internal:
+    name: ${internal_net}
+    driver: bridge
+EOF
+
+  if [[ "$use_proxy" == "yes" && "$proxy_mode" == "traefik" && "$proxy_create" == "no" ]]; then
+    cat >>"$file" <<EOF
+  public:
+    name: ${proxy_net}
+    external: true
+EOF
+  fi
+
+  if [[ "$use_proxy" == "yes" && "$proxy_mode" != "traefik" ]]; then
+    if [[ "$proxy_create" == "yes" ]]; then
+      cat >>"$file" <<EOF
+  proxy:
+    name: ${proxy_net}
+    driver: bridge
+EOF
+    else
+      cat >>"$file" <<EOF
+  proxy:
+    name: ${proxy_net}
+    external: true
+EOF
+    fi
+  fi
+
+  if [[ "$use_proxy" == "yes" ]]; then
+    if [[ "$proxy_mode" == "traefik" ]]; then
+      cat >>"$file" <<EOF
 
 services:
+  postgres:
+    networks:
+      - internal
   backend:
+    networks:
+      - internal
+    ports: !reset []
+    expose:
+      - "3001"
     environment:
       PLATFORM_ADMIN_EMAIL: ${CFG[PLATFORM_ADMIN_EMAIL]:-platform@festschmiede.local}
       PLATFORM_ADMIN_PASSWORD: \${PLATFORM_ADMIN_PASSWORD}
+${redis_env}
+${smtp_env}
+  frontend:
+    networks:
+      - internal
+      - public
+    ports: !reset []
+    expose:
+      - "80"
 EOF
+    else
+      cat >>"$file" <<EOF
 
-  if [[ "$use_redis" == "yes" ]]; then
-    cat >>"${out}/compose.override.yml" <<EOF
-      REDIS_URL: redis://:\${REDIS_PASSWORD:-}@redis:6379
+services:
+  postgres:
+    networks:
+      - internal
+  backend:
+    networks:
+      - internal
+    ports: !reset []
+    expose:
+      - "3001"
+    environment:
+      PLATFORM_ADMIN_EMAIL: ${CFG[PLATFORM_ADMIN_EMAIL]:-platform@festschmiede.local}
+      PLATFORM_ADMIN_PASSWORD: \${PLATFORM_ADMIN_PASSWORD}
+${redis_env}
+${smtp_env}
+  frontend:
+    networks:
+      - internal
+      - proxy
+    ports: !reset []
+    expose:
+      - "80"
+${redis_service}
+${volumes_block}
+EOF
+    fi
+  else
+    cat >>"$file" <<EOF
+
+services:
+  postgres:
+    networks:
+      - internal
+  backend:
+    networks:
+      - internal
+    environment:
+      PLATFORM_ADMIN_EMAIL: ${CFG[PLATFORM_ADMIN_EMAIL]:-platform@festschmiede.local}
+      PLATFORM_ADMIN_PASSWORD: \${PLATFORM_ADMIN_PASSWORD}
+${redis_env}
+${smtp_env}
+  frontend:
+    networks:
+      - internal
+${redis_service}
+${volumes_block}
 EOF
   fi
 
-  if [[ "${CFG[SMTP_ENABLED]:-no}" == "yes" ]]; then
-    cat >>"${out}/compose.override.yml" <<EOF
-      INSTALL_SMTP_HOST: ${CFG[SMTP_HOST]:-}
-      INSTALL_SMTP_PORT: ${CFG[SMTP_PORT]:-587}
-EOF
-  fi
-
-  log_info "Compose-Override erzeugt: ${out}/compose.override.yml"
+  log_info "Compose-Override erzeugt: $file"
 }
 
 generate_env_file() {
@@ -128,6 +268,10 @@ PLATFORM_ADMIN_PASSWORD=${CFG[PLATFORM_ADMIN_PASSWORD]}
 ACME_EMAIL=${CFG[ACME_EMAIL]:-}
 REDIS_URL=${CFG[REDIS_URL]:-}
 
+FESTSCHMIEDE_INTERNAL_NETWORK=${CFG[DOCKER_INTERNAL_NETWORK]}
+FESTSCHMIEDE_PROXY_NETWORK=${CFG[DOCKER_PROXY_NETWORK]}
+PROXY_MODE=${CFG[PROXY_MODE]:-none}
+
 # Installer-Metadaten
 INSTALLER_VERSION=${INSTALLER_VERSION}
 INSTALL_MODULES=${CFG[INSTALL_MODULES]:-payment,legal,notifications}
@@ -141,19 +285,21 @@ EOF
 format_config_summary() {
   apply_defaults
   local s=""
-  s+="Modus:           $INSTALL_MODE\n"
-  s+="Profil:           ${CFG[INSTALL_PROFILE]:-local}\n"
-  s+="Plattform:        ${CFG[PLATFORM_NAME]:-FestSchmiede}\n"
-  s+="Domain:           ${CFG[PLATFORM_DOMAIN]}\n"
-  s+="Datenbank:        ${CFG[DB_MODE]:-internal} (PostgreSQL)\n"
-  s+="Redis:            ${CFG[USE_REDIS]:-no}\n"
-  s+="Reverse Proxy:    ${CFG[PROXY_MODE]:-none}\n"
-  s+="Docker-Netzwerk:  ${CFG[DOCKER_NETWORK]:-festschmiede_public}\n"
-  s+="SMTP:             ${CFG[SMTP_ENABLED]:-no}\n"
-  s+="Module:           ${CFG[INSTALL_MODULES]:-payment,legal,notifications}\n"
-  s+="\n"
-  s+="$(format_secrets_summary)"
-  echo -e "$s"
+  s+="Modus:            ${INSTALL_MODE}"
+  s+=$'\n'"Profil:            ${CFG[INSTALL_PROFILE]:-local}"
+  s+=$'\n'"Plattform:         ${CFG[PLATFORM_NAME]:-FestSchmiede}"
+  s+=$'\n'"Domain:            ${CFG[PLATFORM_DOMAIN]}"
+  s+=$'\n'"Datenbank:         ${CFG[DB_MODE]:-internal} (PostgreSQL)"
+  s+=$'\n'"Redis:             ${CFG[USE_REDIS]:-no}"
+  s+=$'\n'"Reverse Proxy:     ${CFG[PROXY_MODE]:-none}"
+  s+=$'\n'"Internes Netz:     ${CFG[DOCKER_INTERNAL_NETWORK]:-festschmiede_internal} (immer)"
+  if [[ "${CFG[USES_REVERSE_PROXY]:-no}" == "yes" ]]; then
+    s+=$'\n'"Proxy-Netz:        ${CFG[DOCKER_PROXY_NETWORK]:-festschmiede_public} (nur Frontend)"
+  fi
+  s+=$'\n'"SMTP:              ${CFG[SMTP_ENABLED]:-no}"
+  s+=$'\n'"Module:            ${CFG[INSTALL_MODULES]:-payment,legal,notifications}"
+  s+=$'\n\n'"$(format_secrets_summary)"
+  printf '%s' "$s"
 }
 
 get_access_urls() {

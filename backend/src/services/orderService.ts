@@ -18,6 +18,7 @@ import {
   getCancellationDeadline,
   formatDateTimeDE,
   canCustomerCancelOrder,
+  canStaffEditOrderItems,
 } from '../utils/helpers';
 import { emitOrderCreated, emitOrderUpdate } from '../socket';
 import { hookSystem } from '../platform/bootstrap';
@@ -138,6 +139,64 @@ function validateOrderFields(
   if (fields.phoneRequired && !data.phone?.trim()) {
     throw new AppError(400, 'Telefon ist erforderlich');
   }
+}
+
+function mergeOrderItems(items: { foodItemId: string; quantity: number }[]) {
+  const map = new Map<string, number>();
+  for (const item of items) {
+    if (item.quantity <= 0) continue;
+    map.set(item.foodItemId, (map.get(item.foodItemId) ?? 0) + item.quantity);
+  }
+  const merged = [...map.entries()].map(([foodItemId, quantity]) => ({ foodItemId, quantity }));
+  if (merged.length === 0) {
+    throw new AppError(400, 'Mindestens ein Gericht erforderlich');
+  }
+  return merged;
+}
+
+async function buildOrderItems(
+  eventId: string,
+  items: { foodItemId: string; quantity: number }[]
+) {
+  const merged = mergeOrderItems(items);
+  let totalPrice = new Prisma.Decimal(0);
+  const orderItems: {
+    foodItemId: string;
+    quantity: number;
+    unitPrice: Prisma.Decimal;
+    lineTotal: Prisma.Decimal;
+  }[] = [];
+
+  const foodItemIds = merged.map((i) => i.foodItemId);
+  const foodItems = await foodItemRepository.findByIds(foodItemIds);
+  const foodItemMap = new Map(foodItems.map((f) => [f.id, f]));
+
+  for (const item of merged) {
+    const foodItem = foodItemMap.get(item.foodItemId);
+    if (!foodItem || foodItem.eventId !== eventId) {
+      throw new AppError(400, 'Ungültiges Gericht');
+    }
+    if (!foodItem.active || foodItem.soldOut) {
+      throw new AppError(400, `${foodItem.name} ist nicht verfügbar`);
+    }
+    if (foodItem.maxQuantity && item.quantity > foodItem.maxQuantity) {
+      throw new AppError(
+        400,
+        `Maximale Bestellmenge für ${foodItem.name}: ${foodItem.maxQuantity}`
+      );
+    }
+
+    const lineTotal = new Prisma.Decimal(foodItem.price).mul(item.quantity);
+    totalPrice = totalPrice.add(lineTotal);
+    orderItems.push({
+      foodItemId: item.foodItemId,
+      quantity: item.quantity,
+      unitPrice: new Prisma.Decimal(foodItem.price),
+      lineTotal,
+    });
+  }
+
+  return { orderItems, totalPrice };
 }
 
 export const orderService = {
@@ -413,42 +472,7 @@ export const orderService = {
   ) {
     const eventId = event.id;
     const orderDate = getEventOrderDate(event.date);
-    let totalPrice = new Prisma.Decimal(0);
-    const orderItems: {
-      foodItemId: string;
-      quantity: number;
-      unitPrice: Prisma.Decimal;
-      lineTotal: Prisma.Decimal;
-    }[] = [];
-
-    const foodItemIds = [...new Set(items.map((i) => i.foodItemId))];
-    const foodItems = await foodItemRepository.findByIds(foodItemIds);
-    const foodItemMap = new Map(foodItems.map((f) => [f.id, f]));
-
-    for (const item of items) {
-      const foodItem = foodItemMap.get(item.foodItemId);
-      if (!foodItem || foodItem.eventId !== eventId) {
-        throw new AppError(400, 'Ungültiges Gericht');
-      }
-      if (!foodItem.active || foodItem.soldOut) {
-        throw new AppError(400, `${foodItem.name} ist nicht verfügbar`);
-      }
-      if (foodItem.maxQuantity && item.quantity > foodItem.maxQuantity) {
-        throw new AppError(
-          400,
-          `Maximale Bestellmenge für ${foodItem.name}: ${foodItem.maxQuantity}`
-        );
-      }
-
-      const lineTotal = new Prisma.Decimal(foodItem.price).mul(item.quantity);
-      totalPrice = totalPrice.add(lineTotal);
-      orderItems.push({
-        foodItemId: item.foodItemId,
-        quantity: item.quantity,
-        unitPrice: new Prisma.Decimal(foodItem.price),
-        lineTotal,
-      });
-    }
+    const { orderItems, totalPrice } = await buildOrderItems(eventId, items);
 
     const orderNumber = await orderRepository.getNextOrderNumber(eventId, orderDate);
 
@@ -481,6 +505,26 @@ export const orderService = {
       await orderService._releaseOrderToKitchen(event, mapped, customerData);
     }
 
+    return mapped;
+  },
+
+  async updateItems(
+    id: string,
+    items: { foodItemId: string; quantity: number }[],
+    _changedBy?: string
+  ) {
+    const order = await orderRepository.findById(id);
+    if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
+
+    if (!canStaffEditOrderItems(order.status)) {
+      throw new AppError(400, 'Bestellung kann in diesem Status nicht mehr bearbeitet werden');
+    }
+
+    const { orderItems, totalPrice } = await buildOrderItems(order.eventId, items);
+    const updated = await orderRepository.replaceItems(id, orderItems, totalPrice);
+    const mapped = await mapOrderWithCancellation(updated as OrderWithRelations);
+    emitOrderUpdate(order.eventId, mapped);
+    hookSystem.emitAsync(CORE_HOOKS.ORDER_STATUS_CHANGED, mapped);
     return mapped;
   },
 

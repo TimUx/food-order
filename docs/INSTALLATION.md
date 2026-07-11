@@ -1,16 +1,32 @@
 # FestSchmiede – Installationsanleitung
 
-> **Version 2.2.3** – Professioneller interaktiver Installations-Assistent (TUI)
+> **Version 2.3.0** – Professioneller interaktiver Installations-Assistent (TUI)
 
 ## Schnellstart
 
 ### Online (ohne Git-Clone)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.3/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.0/install.sh | bash
 ```
 
-Standard-Installationsverzeichnis:
+**Installationspfad angeben** (Priorität: `--dir` > `FESTSCHMIEDE_INSTALL_DIR` > Default):
+
+```bash
+# Option 1: Kommandozeilen-Option
+./install.sh -d /opt/festschmiede
+
+# Option 2: Umgebungsvariable
+FESTSCHMIEDE_INSTALL_DIR=/opt/festschmiede curl -fsSL .../install.sh | bash
+
+# Option 3: Bei Online-Installation Argumente durchreichen
+curl -fsSL .../install.sh | bash -s -- -d /opt/festschmiede
+
+# Option 4: Eigenen Standard-Pfad vorgeben
+FESTSCHMIEDE_DEFAULT_INSTALL_DIR=/srv/festschmiede curl -fsSL .../install.sh | bash
+```
+
+Standard-Installationsverzeichnis (wenn nichts angegeben):
 
 | Benutzer | Pfad |
 |----------|------|
@@ -144,7 +160,49 @@ Produktion mit Traefik:
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-Siehe auch: [DEPLOYMENT.md](./DEPLOYMENT.md), [DOCKER.md](./DOCKER.md)
+Siehe auch: [Operations — Backup & Restore](./OPERATIONS.md), [ADR-027](./architecture/027-multi-tenant-deployment.md)
+
+## Docker-Referenz
+
+| Compose-Datei | Zweck |
+|---------------|-------|
+| `docker-compose.yml` | Standard (lokal, Single-Node) |
+| `docker-compose.prod.yml` | Traefik, interne Netzwerke, Healthchecks |
+| `docker-compose.ci.yml` | CI/QA |
+| `docker-stack.yml` | Docker Swarm |
+
+| Service | Rolle |
+|---------|-------|
+| postgres | PostgreSQL (alle Mandanten) |
+| backend | API + Socket.IO |
+| frontend | nginx + SPA |
+| traefik | Reverse Proxy (prod overlay) |
+
+Wichtige Umgebungsvariablen: `JWT_SECRET`, `APP_ENCRYPTION_KEY`, `DATABASE_URL`, `PLATFORM_DOMAIN`, `MULTI_TENANT_ENABLED`. Fachliche Einstellungen (SMTP, Zahlung) nur über die Admin-Oberfläche.
+
+## Produktions-Deployment
+
+```
+Internet → Traefik (TLS) → Frontend (nginx) → Backend → PostgreSQL
+```
+
+**Voraussetzungen:** DNS für `<PLATFORM_DOMAIN>` und `*.<PLATFORM_DOMAIN>`, Ports 80/443, starke Secrets.
+
+```env
+ACME_EMAIL=admin@example.test
+PLATFORM_DOMAIN=plattform.de
+PLATFORM_WILDCARD_DOMAIN=*.plattform.de
+MULTI_TENANT_ENABLED=true
+JWT_SECRET=<64+ Zeichen>
+APP_ENCRYPTION_KEY=<32+ Zeichen>
+TRUSTED_PROXY_HOPS=2
+```
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Health: `GET /api/health` · Uploads: `uploads/{tenantId}/` · Details: [ADR-027](./architecture/027-multi-tenant-deployment.md)
 
 ## Tests
 

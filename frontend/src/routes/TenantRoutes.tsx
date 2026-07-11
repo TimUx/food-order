@@ -35,6 +35,9 @@ const BestellungPage = lazy(() =>
 const OrdersPage = lazy(() =>
   import('@/pages/staff/OrdersPage').then((m) => ({ default: m.OrdersPage }))
 );
+const StaffFoodAvailabilityPage = lazy(() =>
+  import('@/pages/staff/StaffFoodAvailabilityPage').then((m) => ({ default: m.StaffFoodAvailabilityPage }))
+);
 const AdminShell = lazy(() =>
   import('@/pages/admin/AdminShell').then((m) => ({ default: m.AdminShell }))
 );
@@ -72,6 +75,7 @@ export function TenantRoutes() {
         <Route path="/mitarbeiter/kueche" element={<Lazy><ProtectedRoute><KitchenPage /></ProtectedRoute></Lazy>} />
         <Route path="/mitarbeiter/abholung" element={<Lazy><ProtectedRoute><AbholungPage /></ProtectedRoute></Lazy>} />
         <Route path="/mitarbeiter/bestellung" element={<Lazy><ProtectedRoute><BestellungPage /></ProtectedRoute></Lazy>} />
+        <Route path="/mitarbeiter/speisen" element={<Lazy><ProtectedRoute><StaffFoodAvailabilityPage /></ProtectedRoute></Lazy>} />
 
         <Route path="/admin/login" element={<Lazy><LoginPage /></Lazy>} />
         <Route path="/admin/einrichtung" element={<Lazy><AdminRoute><SetupWizardPage /></AdminRoute></Lazy>} />
@@ -86,7 +90,6 @@ export function TenantRoutes() {
         <Route path="/mitarbeiter/kasse" element={<Navigate to="/mitarbeiter/abholung" replace />} />
         <Route path="/mitarbeiter/lokale-kasse" element={<Navigate to="/mitarbeiter/bestellung" replace />} />
         <Route path="/mitarbeiter/verein" element={<Navigate to="/admin/verein" replace />} />
-        <Route path="/mitarbeiter/speisen" element={<Navigate to="/admin/speisen" replace />} />
         <Route path="/mitarbeiter/veranstaltungen" element={<Navigate to="/admin/veranstaltungen" replace />} />
 
         <Route path="*" element={<TenantNotFoundPage />} />

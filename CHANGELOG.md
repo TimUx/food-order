@@ -3,6 +3,27 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.0 - 2026-07-11
+
+### Neu
+
+- **Bestellungen bearbeiten:** Admins und Mitarbeiter können offene Bestellungen (Neu/In Bearbeitung) anpassen — Gerichte hinzufügen, entfernen, Mengen ändern, stornieren.
+- **Ausverkauft markieren:** Gerichte als ausverkauft kennzeichnen (Admin, Küche, Kasse); in der Bestellung ausgegraut mit Hinweis.
+- **Bestellexport:** Druckansicht und Excel-Export (`.xlsx`, formatiert) aller Bestellungen pro Veranstaltung.
+- **Plattform:** Mandanten bearbeiten (Organisation, Kontakt, technische Felder).
+- **Installer:** Konfigurierbares Installationsverzeichnis, verbesserte TUI, Docker-Netzwerk-Architektur (intern + Proxy).
+
+### Geändert
+
+- **Dokumentation:** Reduziert auf das Wesentliche (~50 Dateien weniger); README mit Screenshots und Funktionsüberblick erweitert.
+- **Developer Guide:** Node 20, `prisma generate` nach Docker-Builds.
+
+### Abhängigkeiten
+
+- Backend: `exceljs` für XLSX-Export.
+
+---
+
 ## 2.2.3 - 2026-07-10
 
 ### Behoben
@@ -138,7 +159,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 ### Migration
 
 - Bestehende Single-Tenant-Installationen: Daten werden beim Start in den Default-Mandanten migriert (`migrateTenantSchema`).
-- Siehe [Migrationsplan](docs/architecture/MIGRATION_PLAN.md) und Phase-Abschlussberichte in `docs/architecture/`.
+- Siehe [Architektur-ADRs](docs/architecture/README.md).
 
 ### Dokumentation
 

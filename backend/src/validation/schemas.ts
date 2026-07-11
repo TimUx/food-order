@@ -130,6 +130,10 @@ export const createFoodItemSchema = z.object({
 
 export const updateFoodItemSchema = createFoodItemSchema.partial();
 
+export const setFoodSoldOutSchema = z.object({
+  soldOut: z.boolean(),
+});
+
 export const orderItemSchema = z.object({
   foodItemId: z.string().uuid(),
   quantity: z.number().int().positive('Menge muss mindestens 1 sein'),
@@ -163,6 +167,10 @@ export const abortCashierPaymentSchema = z.object({
 
 export const updateOrderStatusSchema = z.object({
   status: z.enum(['NEW', 'IN_PROGRESS', 'READY', 'PICKED_UP', 'CANCELLED']),
+});
+
+export const updateOrderItemsSchema = z.object({
+  items: z.array(orderItemSchema).min(1, 'Mindestens ein Gericht erforderlich'),
 });
 
 export const lookupOrderSchema = z.object({
@@ -234,6 +242,47 @@ export const approveTenantApplicationSchema = z.object({
   createTenant: z.boolean().optional(),
   adminComment: z.string().max(5000).optional(),
 });
+
+const platformTenantSlugSchema = z
+  .string()
+  .min(2, 'Mindestens 2 Zeichen')
+  .max(48, 'Maximal 48 Zeichen')
+  .regex(/^[a-z0-9-]+$/, 'Nur Kleinbuchstaben, Zahlen und Bindestriche');
+
+const optionalEmailSchema = z
+  .string()
+  .email('Ungültige E-Mail-Adresse')
+  .optional()
+  .or(z.literal(''))
+  .nullable();
+
+const optionalUrlSchema = z
+  .string()
+  .url('Ungültige URL')
+  .optional()
+  .or(z.literal(''))
+  .nullable();
+
+export const createPlatformTenantSchema = z.object({
+  name: z.string().min(2, 'Name erforderlich').max(200),
+  shortName: z.string().max(64).optional().nullable(),
+  slug: platformTenantSlugSchema,
+  subdomain: platformTenantSlugSchema,
+  status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'ARCHIVED']).optional(),
+  contactName: z.string().max(120).optional().nullable(),
+  email: optionalEmailSchema,
+  phone: z.string().max(40).optional().nullable(),
+  logoUrl: optionalUrlSchema,
+  locale: z.string().max(20).optional(),
+  timezone: z.string().max(64).optional(),
+  currency: z.string().max(8).optional(),
+  theme: z.string().max(64).optional(),
+  description: z.string().max(5000).optional().nullable(),
+  address: z.string().max(500).optional().nullable(),
+  website: optionalUrlSchema,
+});
+
+export const updatePlatformTenantSchema = createPlatformTenantSchema.partial();
 
 export const updatePlatformLegalPageSchema = z.object({
   title: z.string().min(1).max(200).optional(),

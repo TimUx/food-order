@@ -15,7 +15,7 @@ services:
       - --ping=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --providers.docker.network=festschmiede_public
+      - --providers.docker.network=${FESTSCHMIEDE_PROXY_NETWORK:-festschmiede_public}
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
@@ -43,7 +43,7 @@ services:
       - internal
 
   backend:
-    ports: []
+    ports: !reset []
     expose:
       - "3001"
     environment:
@@ -68,7 +68,7 @@ services:
       start_period: 40s
 
   frontend:
-    ports: []
+    ports: !reset []
     expose:
       - "80"
     networks:
@@ -81,7 +81,7 @@ services:
       retries: 5
     labels:
       - traefik.enable=true
-      - traefik.docker.network=festschmiede_public
+      - traefik.docker.network=${FESTSCHMIEDE_PROXY_NETWORK:-festschmiede_public}
       - traefik.http.routers.festschmiede.rule=Host(`${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}`) || HostRegexp(`^[a-z0-9-]+\\.${PLATFORM_DOMAIN:-${PLATFORM_BASE_DOMAIN:-localhost}}$$`)
       - traefik.http.routers.festschmiede.entrypoints=websecure
       - traefik.http.routers.festschmiede.tls.certresolver=letsencrypt
@@ -111,9 +111,9 @@ services:
 
 networks:
   public:
-    name: festschmiede_public
+    name: ${FESTSCHMIEDE_PROXY_NETWORK:-festschmiede_public}
   internal:
-    name: festschmiede_internal
+    name: ${FESTSCHMIEDE_INTERNAL_NETWORK:-festschmiede_internal}
     internal: true
 
 volumes:

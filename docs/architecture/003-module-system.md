@@ -164,7 +164,7 @@ Optional: `getConfigContract()` mit Zod.
 
 ## Konsolidierungsreview (2026-07-09)
 
-Siehe [ADR-012](./012-architecture-consolidation-review.md).
+Siehe [ADR-003](./003-module-system.md) und [ADR-041](./041-module-api-v3.md).
 
 | Kritikpunkt | Entscheidung |
 |-------------|--------------|

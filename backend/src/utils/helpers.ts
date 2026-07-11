@@ -101,6 +101,11 @@ export function formatDateTimeDE(date: Date): string {
 
 const CANCELLABLE_STATUSES: StatusCode[] = ['NEW', 'IN_PROGRESS'];
 
+/** Bestellpositionen dürfen von Personal nur bei offenen Bestellungen geändert werden. */
+export function canStaffEditOrderItems(status: StatusCode): boolean {
+  return CANCELLABLE_STATUSES.includes(status);
+}
+
 export function canCustomerCancelOrder(
   status: StatusCode,
   source: string,

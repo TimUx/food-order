@@ -53,5 +53,5 @@ import { BaseModule, CORE_HOOKS, paymentServiceRegistry, type FeatureContext } f
 ## Referenzen
 
 - ADR-003 (Module System), ADR-010 (Developer SDK)
-- `docs/MODULE_ARCHITECTURE.md`
+- `docs/DEVELOPER_GUIDE.md`, `docs/architecture/003-module-system.md`
 - `backend/src/platform/module-api.ts`

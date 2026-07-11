@@ -154,7 +154,7 @@ App.tsx
 
 ## Konsolidierungsreview (2026-07-09)
 
-Siehe [ADR-012](./012-architecture-consolidation-review.md). Admin-UI zeigt keine Lifecycle-Begriffe; Dashboard „Funktionsstatus“ mit deutschen Labels.
+Siehe [ADR-006](./006-admin-ui.md) und [ADR-042](./042-volunteer-first-administration.md).
 
 ## Offene Punkte
 

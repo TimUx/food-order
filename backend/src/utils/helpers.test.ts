@@ -7,6 +7,7 @@ import {
   formatEventDate,
   getCancellationDeadline,
   canCustomerCancelOrder,
+  canStaffEditOrderItems,
 } from './helpers';
 
 describe('helpers', () => {
@@ -43,5 +44,13 @@ describe('helpers', () => {
     expect(canCustomerCancelOrder('NEW', 'ONLINE', '2026-08-15T00:00:00.000Z', '18:00', 24, new Date('2026-08-14T12:00:00.000Z'))).toBe(true);
     expect(canCustomerCancelOrder('NEW', 'ONLINE', '2026-08-15T00:00:00.000Z', '18:00', 24, new Date('2026-08-14T19:00:00.000Z'))).toBe(false);
     expect(canCustomerCancelOrder('READY', 'ONLINE', '2026-08-15T00:00:00.000Z', '18:00', 24)).toBe(false);
+  });
+
+  it('erlaubt Positionsbearbeitung nur bei offenen Bestellungen', () => {
+    expect(canStaffEditOrderItems('NEW')).toBe(true);
+    expect(canStaffEditOrderItems('IN_PROGRESS')).toBe(true);
+    expect(canStaffEditOrderItems('READY')).toBe(false);
+    expect(canStaffEditOrderItems('PICKED_UP')).toBe(false);
+    expect(canStaffEditOrderItems('CANCELLED')).toBe(false);
   });
 });

@@ -25,7 +25,14 @@ export function PlatformTenantsPage() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: '', slug: '', subdomain: '', email: '' });
+  const [form, setForm] = useState({
+    name: '',
+    slug: '',
+    subdomain: '',
+    email: '',
+    contactName: '',
+    phone: '',
+  });
 
   const load = () => {
     if (!token) return;
@@ -41,7 +48,7 @@ export function PlatformTenantsPage() {
     if (!token) return;
     await platformApi.createTenant(token, form);
     setShowCreate(false);
-    setForm({ name: '', slug: '', subdomain: '', email: '' });
+    setForm({ name: '', slug: '', subdomain: '', email: '', contactName: '', phone: '' });
     load();
   };
 
@@ -76,9 +83,11 @@ export function PlatformTenantsPage() {
           <Typography variant="h6" gutterBottom>Mandant erstellen</Typography>
           <Box display="flex" gap={2} flexWrap="wrap">
             <TextField label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <TextField label="Ansprechpartner" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} />
+            <TextField label="E-Mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <TextField label="Telefon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <TextField label="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
             <TextField label="Subdomain" value={form.subdomain} onChange={(e) => setForm({ ...form, subdomain: e.target.value })} />
-            <TextField label="E-Mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <Button variant="contained" onClick={handleCreate}>Erstellen</Button>
           </Box>
         </Paper>
@@ -103,6 +112,7 @@ export function PlatformTenantsPage() {
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Subdomain</TableCell>
+              <TableCell>Ansprechpartner</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Benutzer</TableCell>
               <TableCell>Veranstaltungen</TableCell>
@@ -112,11 +122,12 @@ export function PlatformTenantsPage() {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7}>Laden…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8}>Laden…</TableCell></TableRow>
             ) : items.map((t) => (
               <TableRow key={t.id} hover>
-                <TableCell>{t.name}</TableCell>
-                <TableCell>{t.subdomain}</TableCell>
+              <TableCell>{t.name}</TableCell>
+              <TableCell>{t.subdomain}</TableCell>
+              <TableCell>{t.contactName ?? '–'}</TableCell>
                 <TableCell><Chip size="small" label={t.status} color={STATUS_COLORS[t.status] ?? 'default'} /></TableCell>
                 <TableCell>{t.stats?.activeUsers ?? '–'}</TableCell>
                 <TableCell>{t.stats?.events ?? '–'}</TableCell>

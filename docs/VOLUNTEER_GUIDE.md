@@ -110,6 +110,6 @@ Logs ansehen: `docker compose logs backend` (letzte Zeilen kopieren für Support
 
 - **Fehler melden:** GitHub → Issues → „Fehler melden“
 - **Idee einreichen:** GitHub → Issues → „Funktionswunsch“
-- **Geplante Funktionen:** [ROADMAP.md](ROADMAP.md)
+- **Geplante Funktionen:** siehe [CHANGELOG.md](../CHANGELOG.md)
 
 Die Software ist **Version 1.0** — für Veranstaltunge gedacht, mit dokumentiertem Betrieb und Backup.

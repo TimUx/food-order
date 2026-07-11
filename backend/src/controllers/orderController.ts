@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { StatusCode } from '@prisma/client';
 import { orderService } from '../services/orderService';
+import { orderExportService } from '../services/orderExportService';
 import { eventService } from '../services/eventService';
 import { AuthRequest } from '../middleware/auth';
 import { validateOrderBotProtection, BotProtectionPayload } from '../middleware/botProtection';
@@ -87,6 +88,19 @@ export const orderController = {
     }
   },
 
+  async updateItems(
+    req: AuthRequest & { params: { id: string }; body: { items: { foodItemId: string; quantity: number }[] } },
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const order = await orderService.updateItems(req.params.id, req.body.items, req.user?.userId);
+      res.json(order);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async advanceStatus(req: AuthRequest & { params: { id: string } }, res: Response, next: NextFunction) {
     try {
       const order = await orderService.advanceStatus(req.params.id, req.user?.userId);
@@ -110,6 +124,29 @@ export const orderController = {
     try {
       const stats = await orderService.getStats(req.params.eventId);
       res.json(stats);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async exportEventOrdersJson(req: { params: { eventId: string } }, res: Response, next: NextFunction) {
+    try {
+      const data = await orderExportService.getEventExport(req.params.eventId);
+      res.json(data);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async exportEventOrdersXlsx(req: { params: { eventId: string } }, res: Response, next: NextFunction) {
+    try {
+      const { filename, content } = await orderExportService.getEventXlsx(req.params.eventId);
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(content);
     } catch (err) {
       next(err);
     }
