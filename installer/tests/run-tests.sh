@@ -98,10 +98,23 @@ grep -q "external: true" "${INSTALL_DIR}/installer/generated/compose.override.ym
 [[ -f "${INSTALL_DIR}/installer/generated/proxy/nginx-site.conf" ]] \
   && pass "nginx proxy config generated" || fail "nginx proxy config generated"
 
+CFG=()
+CFG[PROXY_MODE]="traefik"
+CFG[PROXY_DEPLOYMENT]="external"
+CFG[USES_REVERSE_PROXY]="yes"
+CFG[INSTALL_PROFILE]="local"
+CFG[PLATFORM_DOMAIN]="festschmiede.example.de"
+apply_defaults
+[[ "${CFG[INSTALL_PROFILE]}" == "production" && "${CFG[CORS_ORIGIN]}" == "https://app.festschmiede.example.de" ]] \
+  && pass "proxy infers production CORS" || fail "proxy infers production CORS"
+
 CFG[PROXY_MODE]="traefik"
 CFG[PROXY_DEPLOYMENT]="external"
 CFG[HTTPS_ENABLED]="yes"
 CFG[TRAEFIK_CERT_RESOLVER]="letsencrypt"
+CFG[DOCKER_PROXY_NETWORK]="traefik_net"
+CFG[DOCKER_NETWORK]="traefik_net"
+CFG[DOCKER_NETWORK_CREATE]="no"
 generate_compose_override
 grep -q "traefik.enable=true" "${INSTALL_DIR}/docker-compose.override.yml" \
   && pass "external traefik labels" || fail "external traefik labels"

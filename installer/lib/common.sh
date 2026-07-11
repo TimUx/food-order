@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # FestSchmiede Installer – gemeinsame Variablen und Hilfsfunktionen
 
-INSTALLER_VERSION="2.3.9"
+INSTALLER_VERSION="2.3.10"
 PRODUCT_NAME="FestSchmiede"
 
 # Installationsverzeichnis (Repo-Root) – nur setzen wenn nicht bereits gesetzt

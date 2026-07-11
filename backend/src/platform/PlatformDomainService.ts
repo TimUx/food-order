@@ -48,6 +48,56 @@ export function isLocalPlatformDomain(domain: string): boolean {
   return domain === 'localhost' || domain === '127.0.0.1';
 }
 
+function isLocalhostOrigin(origin: string): boolean {
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
+
+function isProductionEnv(): boolean {
+  return (process.env.NODE_ENV || 'development') === 'production';
+}
+
+/** DB-Default localhost-CORS durch ENV-Domain-Konfiguration ersetzen (Installer/Produktion). */
+export function resolveCorsNetworkSettings(
+  networkSettings: Record<string, unknown> | undefined,
+  domainConfig: PlatformDomainConfig
+): Record<string, unknown> {
+  const dbOrigins = Array.isArray(networkSettings?.corsOrigins)
+    ? (networkSettings.corsOrigins as string[])
+    : [];
+  const localhostOnly =
+    dbOrigins.length === 0 || dbOrigins.every((origin) => isLocalhostOrigin(origin));
+
+  if (
+    !isProductionEnv() ||
+    isLocalPlatformDomain(domainConfig.platformDomain) ||
+    !localhostOnly
+  ) {
+    return networkSettings ?? {};
+  }
+
+  const corsOrigins = domainConfig.allowedOrigins.length
+    ? domainConfig.allowedOrigins
+    : [
+        `https://${domainConfig.wwwDomain}`,
+        `https://${domainConfig.appDomain}`,
+        ...(domainConfig.apiDomain ? [`https://${domainConfig.apiDomain}`] : []),
+      ];
+
+  return {
+    ...networkSettings,
+    corsOrigins,
+    allowWildcardSubdomains:
+      typeof networkSettings?.allowWildcardSubdomains === 'boolean'
+        ? networkSettings.allowWildcardSubdomains
+        : Boolean(domainConfig.wildcardDomain),
+  };
+}
+
 function buildHost(subdomain: string, platformDomain: string): string {
   if (isLocalPlatformDomain(platformDomain)) {
     return subdomain === platformDomain ? platformDomain : `${subdomain}.${platformDomain}`;
@@ -339,4 +389,5 @@ export const platformDomainService = {
   extractSubdomainFromHost,
   applyToContext: applyDomainConfigToPlatformContext,
   getPublicView: getDomainPublicView,
+  resolveCorsNetworkSettings,
 };

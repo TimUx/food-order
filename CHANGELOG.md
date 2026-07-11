@@ -3,6 +3,15 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.10 - 2026-07-11
+
+### Behoben
+
+- **Backend:** Produktions-CORS nutzt HTTPS-Origins aus `PLATFORM_DOMAIN` / `PLATFORM_ALLOWED_ORIGINS`, wenn die Datenbank noch localhost-Defaults enthält — behebt Backend-Absturz nach Installation mit externem Traefik.
+- **Installer:** Leitet bei aktivem Reverse Proxy automatisch Produktions-CORS ab.
+
+---
+
 ## 2.3.9 - 2026-07-11
 
 ### Behoben

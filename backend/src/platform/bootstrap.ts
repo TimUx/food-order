@@ -44,6 +44,7 @@ import { PlatformSettingsService } from './tenant/PlatformSettingsService';
 import { TenantSettingsServiceImpl } from './tenant/TenantSettingsServiceImpl';
 import type { TenantSettingsService } from './tenant/TenantSettingsService';
 import { config } from '../config';
+import { prisma } from '../config/database';
 import { createPlatformContextMiddleware, createPlatformPublicMiddleware } from '../middleware/platformContext';
 import { createTenantContextMiddleware } from '../middleware/tenantContext';
 import { createTenantController } from '../controllers/tenantController';
@@ -239,7 +240,25 @@ export async function initializeTenantInfrastructure(): Promise<void> {
   platformContextInstance.initialize(merged);
 
   const networkSettings = await platformSettingsServiceInstance.getNamespace('platform.network');
-    corsPolicy.bindFromPlatform(merged, networkSettings);
+  const effectiveNetworkSettings = platformDomainService.resolveCorsNetworkSettings(
+    networkSettings,
+    domainConfig
+  );
+  corsPolicy.bindFromPlatform(merged, effectiveNetworkSettings);
+
+  if (
+    Array.isArray(effectiveNetworkSettings.corsOrigins) &&
+    JSON.stringify(effectiveNetworkSettings.corsOrigins) !== JSON.stringify(networkSettings?.corsOrigins)
+  ) {
+    await prisma.platformSettings.upsert({
+      where: { key: 'platform.network.corsOrigins' },
+      update: { value: effectiveNetworkSettings.corsOrigins as object },
+      create: {
+        key: 'platform.network.corsOrigins',
+        value: effectiveNetworkSettings.corsOrigins as object,
+      },
+    });
+  }
 
   const { ensureDefaultTenant } = await import('../core/tenant/ensureDefaultTenant');
   await ensureDefaultTenant();

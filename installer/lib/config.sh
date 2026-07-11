@@ -127,6 +127,10 @@ apply_defaults() {
     CFG[USES_REVERSE_PROXY]="yes"
   fi
 
+  if [[ "${CFG[INSTALL_PROFILE]:-}" != "production" ]] && [[ "${CFG[USES_REVERSE_PROXY]:-no}" == "yes" && "${CFG[PROXY_DEPLOYMENT]:-}" != "none" ]]; then
+    CFG[INSTALL_PROFILE]="production"
+  fi
+
   if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
     CFG[MULTI_TENANT_ENABLED]="true"
     CFG[PLATFORM_DOMAIN]="${CFG[PLATFORM_DOMAIN]:-festschmiede.local}"

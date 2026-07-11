@@ -9,6 +9,7 @@ import {
   applyDomainConfigToPlatformContext,
   resolveSurfaceFromSubdomain,
   isReservedSubdomain,
+  resolveCorsNetworkSettings,
 } from './PlatformDomainService';
 import { DEFAULT_PLATFORM_CONTEXT } from './tenant/types';
 
@@ -87,5 +88,21 @@ describe('PlatformDomainService', () => {
     expect(merged.appDomain).toBe('app.custom.example');
     expect(merged.allowedDomains).toContain('custom.example');
     expect(merged.reservedSubdomains).toContain('app');
+  });
+
+  it('replaces localhost DB CORS defaults with ENV production origins', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.PLATFORM_DOMAIN = 'plattform.de';
+    const domainConfig = loadDomainConfigFromEnv();
+    const resolved = resolveCorsNetworkSettings(
+      { corsOrigins: ['http://localhost:5173'], allowWildcardSubdomains: false },
+      domainConfig
+    );
+    expect(resolved.corsOrigins).toEqual([
+      'https://www.plattform.de',
+      'https://app.plattform.de',
+      'https://api.plattform.de',
+    ]);
+    expect(resolved.allowWildcardSubdomains).toBe(true);
   });
 });

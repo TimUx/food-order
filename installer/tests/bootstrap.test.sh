@@ -45,16 +45,16 @@ default_dir=$(
 
 # Version
 out=$("${ROOT}/install.sh" --version 2>&1)
-echo "$out" | grep -q "2.3.9" && pass "--version" || fail "--version"
+echo "$out" | grep -q "2.3.10" && pass "--version" || fail "--version"
 
 # Lokaler Modus erkennt Repository
 [[ -f "${ROOT}/installer/install.sh" ]] && pass "local installer exists" || fail "local installer exists"
 
 # URL-Generierung (inline test via bash)
-REF=$(FESTSCHMIEDE_VERSION=2.3.9 bash -c '
+REF=$(FESTSCHMIEDE_VERSION=2.3.10 bash -c '
   source /dev/null 2>/dev/null
   FESTSCHMIEDE_GITHUB_REPO=TimUx/FestSchmiede
-  FESTSCHMIEDE_VERSION=2.3.9
+  FESTSCHMIEDE_VERSION=2.3.10
   echo "https://raw.githubusercontent.com/${FESTSCHMIEDE_GITHUB_REPO}/v${FESTSCHMIEDE_VERSION}/docker-compose.yml"
 ')
 echo "$REF" | grep -q "raw.githubusercontent.com" && pass "raw URL format" || fail "raw URL format"
@@ -69,7 +69,7 @@ TMP_VER=$(mktemp -d)
 mkdir -p "$TMP_VER/installer/lib"
 echo 'INSTALLER_VERSION="2.3.0"' > "$TMP_VER/installer/lib/common.sh"
 detected=$(grep -E '^INSTALLER_VERSION=' "$TMP_VER/installer/lib/common.sh" | cut -d'"' -f2)
-[[ "$detected" == "2.3.0" && "$detected" != "2.3.9" ]] \
+[[ "$detected" == "2.3.0" && "$detected" != "2.3.10" ]] \
   && pass "installed version detect" || fail "installed version detect"
 rm -rf "$TMP_VER"
 
