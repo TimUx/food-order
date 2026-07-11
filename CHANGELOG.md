@@ -3,6 +3,15 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.11 - 2026-07-12
+
+### Behoben
+
+- **Backend:** Produktions-CORS wird bei jeder Start immer aus ENV/Domain abgeleitet (nicht nur wenn DB localhost enthält); Wildcard-Origins (`https://*.domain`) werden korrekt behandelt.
+- **Installer:** Schreibt `COMPOSE_FILE` in `.env`, damit `docker compose down/up` automatisch die Override-Datei lädt.
+
+---
+
 ## 2.3.10 - 2026-07-11
 
 ### Behoben

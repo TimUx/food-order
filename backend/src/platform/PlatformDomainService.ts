@@ -48,53 +48,71 @@ export function isLocalPlatformDomain(domain: string): boolean {
   return domain === 'localhost' || domain === '127.0.0.1';
 }
 
-function isLocalhostOrigin(origin: string): boolean {
-  try {
-    const host = new URL(origin).hostname.toLowerCase();
-    return host === 'localhost' || host === '127.0.0.1';
-  } catch {
-    return false;
-  }
-}
-
 function isProductionEnv(): boolean {
   return (process.env.NODE_ENV || 'development') === 'production';
 }
 
-/** DB-Default localhost-CORS durch ENV-Domain-Konfiguration ersetzen (Installer/Produktion). */
+/** Gültige HTTPS-Origins für Produktion (ohne Wildcard-URL-Strings). */
+export function productionCorsOriginsFromEnv(domainConfig: PlatformDomainConfig): string[] {
+  const raw =
+    domainConfig.allowedOrigins.length > 0
+      ? domainConfig.allowedOrigins
+      : [
+          `https://${domainConfig.wwwDomain}`,
+          `https://${domainConfig.appDomain}`,
+          ...(domainConfig.apiDomain ? [`https://${domainConfig.apiDomain}`] : []),
+        ];
+
+  const httpsOrigins = raw.filter((origin) => {
+    try {
+      return new URL(origin).protocol === 'https:';
+    } catch {
+      return false;
+    }
+  });
+
+  if (httpsOrigins.length > 0) {
+    return httpsOrigins;
+  }
+
+  const corsOrigin = process.env.CORS_ORIGIN?.trim();
+  if (corsOrigin) {
+    try {
+      if (new URL(corsOrigin).protocol === 'https:') {
+        return [corsOrigin];
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return [];
+}
+
+/** Produktions-CORS aus ENV/Domain-Konfiguration (DB-Localhost-Defaults überschreiben). */
 export function resolveCorsNetworkSettings(
   networkSettings: Record<string, unknown> | undefined,
   domainConfig: PlatformDomainConfig
 ): Record<string, unknown> {
-  const dbOrigins = Array.isArray(networkSettings?.corsOrigins)
-    ? (networkSettings.corsOrigins as string[])
-    : [];
-  const localhostOnly =
-    dbOrigins.length === 0 || dbOrigins.every((origin) => isLocalhostOrigin(origin));
-
-  if (
-    !isProductionEnv() ||
-    isLocalPlatformDomain(domainConfig.platformDomain) ||
-    !localhostOnly
-  ) {
+  if (!isProductionEnv() || isLocalPlatformDomain(domainConfig.platformDomain)) {
     return networkSettings ?? {};
   }
 
-  const corsOrigins = domainConfig.allowedOrigins.length
-    ? domainConfig.allowedOrigins
-    : [
-        `https://${domainConfig.wwwDomain}`,
-        `https://${domainConfig.appDomain}`,
-        ...(domainConfig.apiDomain ? [`https://${domainConfig.apiDomain}`] : []),
-      ];
+  const corsOrigins = productionCorsOriginsFromEnv(domainConfig);
+  if (corsOrigins.length === 0) {
+    return networkSettings ?? {};
+  }
+
+  const allowWildcard =
+    typeof networkSettings?.allowWildcardSubdomains === 'boolean'
+      ? networkSettings.allowWildcardSubdomains
+      : Boolean(domainConfig.wildcardDomain) ||
+        domainConfig.allowedOrigins.some((origin) => origin.includes('*.'));
 
   return {
     ...networkSettings,
     corsOrigins,
-    allowWildcardSubdomains:
-      typeof networkSettings?.allowWildcardSubdomains === 'boolean'
-        ? networkSettings.allowWildcardSubdomains
-        : Boolean(domainConfig.wildcardDomain),
+    allowWildcardSubdomains: allowWildcard,
   };
 }
 
@@ -390,4 +408,5 @@ export const platformDomainService = {
   applyToContext: applyDomainConfigToPlatformContext,
   getPublicView: getDomainPublicView,
   resolveCorsNetworkSettings,
+  productionCorsOriginsFromEnv,
 };

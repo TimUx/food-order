@@ -9,6 +9,7 @@ import {
   applyDomainConfigToPlatformContext,
   resolveSurfaceFromSubdomain,
   isReservedSubdomain,
+  productionCorsOriginsFromEnv,
   resolveCorsNetworkSettings,
 } from './PlatformDomainService';
 import { DEFAULT_PLATFORM_CONTEXT } from './tenant/types';
@@ -104,5 +105,27 @@ describe('PlatformDomainService', () => {
       'https://api.plattform.de',
     ]);
     expect(resolved.allowWildcardSubdomains).toBe(true);
+  });
+
+  it('always prefers ENV HTTPS origins in production even when DB has localhost', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.PLATFORM_DOMAIN = 'plattform.de';
+    process.env.PLATFORM_ALLOWED_ORIGINS = 'https://plattform.de,https://*.plattform.de';
+    const domainConfig = loadDomainConfigFromEnv();
+    const resolved = resolveCorsNetworkSettings(
+      { corsOrigins: ['http://localhost:5173'] },
+      domainConfig
+    );
+    expect(resolved.corsOrigins).toEqual(['https://plattform.de']);
+    expect(resolved.allowWildcardSubdomains).toBe(true);
+  });
+
+  it('uses CORS_ORIGIN fallback when allowed origins only contain wildcards', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.PLATFORM_DOMAIN = 'plattform.de';
+    process.env.CORS_ORIGIN = 'https://app.plattform.de';
+    process.env.PLATFORM_ALLOWED_ORIGINS = 'https://*.plattform.de';
+    const domainConfig = loadDomainConfigFromEnv();
+    expect(productionCorsOriginsFromEnv(domainConfig)).toEqual(['https://app.plattform.de']);
   });
 });

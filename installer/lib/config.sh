@@ -630,6 +630,15 @@ generate_env_file() {
     log_info "Backup der .env: $backup"
   fi
 
+  local compose_file_line=""
+  if [[ -f "$(compose_override_publish_path)" ]]; then
+    if [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ]]; then
+      compose_file_line="COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml:docker-compose.override.yml"
+    else
+      compose_file_line="COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml"
+    fi
+  fi
+
   cat >"$env_file" <<EOF
 # FestSchmiede – automatisch generiert vom Installer v${INSTALLER_VERSION}
 # $(date -Iseconds)
@@ -674,6 +683,8 @@ DOCKER_NETWORK_CREATE=${CFG[DOCKER_NETWORK_CREATE]:-yes}
 PROXY_MODE=${CFG[PROXY_MODE]:-none}
 PROXY_DEPLOYMENT=${CFG[PROXY_DEPLOYMENT]:-none}
 TRAEFIK_CERT_RESOLVER=${CFG[TRAEFIK_CERT_RESOLVER]:-}
+
+${compose_file_line}
 
 # Installer-Metadaten
 INSTALLER_VERSION=${INSTALLER_VERSION}

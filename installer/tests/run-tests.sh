@@ -116,6 +116,10 @@ CFG[DOCKER_PROXY_NETWORK]="traefik_net"
 CFG[DOCKER_NETWORK]="traefik_net"
 CFG[DOCKER_NETWORK_CREATE]="no"
 generate_compose_override
+generate_all_secrets
+generate_env_file
+grep -q "COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml" "${INSTALL_DIR}/.env" \
+  && pass "compose file env var" || fail "compose file env var"
 grep -q "traefik.enable=true" "${INSTALL_DIR}/docker-compose.override.yml" \
   && pass "external traefik labels" || fail "external traefik labels"
 grep -q "traefik.docker.network=traefik_net" "${INSTALL_DIR}/docker-compose.override.yml" \
