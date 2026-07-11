@@ -2,23 +2,24 @@
 # FestSchmiede – Installations-Bootstrap
 # Funktioniert lokal (Git-Clone) und online ohne Repository:
 #
-#   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.3/install.sh | bash
-#   wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.3/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.4/install.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.4/install.sh | bash
 #
 # Umgebungsvariablen:
 #   FESTSCHMIEDE_INSTALL_DIR          – Zielverzeichnis (höchste Priorität)
 #   FESTSCHMIEDE_DEFAULT_INSTALL_DIR  – Standard-Zielverzeichnis (wenn INSTALL_DIR leer)
-#   FESTSCHMIEDE_VERSION              – Release-Tag (Standard: 2.3.3)
+#   FESTSCHMIEDE_VERSION              – Release-Tag (Standard: 2.3.4)
 #   FESTSCHMIEDE_GITHUB_REPO          – GitHub Repo (Standard: TimUx/FestSchmiede)
 #   FESTSCHMIEDE_REF                  – Git-Ref statt Version (z.B. main)
 #   FESTSCHMIEDE_BOOTSTRAP_ONLY=1     – Nur Dateien herunterladen
 
 set -euo pipefail
 
-FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.3.3}"
+FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.3.4}"
 FESTSCHMIEDE_GITHUB_REPO="${FESTSCHMIEDE_GITHUB_REPO:-TimUx/FestSchmiede}"
 FESTSCHMIEDE_REF="${FESTSCHMIEDE_REF:-}"
 FESTSCHMIEDE_INSTALL_DIR="${FESTSCHMIEDE_INSTALL_DIR:-}"
+FESTSCHMIEDE_INSTALL_DIR_EXPLICIT=0
 # Standard-Installationspfad (leer = automatisch: /opt/festschmiede als root, ~/festschmiede sonst)
 FESTSCHMIEDE_DEFAULT_INSTALL_DIR="${FESTSCHMIEDE_DEFAULT_INSTALL_DIR:-}"
 
@@ -89,12 +90,11 @@ _resolve_install_dir() {
   local path="$1"
   [[ -z "$path" ]] && return 1
 
-  case "$path" in
-    "~") path="$HOME" ;;
-    "~/"*) path="${HOME}/${path#~/}" ;;
-  esac
-
-  if [[ "$path" != /* ]]; then
+  if [[ "$path" == "~" ]]; then
+    path="$HOME"
+  elif [[ "$path" == "~/"* ]]; then
+    path="${HOME}/${path:2}"
+  elif [[ "$path" != /* ]]; then
     path="$(pwd)/$path"
   fi
 
@@ -116,6 +116,7 @@ _parse_args() {
       -d|--dir)
         [[ $# -ge 2 ]] || { _err "--dir erfordert Pfad"; exit 1; }
         FESTSCHMIEDE_INSTALL_DIR="$2"
+        FESTSCHMIEDE_INSTALL_DIR_EXPLICIT=1
         shift
         ;;
       --bootstrap-only) export FESTSCHMIEDE_BOOTSTRAP_ONLY=1 ;;
@@ -227,11 +228,48 @@ _should_refresh_installation() {
   [[ "$installed" != "${FESTSCHMIEDE_VERSION}" ]]
 }
 
+_prompt_install_dir_online() {
+  [[ -n "${FESTSCHMIEDE_INSTALL_DIR:-}" ]] && return 0
+  [[ "${FESTSCHMIEDE_NONINTERACTIVE:-}" == "1" ]] && return 0
+  [[ -n "${FESTSCHMIEDE_GUIDED_OP:-}" ]] && return 0
+  [[ "${FESTSCHMIEDE_BOOTSTRAP_ONLY:-}" == "1" ]] && return 0
+
+  local default="$(_default_install_dir)" chosen resolved
+  if [[ -f "${default}/docker-compose.yml" ]]; then
+    default="$(_resolve_install_dir "$default")"
+  fi
+
+  if command -v dialog >/dev/null 2>&1; then
+    chosen=$(dialog --backtitle "FestSchmiede Installer v${FESTSCHMIEDE_VERSION}" \
+      --title "Installationspfad" \
+      --inputbox "Verzeichnis für die FestSchmiede-Plattform:
+
+Docker-Container, Konfiguration und Daten werden hier abgelegt." 12 78 "$default" \
+      3>&1 1>&2 2>&3) || exit 0
+  elif command -v whiptail >/dev/null 2>&1; then
+    chosen=$(whiptail --backtitle "FestSchmiede Installer v${FESTSCHMIEDE_VERSION}" \
+      --title "Installationspfad" \
+      --inputbox "Verzeichnis für die FestSchmiede-Plattform (Container, Config, Daten):" 12 78 "$default" \
+      3>&1 1>&2 2>&3) || exit 0
+  else
+    echo "Installationspfad wählen (Standard: ${default})"
+    read -r -p "Pfad [${default}]: " chosen
+    chosen="${chosen:-$default}"
+  fi
+
+  resolved="$(_resolve_install_dir "$chosen")" || { _err "Pfad ungültig: ${chosen}"; exit 1; }
+  FESTSCHMIEDE_INSTALL_DIR="$resolved"
+  export FESTSCHMIEDE_INSTALL_DIR_PROMPTED=1
+  _log "Installationspfad gewählt: ${FESTSCHMIEDE_INSTALL_DIR}"
+}
+
 _run_installer() {
   local install_dir="$1"
   shift
   export INSTALL_DIR="$install_dir"
   export FESTSCHMIEDE_ONLINE_INSTALL=1
+  export FESTSCHMIEDE_INSTALL_DIR_EXPLICIT="${FESTSCHMIEDE_INSTALL_DIR_EXPLICIT}"
+  export FESTSCHMIEDE_INSTALL_DIR_PROMPTED="${FESTSCHMIEDE_INSTALL_DIR_PROMPTED:-0}"
   exec "${install_dir}/installer/install.sh" "$@"
 }
 
@@ -265,6 +303,7 @@ main() {
   fi
 
   # Online-Modus
+  _prompt_install_dir_online
   local target
   target="$(_resolve_target_dir "$(_default_install_dir)")"
   _log "Online-Installation (ohne Git-Clone)"

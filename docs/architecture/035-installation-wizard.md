@@ -8,7 +8,7 @@ Accepted (v2.2.0)
 
 Der Wizard in `installer/lib/wizard.sh` implementiert konfigurierbare Schritte mit persistentem State in `.installer-state/install.state`.
 
-Schritte: Willkommen → Systemanalyse → Modus → Docker → Reverse Proxy → Proxy-Netzwerk (optional) → Domain → Plattform → DB → Redis → Mail → Sicherheit → Zusammenfassung.
+Schritte: Willkommen → Installationspfad → Systemanalyse → Modus → Docker → Reverse Proxy → Proxy-Netzwerk (optional) → Domain → Plattform → DB → Redis → Mail → Sicherheit → Zusammenfassung.
 
 Navigation über `tui_nav()` mit Zurück/Weiter/Abbrechen.
 

@@ -1,16 +1,18 @@
 # FestSchmiede – Installationsanleitung
 
-> **Version 2.3.3** – Professioneller interaktiver Installations-Assistent (TUI)
+> **Version 2.3.4** – Professioneller interaktiver Installations-Assistent (TUI)
 
 ## Schnellstart
 
 ### Online (ohne Git-Clone)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.3/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.4/install.sh | bash
 ```
 
-**Installationspfad angeben** (Priorität: `--dir` > `FESTSCHMIEDE_INSTALL_DIR` > Default):
+**Installationspfad angeben** (Priorität: `--dir` > `FESTSCHMIEDE_INSTALL_DIR` > interaktive Abfrage > Default):
+
+Beim normalen Ablauf (`curl | bash` oder `./install.sh`) erscheint ein Dialog zur Pfadauswahl — der Standard (`/opt/festschmiede` als root, sonst `~/festschmiede`) ist nur ein Vorschlag und kann geändert werden.
 
 ```bash
 # Option 1: Kommandozeilen-Option
@@ -62,7 +64,8 @@ Optional: `dialog` oder `gum` für die TUI-Oberfläche (Debian/Ubuntu: `dialog` 
 
 ```mermaid
 flowchart TD
-    A[Willkommen] --> B[Systemanalyse]
+    A[Willkommen] --> A2[Installationspfad]
+    A2 --> B[Systemanalyse]
     B --> C[Installationsmodus]
     C --> D[Docker]
     D --> F[Reverse Proxy]
@@ -80,18 +83,19 @@ flowchart TD
 
 ### Schritte im Detail
 
-1. **Systemanalyse** – Distribution, CPU, RAM, Docker, Netzwerke, Ports, Reverse Proxy
-2. **Installationsmodus** – Neuinstallation, Upgrade, Migration, Reparatur, Nur Config
-3. **Docker** – Erkennung oder automatische Installation
-4. **Reverse Proxy** – Keiner (lokale Host-Ports), Traefik, vorhandener Proxy oder NGINX (manuell)
-5. **Proxy-Netzwerk** – **Nur wenn ein Reverse Proxy gewählt wurde:** Docker-Netzwerk für den Frontend-Container wählen oder erstellen. Ohne Proxy entfällt dieser Schritt; es wird nur das interne Netz `festschmiede_internal` verwendet.
-6. **Domain** – Basisdomain, WWW/APP-Subdomains, HTTPS/Let's Encrypt
-7. **Plattform** – Name, Zeitzone, Sprache
-8. **Datenbank** – Intern (PostgreSQL-Container) oder extern
-9. **Redis** – Intern, extern oder keiner
-10. **Mail** – SMTP-Konfiguration (optional, kann später in `/platform/email` erfolgen)
-11. **Sicherheit** – Automatisch generierte Secrets (JWT, Encryption, Admin-Passwort, …)
-12. **Zusammenfassung** – Bestätigung vor Installation
+1. **Installationspfad** – Zielverzeichnis wählen (Standard nur Vorschlag, z. B. `/opt/festschmiede` als root oder `~/festschmiede` sonst)
+2. **Systemanalyse** – Distribution, CPU, RAM, Docker, Netzwerke, Ports, Reverse Proxy
+3. **Installationsmodus** – Neuinstallation, Upgrade, Migration, Reparatur, Nur Config
+4. **Docker** – Erkennung oder automatische Installation
+5. **Reverse Proxy** – Keiner (lokale Host-Ports), Traefik, vorhandener Proxy oder NGINX (manuell)
+6. **Proxy-Netzwerk** – **Nur wenn ein Reverse Proxy gewählt wurde:** Docker-Netzwerk für den Frontend-Container wählen oder erstellen. Ohne Proxy entfällt dieser Schritt; es wird nur das interne Netz `festschmiede_internal` verwendet.
+7. **Domain** – Basisdomain, WWW/APP-Subdomains, HTTPS/Let's Encrypt
+8. **Plattform** – Name, Zeitzone, Sprache
+9. **Datenbank** – Intern (PostgreSQL-Container) oder extern
+10. **Redis** – Intern, extern oder keiner
+11. **Mail** – SMTP-Konfiguration (optional, kann später in `/platform/email` erfolgen)
+12. **Sicherheit** – Automatisch generierte Secrets (JWT, Encryption, Admin-Passwort, …)
+13. **Zusammenfassung** – Bestätigung vor Installation
 
 Module aktivieren Sie nach der Installation unter **Administration → Module**.
 

@@ -16,6 +16,12 @@ validate_port() {
   [[ "$port" =~ ^[0-9]+$ ]] && (( port >= 1 && port <= 65535 ))
 }
 
+validate_install_dir() {
+  local path="$1" resolved
+  resolved="$(resolve_install_dir_path "$path" 2>/dev/null)" || return 1
+  [[ -n "$resolved" && "$resolved" == /* ]]
+}
+
 validate_path() {
   local path="$1"
   [[ -d "$(dirname "$path")" || "$path" =~ ^/ ]]

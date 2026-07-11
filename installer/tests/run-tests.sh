@@ -45,6 +45,9 @@ run_full_detection
 [[ -n "${SYS_DETECT[arch]:-}" ]] && pass "arch detected" || fail "arch detected"
 
 echo "--- Konfiguration ---"
+resolved=$(resolve_install_dir_path "~/festschmiede-test")
+[[ "$resolved" == "${HOME}/festschmiede-test" ]] && pass "install dir resolve tilde" || fail "install dir resolve tilde"
+validate_install_dir "/tmp/festschmiede-test" && pass "install dir validate" || fail "install dir validate"
 CFG[INSTALL_PROFILE]="local"
 CFG[PLATFORM_DOMAIN]="localhost"
 apply_defaults

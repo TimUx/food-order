@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # FestSchmiede Installer – gemeinsame Variablen und Hilfsfunktionen
 
-INSTALLER_VERSION="2.3.3"
+INSTALLER_VERSION="2.3.4"
 PRODUCT_NAME="FestSchmiede"
 
 # Installationsverzeichnis (Repo-Root) – nur setzen wenn nicht bereits gesetzt
@@ -46,6 +46,50 @@ COMPOSE_CMD=(docker compose)
 
 # shellcheck source=installer/lib/log.sh
 source "${INSTALLER_DIR}/lib/log.sh"
+
+resolve_install_dir_path() {
+  local path="$1"
+  [[ -n "$path" ]] || return 1
+
+  if [[ "$path" == "~" ]]; then
+    path="$HOME"
+  elif [[ "$path" == "~/"* ]]; then
+    path="${HOME}/${path:2}"
+  elif [[ "$path" != /* ]]; then
+    path="$(pwd)/$path"
+  fi
+
+  local parent="${path%/*}"
+  [[ -n "$parent" && "$parent" != "$path" ]] || parent="/"
+  mkdir -p "$parent" || return 1
+  printf '%s\n' "$path"
+}
+
+set_install_dir() {
+  local new_dir="$1"
+  INSTALL_DIR="$new_dir"
+  STATE_DIR="${INSTALLER_STATE_DIR:-${INSTALL_DIR}/.installer-state}"
+  LOG_DIR="${INSTALLER_LOG_DIR:-${INSTALL_DIR}/installer/logs}"
+  BACKUP_DIR="${STATE_DIR}/backups"
+  mkdir -p "$STATE_DIR" "$LOG_DIR" "$BACKUP_DIR"
+  STATE_FILE="${STATE_DIR}/install.state"
+  COMPOSE_FILES=("-f" "${INSTALL_DIR}/docker-compose.yml")
+  export INSTALL_DIR
+}
+
+relocate_install_tree() {
+  local from="$1" to="$2"
+  [[ "$from" == "$to" ]] && return 0
+  [[ -f "${from}/docker-compose.yml" ]] || return 0
+
+  mkdir -p "$to"
+  log_info "Verschiebe Installation von ${from} nach ${to}..."
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a "${from}/" "${to}/"
+  else
+    cp -a "${from}/." "${to}/"
+  fi
+}
 
 load_existing_env() {
   local env_file="${INSTALL_DIR}/.env"

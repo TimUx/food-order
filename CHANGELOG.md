@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.4 - 2026-07-11
+
+### Neu
+
+- **Installer:** Interaktive Auswahl des Installationspfads — vor dem Download (Online-Install) und im Wizard nach dem Willkommensdialog. `/opt/festschmiede` ist nur noch ein Vorschlag, kein stilles Default ohne Abfrage.
+
+---
+
 ## 2.3.3 - 2026-07-11
 
 ### Geändert

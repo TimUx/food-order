@@ -16,6 +16,44 @@ wizard_step_welcome() {
   return 0
 }
 
+wizard_step_install_dir() {
+  if [[ "${FESTSCHMIEDE_INSTALL_DIR_EXPLICIT:-0}" == "1" \
+     || "${FESTSCHMIEDE_INSTALL_DIR_PROMPTED:-0}" == "1" ]]; then
+    log_info "Installationspfad: ${INSTALL_DIR}"
+    return 0
+  fi
+
+  local chosen resolved
+  chosen=$(tui_input "Installationspfad" "Verzeichnis für die FestSchmiede-Plattform:
+
+Docker-Container, Konfiguration und Daten werden hier abgelegt." \
+    "${INSTALL_DIR}") || return 1
+
+  if ! validate_install_dir "$chosen"; then
+    tui_msgbox "Fehler" "Ungültiger Pfad: ${chosen}
+
+Bitte einen absoluten Pfad angeben (z. B. /srv/festschmiede oder ~/festschmiede)."
+    return 1
+  fi
+
+  resolved="$(resolve_install_dir_path "$chosen")"
+  if [[ "$resolved" != "$INSTALL_DIR" ]]; then
+    if [[ -f "${INSTALL_DIR}/.env" ]]; then
+      if ! tui_yesno "Installationspfad" "Unter ${INSTALL_DIR} liegt bereits eine Installation (.env).
+
+Wirklich nach ${resolved} wechseln?"; then
+        return 1
+      fi
+    fi
+    relocate_install_tree "$INSTALL_DIR" "$resolved" || return 1
+    set_install_dir "$resolved"
+  fi
+
+  mkdir -p "$INSTALL_DIR"
+  log_info "Installationspfad: ${INSTALL_DIR}"
+  return 0
+}
+
 wizard_step_system() {
   run_full_detection
   load_existing_env
@@ -338,6 +376,7 @@ run_wizard() {
   _detect_tui_backend
   local steps=(
     wizard_step_welcome
+    wizard_step_install_dir
     wizard_step_system
     wizard_step_mode
     wizard_step_docker
