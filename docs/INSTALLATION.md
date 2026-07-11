@@ -1,13 +1,13 @@
 # FestSchmiede – Installationsanleitung
 
-> **Version 2.3.1** – Professioneller interaktiver Installations-Assistent (TUI)
+> **Version 2.3.2** – Professioneller interaktiver Installations-Assistent (TUI)
 
 ## Schnellstart
 
 ### Online (ohne Git-Clone)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.1/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.2/install.sh | bash
 ```
 
 **Installationspfad angeben** (Priorität: `--dir` > `FESTSCHMIEDE_INSTALL_DIR` > Default):
@@ -100,6 +100,17 @@ flowchart TD
 - **Weiter** – nächster Schritt
 - **Zurück** – vorheriger Schritt
 - **Abbrechen** – Installation beenden (jederzeit)
+
+### Reverse Proxy und Netzwerke
+
+| Netzwerk | Wann | Zweck |
+|----------|------|--------|
+| `festschmiede_internal` | Immer | Backend, Datenbank, Redis und Frontend untereinander (nicht abfragbar) |
+| Proxy-Netzwerk (z. B. `traefik` oder `festschmiede_public`) | Nur mit Reverse Proxy | Nur der **Frontend**-Container wird zusätzlich an das Netz angeschlossen, in dem Traefik/NGINX läuft — sonst kann der Proxy die App nicht erreichen |
+
+Ohne Reverse Proxy werden **Host-Ports** freigegeben; der Schritt „Proxy-Netzwerk“ entfällt.
+
+Beim Online-Install (`curl … \| bash`) werden vorhandene Installationen automatisch auf die Version aus dem Bootstrap-Skript aktualisiert. Erzwingen: `FESTSCHMIEDE_FORCE_DOWNLOAD=1`.
 
 ## Erzeugte Dateien
 

@@ -3,6 +3,18 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.2 - 2026-07-11
+
+### Behoben
+
+- **Bootstrap:** Bei erneutem `curl | bash` auf bestehende Installation werden Plattform-Dateien automatisch aktualisiert, wenn die installierte Installer-Version veraltet ist (verhindert alten Wizard mit „Docker-Netzwerk“ vor Proxy-Abfrage).
+
+### Geändert
+
+- **Dokumentation:** Erklärung zu internem vs. Proxy-Netzwerk und Auto-Update beim Online-Install.
+
+---
+
 ## 2.3.1 - 2026-07-11
 
 ### Behoben

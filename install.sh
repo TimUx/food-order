@@ -2,20 +2,20 @@
 # FestSchmiede – Installations-Bootstrap
 # Funktioniert lokal (Git-Clone) und online ohne Repository:
 #
-#   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.1/install.sh | bash
-#   wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.1/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.2/install.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.2/install.sh | bash
 #
 # Umgebungsvariablen:
 #   FESTSCHMIEDE_INSTALL_DIR          – Zielverzeichnis (höchste Priorität)
 #   FESTSCHMIEDE_DEFAULT_INSTALL_DIR  – Standard-Zielverzeichnis (wenn INSTALL_DIR leer)
-#   FESTSCHMIEDE_VERSION              – Release-Tag (Standard: 2.3.1)
+#   FESTSCHMIEDE_VERSION              – Release-Tag (Standard: 2.3.2)
 #   FESTSCHMIEDE_GITHUB_REPO          – GitHub Repo (Standard: TimUx/FestSchmiede)
 #   FESTSCHMIEDE_REF                  – Git-Ref statt Version (z.B. main)
 #   FESTSCHMIEDE_BOOTSTRAP_ONLY=1     – Nur Dateien herunterladen
 
 set -euo pipefail
 
-FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.3.1}"
+FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.3.2}"
 FESTSCHMIEDE_GITHUB_REPO="${FESTSCHMIEDE_GITHUB_REPO:-TimUx/FestSchmiede}"
 FESTSCHMIEDE_REF="${FESTSCHMIEDE_REF:-}"
 FESTSCHMIEDE_INSTALL_DIR="${FESTSCHMIEDE_INSTALL_DIR:-}"
@@ -209,6 +209,24 @@ _bootstrap_verify() {
   [[ $missing -eq 0 ]] || exit 1
 }
 
+_installed_installer_version() {
+  local install_dir="$1"
+  local file="${install_dir}/installer/lib/common.sh"
+  [[ -f "$file" ]] || return 1
+  grep -E '^INSTALLER_VERSION=' "$file" | head -1 | cut -d'"' -f2
+}
+
+_should_refresh_installation() {
+  local install_dir="$1"
+  local installed=""
+
+  [[ "${FESTSCHMIEDE_FORCE_DOWNLOAD:-}" == "1" ]] && return 0
+
+  installed="$(_installed_installer_version "$install_dir" 2>/dev/null || true)"
+  [[ -z "$installed" ]] && return 0
+  [[ "$installed" != "${FESTSCHMIEDE_VERSION}" ]]
+}
+
 _run_installer() {
   local install_dir="$1"
   shift
@@ -253,8 +271,19 @@ main() {
   _log "Zielverzeichnis: ${target}"
 
   if [[ -f "${target}/docker-compose.yml" && -f "${target}/installer/install.sh" ]]; then
-    _log "Bestehende Installation gefunden"
-    if [[ "${FESTSCHMIEDE_FORCE_DOWNLOAD:-}" == "1" ]]; then
+    local installed_version=""
+    installed_version="$(_installed_installer_version "$target" 2>/dev/null || true)"
+    if [[ -n "$installed_version" ]]; then
+      _log "Bestehende Installation gefunden (Installer v${installed_version})"
+    else
+      _log "Bestehende Installation gefunden"
+    fi
+    if _should_refresh_installation "$target"; then
+      if [[ "${FESTSCHMIEDE_FORCE_DOWNLOAD:-}" == "1" ]]; then
+        _log "Erzwinge Neu-Download (FESTSCHMIEDE_FORCE_DOWNLOAD=1)..."
+      else
+        _log "Aktualisiere Plattform-Dateien auf v${FESTSCHMIEDE_VERSION}..."
+      fi
       _bootstrap_download "$target"
     fi
   else
