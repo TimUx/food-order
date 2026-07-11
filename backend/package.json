@@ -1,6 +1,6 @@
 {
   "name": "festschmiede-backend",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "description": "Backend für die FestSchmiede-Plattform",
   "main": "dist/src/index.js",
   "scripts": {
@@ -22,6 +22,7 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",

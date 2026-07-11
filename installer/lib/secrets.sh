@@ -51,11 +51,12 @@ load_secrets_from_env() {
 
 format_secrets_summary() {
   local s=""
-  s+="JWT_SECRET:              [${#SECRETS[JWT_SECRET]} Zeichen]\n"
-  s+="APP_ENCRYPTION_KEY:      [${#SECRETS[APP_ENCRYPTION_KEY]} Zeichen]\n"
-  s+="POSTGRES_PASSWORD:       [${#SECRETS[POSTGRES_PASSWORD]} Zeichen]\n"
-  s+="PLATFORM_ADMIN_PASSWORD: [${#SECRETS[PLATFORM_ADMIN_PASSWORD]} Zeichen]\n"
-  s+="WEBHOOK_SECRET:          [generiert]\n"
-  s+="API_SECRET:              [generiert]\n"
-  echo -e "$s"
+  s+="Generierte Secrets (Längen):"
+  s+=$'\n'
+  s+=$'\n'"  JWT Secret           ${#SECRETS[JWT_SECRET]} Zeichen"
+  s+=$'\n'"  Verschlüsselung      ${#SECRETS[APP_ENCRYPTION_KEY]} Zeichen"
+  s+=$'\n'"  Datenbank            ${#SECRETS[POSTGRES_PASSWORD]} Zeichen"
+  s+=$'\n'"  Admin-Passwort       ${#SECRETS[PLATFORM_ADMIN_PASSWORD]} Zeichen"
+  s+=$'\n'"  Webhook/API          generiert"
+  printf '%s' "$s"
 }

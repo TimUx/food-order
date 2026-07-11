@@ -84,7 +84,7 @@ Vereine benötigen eine einfache, touch-optimierte Lösung für Veranstaltungsta
 
 ## Migrationsstrategie
 
-Keine Migration nötig – beschreibt den aktuellen und angestrebten Gesamtrahmen. Zukünftige Schritte siehe [MIGRATION_PLAN.md](./MIGRATION_PLAN.md).
+Keine Migration nötig – beschreibt den aktuellen Gesamtrahmen. Weitere ADRs: [README](./README.md).
 
 ## Offene Punkte
 

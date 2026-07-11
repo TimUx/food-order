@@ -138,6 +138,16 @@ export function FoodItemsPage() {
     }
   };
 
+  const handleSoldOutToggle = async (item: FoodItem, soldOut: boolean) => {
+    if (!token) return;
+    try {
+      await api.setFoodSoldOut(token, item.id, soldOut);
+      loadItems();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Speisenverwaltung">
@@ -178,7 +188,15 @@ export function FoodItemsPage() {
               <TableCell>{item.name}</TableCell>
               <TableCell>{formatPrice(Number(item.price))}</TableCell>
               <TableCell>{item.active ? 'Ja' : 'Nein'}</TableCell>
-              <TableCell>{item.soldOut ? 'Ja' : 'Nein'}</TableCell>
+              <TableCell>
+                <Switch
+                  checked={item.soldOut}
+                  color="error"
+                  size="small"
+                  onChange={(e) => void handleSoldOutToggle(item, e.target.checked)}
+                  inputProps={{ 'aria-label': `${item.name} als ausverkauft markieren` }}
+                />
+              </TableCell>
               <TableCell>{item.maxQuantity ?? '–'}</TableCell>
               <TableCell align="right">
                 <IconButton component="label" size="small">

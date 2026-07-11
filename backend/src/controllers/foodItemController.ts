@@ -46,6 +46,19 @@ export const foodItemController = {
     }
   },
 
+  async setSoldOut(
+    req: { params: { id: string }; body: { soldOut: boolean } },
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const item = await foodItemService.setSoldOut(req.params.id, req.body.soldOut);
+      res.json(item);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async delete(req: { params: { id: string } }, res: Response, next: NextFunction) {
     try {
       await foodItemService.delete(req.params.id);

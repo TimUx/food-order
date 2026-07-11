@@ -1,47 +1,63 @@
 # FestSchmiede
 
-Open-Source-Plattform für Veranstaltungs-Bestellungen: Vorausbestellung, Küche, Abholung, Admin — mandantenfähig, Docker-basiert, PWA-fähig.
+Open-Source-Plattform für Veranstaltungs-Bestellungen: Vorausbestellung, Küche, Abholung, Kasse und Administration — mandantenfähig, Docker-basiert, als PWA nutzbar.
 
-![Bestellseite](docs/screenshots/01-bestellseite-monitor.png)
+Ideal für Vereinsfeste, Schützenfeste und Veranstaltungen mit Speisenverkauf und Abholung.
+
+## Screenshots
+
+| Bestellseite | Kundenstatus | Abholboard |
+|:---:|:---:|:---:|
+| ![Bestellseite](docs/screenshots/01-bestellseite-monitor.png) | ![Status](docs/screenshots/02-kundenstatus.png) | ![Abholboard](docs/screenshots/04-abholboard-monitor.png) |
+
+| Mitarbeiter-Dashboard | Küche (Tablet) | Admin |
+|:---:|:---:|:---:|
+| ![Dashboard](docs/screenshots/06-dashboard.png) | ![Küche](docs/screenshots/07-kuechenansicht-tablet.png) | ![Admin](docs/screenshots/16-admin-uebersicht.png) |
+
+Weitere Bilder: [docs/screenshots/](docs/screenshots/README.md)
+
+## Funktionen
+
+- **Gäste:** Speisekarte, Vorausbestellung, Live-Status, Abholboard
+- **Mitarbeiter:** Küchenmonitor, Abholung, Kassenbestellung, Bestellübersicht mit Bearbeitung
+- **Administration:** Veranstaltungen, Speisekarte, Team & Rollen, Bestell-Einstellungen
+- **Plattform:** Mehrere Mandanten (Vereine) auf einer Instanz
+- **Optional:** Online-Zahlung, E-Mail/Push-Benachrichtigungen, Bondruck, Rechtstexte
 
 ## Schnellstart
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.2.3/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.0/install.sh | bash
 ```
 
-Oder nach Git-Clone: `./install.sh` · Details: [Installation](docs/INSTALLATION.md)
+Oder nach Git-Clone: `./install.sh` — Details in der [Installationsanleitung](docs/INSTALLATION.md).
 
 | Dienst | URL (lokal) |
 |--------|-------------|
 | Bestellseite | http://localhost:5173/ |
+| Mitarbeiter | http://localhost:5173/mitarbeiter/login |
 | Admin | http://localhost:5173/admin/login |
 | Plattform | http://localhost:5173/platform/login |
 
-## Dokumentation — drei Ebenen
+## Dokumentation
 
 | Ich bin… | Start hier |
 |----------|------------|
-| **Ehrenamt** (Vorstand, Helfer ohne IT) | [Volunteer Guide](docs/VOLUNTEER_GUIDE.md) |
-| **Admin** (Installation & Betrieb) | [Dokumentation — Admin-Pfad](docs/README.md#administratoren--in-drei-klicks) |
-| **Maintainer** (Entwicklung) | [Developer Guide](docs/DEVELOPER_GUIDE.md) |
+| **Helfer:in / Vorstand** (ohne IT) | [Volunteer Guide](docs/VOLUNTEER_GUIDE.md) |
+| **Admin** (Installation & Betrieb) | [Installation](docs/INSTALLATION.md) → [Admin Guide](docs/ADMIN_GUIDE.md) → [Operations](docs/OPERATIONS.md) |
+| **Mitarbeiter** (Küche, Abholung) | [User Guide](docs/USER_GUIDE.md) |
+| **Entwickler:in** | [Developer Guide](docs/DEVELOPER_GUIDE.md) · [ADRs](docs/architecture/README.md) |
 
-**Admin in drei Schritten:** [Installation](docs/INSTALLATION.md) → [Ersteinrichtung](docs/ADMIN_GUIDE.md#erste-schritte-nach-der-installation) → [Checkliste vor dem Fest](docs/OPERATIONS.md#vor-dem-sommerfest-checkliste)
+Vollständiger Index: [docs/README.md](docs/README.md)
 
-Vollständiger Index: [docs/README.md](docs/README.md) · Struktur: [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)
+**Admin in drei Schritten:** Installieren → [Ersteinrichtung](docs/ADMIN_GUIDE.md#erste-schritte-nach-der-installation) → [Checkliste vor dem Fest](docs/OPERATIONS.md#vor-dem-sommerfest-checkliste)
 
-## Funktionen (Kurz)
+## Technik
 
-Bestellseite · Live-Status · Abholboard · Küchen-Tablet · Kasse vor Ort · Admin (Events, Speisen, Team) · optionale Module (Zahlung, Benachrichtigungen, Rechtliches)
+React · TypeScript · Node.js · PostgreSQL · Docker · Socket.IO (Echtzeit)
 
-Screenshots: [docs/screenshots/](docs/screenshots/README.md)
-
-## Technik & Sicherheit
-
-React · TypeScript · Node.js · PostgreSQL · Docker · Socket.IO
-
-[Sicherheit](SECURITY.md) · [Architektur (ADRs)](docs/architecture/README.md) · [Roadmap](docs/ROADMAP.md)
+Versionshistorie: [CHANGELOG.md](CHANGELOG.md) · Sicherheit: [SECURITY.md](SECURITY.md)
 
 ## Lizenz & Mitwirkung
 
-Siehe Repository-Lizenz. Sicherheitsmeldungen: [SECURITY.md](SECURITY.md).
+Siehe Repository-Lizenz. Beiträge: [CONTRIBUTING.md](CONTRIBUTING.md) · Support: [SUPPORT.md](SUPPORT.md)

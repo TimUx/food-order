@@ -31,6 +31,12 @@ export function canAccessPermission(user: User | null, permissionKey?: string): 
   return Boolean(user.permissions?.includes(permissionKey));
 }
 
+export function canAccessAnyPermission(user: User | null, permissionKeys: string[]): boolean {
+  if (!user) return false;
+  if (user.role === 'ADMIN') return true;
+  return permissionKeys.some((key) => user.permissions?.includes(key));
+}
+
 export function hasDelegatedAdminAccess(user: User | null): boolean {
   if (!user) return false;
   if (user.role === 'ADMIN') return true;

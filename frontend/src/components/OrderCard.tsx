@@ -19,6 +19,7 @@ interface OrderCardProps {
   order: Order;
   onStatusChange?: (status: OrderStatus) => void;
   onAdvance?: () => void;
+  onEdit?: () => void;
   showActions?: boolean;
   compact?: boolean;
   kitchenMode?: boolean;
@@ -28,6 +29,7 @@ export function OrderCard({
   order,
   onStatusChange,
   onAdvance,
+  onEdit,
   showActions = false,
   compact = false,
   kitchenMode = false,
@@ -129,6 +131,11 @@ export function OrderCard({
 
         {showActions && (
           <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+            {!kitchenMode && onEdit && ['NEW', 'IN_PROGRESS'].includes(order.status) && (
+              <Button variant="outlined" size="small" onClick={onEdit}>
+                Bearbeiten
+              </Button>
+            )}
             {kitchenMode && order.status === 'IN_PROGRESS' && onAdvance && (
               <Button
                 variant="contained"

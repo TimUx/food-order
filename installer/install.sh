@@ -1,11 +1,39 @@
 #!/usr/bin/env bash
 # FestSchmiede Installer – Professioneller interaktiver Installations-Assistent (TUI)
-# Version 2.2.3
+# Version 2.3.0
 
 set -euo pipefail
 
 INSTALLER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="$(cd "${INSTALLER_DIR}/.." && pwd)"
+
+_parse_installer_args() {
+  REMAINING_ARGS=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -d|--dir)
+        [[ $# -ge 2 ]] || { echo "FEHLER: --dir erfordert Pfad" >&2; exit 1; }
+        INSTALL_DIR="$2"
+        shift
+        ;;
+      -h|--help|--update|--repair|--backup|--validate|--validate-update)
+        break
+        ;;
+      *)
+        echo "FEHLER: Unbekannte Option: $1" >&2
+        exit 1
+        ;;
+    esac
+    shift
+  done
+  REMAINING_ARGS=("$@")
+}
+
+_parse_installer_args "$@"
+set -- "${REMAINING_ARGS[@]}"
+
+if [[ -z "${INSTALL_DIR:-}" ]]; then
+  INSTALL_DIR="$(cd "${INSTALLER_DIR}/.." && pwd)"
+fi
 
 # Bibliotheken laden
 # shellcheck source=installer/lib/common.sh
@@ -32,8 +60,12 @@ Verwendung:
   ./installer/install.sh --backup     Nur Datenbank-Backup
   ./installer/install.sh --validate   Prüft Update-Voraussetzungen (ohne Änderungen)
 
+Optionen:
+  -d, --dir PATH   Installationsverzeichnis (Plattform-Root)
+
 Umgebungsvariablen:
-  FESTSCHMIEDE_NONINTERACTIVE=1   Keine TUI-Dialoge (für Skripte/CI)
+  INSTALL_DIR                      Installationsverzeichnis
+  FESTSCHMIEDE_NONINTERACTIVE=1    Keine TUI-Dialoge (für Skripte/CI)
 
 Protokoll: installer/logs/
 EOF

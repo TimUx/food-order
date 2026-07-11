@@ -5,7 +5,7 @@ installer/logs/*.log
 .installer-state/
 
 # Generierte Konfiguration
-installer/generated/compose.override.yml
+generated/compose.override.yml
 
 # Credentials (lokal)
 .installer-state/credentials.txt

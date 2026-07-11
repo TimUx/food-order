@@ -153,48 +153,43 @@ run_full_detection() {
 
 format_detection_report() {
   local report=""
-  report+="═══ System ═══\n"
-  report+="Distribution:  ${SYS_DETECT[os_name]:-?} (${SYS_DETECT[arch]})\n"
-  report+="Kernel:        ${SYS_DETECT[kernel]:-?}\n"
-  report+="CPU-Kerne:     ${SYS_DETECT[cpu_cores]:-?}\n"
-  report+="RAM:           ${SYS_DETECT[ram_mb]:-?} MB\n\n"
-
-  report+="═══ Docker ═══\n"
-  report+="Installiert:   ${SYS_DETECT[docker_installed]}\n"
-  report+="Version:       ${SYS_DETECT[docker_version]:-–}\n"
-  report+="Compose:       ${SYS_DETECT[compose_installed]} – ${SYS_DETECT[compose_version]:-–}\n\n"
-
-  report+="═══ Netzwerk / Proxy ═══\n"
-  report+="Reverse Proxy: ${SYS_DETECT[proxy_detected]}\n"
-  report+="Firewall:      ${SYS_DETECT[firewall]}\n"
-  report+="Port 80:       ${SYS_DETECT[port_80]}\n"
-  report+="Port 443:      ${SYS_DETECT[port_443]}\n"
-  report+="Port 3001:     ${SYS_DETECT[port_3001]}\n"
-  report+="Port 5173:     ${SYS_DETECT[port_5173]}\n\n"
+  report+="--- System ---"
+  report+=$'\n'"Distribution:   ${SYS_DETECT[os_name]:-?} (${SYS_DETECT[arch]})"
+  report+=$'\n'"Kernel:         ${SYS_DETECT[kernel]:-?}"
+  report+=$'\n'"CPU-Kerne:      ${SYS_DETECT[cpu_cores]:-?}"
+  report+=$'\n'"RAM:            ${SYS_DETECT[ram_mb]:-?} MB"
+  report+=$'\n\n'"--- Docker ---"
+  report+=$'\n'"Installiert:    ${SYS_DETECT[docker_installed]}"
+  report+=$'\n'"Version:        ${SYS_DETECT[docker_version]:-–}"
+  report+=$'\n'"Compose:        ${SYS_DETECT[compose_installed]} – ${SYS_DETECT[compose_version]:-–}"
+  report+=$'\n\n'"--- Netzwerk / Proxy ---"
+  report+=$'\n'"Reverse Proxy:  ${SYS_DETECT[proxy_detected]}"
+  report+=$'\n'"Firewall:       ${SYS_DETECT[firewall]}"
+  report+=$'\n'"Port 80:        ${SYS_DETECT[port_80]}"
+  report+=$'\n'"Port 443:       ${SYS_DETECT[port_443]}"
+  report+=$'\n'"Port 3001:      ${SYS_DETECT[port_3001]}"
+  report+=$'\n'"Port 5173:      ${SYS_DETECT[port_5173]}"
 
   if [[ ${#DOCKER_NETWORKS[@]} -gt 0 ]]; then
-    report+="═══ Docker-Netzwerke (${#DOCKER_NETWORKS[@]}) ═══\n"
+    report+=$'\n\n'"--- Docker-Netzwerke (${#DOCKER_NETWORKS[@]}) ---"
     local n
     for n in "${DOCKER_NETWORKS[@]:0:8}"; do
-      report+="  • ${n//|/ (}\n"
+      report+=$'\n'"  - ${n//|/ (})"
     done
-    [[ ${#DOCKER_NETWORKS[@]} -gt 8 ]] && report+="  … und $(( ${#DOCKER_NETWORKS[@]} - 8 )) weitere\n"
-    report+="\n"
+    [[ ${#DOCKER_NETWORKS[@]} -gt 8 ]] && report+=$'\n'"  ... und $(( ${#DOCKER_NETWORKS[@]} - 8 )) weitere"
   fi
 
   if [[ ${#DOCKER_VOLUMES[@]} -gt 0 ]]; then
-    report+="═══ Docker-Volumes (${#DOCKER_VOLUMES[@]}) ═══\n"
+    report+=$'\n\n'"--- Docker-Volumes (${#DOCKER_VOLUMES[@]}) ---"
     local v
     for v in "${DOCKER_VOLUMES[@]:0:6}"; do
-      report+="  • $v\n"
+      report+=$'\n'"  - $v"
     done
-    report+="\n"
   fi
 
-  report+="═══ Bestehende Installation ═══\n"
-  report+="Erkannt:       ${SYS_DETECT[existing_install]}\n"
-
-  echo -e "$report"
+  report+=$'\n\n'"--- Bestehende Installation ---"
+  report+=$'\n'"Erkannt:        ${SYS_DETECT[existing_install]}"
+  printf '%s' "$report"
 }
 
 network_description() {

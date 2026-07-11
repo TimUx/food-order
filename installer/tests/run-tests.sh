@@ -62,6 +62,35 @@ while IFS='=' read -r k v; do CFG["$k"]="$v"; done <"$TMP_ENV"
 [[ "${CFG[POSTGRES_USER]}" == "testuser" ]] && pass "env reload" || fail "env reload"
 rm -f "$TMP_ENV"
 
+echo "--- Compose Netzwerke ---"
+CFG=()
+CFG[USES_REVERSE_PROXY]="no"
+CFG[PROXY_MODE]="none"
+generate_compose_override
+grep -q "festschmiede_internal" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "internal network local" || fail "internal network local"
+! grep -qE "ports: (\[\]|!reset \[\])" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "local keeps host ports" || fail "local keeps host ports"
+
+CFG[USES_REVERSE_PROXY]="yes"
+CFG[PROXY_MODE]="existing"
+CFG[DOCKER_PROXY_NETWORK]="traefik_net"
+CFG[DOCKER_NETWORK]="traefik_net"
+CFG[DOCKER_NETWORK_CREATE]="no"
+generate_compose_override
+grep -qE "ports: (\[\]|!reset \[\])" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "proxy mode no host ports" || fail "proxy mode no host ports"
+grep -q "proxy" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "proxy network defined" || fail "proxy network defined"
+grep -q "external: true" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "external proxy network" || fail "external proxy network"
+
+CFG[PROXY_MODE]="traefik"
+CFG[DOCKER_NETWORK_CREATE]="yes"
+generate_compose_override
+grep -q "public" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
+  && pass "traefik uses public network" || fail "traefik uses public network"
+
 echo ""
 echo "Ergebnis: $PASS bestanden, $FAIL fehlgeschlagen"
 [[ $FAIL -eq 0 ]]

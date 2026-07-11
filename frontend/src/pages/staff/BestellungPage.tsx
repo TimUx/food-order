@@ -47,7 +47,7 @@ export function BestellungPage() {
       }),
     ])
       .then(([foodItems]) => {
-        setItems(foodItems.filter((i) => i.active && !i.soldOut));
+        setItems(foodItems.filter((i) => i.active));
         const initial: Record<string, number> = {};
         foodItems.forEach((i) => { initial[i.id] = 0; });
         setQuantities(initial);

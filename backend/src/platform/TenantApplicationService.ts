@@ -208,6 +208,9 @@ export class TenantApplicationService {
           phone: application.phone ?? undefined,
           website: application.website ?? undefined,
           description: application.reason,
+          address: [application.street, `${application.postalCode} ${application.city}`.trim(), application.country]
+            .filter(Boolean)
+            .join(', '),
         },
         actorId
       );

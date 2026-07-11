@@ -148,7 +148,7 @@ SMTP liegt vollständig in der Anwendung (`core.email` → `ClubSettings`). `ema
 
 ## Konsolidierungsreview (2026-07-09)
 
-Siehe [ADR-012](./012-architecture-consolidation-review.md).
+Siehe [ADR-003](./003-module-system.md) und [ADR-042](./042-volunteer-first-administration.md).
 
 | Kritikpunkt | Entscheidung |
 |-------------|--------------|

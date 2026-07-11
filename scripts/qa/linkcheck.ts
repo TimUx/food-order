@@ -10,7 +10,6 @@ const SCAN_ROOTS = [
   root,
   path.join(root, 'docs'),
   path.join(root, 'docs/architecture'),
-  path.join(root, 'docs/architecture/archive'),
   path.join(root, 'docs/screenshots'),
 ];
 
@@ -50,11 +49,6 @@ function walk(dir: string, fn: (file: string) => void): void {
 }
 
 function shouldCheckFile(file: string): boolean {
-  const rel = path.relative(root, file).replace(/\\/g, '/');
-  if (rel.startsWith('docs/architecture/archive/') && !rel.endsWith('archive/README.md')) {
-    return false;
-  }
-  if (rel.startsWith('docs/release-notes')) return false;
   return true;
 }
 

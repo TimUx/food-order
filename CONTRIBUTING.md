@@ -27,6 +27,6 @@ npm run qa:e2e
 
 ## Modul-Entwicklung
 
-Siehe `docs/MODULE_ARCHITECTURE.md` und `docs/architecture/003-module-system.md`.
+Siehe [ADR-003](docs/architecture/003-module-system.md) und [Developer Guide](docs/DEVELOPER_GUIDE.md).
 
 Neue Module registrieren QA-Metadaten in `module.json` – keine Workflow-Änderungen nötig.

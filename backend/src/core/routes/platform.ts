@@ -13,6 +13,8 @@ import {
   updateTenantApplicationStatusSchema,
   approveTenantApplicationSchema,
   updatePlatformLegalPageSchema,
+  createPlatformTenantSchema,
+  updatePlatformTenantSchema,
   applicationIdParamSchema,
   platformSmtpUpdateSchema,
   platformTestMailSchema,
@@ -69,11 +71,13 @@ router.get(
 router.post(
   '/tenants',
   requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_CREATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateBody(createPlatformTenantSchema),
   platformController.createTenant
 );
 router.put(
   '/tenants/:id',
   requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_UPDATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateBody(updatePlatformTenantSchema),
   platformController.updateTenant
 );
 router.post(

@@ -251,6 +251,46 @@ export const orderRepository = {
     const { getOrderEventStats } = await import('./orderStats');
     return getOrderEventStats(eventId);
   },
+
+  replaceItems: async (
+    id: string,
+    items: Array<{
+      foodItemId: string;
+      quantity: number;
+      unitPrice: Prisma.Decimal;
+      lineTotal: Prisma.Decimal;
+    }>,
+    totalPrice: Prisma.Decimal
+  ) => {
+    const tenantId = requireTenantId();
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findFirst({ where: { tenantId, id } });
+      if (!existing) throw new Error('Bestellung nicht gefunden');
+
+      await tx.orderItem.deleteMany({ where: { orderId: id } });
+      if (items.length > 0) {
+        await tx.orderItem.createMany({
+          data: items.map((item) => ({
+            orderId: id,
+            foodItemId: item.foodItemId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            lineTotal: item.lineTotal,
+          })),
+        });
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: { totalPrice },
+        include: {
+          customer: true,
+          event: true,
+          items: { include: { foodItem: true } },
+        },
+      });
+    });
+  },
 };
 
 export const customerRepository = {

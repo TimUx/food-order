@@ -1,43 +1,36 @@
-# Architektur-Dokumentation
+# Architektur (ADRs)
 
-Architecture Decision Records (ADRs) und technische Referenz für Maintainer.
+Architecture Decision Records für Maintainer und Contributors.
 
-> **Stand:** Plattform v2.2 — Multi-Tenant produktionsbereit.
+**Stand:** Plattform v2.2 — Multi-Tenant produktionsbereit.
 
-## Einstieg
+## Wichtige ADRs
 
-| Dokument | Inhalt |
-|----------|--------|
-| [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md) | Ist-Analyse (Codebase-Überblick) |
-| [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) | Phasenplan Multi-Tenant |
-| [archive/](./archive/) | Phase- & Release-Reports (archiviert) |
+| Nr. | Dokument | Thema |
+|-----|----------|-------|
+| 001 | [platform-overview](./001-platform-overview.md) | Gesamtplattform |
+| 002 | [core-architecture](./002-core-architecture.md) | Core, Extension Points |
+| 003 | [module-system](./003-module-system.md) | ModuleManager, Lifecycle |
+| 007 | [payment-module](./007-payment-module.md) | Zahlungsmodul |
+| 020 | [multi-tenant-platform](./020-multi-tenant-platform.md) | Multi-Tenant |
+| 023 | [tenant-routing](./023-tenant-routing.md) | Routing & Frontend |
+| 027 | [multi-tenant-deployment](./027-multi-tenant-deployment.md) | Deployment |
+| 030 | [performance-scalability](./030-performance-scalability.md) | Performance |
+| 039 | [production-migrations](./039-production-migrations.md) | Prisma Migrate |
+| 040 | [tenant-access-policy](./040-tenant-access-policy.md) | Tenant-scoped DB |
+| 041 | [module-api-v3](./041-module-api-v3.md) | Modul-Runtime API |
+| 043 | [tenant-role-templates](./043-tenant-role-templates.md) | Rollenvorlagen |
+| 044 | [guided-operations](./044-guided-operations.md) | Installer-Ops |
+| 045 | [security-hardening-baseline](./045-security-hardening-baseline.md) | Security |
 
-## Architecture Decision Records
+## Alle ADRs
 
-| Nr. | ADR | Kurzbeschreibung |
-|-----|-----|------------------|
-| 001 | [platform-overview.md](./001-platform-overview.md) | Gesamtplattform, Schichten |
-| 002 | [core-architecture.md](./002-core-architecture.md) | Core-Prinzipien, Extension Points |
-| 003 | [module-system.md](./003-module-system.md) | ModuleManager, Lifecycle |
-| 004–014 | [004](./004-settings-platform.md) … [014](./014-legal-module.md) | Settings, Permissions, Module |
-| 020–030 | [020](./020-multi-tenant-platform.md) … [030](./030-performance-scalability.md) | Multi-Tenant, Security, Performance |
-| 031–038 | [031](./031-central-mail-service.md) … [038](./038-rollback-strategy.md) | Mail, Installer, Rollback |
-| 039 | [039-production-migrations.md](./039-production-migrations.md) | Prisma Migrate in Produktion |
-| 040 | [tenant-access-policy.md](./040-tenant-access-policy.md) | Tenant-scoped Prisma-Zugriff |
-| 041 | [module-api-v3.md](./041-module-api-v3.md) | Konsolidierte Modul-Runtime API |
-| 042 | [042-volunteer-first-administration.md](./042-volunteer-first-administration.md) | Volunteer-first Admin |
-| 043 | [043-tenant-role-templates.md](./043-tenant-role-templates.md) | Rollenvorlagen |
-| 044 | [044-guided-operations.md](./044-guided-operations.md) | Geführte Betriebsabläufe |
-| 045 | [045-security-hardening-baseline.md](./045-security-hardening-baseline.md) | Security Hardening |
+Dateien `001`–`045` in diesem Ordner (Module, Settings, Notifications, Installer, …).
 
-Vollständige Tabelle mit Status: siehe Dateien `0*.md` in diesem Ordner.
+## Handbücher
 
-## Verwandte Handbücher
-
-- [docs/README.md](../README.md) — Zielgruppen-Index
-- [MODULE_ARCHITECTURE.md](../MODULE_ARCHITECTURE.md) — Modul-Doku
-- [DEVELOPER_GUIDE.md](../DEVELOPER_GUIDE.md) — Entwicklung
-- [PERFORMANCE_GUIDE.md](../PERFORMANCE_GUIDE.md) · [NOTIFICATION_GUIDE.md](../NOTIFICATION_GUIDE.md)
+- [docs/README.md](../README.md) — Dokumentations-Index
+- [DEVELOPER_GUIDE.md](../DEVELOPER_GUIDE.md) — Entwicklung & Betrieb
 
 ## Prinzip
 

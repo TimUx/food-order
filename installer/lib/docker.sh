@@ -5,7 +5,10 @@ install_docker_if_missing() {
   [[ "${SYS_DETECT[docker_installed]}" == "yes" ]] && return 0
 
   log_info "Docker nicht gefunden – Installation anbieten"
-  if ! tui_yesno "Docker installieren" "Docker ist nicht installiert.\n\nSoll Docker jetzt installiert werden?\n(Unterstützt: Debian/Ubuntu via get.docker.com)"; then
+  if ! tui_yesno "Docker installieren" "Docker ist nicht installiert.
+
+Soll Docker jetzt installiert werden?
+(Unterstützt: Debian/Ubuntu via get.docker.com)"; then
     log_error "Docker erforderlich – Installation abgebrochen"
     return 1
   fi
@@ -30,7 +33,9 @@ compose_pull() {
 
 compose_up() {
   local profiles=()
-  [[ "${CFG[USE_REDIS]:-no}" == "yes" ]] && profiles+=(--profile redis)
+  if [[ "${CFG[USE_REDIS]:-no}" == "internal" || "${CFG[USE_REDIS]:-no}" == "yes" ]]; then
+    profiles+=(--profile redis)
+  fi
 
   log_info "Starte Container..."
   (cd "$INSTALL_DIR" && "${COMPOSE_CMD[@]}" "${COMPOSE_FILES[@]}" "${profiles[@]}" up -d) >>"$LOG_FILE" 2>&1
@@ -118,14 +123,15 @@ run_installation() {
 }
 
 docker_status_report() {
-  local s=""
-  s+="Container:\n"
-  s+="$(docker ps --format '  {{.Names}}: {{.Status}}' 2>/dev/null | grep -E 'vereins-|festschmiede' || echo '  (keine)')\n"
-  s+="\nHealth:\n"
+  local s="" containers
+  s+="Container:"
+  containers=$(docker ps --format '  {{.Names}}: {{.Status}}' 2>/dev/null | grep -E 'vereins-|festschmiede' || echo '  (keine)')
+  s+=$'\n'"${containers}"
+  s+=$'\n\n'"Health:"
   if curl -fsS http://localhost:3001/api/health >/dev/null 2>&1; then
-    s+="  Backend:  OK\n"
+    s+=$'\n'"  Backend:  OK"
   else
-    s+="  Backend:  nicht erreichbar\n"
+    s+=$'\n'"  Backend:  nicht erreichbar"
   fi
-  echo -e "$s"
+  printf '%s' "$s"
 }

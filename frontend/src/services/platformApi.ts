@@ -90,10 +90,12 @@ export interface PlatformTenant {
   currency: string;
   theme: string;
   description: string | null;
+  address: string | null;
   website: string | null;
   activatedAt: string | null;
   archivedAt: string | null;
   createdAt: string;
+  updatedAt?: string;
   stats?: {
     activeUsers: number;
     events: number;
@@ -101,6 +103,24 @@ export interface PlatformTenant {
     modules: number;
     ordersTotal: number;
   };
+}
+
+export interface UpdatePlatformTenantPayload {
+  name?: string;
+  shortName?: string | null;
+  slug?: string;
+  subdomain?: string;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  website?: string | null;
+  description?: string | null;
+  logoUrl?: string | null;
+  locale?: string;
+  timezone?: string;
+  currency?: string;
+  theme?: string;
 }
 
 async function platformRequest<T>(
@@ -162,10 +182,10 @@ export const platformApi = {
   getTenant: (token: string, id: string) =>
     platformRequest<PlatformTenant>(`/tenants/${id}`, {}, token),
 
-  createTenant: (token: string, data: Record<string, unknown>) =>
+  createTenant: (token: string, data: UpdatePlatformTenantPayload & { name: string; slug: string; subdomain: string }) =>
     platformRequest<PlatformTenant>('/tenants', { method: 'POST', body: JSON.stringify(data) }, token),
 
-  updateTenant: (token: string, id: string, data: Record<string, unknown>) =>
+  updateTenant: (token: string, id: string, data: UpdatePlatformTenantPayload) =>
     platformRequest<PlatformTenant>(`/tenants/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
 
   activateTenant: (token: string, id: string) =>
