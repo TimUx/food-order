@@ -104,6 +104,7 @@ Reverse Proxy konfigurieren:" \
       CFG[USES_REVERSE_PROXY]="no"
       CFG[INSTALL_PROFILE]="local"
       CFG[HTTPS_ENABLED]="no"
+      log_info "Kein Reverse Proxy: Host-Ports nach außen, kein zusätzliches Proxy-Netzwerk"
       ;;
     traefik)
       CFG[USES_REVERSE_PROXY]="yes"
@@ -112,6 +113,7 @@ Reverse Proxy konfigurieren:" \
       ;;
     existing|nginx)
       CFG[USES_REVERSE_PROXY]="yes"
+      CFG[INSTALL_PROFILE]="production"
       ;;
   esac
   log_info "Reverse Proxy: $choice (internes Netz: festschmiede_internal)"
@@ -119,12 +121,8 @@ Reverse Proxy konfigurieren:" \
 }
 
 wizard_step_network() {
+  # Wird von run_wizard übersprungen, wenn USES_REVERSE_PROXY != yes
   CFG[DOCKER_INTERNAL_NETWORK]="festschmiede_internal"
-
-  if [[ "${CFG[USES_REVERSE_PROXY]:-no}" != "yes" ]]; then
-    log_info "Kein Reverse Proxy – nur internes Netz ${CFG[DOCKER_INTERNAL_NETWORK]}"
-    return 0
-  fi
 
   local menu_items=()
   local net
@@ -161,7 +159,7 @@ Proxy-Netzwerk angeschlossen." "${menu_items[@]}") || return 1
 }
 
 wizard_step_domain() {
-  if [[ "${CFG[INSTALL_PROFILE]:-local}" == "local" ]]; then
+  if [[ "${CFG[INSTALL_PROFILE]:-local}" == "local" && "${CFG[USES_REVERSE_PROXY]:-no}" != "yes" ]]; then
     CFG[PLATFORM_DOMAIN]="localhost"
     log_info "Lokales Profil: Domain localhost, kein HTTPS"
     return 0
@@ -173,11 +171,22 @@ wizard_step_domain() {
   CFG[APP_SUBDOMAIN]=$(tui_input "APP-Subdomain" "Subdomain für Plattform-Admin:" "${CFG[APP_SUBDOMAIN]:-app}") || return 1
   CFG[PLATFORM_WILDCARD_DOMAIN]="*.${CFG[PLATFORM_DOMAIN]}"
 
-  if tui_yesno "HTTPS" "Let's Encrypt (HTTPS) aktivieren?
+  local https_prompt
+  if [[ "${CFG[PROXY_MODE]:-}" == "traefik" ]]; then
+    https_prompt="Let's Encrypt (HTTPS) aktivieren?
 
-Erfordert gültige DNS-Einträge für ${CFG[PLATFORM_DOMAIN]} und *.${CFG[PLATFORM_DOMAIN]}"; then
+Erfordert gültige DNS-Einträge für ${CFG[PLATFORM_DOMAIN]} und *.${CFG[PLATFORM_DOMAIN]}"
+  else
+    https_prompt="HTTPS aktivieren?
+
+URLs und CORS werden auf https:// gesetzt (Zertifikat konfigurieren Sie am Reverse Proxy)."
+  fi
+
+  if tui_yesno "HTTPS" "$https_prompt"; then
     CFG[HTTPS_ENABLED]="yes"
-    prompt_until_valid "ACME E-Mail" "E-Mail für Let's Encrypt:" validate_email "admin@${CFG[PLATFORM_DOMAIN]}" ACME_EMAIL || return 1
+    if [[ "${CFG[PROXY_MODE]:-}" == "traefik" ]]; then
+      prompt_until_valid "ACME E-Mail" "E-Mail für Let's Encrypt:" validate_email "admin@${CFG[PLATFORM_DOMAIN]}" ACME_EMAIL || return 1
+    fi
   fi
   return 0
 }
@@ -338,6 +347,10 @@ Tipp: Regelmäßige Backups mit scripts/backup/postgres-backup.sh"
   log_info "Credentials gespeichert: $cred_file"
 }
 
+wizard_should_skip_step() {
+  [[ "$1" == "wizard_step_network" && "${CFG[USES_REVERSE_PROXY]:-no}" != "yes" ]]
+}
+
 run_wizard() {
   _detect_tui_backend
   local steps=(
@@ -359,10 +372,23 @@ run_wizard() {
 
   local i=0
   local total=${#steps[@]}
+  local wizard_nav=""
 
   while [[ $i -lt $total ]]; do
   WIZARD_STEP=$i
   save_state
+
+  if wizard_should_skip_step "${steps[$i]}"; then
+    CFG[DOCKER_INTERNAL_NETWORK]="${CFG[DOCKER_INTERNAL_NETWORK]:-festschmiede_internal}"
+    log_info "Schritt Proxy-Netzwerk entfällt (kein Reverse Proxy)"
+    if [[ "$wizard_nav" == "back" ]]; then
+      i=$((i - 1))
+    else
+      i=$((i + 1))
+    fi
+    wizard_nav=""
+    continue
+  fi
 
   local step_name="Schritt $((i+1))/$total"
   log_info "Wizard: $step_name – ${steps[$i]}"
@@ -380,11 +406,12 @@ run_wizard() {
     tui_nav "$step_name"
     local nav=$?
     case $nav in
-      0) i=$((i-1)); continue ;;
+      0) wizard_nav="back"; i=$((i-1)); continue ;;
       2) WIZARD_CANCELLED=1; return 1 ;;
     esac
   fi
 
+  wizard_nav=""
   i=$((i+1))
   done
 

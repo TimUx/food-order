@@ -3,6 +3,20 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.1 - 2026-07-11
+
+### Behoben
+
+- **Installer:** „Vorhandenen Proxy verwenden“ und NGINX setzen jetzt das Produktionsprofil — Domain und HTTPS können konfiguriert werden.
+- **Installer:** Proxy-Netzwerk-Schritt erscheint nur noch, wenn ein Reverse Proxy gewählt wurde; ohne Proxy lokale Host-Ports und nur internes Docker-Netz.
+
+### Geändert
+
+- **Installer:** HTTPS-Abfrage bei externem Proxy ohne Let's-Encrypt-Pflicht (Zertifikat am Reverse Proxy).
+- **Dokumentation:** Wizard-Schritte Reverse Proxy / Proxy-Netzwerk korrigiert.
+
+---
+
 ## 2.3.0 - 2026-07-11
 
 ### Neu

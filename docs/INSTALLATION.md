@@ -1,13 +1,13 @@
 # FestSchmiede – Installationsanleitung
 
-> **Version 2.3.0** – Professioneller interaktiver Installations-Assistent (TUI)
+> **Version 2.3.1** – Professioneller interaktiver Installations-Assistent (TUI)
 
 ## Schnellstart
 
 ### Online (ohne Git-Clone)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.0/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.1/install.sh | bash
 ```
 
 **Installationspfad angeben** (Priorität: `--dir` > `FESTSCHMIEDE_INSTALL_DIR` > Default):
@@ -84,8 +84,8 @@ flowchart TD
 1. **Systemanalyse** – Distribution, CPU, RAM, Docker, Netzwerke, Ports, Reverse Proxy
 2. **Installationsmodus** – Neuinstallation, Upgrade, Migration, Reparatur, Nur Config
 3. **Docker** – Erkennung oder automatische Installation
-4. **Docker-Netzwerk** – Bestehendes Netzwerk wählen oder neues erstellen
-5. **Reverse Proxy** – Traefik, NGINX, Caddy, vorhanden oder keiner
+4. **Reverse Proxy** – Keiner (lokale Host-Ports), Traefik, vorhandener Proxy oder NGINX (manuell)
+5. **Proxy-Netzwerk** – **Nur wenn ein Reverse Proxy gewählt wurde:** Docker-Netzwerk für den Frontend-Container wählen oder erstellen. Ohne Proxy entfällt dieser Schritt; es wird nur das interne Netz `festschmiede_internal` verwendet.
 6. **Domain** – Basisdomain, WWW/APP-Subdomains, HTTPS/Let's Encrypt
 7. **Plattform** – Name, Zeitzone, Sprache
 8. **Datenbank** – Intern (PostgreSQL-Container) oder extern

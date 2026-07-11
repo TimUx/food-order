@@ -74,9 +74,14 @@ grep -q "festschmiede_internal" "${INSTALL_DIR}/installer/generated/compose.over
 
 CFG[USES_REVERSE_PROXY]="yes"
 CFG[PROXY_MODE]="existing"
+CFG[INSTALL_PROFILE]="production"
+CFG[PLATFORM_DOMAIN]="festschmiede.example.de"
 CFG[DOCKER_PROXY_NETWORK]="traefik_net"
 CFG[DOCKER_NETWORK]="traefik_net"
 CFG[DOCKER_NETWORK_CREATE]="no"
+apply_defaults
+[[ "${CFG[INSTALL_PROFILE]}" == "production" && "${CFG[PLATFORM_DOMAIN]}" == "festschmiede.example.de" ]] \
+  && pass "existing proxy uses production profile" || fail "existing proxy uses production profile"
 generate_compose_override
 grep -qE "ports: (\[\]|!reset \[\])" "${INSTALL_DIR}/installer/generated/compose.override.yml" \
   && pass "proxy mode no host ports" || fail "proxy mode no host ports"
