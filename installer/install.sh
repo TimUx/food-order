@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # FestSchmiede Installer – Professioneller interaktiver Installations-Assistent (TUI)
-# Version 2.3.7
+# Version 2.3.8
 
 set -euo pipefail
 

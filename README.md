@@ -27,7 +27,7 @@ Weitere Bilder: [docs/screenshots/](docs/screenshots/README.md)
 ## Schnellstart
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.7/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.8/install.sh | bash
 ```
 
 Oder nach Git-Clone: `./install.sh` — Details in der [Installationsanleitung](docs/INSTALLATION.md).

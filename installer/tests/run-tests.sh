@@ -131,6 +131,25 @@ load_postgres_credentials_from_file "$cred" \
   && pass "postgres credentials from backup" || fail "postgres credentials from backup"
 rm -rf "$TMP_PG"
 
+echo "--- Postgres Volume Filter ---"
+export INSTALL_DIR="/srv/apps/festschmiede"
+DOCKER_VOLUMES=(patchmon_postgres_data other_postgres_data)
+# shellcheck source=installer/lib/detect.sh
+source "${INSTALLER_DIR}/lib/detect.sh"
+detect_postgres_volume
+[[ "${SYS_DETECT[postgres_volume]:-no}" == "no" ]] \
+  && pass "ignores foreign postgres volumes" || fail "ignores foreign postgres volumes"
+
+DOCKER_VOLUMES=(patchmon_postgres_data festschmiede_postgres_data)
+detect_postgres_volume
+[[ "${SYS_DETECT[postgres_volume_name]:-}" == "festschmiede_postgres_data" ]] \
+  && pass "detects festschmiede postgres volume" || fail "detects festschmiede postgres volume"
+
+DOCKER_VOLUMES=(vereins_postgres_data)
+detect_postgres_volume
+[[ "${SYS_DETECT[postgres_volume_name]:-}" == "vereins_postgres_data" ]] \
+  && pass "detects legacy vereins postgres volume" || fail "detects legacy vereins postgres volume"
+
 echo ""
 echo "Ergebnis: $PASS bestanden, $FAIL fehlgeschlagen"
 [[ $FAIL -eq 0 ]]

@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 # FestSchmiede Installer – Konfigurationsgenerierung (.env, compose)
 
-#!/usr/bin/env bash
-# FestSchmiede Installer – Konfigurationsgenerierung (.env, compose)
-
 load_postgres_credentials_from_file() {
   local env_file="$1"
   local key value

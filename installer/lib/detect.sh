@@ -126,16 +126,60 @@ detect_ports() {
   done
 }
 
+compose_project_name() {
+  local name=""
+  if [[ -f "${INSTALL_DIR}/.env" ]]; then
+    name=$(grep -E '^COMPOSE_PROJECT_NAME=' "${INSTALL_DIR}/.env" 2>/dev/null | head -1 | cut -d= -f2-)
+    name="${name%$'\r'}"
+    name="${name#\"}"; name="${name%\"}"
+    name="${name#\'}"; name="${name%\'}"
+  fi
+  if [[ -z "$name" ]]; then
+    name=$(basename "$INSTALL_DIR")
+  fi
+  echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_-]//g'
+}
+
+is_festschmiede_postgres_volume() {
+  local vol="$1" project candidate
+  [[ -n "$vol" ]] || return 1
+  project=$(compose_project_name)
+  for candidate in "${project}_postgres_data" "festschmiede_postgres_data" "vereins_postgres_data"; do
+    [[ -n "$candidate" && "$vol" == "$candidate" ]] && return 0
+  done
+  return 1
+}
+
+postgres_volume_from_container() {
+  local container vol
+  for container in festschmiede-postgres vereins-postgres; do
+    if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$container"; then
+      vol=$(docker inspect "$container" --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Name}}{{end}}{{end}}' 2>/dev/null || true)
+      if [[ -n "$vol" ]]; then
+        echo "$vol"
+        return 0
+      fi
+    fi
+  done
+  return 1
+}
+
 detect_postgres_volume() {
   SYS_DETECT[postgres_volume]="no"
   SYS_DETECT[postgres_volume_name]=""
-  local vol
+  local vol container_vol
+
+  if container_vol=$(postgres_volume_from_container); then
+    SYS_DETECT[postgres_volume]="yes"
+    SYS_DETECT[postgres_volume_name]="$container_vol"
+    return 0
+  fi
+
   for vol in "${DOCKER_VOLUMES[@]}"; do
-    if [[ "$vol" == *postgres_data* ]]; then
-      SYS_DETECT[postgres_volume]="yes"
-      SYS_DETECT[postgres_volume_name]="$vol"
-      return 0
-    fi
+    is_festschmiede_postgres_volume "$vol" || continue
+    SYS_DETECT[postgres_volume]="yes"
+    SYS_DETECT[postgres_volume_name]="$vol"
+    return 0
   done
 }
 

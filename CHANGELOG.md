@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.3.8 - 2026-07-11
+
+### Behoben
+
+- **Installer:** PostgreSQL-Volume-Erkennung berücksichtigt nur FestSchmiede-Volumes (`festschmiede_postgres_data`, `{projekt}_postgres_data`, Legacy `vereins_postgres_data`) — nicht fremde Volumes wie `patchmon_postgres_data`.
+
+---
+
 ## 2.3.7 - 2026-07-11
 
 ### Behoben
