@@ -3,6 +3,16 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.9 - 2026-07-12
+
+### Behoben
+
+- **CI / QA:** Login-API akzeptiert wieder `email` als Alias für `identifier` (Rückwärtskompatibilität für Tests und bestehende Clients).
+- **CI / QA:** Seeds setzen `passwordEnabled` explizit; E2E-Tests nutzen das neue Login-Feld-Label.
+- **CI / QA:** ESLint-Warnung in `platformAuthService.ts` behoben.
+
+---
+
 ## 2.4.8 - 2026-07-12
 
 ### Hinzugefügt
