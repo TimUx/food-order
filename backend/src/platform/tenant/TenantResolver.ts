@@ -183,7 +183,7 @@ export class TenantResolver {
   }
 
   extractRoutingPath(req: Request): string {
-    const original = req.originalUrl.split('?')[0];
+    const original = req.originalUrl?.split('?')[0];
     return original || req.path;
   }
 
