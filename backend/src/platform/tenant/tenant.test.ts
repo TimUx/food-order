@@ -132,7 +132,7 @@ describe('TenantResolver', () => {
       wwwDomain: 'www.example.test',
       appSubdomain: 'app',
       appDomain: 'app.example.test',
-      pathPrefixRoutingEnabled: false,
+      pathPrefixRoutingEnabled: true,
     });
     tenantService = createMockTenantService();
     resolver = new TenantResolver(tenantService, platformContext, {
@@ -169,18 +169,20 @@ describe('TenantResolver', () => {
     expect(result.surface).toBe('app');
   });
 
-  it('resolves tenant by subdomain', async () => {
-    vi.mocked(tenantService.findBySubdomain).mockResolvedValue(sampleTenant);
+  it('resolves tenant by path prefix on app host', async () => {
+    vi.mocked(tenantService.findBySlug).mockResolvedValue(sampleTenant);
     const req = {
-      headers: { host: 'asv-libelle.example.test' },
-      hostname: 'asv-libelle.example.test',
+      headers: { host: 'app.example.test' },
+      hostname: 'app.example.test',
       path: '/api/public/tenant',
+      originalUrl: '/asv-libelle/api/public/tenant',
     } as Request;
 
     const result = await resolver.resolve(req);
     expect(result.type).toBe('tenant');
     expect(result.scope).toBe('tenant');
-    expect(result.matchedBy).toBe('subdomain');
+    expect(result.matchedBy).toBe('path_prefix');
+    expect(result.pathPrefix).toBe('/asv-libelle');
     expect(result.tenant?.slug).toBe('asv-libelle');
   });
 
@@ -213,11 +215,23 @@ describe('TenantResolver', () => {
     expect(result.matchedBy).toBe('default_fallback');
   });
 
+  it('rejects legacy tenant subdomain hosts', async () => {
+    const req = {
+      headers: { host: 'asv-libelle.example.test' },
+      hostname: 'asv-libelle.example.test',
+      path: '/api/public/tenant',
+      originalUrl: '/api/public/tenant',
+    } as Request;
+
+    await expect(resolver.resolve(req)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
   it('rejects invalid host headers', async () => {
     const req = {
       headers: { host: 'evil<script>.example' },
       hostname: 'evil<script>.example',
       path: '/api/public/tenant',
+      originalUrl: '/api/public/tenant',
     } as Request;
 
     await expect(resolver.resolve(req)).rejects.toMatchObject({ statusCode: 400 });

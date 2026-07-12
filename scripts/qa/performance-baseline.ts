@@ -6,8 +6,10 @@ import fs from 'fs';
 import path from 'path';
 
 const artifactsDir = path.resolve(__dirname, '../../artifacts');
-const apiBase = process.env.QA_API_BASE || 'http://localhost:3001/api';
-const tenantHost = process.env.QA_TENANT_HOST || 'default.localhost';
+const tenantSlug = process.env.QA_TENANT_SLUG || 'default';
+const apiBase = process.env.QA_API_BASE || `http://localhost:3001/${tenantSlug}/api`;
+const platformApiBase = process.env.QA_PLATFORM_API_BASE || 'http://localhost:3001/api';
+const tenantHost = process.env.QA_TENANT_HOST || 'localhost';
 const eventId = process.env.QA_EVENT_ID || '00000000-0000-0000-0000-000000000001';
 const staffEmail = process.env.STAFF_EMAIL || 'admin@verein.local';
 const staffPassword = process.env.STAFF_PASSWORD || 'admin123';
@@ -56,7 +58,7 @@ async function main(): Promise<void> {
     eventStatsThresholdMs: statsThresholdMs,
   };
 
-  const health = await measure('health', `${apiBase}/health`);
+  const health = await measure('health', `${platformApiBase}/health`);
   results.healthMs = health.ms;
 
   const menu = await measure('menu', `${apiBase}/public/menu`, { headers: tenantHeaders() });
@@ -69,7 +71,7 @@ async function main(): Promise<void> {
   const event = await measure('event', `${apiBase}/public/event`, { headers: tenantHeaders() });
   results.publicEventMs = event.ms;
 
-  const routing = await measure('routing', `${apiBase}/public/routing-config`);
+  const routing = await measure('routing', `${platformApiBase}/public/routing-config`);
   results.routingConfigMs = routing.ms;
 
   const realtime1 = await measure('realtime-pickup', `${apiBase}/realtime/pickup-board`, {

@@ -10,6 +10,7 @@ import { moduleManager, createTenantMiddlewareStack, initializeTenantInfrastruct
 import { registerCorePayables } from './core/payable/registerPayables';
 import { migrateLegacySettingsSecrets } from './core/settings/migrateLegacySecrets';
 import { createUploadAccessMiddleware } from './middleware/uploadAccess';
+import { createTenantPathRewriteMiddleware } from './middleware/tenantPathRewrite';
 
 const app = express();
 
@@ -27,6 +28,8 @@ app.use(express.json({
     }
   },
 }));
+
+app.use(createTenantPathRewriteMiddleware());
 
 for (const middleware of createTenantMiddlewareStack()) {
   app.use(middleware);

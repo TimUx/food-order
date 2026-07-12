@@ -191,7 +191,7 @@ export const DEFAULT_PLATFORM_CONTEXT: PlatformContextData = {
   sessionDomain: null,
   maintenanceMode: false,
   allowedDomains: ['localhost'],
-  pathPrefixRoutingEnabled: false,
+  pathPrefixRoutingEnabled: true,
   defaultLocale: 'de-DE',
   defaultTimezone: 'Europe/Berlin',
   defaultTheme: 'default',

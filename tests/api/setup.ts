@@ -12,26 +12,45 @@ const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 process.chdir(backendRoot);
 dotenv.config({ path: path.join(backendRoot, '.env') });
 
-// API tests use in-process supertest — ensure tenant resolves on localhost.
-process.env.MULTI_TENANT_ENABLED = process.env.MULTI_TENANT_ENABLED ?? 'false';
+// Pfad-basiertes Mandanten-Routing (v2.0): /default/api/… auf localhost
+process.env.MULTI_TENANT_ENABLED = process.env.MULTI_TENANT_ENABLED ?? 'true';
 process.env.PLATFORM_DOMAIN = process.env.PLATFORM_DOMAIN ?? 'localhost';
 process.env.PLATFORM_BASE_DOMAIN = process.env.PLATFORM_BASE_DOMAIN ?? 'localhost';
 
 export const BACKEND_ROOT = backendRoot;
-export const QA_TENANT_HOST = 'default.localhost';
+export const QA_TENANT_SLUG = process.env.QA_TENANT_SLUG || 'default';
+export const QA_TENANT_HOST = process.env.QA_TENANT_HOST || 'localhost';
 
-/** Supertest helper with Host header for default-tenant API routes. */
+const PLATFORM_API_PREFIXES = [
+  '/api/platform',
+  '/api/public/platform',
+  '/api/health',
+  '/api/public/routing-config',
+  '/api/public/tenant-applications',
+];
+
+/** Mandanten-API-Pfad mit Slug-Präfix (v2.0). */
+export function tenantApiPath(url: string): string {
+  if (url.startsWith('http')) return url;
+  if (/^\/[^/]+\/api\//.test(url)) return url;
+  if (PLATFORM_API_PREFIXES.some((prefix) => url === prefix || url.startsWith(`${prefix}/`))) {
+    return url;
+  }
+  return `/${QA_TENANT_SLUG}${url}`;
+}
+
+/** Supertest helper: localhost + Pfad-Präfix für Mandanten-APIs. */
 export function tenantApi(app: Express) {
   const agent = request(app);
-  const withHost = (call: ReturnType<typeof agent.get>) =>
-    call.set('Host', QA_TENANT_HOST).set('X-Forwarded-Host', QA_TENANT_HOST);
+  const withHost = <T extends ReturnType<typeof agent.get>>(call: T): T =>
+    call.set('Host', QA_TENANT_HOST).set('X-Forwarded-Host', QA_TENANT_HOST) as T;
 
   return {
-    get: (url: string) => withHost(agent.get(url)),
-    post: (url: string) => withHost(agent.post(url)),
-    put: (url: string) => withHost(agent.put(url)),
-    patch: (url: string) => withHost(agent.patch(url)),
-    delete: (url: string) => withHost(agent.delete(url)),
+    get: (url: string) => withHost(agent.get(tenantApiPath(url))),
+    post: (url: string) => withHost(agent.post(tenantApiPath(url))),
+    put: (url: string) => withHost(agent.put(tenantApiPath(url))),
+    patch: (url: string) => withHost(agent.patch(tenantApiPath(url))),
+    delete: (url: string) => withHost(agent.delete(tenantApiPath(url))),
   };
 }
 

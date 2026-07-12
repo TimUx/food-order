@@ -38,6 +38,7 @@ export interface RoutingConfig {
   wwwUrl: string;
   appUrl: string;
   apiUrl: string;
+  apiBasePath: string;
   tenantUrl: string | null;
   domains: PlatformDomainsConfig;
 }
@@ -65,6 +66,7 @@ export const DEFAULT_ROUTING: RoutingConfig = {
   wwwUrl: defaultOrigin,
   appUrl: defaultOrigin,
   apiUrl: `${defaultOrigin}/api`,
+  apiBasePath: '/api',
   tenantUrl: null,
   domains: {
     platformDomain: 'localhost',
@@ -80,7 +82,7 @@ export const DEFAULT_ROUTING: RoutingConfig = {
     statusSubdomain: null,
     statusDomain: null,
     wildcardDomain: '*.localhost',
-    tenantDomainPattern: '{tenant}.localhost',
+    tenantDomainPattern: '{tenant}',
     cookieDomain: null,
     sessionDomain: null,
     reservedSubdomains: ['www', 'app', 'api', 'docs', 'status'],

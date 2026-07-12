@@ -13,7 +13,7 @@ function createResolver(trustProxyHops = 0) {
     current: () => ({
       baseDomain: 'festschmiede.test',
       allowedDomains: ['festschmiede.test'],
-      pathPrefixRoutingEnabled: false,
+      pathPrefixRoutingEnabled: true,
     }),
   } as never;
 
@@ -25,11 +25,12 @@ function createResolver(trustProxyHops = 0) {
   });
 }
 
-function fakeReq(host: string, forwardedHost?: string): Request {
+function fakeReq(host: string, forwardedHost?: string, reqPath = '/api/public/club'): Request {
   return {
     hostname: host,
     headers: forwardedHost ? { 'x-forwarded-host': forwardedHost } : {},
-    path: '/api/public/club',
+    path: reqPath,
+    originalUrl: reqPath,
   } as Request;
 }
 
@@ -55,6 +56,7 @@ describe('TenantResolver security', () => {
         hostname: 'evil<script>',
         headers: {},
         path: '/api/public/club',
+        originalUrl: '/api/public/club',
       } as Request)
     ).rejects.toThrow();
   });

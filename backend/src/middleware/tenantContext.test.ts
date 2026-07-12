@@ -49,7 +49,7 @@ describe('tenantContext middleware', () => {
     vi.mocked(tenantResolver.resolve).mockResolvedValue({
       type: 'tenant',
       tenant: tenantData,
-      matchedBy: 'subdomain',
+      matchedBy: 'path_prefix',
     });
 
     const req = { path: '/api/public/tenant' } as Request;

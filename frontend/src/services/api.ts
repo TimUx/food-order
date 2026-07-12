@@ -1,5 +1,15 @@
 const API_URL = import.meta.env.VITE_API_URL || '';
 
+let apiBasePath = '/api';
+
+export function configureApiBase(path: string): void {
+  apiBasePath = path.startsWith('/') ? path : `/${path}`;
+}
+
+export function getApiBasePath(): string {
+  return apiBasePath;
+}
+
 type AuthRefreshHandlers = {
   getRefreshToken: () => string | null;
   onTokensRefreshed: (accessToken: string, refreshToken?: string) => void;
@@ -62,7 +72,7 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = path.startsWith('http') ? path : `${API_URL}/api${path}`;
+  const url = path.startsWith('http') ? path : `${API_URL}${apiBasePath}${path}`;
   const res = await fetch(url, { ...options, headers });
 
   if (res.status === 401 && token && !options._skipRefresh) {

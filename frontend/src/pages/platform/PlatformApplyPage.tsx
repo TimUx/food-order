@@ -136,8 +136,8 @@ export function PlatformApplyPage() {
               <TextField
                 required
                 fullWidth
-                label="Gewünschte Subdomain"
-                helperText={`z. B. mein-verein → ${routing.domains?.tenantDomainPattern?.replace('{subdomain}', 'mein-verein') ?? `${platform.baseDomain}`}`}
+                label="Gewünschter Mandanten-Slug"
+                helperText={`z. B. mein-verein → ${routing.appUrl}/mein-verein`}
                 value={form.requestedSubdomain}
                 onChange={(e) => update('requestedSubdomain', e.target.value)}
               />

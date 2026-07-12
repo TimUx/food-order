@@ -3,6 +3,30 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.0.0 - 2026-07-12
+
+### Geändert (Breaking)
+
+- **Multi-Tenant-Routing:** Mandanten sind nur noch unter Pfad auf dem App-Host erreichbar (`https://app.example.de/<tenant>/…`), nicht mehr per Subdomain (`<tenant>.example.de`).
+- **API:** Mandanten-APIs unter `/<tenant>/api/…` (zentraler `TenantResolver` + Pfad-Rewrite-Middleware).
+- **Frontend:** Öffentliche Bestellseite unter `/<tenant>/public`; `apiBasePath` aus Routing-Konfiguration.
+- **Traefik/Installer:** Nur noch zwei Router (`www` + `app`); keine `HostRegexp`, Wildcard-Zertifikate oder Mandanten-Subdomain-Fragen im Wizard.
+- **URLs in E-Mails/Links:** Pfad-basiert über `app.<domain>/<slug>`.
+
+### Neu
+
+- `TenantPathRewriteMiddleware` für `/:tenant/api` und `/:tenant/uploads`.
+- `createTenantResolverMiddleware` als Alias der zentralen Tenant-Middleware.
+- Automatische DB-Migration `migratePathRoutingV20` (Pfad-Routing aktivieren, Wildcard-CORS deaktivieren).
+
+### Vorteile
+
+- Ein Zertifikat pro Host (www + app), kein Wildcard/DNS-Challenge.
+- Einfacheres Self-Hosting mit Traefik, nginx, Caddy oder HAProxy.
+- Zukünftige eigene Domains/Subdomains pro Mandant nur im `TenantResolver` änderbar.
+
+---
+
 ## 2.3.13 - 2026-07-12
 
 ### Behoben

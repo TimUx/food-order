@@ -60,3 +60,6 @@ export function createTenantContextMiddleware(
     }
   };
 }
+
+/** Alias gemäß Architektur-Dokumentation (TenantResolverMiddleware). */
+export const createTenantResolverMiddleware = createTenantContextMiddleware;

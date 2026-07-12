@@ -23,7 +23,7 @@ export interface PlatformDomainConfig {
   sessionDomain: string | null;
   allowedOrigins: string[];
   reservedSubdomains: string[];
-  tenantSubdomainMode: 'wildcard';
+  tenantRoutingMode: 'path';
   source: 'infrastructure';
 }
 
@@ -196,7 +196,7 @@ export function loadDomainConfigFromEnv(): PlatformDomainConfig {
     sessionDomain: process.env.PLATFORM_SESSION_DOMAIN?.trim() || process.env.SESSION_DOMAIN?.trim() || null,
     allowedOrigins,
     reservedSubdomains,
-    tenantSubdomainMode: 'wildcard',
+    tenantRoutingMode: 'path',
     source: 'infrastructure',
   };
 }
@@ -246,21 +246,32 @@ export function buildPlatformUrl(domains: PlatformDomainConfig, path = '', proto
 
 export function buildTenantUrl(
   domains: PlatformDomainConfig,
-  tenantSubdomain: string,
+  tenantSlug: string,
   path = '',
   proto?: 'http' | 'https'
 ): string {
+  const normalizedPath = normalizePath(path);
   if (isLocalPlatformDomain(domains.platformDomain)) {
-    return buildLocalDevUrl(path);
+    return buildLocalDevUrl(`/${tenantSlug}${normalizedPath}`);
   }
   const scheme = proto ?? defaultProto(domains);
-  return `${scheme}://${tenantSubdomain}.${domains.platformDomain}${normalizePath(path)}`;
+  return `${scheme}://${domains.appDomain}/${tenantSlug}${normalizedPath}`;
 }
 
-export function buildApiUrl(domains: PlatformDomainConfig, path = '', proto?: 'http' | 'https'): string {
+export function buildApiUrl(
+  domains: PlatformDomainConfig,
+  path = '',
+  proto?: 'http' | 'https',
+  tenantSlug?: string | null
+): string {
   const host = domains.apiDomain ?? domains.appDomain;
   const scheme = proto ?? defaultProto(domains);
-  return `${scheme}://${host}${normalizePath(path)}`;
+  const normalizedPath = normalizePath(path);
+  const apiPath = normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
+  if (tenantSlug) {
+    return `${scheme}://${host}/${tenantSlug}${apiPath}`;
+  }
+  return `${scheme}://${host}${apiPath}`;
 }
 
 export function buildDocsUrl(domains: PlatformDomainConfig, path = '', proto?: 'http' | 'https'): string {
@@ -277,12 +288,12 @@ export function buildStatusUrl(domains: PlatformDomainConfig, path = '', proto?:
 
 export function formatTenantSubdomainExample(
   domains: PlatformDomainConfig,
-  tenantSubdomain = 'mein-verein'
+  tenantSlug = 'mein-verein'
 ): string {
   if (isLocalPlatformDomain(domains.platformDomain)) {
-    return `${tenantSubdomain} (lokal: Subdomain oder Pfad-Präfix)`;
+    return `${tenantSlug} (lokal: /${tenantSlug})`;
   }
-  return `${tenantSubdomain}.${domains.platformDomain}`;
+  return `${domains.appDomain}/${tenantSlug}`;
 }
 
 export function isReservedSubdomain(subdomain: string, domains: PlatformDomainConfig): boolean {
@@ -386,7 +397,7 @@ export function getDomainPublicView(ctx: PlatformContextData | undefined): Platf
     wildcardDomain: ctx.wildcardDomain,
     reservedSubdomains: ctx.reservedSubdomains?.length ? ctx.reservedSubdomains : domains.reservedSubdomains,
     allowedOrigins: domains.allowedOrigins,
-    tenantDomainPattern: `{tenant}.${ctx.baseDomain}`,
+    tenantDomainPattern: `{tenant}`,
     source: 'infrastructure',
   };
 }

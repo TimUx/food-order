@@ -134,17 +134,22 @@ apply_defaults() {
   fi
 
   if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
-    CFG[MULTI_TENANT_ENABLED]="true"
+    CFG[MULTI_TENANT_ENABLED]="${CFG[MULTI_TENANT_ENABLED]:-true}"
     CFG[PLATFORM_DOMAIN]="${CFG[PLATFORM_DOMAIN]:-festschmiede.local}"
-    CFG[PLATFORM_WILDCARD_DOMAIN]="*.${CFG[PLATFORM_DOMAIN]}"
     CFG[WWW_SUBDOMAIN]="${CFG[WWW_SUBDOMAIN]:-www}"
     CFG[APP_SUBDOMAIN]="${CFG[APP_SUBDOMAIN]:-app}"
     CFG[API_SUBDOMAIN]="${CFG[API_SUBDOMAIN]:-api}"
     CFG[ACME_EMAIL]="${CFG[ACME_EMAIL]:-admin@${CFG[PLATFORM_DOMAIN]}}"
-    CFG[CORS_ORIGIN]="https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}"
-    CFG[VITE_API_URL]="https://${CFG[API_SUBDOMAIN]:-api}.${CFG[PLATFORM_DOMAIN]}"
-    CFG[VITE_WS_URL]="https://${CFG[API_SUBDOMAIN]:-api}.${CFG[PLATFORM_DOMAIN]}"
-    CFG[PLATFORM_ALLOWED_ORIGINS]="https://${CFG[PLATFORM_DOMAIN]},https://*.${CFG[PLATFORM_DOMAIN]}"
+    migrate_traefik_tls_model
+    if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
+      CFG[CORS_ORIGIN]="https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}"
+      CFG[VITE_API_URL]="https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}"
+    else
+      CFG[CORS_ORIGIN]="https://${CFG[PLATFORM_DOMAIN]}"
+      CFG[VITE_API_URL]="https://${CFG[PLATFORM_DOMAIN]}"
+    fi
+    CFG[VITE_WS_URL]="${CFG[VITE_API_URL]}"
+    CFG[PLATFORM_ALLOWED_ORIGINS]="$(build_production_allowed_origins)"
   else
     CFG[MULTI_TENANT_ENABLED]="false"
     CFG[PLATFORM_DOMAIN]="${CFG[PLATFORM_DOMAIN]:-localhost}"
@@ -233,6 +238,99 @@ escape_stack_value() {
   printf '%s' "$1" | sed -e 's/"/\\"/g' -e 's/\$/$$/g'
 }
 
+build_traefik_host_rule() {
+  local mode="${1:-compose}"
+  local domain="${CFG[PLATFORM_DOMAIN]}"
+  local parts=() part rule=""
+
+  if [[ "${CFG[ENABLE_WWW_HOST]:-yes}" == "yes" ]]; then
+    parts+=("Host(\`${CFG[WWW_SUBDOMAIN]:-www}.${domain}\`)")
+  fi
+  if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
+    parts+=("Host(\`${CFG[APP_SUBDOMAIN]:-app}.${domain}\`)")
+  fi
+
+  for part in "${parts[@]}"; do
+    [[ -n "$rule" ]] && rule+=" || "
+    rule+="$part"
+  done
+  printf '%s' "$rule"
+}
+
+build_production_allowed_origins() {
+  local domain="${CFG[PLATFORM_DOMAIN]}"
+  local origins=()
+  if [[ "${CFG[ENABLE_WWW_HOST]:-yes}" == "yes" ]]; then
+    origins+=("https://${CFG[WWW_SUBDOMAIN]:-www}.${domain}")
+  fi
+  if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
+    origins+=("https://${CFG[APP_SUBDOMAIN]:-app}.${domain}")
+  fi
+  local IFS=,
+  echo "${origins[*]}"
+}
+
+build_nginx_server_names() {
+  local domain="${CFG[PLATFORM_DOMAIN]}"
+  local names=""
+  if [[ "${CFG[ENABLE_WWW_HOST]:-yes}" == "yes" ]]; then
+    names+="${CFG[WWW_SUBDOMAIN]:-www}.${domain}"
+  fi
+  if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
+    [[ -n "$names" ]] && names+=" "
+    names+="${CFG[APP_SUBDOMAIN]:-app}.${domain}"
+  fi
+  printf '%s' "$names"
+}
+
+migrate_traefik_tls_model() {
+  # Rückwärtskompatibilität: alte Installationen ohne Host-Flags
+  if [[ -z "${CFG[ENABLE_WWW_HOST]:-}" ]]; then
+    CFG[ENABLE_WWW_HOST]="yes"
+  fi
+  if [[ -z "${CFG[ENABLE_APP_HOST]:-}" ]]; then
+    CFG[ENABLE_APP_HOST]="yes"
+  fi
+
+  # Pfad-basiertes Mandanten-Routing (v2.0): Multi-Tenant unabhängig von Subdomain-Hosts
+  if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+    CFG[MULTI_TENANT_ENABLED]="true"
+  fi
+
+  CFG[TRAEFIK_CERT_RESOLVER]="${CFG[TRAEFIK_CERT_RESOLVER]:-le}"
+
+  CFG[PLATFORM_WWW_DOMAIN]=""
+  [[ "${CFG[ENABLE_WWW_HOST]}" == "yes" ]] && CFG[PLATFORM_WWW_DOMAIN]="${CFG[WWW_SUBDOMAIN]:-www}.${CFG[PLATFORM_DOMAIN]}"
+  CFG[PLATFORM_APP_DOMAIN]=""
+  [[ "${CFG[ENABLE_APP_HOST]}" == "yes" ]] && CFG[PLATFORM_APP_DOMAIN]="${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}"
+
+  CFG[PLATFORM_WILDCARD_DOMAIN]=""
+  unset 'CFG[ENABLE_TENANT_HOSTS]'
+
+  if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" && -n "${CFG[PLATFORM_DOMAIN]:-}" ]]; then
+    CFG[TRAEFIK_ROUTER_RULE]="$(build_traefik_host_rule compose)"
+    CFG[TRAEFIK_ROUTER_RULE_SWARM]="$(build_traefik_host_rule swarm)"
+  fi
+}
+
+regenerate_deployment_from_env() {
+  load_existing_env
+  apply_defaults
+  migrate_traefik_tls_model
+  generate_deployment_config
+  generate_env_file
+  log_info "Deployment-Konfiguration migriert (Pfad-basiertes Mandanten-Routing, Per-Host-TLS)"
+}
+
+_write_traefik_tls_labels() {
+  local indent="${1:-      }"
+  local resolver="${CFG[TRAEFIK_CERT_RESOLVER]:-le}"
+  printf '%s- traefik.http.routers.festschmiede.tls=true\n' "$indent"
+  if [[ "${CFG[HTTPS_ENABLED]:-no}" == "yes" || "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+    printf '%s- traefik.http.routers.festschmiede.tls.certresolver=%s\n' "$indent" "$resolver"
+  fi
+}
+
 _swarm_node_placement_yaml() {
   local node_id="${CFG[SWARM_NODE_ID]:-}"
   local node_hostname="${CFG[SWARM_NODE_HOSTNAME]:-}"
@@ -250,26 +348,17 @@ EOF
 }
 
 _write_swarm_traefik_deploy_labels() {
-  local domain="${CFG[PLATFORM_DOMAIN]}"
   local proxy_net="${CFG[DOCKER_PROXY_NETWORK]}"
-  local resolver="${CFG[TRAEFIK_CERT_RESOLVER]:-}"
+  local rule="${CFG[TRAEFIK_ROUTER_RULE_SWARM]:-$(build_traefik_host_rule swarm)}"
 
   cat <<EOF
       labels:
         - traefik.enable=true
         - traefik.docker.network=${proxy_net}
-        - traefik.http.routers.festschmiede.rule=Host(\`${domain}\`) || HostRegexp(\`^[a-z0-9-]+\\\\.${domain}\$\$\`)
+        - traefik.http.routers.festschmiede.rule=${rule}
         - traefik.http.routers.festschmiede.entrypoints=websecure
 EOF
-  if [[ -n "$resolver" && "${CFG[HTTPS_ENABLED]:-no}" == "yes" ]]; then
-    cat <<EOF
-        - traefik.http.routers.festschmiede.tls.certresolver=${resolver}
-        - traefik.http.routers.festschmiede.tls.domains[0].main=${domain}
-        - traefik.http.routers.festschmiede.tls.domains[0].sans=*.${domain}
-EOF
-  else
-    echo "        - traefik.http.routers.festschmiede.tls=true"
-  fi
+  _write_traefik_tls_labels "        "
   cat <<EOF
         - traefik.http.routers.festschmiede.service=festschmiede
         - traefik.http.services.festschmiede.loadbalancer.server.port=80
@@ -298,7 +387,8 @@ generate_swarm_stack() {
   local image_tag="${CFG[IMAGE_TAG]}"
   local domain="${CFG[PLATFORM_DOMAIN]}"
 
-  local db_user db_name db_pass jwt_sec enc_key admin_pass admin_email cors allowed wildcard
+  local db_user db_name db_pass jwt_sec enc_key admin_pass admin_email cors allowed
+  local www_domain app_domain
   db_user="$(escape_stack_value "${CFG[POSTGRES_USER]}")"
   db_name="$(escape_stack_value "${CFG[POSTGRES_DB]}")"
   db_pass="$(escape_stack_value "${CFG[POSTGRES_PASSWORD]}")"
@@ -308,7 +398,8 @@ generate_swarm_stack() {
   admin_email="$(escape_stack_value "${CFG[PLATFORM_ADMIN_EMAIL]:-platform@festschmiede.local}")"
   cors="$(escape_stack_value "${CFG[CORS_ORIGIN]}")"
   allowed="$(escape_stack_value "${CFG[PLATFORM_ALLOWED_ORIGINS]:-}")"
-  wildcard="$(escape_stack_value "${CFG[PLATFORM_WILDCARD_DOMAIN]:-}")"
+  www_domain="$(escape_stack_value "${CFG[PLATFORM_WWW_DOMAIN]:-}")"
+  app_domain="$(escape_stack_value "${CFG[PLATFORM_APP_DOMAIN]:-}")"
 
   local database_url redis_env="" smtp_env="" postgres_service="" redis_service="" secrets_block=""
   if [[ "$db_mode" == "internal" ]]; then
@@ -426,7 +517,8 @@ ${backend_ports}
       MULTI_TENANT_ENABLED: "${CFG[MULTI_TENANT_ENABLED]:-false}"
       PLATFORM_DOMAIN: "${domain}"
       PLATFORM_BASE_DOMAIN: "${domain}"
-      PLATFORM_WILDCARD_DOMAIN: "${wildcard}"
+      PLATFORM_WWW_DOMAIN: "${www_domain}"
+      PLATFORM_APP_DOMAIN: "${app_domain}"
       PLATFORM_ALLOWED_ORIGINS: "${allowed}"
       DEFAULT_TENANT_SLUG: "${CFG[DEFAULT_TENANT_SLUG]:-default}"
       TRUSTED_PROXY_HOPS: "${CFG[TRUSTED_PROXY_HOPS]:-2}"
@@ -544,26 +636,17 @@ generate_deployment_config() {
 }
 
 _write_traefik_frontend_labels() {
-  local domain="${CFG[PLATFORM_DOMAIN]}"
   local proxy_net="${CFG[DOCKER_PROXY_NETWORK]}"
-  local resolver="${CFG[TRAEFIK_CERT_RESOLVER]:-}"
+  local rule="${CFG[TRAEFIK_ROUTER_RULE]:-$(build_traefik_host_rule compose)}"
 
   cat <<EOF
     labels:
       - traefik.enable=true
       - traefik.docker.network=${proxy_net}
-      - traefik.http.routers.festschmiede.rule=Host(\`${domain}\`) || HostRegexp(\`^[a-z0-9-]+\\\\.${domain}$\`)
+      - traefik.http.routers.festschmiede.rule=${rule}
       - traefik.http.routers.festschmiede.entrypoints=websecure
 EOF
-  if [[ -n "$resolver" && "${CFG[HTTPS_ENABLED]:-no}" == "yes" ]]; then
-    cat <<EOF
-      - traefik.http.routers.festschmiede.tls.certresolver=${resolver}
-      - traefik.http.routers.festschmiede.tls.domains[0].main=${domain}
-      - traefik.http.routers.festschmiede.tls.domains[0].sans=*.${domain}
-EOF
-  else
-    echo "      - traefik.http.routers.festschmiede.tls=true"
-  fi
+  _write_traefik_tls_labels "      "
   cat <<EOF
       - traefik.http.services.festschmiede.loadbalancer.server.port=80
       - traefik.http.middlewares.festschmiede-headers.headers.sslredirect=true
@@ -580,6 +663,8 @@ generate_proxy_config_files() {
   local domain="${CFG[PLATFORM_DOMAIN]}"
   local proxy_net="${CFG[DOCKER_PROXY_NETWORK]}"
   local mode="${CFG[PROXY_MODE]}"
+  local nginx_names
+  nginx_names="$(build_nginx_server_names)"
   mkdir -p "$out"
 
   cat >"${out}/README.md" <<EOF
@@ -592,6 +677,9 @@ generate_proxy_config_files() {
 
 Die Dateien in diesem Ordner sind Vorlagen. Prüfen Sie Pfade, Zertifikate
 und Netzwerk-Anbindung an Ihre Umgebung, bevor Sie sie aktivieren.
+
+TLS: Pro Hostname ein eigenes Zertifikat (kein Wildcard). Mandanten-Subdomains
+erhalten jeweils ein separates Zertifikat über Traefik/Let's Encrypt.
 EOF
 
   case "$mode" in
@@ -608,13 +696,13 @@ upstream festschmiede_frontend {
 
 server {
     listen 80;
-    server_name ${domain} *.${domain};
+    server_name ${nginx_names};
     return 301 https://\$host\$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name ${domain} *.${domain};
+    server_name ${nginx_names};
 
     # ssl_certificate     /pfad/zu/fullchain.pem;
     # ssl_certificate_key /pfad/zu/privkey.pem;
@@ -650,13 +738,13 @@ upstream festschmiede_frontend {
 
 server {
     listen 80;
-    server_name ${domain} *.${domain};
+    server_name ${nginx_names};
     return 301 https://\$host\$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name ${domain} *.${domain};
+    server_name ${nginx_names};
 
     # ssl_certificate     /pfad/zu/fullchain.pem;
     # ssl_certificate_key /pfad/zu/privkey.pem;
@@ -690,7 +778,7 @@ EOF
 # FestSchmiede – Caddy (Vorlage)
 # nginx/Caddy muss im Docker-Netzwerk ${proxy_net} erreichbar sein.
 
-${domain}, *.${domain} {
+${nginx_names} {
     reverse_proxy festschmiede-frontend:80 {
         header_up Host {host}
         header_up X-Real-IP {remote_host}
@@ -707,7 +795,7 @@ EOF
 
 <VirtualHost *:443>
     ServerName ${domain}
-    ServerAlias *.${domain}
+    ServerAlias ${nginx_names}
 
     # SSLEngine on
     # SSLCertificateFile /pfad/zu/cert.pem
@@ -994,11 +1082,15 @@ VITE_WS_URL=${CFG[VITE_WS_URL]}
 
 MULTI_TENANT_ENABLED=${CFG[MULTI_TENANT_ENABLED]}
 PLATFORM_DOMAIN=${CFG[PLATFORM_DOMAIN]}
-PLATFORM_WILDCARD_DOMAIN=${CFG[PLATFORM_WILDCARD_DOMAIN]:-}
+ENABLE_WWW_HOST=${CFG[ENABLE_WWW_HOST]:-yes}
+ENABLE_APP_HOST=${CFG[ENABLE_APP_HOST]:-yes}
 WWW_SUBDOMAIN=${CFG[WWW_SUBDOMAIN]:-www}
 APP_SUBDOMAIN=${CFG[APP_SUBDOMAIN]:-app}
 API_SUBDOMAIN=${CFG[API_SUBDOMAIN]:-api}
+PLATFORM_WWW_DOMAIN=${CFG[PLATFORM_WWW_DOMAIN]:-}
+PLATFORM_APP_DOMAIN=${CFG[PLATFORM_APP_DOMAIN]:-}
 PLATFORM_ALLOWED_ORIGINS=${CFG[PLATFORM_ALLOWED_ORIGINS]:-}
+TRAEFIK_ROUTER_RULE=${CFG[TRAEFIK_ROUTER_RULE]:-}
 DEFAULT_TENANT_SLUG=${CFG[DEFAULT_TENANT_SLUG]}
 TRUSTED_PROXY_HOPS=${CFG[TRUSTED_PROXY_HOPS]}
 LOG_FORMAT=${CFG[LOG_FORMAT]}
@@ -1044,6 +1136,17 @@ format_config_summary() {
   fi
   s+=$'\n'"Plattform:         ${CFG[PLATFORM_NAME]:-FestSchmiede}"
   s+=$'\n'"Domain:            ${CFG[PLATFORM_DOMAIN]}"
+  if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+    local host_list=""
+    [[ "${CFG[ENABLE_WWW_HOST]:-yes}" == "yes" ]] && host_list="www.${CFG[PLATFORM_DOMAIN]}"
+    if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
+      [[ -n "$host_list" ]] && host_list+=", "
+      host_list+="app.${CFG[PLATFORM_DOMAIN]}"
+    fi
+    s+=$'\n'"Hosts:             ${host_list}"
+    s+=$'\n'"Mandanten:         app.${CFG[PLATFORM_DOMAIN]}/<tenant>"
+    s+=$'\n'"TLS:               Per-Host (Traefik/${CFG[TRAEFIK_CERT_RESOLVER]:-le}, kein Wildcard-Zertifikat)"
+  fi
   s+=$'\n'"Datenbank:         ${CFG[DB_MODE]:-internal} (PostgreSQL)"
   s+=$'\n'"Redis:             ${CFG[USE_REDIS]:-no}"
   s+=$'\n'"Reverse Proxy:     ${CFG[PROXY_MODE]:-none} (${CFG[PROXY_DEPLOYMENT]:-none})"
@@ -1070,7 +1173,7 @@ get_access_urls() {
   if [[ "${CFG[INSTALL_PROFILE]}" == "production" ]]; then
     echo "Homepage:  https://${CFG[WWW_SUBDOMAIN]:-www}.${CFG[PLATFORM_DOMAIN]}"
     echo "APP:       https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}/platform"
-    echo "Mandant:   https://<tenant>.${CFG[PLATFORM_DOMAIN]}"
+    echo "Mandant:   https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}/<tenant>/public"
   else
     echo "Frontend:  http://localhost:5173"
     echo "Backend:   http://localhost:3001"

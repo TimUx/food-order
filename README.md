@@ -27,17 +27,19 @@ Weitere Bilder: [docs/screenshots/](docs/screenshots/README.md)
 ## Schnellstart
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.13/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.0.0/install.sh | bash
 ```
 
 Oder nach Git-Clone: `./install.sh` — Details in der [Installationsanleitung](docs/INSTALLATION.md).
 
-| Dienst | URL (lokal) |
-|--------|-------------|
-| Bestellseite | http://localhost:5173/ |
-| Mitarbeiter | http://localhost:5173/mitarbeiter/login |
-| Admin | http://localhost:5173/admin/login |
+| Dienst | URL (lokal, Mandant `default`) |
+|--------|--------------------------------|
+| Bestellseite | http://localhost:5173/default/public |
+| Mitarbeiter | http://localhost:5173/default/mitarbeiter/login |
+| Admin | http://localhost:5173/default/admin/login |
 | Plattform | http://localhost:5173/platform/login |
+
+Produktion: `https://app.<domain>/<tenant>/public` · Landingpage: `https://www.<domain>`
 
 ## Dokumentation
 

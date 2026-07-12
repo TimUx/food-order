@@ -47,7 +47,7 @@ describe('PlatformDomainService', () => {
     const cfg = loadDomainConfigFromEnv();
     expect(buildWwwUrl(cfg, '/faq')).toBe('http://localhost:5173/faq');
     expect(buildAppUrl(cfg, '/platform')).toBe('http://localhost:5173/platform');
-    expect(buildTenantUrl(cfg, 'default', '/bestellung')).toBe('http://localhost:5173/bestellung');
+    expect(buildTenantUrl(cfg, 'default', '/bestellung')).toBe('http://localhost:5173/default/bestellung');
   });
 
   it('builds www, app and tenant URLs from configured domains', () => {
@@ -60,9 +60,9 @@ describe('PlatformDomainService', () => {
     });
     expect(buildAppUrl(cfg, '/platform', 'https')).toBe('https://app.example.test/platform');
     expect(buildWwwUrl(cfg, '/', 'https')).toBe('https://www.example.test');
-    expect(buildTenantUrl(cfg, 'verein', '/bestellung', 'https')).toBe('https://verein.example.test/bestellung');
-    expect(buildApiUrl(cfg, '/api', 'https')).toBe('https://api.example.test/api');
-    expect(formatTenantSubdomainExample(cfg, 'mein-verein')).toBe('mein-verein.example.test');
+    expect(buildTenantUrl(cfg, 'verein', '/bestellung', 'https')).toBe('https://app.example.test/verein/bestellung');
+    expect(buildApiUrl(cfg, '/api', 'https', 'verein')).toBe('https://api.example.test/verein/api');
+    expect(formatTenantSubdomainExample(cfg, 'mein-verein')).toBe('app.example.test/mein-verein');
   });
 
   it('resolves surface from subdomain labels', () => {

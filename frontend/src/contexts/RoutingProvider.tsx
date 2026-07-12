@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import type { RoutingConfig } from '@/types/routing';
 import { DEFAULT_ROUTING } from '@/types/routing';
 import { fetchRoutingConfig } from '@/services/routingConfig';
+import { configureApiBase } from '@/services/api';
 
 interface RoutingContextType {
   routing: RoutingConfig;
@@ -22,6 +23,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const config = await fetchRoutingConfig();
+      configureApiBase(config.apiBasePath ?? '/api');
       setRouting(config);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Routing konnte nicht geladen werden');

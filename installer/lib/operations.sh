@@ -152,6 +152,9 @@ run_guided_update() {
 
   load_existing_env
   load_secrets_from_env
+  apply_defaults
+  generate_deployment_config
+  generate_env_file
   build_compose_files
 
   _ops_progress "Schritt 1/5: Konfigurations-Backup..."
@@ -189,6 +192,9 @@ run_guided_update() {
 
 run_guided_repair() {
   load_existing_env
+  apply_defaults
+  generate_deployment_config
+  generate_env_file
   build_compose_files
 
   _ops_progress "Reparatur: Services neu starten..."

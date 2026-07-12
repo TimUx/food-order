@@ -10,8 +10,11 @@ env:
   JWT_SECRET: qa-docker-ci-jwt-secret-not-in-blocklist-32chars
   APP_ENCRYPTION_KEY: qa-docker-ci-encryption-key-not-blocked32
   CORS_ORIGIN: http://localhost:5173
-  QA_API_BASE: http://localhost:3001/api
+  QA_API_BASE: http://localhost:3001/default/api
+  QA_PLATFORM_API_BASE: http://localhost:3001/api
+  QA_TENANT_SLUG: default
   QA_FRONTEND_BASE: http://localhost:5173
+  QA_TENANT_FRONTEND_BASE: http://localhost:5173/default
   QA_WORKFLOW: nightly
 
 jobs:

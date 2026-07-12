@@ -33,7 +33,7 @@ test.describe('Administrator', () => {
 
 test.describe('Bestellablauf', () => {
   test('Speisekarte öffnen und Bestellung absenden', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/public');
     await expect(page.getByText(/sommerfest|bestell/i).first()).toBeVisible({ timeout: 30_000 });
 
     const addButton = page.getByRole('button', { name: /\+/ }).first();

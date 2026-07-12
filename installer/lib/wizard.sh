@@ -311,43 +311,60 @@ wizard_step_domain() {
     return 0
   fi
 
-  prompt_until_valid "Schritt 6: Domain" "Basis-Domain (z.B. festschmiede.example.de):" validate_domain "festschmiede.local" PLATFORM_DOMAIN || return 1
+  prompt_until_valid "Schritt 9: Hauptdomain" "Hauptdomain (z. B. festschmiede.de):" validate_domain "festschmiede.local" PLATFORM_DOMAIN || return 1
 
-  CFG[WWW_SUBDOMAIN]=$(tui_input "WWW-Subdomain" "Subdomain für Homepage:" "${CFG[WWW_SUBDOMAIN]:-www}") || return 1
-  CFG[APP_SUBDOMAIN]=$(tui_input "APP-Subdomain" "Subdomain für Plattform-Admin:" "${CFG[APP_SUBDOMAIN]:-app}") || return 1
-  CFG[PLATFORM_WILDCARD_DOMAIN]="*.${CFG[PLATFORM_DOMAIN]}"
+  if tui_yesno "Website (www)" "Soll die öffentliche Website unter www.${CFG[PLATFORM_DOMAIN]} erreichbar sein?"; then
+    CFG[ENABLE_WWW_HOST]="yes"
+    CFG[WWW_SUBDOMAIN]="www"
+  else
+    CFG[ENABLE_WWW_HOST]="no"
+  fi
+
+  if tui_yesno "Anwendung (app)" "Soll die Plattform unter app.${CFG[PLATFORM_DOMAIN]} erreichbar sein?
+
+Mandanten werden unter app.${CFG[PLATFORM_DOMAIN]}/<tenant> bereitgestellt."; then
+    CFG[ENABLE_APP_HOST]="yes"
+    CFG[APP_SUBDOMAIN]="app"
+    CFG[MULTI_TENANT_ENABLED]="true"
+  else
+    CFG[ENABLE_APP_HOST]="no"
+  fi
 
   local https_prompt
   if [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ]]; then
-    https_prompt="Let's Encrypt (HTTPS) aktivieren?
+    https_prompt="HTTPS mit Let's Encrypt aktivieren?
 
-Erfordert gültige DNS-Einträge für ${CFG[PLATFORM_DOMAIN]} und *.${CFG[PLATFORM_DOMAIN]}"
+Traefik erzeugt pro Hostname ein eigenes Zertifikat beim ersten HTTPS-Aufruf.
+DNS: A/AAAA nur für www und app (keine Mandanten-Subdomains)."
   elif [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "external" ]]; then
     if [[ "${CFG[DEPLOYMENT_MODE]:-compose}" == "swarm" ]]; then
-      https_prompt="Traefik TLS-Labels in stack.yml setzen?
+      https_prompt="Traefik TLS in stack.yml aktivieren?
 
-Der vorhandene Traefik muss den Cert-Resolver kennen
-(oder TLS wird ohne Resolver gesetzt)."
+Pro Hostname ein Zertifikat (tls=true, certresolver=le).
+Keine Wildcard-Zertifikate (tls.domains entfällt)."
     else
-      https_prompt="Traefik TLS-Labels im Compose-File setzen?
+      https_prompt="Traefik TLS im Compose-File aktivieren?
 
-Der vorhandene Traefik muss den Cert-Resolver kennen
-(oder TLS wird ohne Resolver gesetzt)."
+Pro Hostname ein Zertifikat (tls=true, certresolver=le).
+Keine Wildcard-Zertifikate (tls.domains entfällt)."
     fi
   else
     https_prompt="HTTPS aktivieren?
 
-URLs und CORS werden auf https:// gesetzt (Zertifikat konfigurieren Sie am Reverse Proxy)."
+URLs und CORS werden auf https:// gesetzt."
   fi
 
   if tui_yesno "HTTPS" "$https_prompt"; then
     CFG[HTTPS_ENABLED]="yes"
-    if [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ]]; then
-      prompt_until_valid "ACME E-Mail" "E-Mail für Let's Encrypt:" validate_email "admin@${CFG[PLATFORM_DOMAIN]}" ACME_EMAIL || return 1
-    elif [[ "${CFG[PROXY_MODE]:-}" == "traefik" && "${CFG[PROXY_DEPLOYMENT]:-}" == "external" ]]; then
-      CFG[TRAEFIK_CERT_RESOLVER]=$(tui_input "Traefik Cert-Resolver" "Name des Certificate Resolvers auf Ihrem Traefik (leer = tls ohne Resolver):" "${CFG[TRAEFIK_CERT_RESOLVER]:-letsencrypt}") || return 1
+    if [[ "${CFG[PROXY_MODE]:-}" == "traefik" ]]; then
+      CFG[TRAEFIK_CERT_RESOLVER]="le"
+      if [[ "${CFG[PROXY_DEPLOYMENT]:-}" == "bundled" ]]; then
+        prompt_until_valid "ACME E-Mail" "E-Mail für Let's Encrypt:" validate_email "admin@${CFG[PLATFORM_DOMAIN]}" ACME_EMAIL || return 1
+      fi
     fi
   fi
+  migrate_traefik_tls_model
+  log_info "Traefik-Hosts: ${CFG[TRAEFIK_ROUTER_RULE]:-}"
   return 0
 }
 

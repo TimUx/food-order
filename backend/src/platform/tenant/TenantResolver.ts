@@ -27,7 +27,7 @@ interface CacheEntry {
 function platformResult(
   scope: RoutingScope,
   surface: PlatformSurface,
-  matchedBy: ResolveResult['matchedBy'] = 'subdomain'
+  matchedBy: ResolveResult['matchedBy'] = 'path_prefix'
 ): ResolveResult {
   return { type: 'platform', scope, surface, matchedBy };
 }
@@ -53,8 +53,8 @@ export class TenantResolver {
     this.validateHost(host);
 
     const platform = this.platformContext.current();
-    const path = pathOverride ?? req.path;
-    const cacheKey = this.buildCacheKey(host, path, platform.pathPrefixRoutingEnabled);
+    const path = pathOverride ?? this.extractRoutingPath(req);
+    const cacheKey = this.buildCacheKey(host, path);
     const cached = this.getFromCache(cacheKey);
     if (cached) return cached;
 
@@ -70,16 +70,16 @@ export class TenantResolver {
   ): Promise<ResolveResult> {
     const normalizedHost = host.toLowerCase();
     const domains = platformDomainService.getPublicView(platform);
+    const pathRoutingActive =
+      platform.pathPrefixRoutingEnabled || this.config.multiTenantEnabled;
 
-    if (platform.pathPrefixRoutingEnabled) {
-      const prefixResult = await this.resolvePathPrefix(path);
-      if (prefixResult) return prefixResult;
-    }
-
-    // Localhost: Pfad-basierte Unterscheidung www vs app (Host ist maßgeblich)
     if (normalizedHost === 'localhost' || normalizedHost === '127.0.0.1') {
-      if (path.startsWith('/platform') || path.startsWith('/api/platform')) {
+      if (this.isPlatformPath(path)) {
         return platformResult('app', 'app', 'localhost_path');
+      }
+      if (pathRoutingActive) {
+        const prefixResult = await this.resolvePathPrefix(path);
+        if (prefixResult) return prefixResult;
       }
       if (!this.config.multiTenantEnabled) {
         return this.resolveDefaultTenant('default_fallback');
@@ -89,49 +89,33 @@ export class TenantResolver {
       }
     }
 
-    const subdomain = platformDomainService.extractSubdomainFromHost(normalizedHost, domains.platformDomain);
-
-    if (subdomain === null) {
-      // Apex-Domain → Homepage (www)
-      return platformResult('www', 'apex');
-    }
-
+    const subdomain = platformDomainService.extractSubdomainFromHost(
+      normalizedHost,
+      domains.platformDomain
+    );
     const surface = platformDomainService.resolveSurfaceFromSubdomain(subdomain, domains);
 
-    if (surface === 'www') {
-      return platformResult('www', 'www');
+    if (surface === 'www' || subdomain === null) {
+      return platformResult('www', surface === 'apex' ? 'apex' : 'www', 'subdomain');
     }
 
-    if (surface === 'app') {
-      return platformResult('app', 'app');
+    if (surface === 'app' || surface === 'reserved') {
+      if (pathRoutingActive) {
+        const prefixResult = await this.resolvePathPrefix(path);
+        if (prefixResult) return prefixResult;
+      }
+      return platformResult('app', surface === 'reserved' ? 'reserved' : 'app', 'subdomain');
     }
 
-    if (surface === 'reserved') {
-      return platformResult('app', 'reserved');
-    }
-
-    return this.resolveSubdomain(subdomain);
+    throw new TenantNotFoundError();
   }
 
-  private async resolveSubdomain(subdomain: string): Promise<ResolveResult> {
-    const negativeKey = `neg:sub:${subdomain}`;
-    if (this.isNegativeCached(negativeKey)) {
-      throw new TenantNotFoundError();
-    }
-
-    const tenant = await this.tenantService.findBySubdomain(subdomain);
-    if (!tenant) {
-      this.setNegativeCache(negativeKey);
-      throw new TenantNotFoundError();
-    }
-
-    const contextData = await this.tenantService.resolveContextData(tenant);
-    return {
-      type: 'tenant',
-      scope: 'tenant',
-      tenant: contextData,
-      matchedBy: 'subdomain',
-    };
+  private isPlatformPath(path: string): boolean {
+    return (
+      path.startsWith('/platform') ||
+      path.startsWith('/api/platform') ||
+      /^\/[^/]+\/platform(\/|$)/.test(path)
+    );
   }
 
   private async resolvePathPrefix(path: string): Promise<ResolveResult | null> {
@@ -146,8 +130,16 @@ export class TenantResolver {
       return null;
     }
 
+    const negativeKey = `neg:slug:${slug}`;
+    if (this.isNegativeCached(negativeKey)) {
+      return null;
+    }
+
     const tenant = await this.tenantService.findBySlug(slug);
-    if (!tenant) return null;
+    if (!tenant) {
+      this.setNegativeCache(negativeKey);
+      return null;
+    }
 
     const contextData = await this.tenantService.resolveContextData(tenant);
     return {
@@ -190,6 +182,11 @@ export class TenantResolver {
     return raw.toLowerCase().split(':')[0] ?? null;
   }
 
+  extractRoutingPath(req: Request): string {
+    const original = req.originalUrl.split('?')[0];
+    return original || req.path;
+  }
+
   private validateHost(host: string): void {
     if (!/^[a-z0-9.-]+$/i.test(host)) {
       throw new TenantInvalidHostError();
@@ -204,20 +201,19 @@ export class TenantResolver {
       host === '127.0.0.1' ||
       host === baseDomain ||
       host.endsWith(`.${baseDomain}`) ||
-      allowed.some((domain) => host === domain.toLowerCase() || host.endsWith(`.${domain.toLowerCase()}`));
+      allowed.some(
+        (domain) =>
+          host === domain.toLowerCase() || host.endsWith(`.${domain.toLowerCase()}`)
+      );
 
     if (!isAllowed) {
       throw new TenantInvalidDomainError();
     }
   }
 
-  private buildCacheKey(host: string, path: string, prefixEnabled: boolean): string {
+  private buildCacheKey(host: string, path: string): string {
     const firstSegment = path.split('/').filter(Boolean)[0] ?? '';
-    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
-    if (prefixEnabled || isLocalHost) {
-      return `${host}:${firstSegment}`;
-    }
-    return host;
+    return `${host}:${firstSegment}`;
   }
 
   private getFromCache(key: string): ResolveResult | null {

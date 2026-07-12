@@ -23,28 +23,27 @@ export function createTenantController(
     platform: PlatformContextData,
     result: ResolveResult | null
   ) {
-    const host = tenantResolver.extractHost(req) ?? 'localhost';
     const proto = platformDomainService.resolveProto(req);
     const domains = platformDomainService.getPublicView(platform);
 
     const wwwUrl = platformDomainService.buildWwwUrl(domains, '', proto);
     const appUrl = platformDomainService.buildAppUrl(domains, '', proto);
-    const apiUrl = platformDomainService.buildApiUrl(domains, '/api', proto);
+    const tenantSlug = result?.tenant?.slug ?? null;
+    const apiUrl = platformDomainService.buildApiUrl(domains, '/api', proto, tenantSlug);
 
     let tenantUrl: string | null = null;
     if (result?.tenant) {
-      if (result.matchedBy === 'path_prefix') {
-        tenantUrl = `${proto}://${host}${result.pathPrefix ?? ''}`;
-      } else {
-        tenantUrl = platformDomainService.buildTenantUrl(domains, result.tenant.subdomain, '', proto);
-      }
+      tenantUrl = platformDomainService.buildTenantUrl(domains, result.tenant.slug, '', proto);
     }
+
+    const apiBasePath = tenantSlug ? `/${tenantSlug}/api` : '/api';
 
     return {
       wwwUrl,
       appUrl,
       platformUrl: appUrl,
       apiUrl,
+      apiBasePath,
       tenantUrl,
       domains: {
         platformDomain: domains.platformDomain,

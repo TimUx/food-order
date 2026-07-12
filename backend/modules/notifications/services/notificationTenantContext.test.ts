@@ -22,14 +22,20 @@ describe('notificationTenantContext', () => {
     vi.mocked(platformContext.current).mockReset();
   });
 
-  it('builds subdomain URL in production-like setup', () => {
+  it('builds path-based tenant URL on app host', () => {
+    process.env.PLATFORM_DOMAIN = 'festschmiede.test';
+    process.env.NODE_ENV = 'production';
     vi.mocked(tenantContext.current).mockReturnValue({ subdomain: 'feuerwehr', slug: 'feuerwehr' } as never);
-    vi.mocked(platformContext.current).mockReturnValue({ baseDomain: 'festschmiede.test' } as never);
+    vi.mocked(platformContext.current).mockReturnValue({
+      baseDomain: 'festschmiede.test',
+      appDomain: 'app.festschmiede.test',
+      pathPrefixRoutingEnabled: true,
+    } as never);
 
-    expect(resolveTenantPublicBaseUrl()).toBe('http://feuerwehr.festschmiede.test');
+    expect(resolveTenantPublicBaseUrl()).toBe('https://app.festschmiede.test/feuerwehr');
   });
 
-  it('builds path-prefix URL when enabled', () => {
+  it('builds local path-prefix URL', () => {
     vi.mocked(tenantContext.current).mockReturnValue({ slug: 'feuerwehr' } as never);
     vi.mocked(platformContext.current).mockReturnValue({
       baseDomain: 'localhost',
@@ -39,7 +45,7 @@ describe('notificationTenantContext', () => {
     expect(resolveTenantPublicBaseUrl()).toBe('http://localhost:5173/feuerwehr');
   });
 
-  it('falls back to corsOrigin without tenant context', () => {
+  it('falls back to app URL without tenant context', () => {
     vi.mocked(tenantContext.current).mockReturnValue(undefined);
     vi.mocked(platformContext.current).mockReturnValue(undefined);
 

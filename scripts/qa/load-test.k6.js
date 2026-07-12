@@ -5,7 +5,7 @@
  *
  * Ausführung:
  *   k6 run scripts/qa/load-test.k6.js
- *   API_BASE=http://localhost:3001/api STAFF_EMAIL=admin@example.de STAFF_PASSWORD=secret k6 run scripts/qa/load-test.k6.js
+ *   API_BASE=http://localhost:3001/default/api STAFF_EMAIL=admin@example.de STAFF_PASSWORD=secret k6 run scripts/qa/load-test.k6.js
  *
  * Zielwerte (Akzeptanz):
  *   - 100 gleichzeitige Bestellungen (order_load)
@@ -15,7 +15,9 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
-const API_BASE = __ENV.API_BASE || 'http://localhost:3001/api';
+const TENANT_SLUG = __ENV.QA_TENANT_SLUG || 'default';
+const API_BASE = __ENV.API_BASE || `http://localhost:3001/${TENANT_SLUG}/api`;
+const PLATFORM_API_BASE = __ENV.PLATFORM_API_BASE || 'http://localhost:3001/api';
 const FOOD_ITEM_ID = __ENV.FOOD_ITEM_ID || '00000000-0000-0000-0001-000000000001';
 const EVENT_ID = __ENV.EVENT_ID || '00000000-0000-0000-0000-000000000001';
 const STAFF_EMAIL = __ENV.STAFF_EMAIL || 'admin@verein.local';
@@ -98,7 +100,7 @@ export const options = {
 };
 
 export function healthCheck() {
-  const res = http.get(`${API_BASE}/health`);
+  const res = http.get(`${PLATFORM_API_BASE}/health`);
   check(res, {
     'health 200': (r) => r.status === 200,
     'health has db latency': (r) => r.json('database.latencyMs') !== undefined,
@@ -111,7 +113,7 @@ export function publicApi() {
     `${API_BASE}/public/menu`,
     `${API_BASE}/public/club`,
     `${API_BASE}/public/event`,
-    `${API_BASE}/public/routing-config`,
+    `${PLATFORM_API_BASE}/public/routing-config`,
   ];
   const url = endpoints[__ITER % endpoints.length];
   const res = http.get(url);

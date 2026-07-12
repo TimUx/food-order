@@ -39,43 +39,34 @@ Der Resolver ist die **einzige** Stelle, die folgende Request-Eigenschaften ausw
 - Request-Pfad (für URL-Prefix-Modus)
 - `PlatformSettings.baseDomain` und `allowedDomains`
 
-### Routing-Varianten
+### Routing-Varianten (v2.0)
 
 | Priorität | Variante | Beispiel | TenantContext |
 |-----------|----------|----------|---------------|
-| 1 | **Subdomain** (primär) | `https://asv-libelle.example.org` | Ja (`asv-libelle`) |
-| 2 | **URL-Prefix** (optional) | `https://example.org/asv-libelle` | Ja (`asv-libelle`) |
-| 3 | **Custom Domain** (Phase 3) | `https://bestellung.feuerwehr-xy.de` | Ja (Mapping-Tabelle) |
-| – | **Plattform** | `https://example.org` | Nein |
-| – | **Plattform-Admin** | `https://example.org/platform` | Nein |
+| 1 | **URL-Pfad auf App-Host** (primär) | `https://app.example.org/feuerwehr/public` | Ja (`feuerwehr`) |
+| 2 | **Custom Domain** (zukünftig) | `https://bestellung.feuerwehr-xy.de` | Ja (nur Resolver anpassen) |
+| – | **Landingpage** | `https://www.example.org` | Nein |
+| – | **Plattform-Admin** | `https://app.example.org/platform` | Nein |
 
-### Subdomain-Auflösung (primär)
+Subdomain-Routing (`https://verein.example.org`) wurde in v2.0 entfernt.
 
-```
-Request: Host = asv-libelle.example.org
-  1. Extrahiere Subdomain: "asv-libelle"
-  2. Validiere gegen PlatformSettings.baseDomain (Suffix-Match)
-  3. Lookup tenants.subdomain = "asv-libelle" AND status = ACTIVE
-  4. Setze TenantContext
-```
-
-**Reservierte Subdomains** (kein Mandant):
-
-`www`, `api`, `admin`, `platform`, `status`, `mail`, `cdn`, `static`
-
-### URL-Prefix-Auflösung (optional)
-
-Aktivierbar über `PlatformSettings.pathPrefixRoutingEnabled`.
+### Pfad-Auflösung (primär)
 
 ```
-Request: Host = example.org, Path = /asv-libelle/bestellung
-  1. Erster Pfadsegment = "asv-libelle"
-  2. Lookup tenants.slug = "asv-libelle"
-  3. Strip Prefix für Frontend-Router: /bestellung
-  4. Setze TenantContext
+Request: Host = app.example.org, Path = /feuerwehr/public
+  1. Host → App-Oberfläche
+  2. Erster Pfadsegment = "feuerwehr"
+  3. Lookup tenants.slug = "feuerwehr"
+  4. Frontend basename = "/feuerwehr"
+  5. API-Basis = "/feuerwehr/api"
+  6. Setze TenantContext
 ```
 
-**Frontend-Anpassung:** React-Router erhält `basename="/asv-libelle"` dynamisch vom Backend (`GET /api/public/routing-config`).
+**Reservierte Pfadsegmente** (kein Mandant): `platform`, `api`, `www`, `app`, …
+
+### URL-Prefix-Auflösung
+
+Standardmäßig aktiv (`PlatformSettings.pathPrefixRoutingEnabled = true`).
 
 ### Plattform-Routing
 

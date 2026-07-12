@@ -62,7 +62,8 @@ export function TenantRoutes() {
     <MaintenanceGate>
       <BrandingHead />
       <Routes>
-        <Route path="/" element={<OrderPage />} />
+        <Route path="/" element={<Navigate to="/public" replace />} />
+        <Route path="/public" element={<OrderPage />} />
         <Route path="/kontakt" element={<ContactPage />} />
         <Route path="/recht/:legalSlug" element={<LegalPage />} />
         <Route path="/status" element={<OrderStatusPage />} />
@@ -81,7 +82,7 @@ export function TenantRoutes() {
         <Route path="/admin/einrichtung" element={<Lazy><AdminRoute><SetupWizardPage /></AdminRoute></Lazy>} />
         <Route path="/admin/*" element={<Lazy><AdminShell /></Lazy>} />
 
-        <Route path="/platform/*" element={<Navigate to="/" replace />} />
+        <Route path="/platform/*" element={<Navigate to="/public" replace />} />
 
         {['impressum', 'datenschutz', 'agb', 'widerruf'].map((slug) => (
           <Route key={slug} path={`/${slug}`} element={<Navigate to={`/recht/${slug}`} replace />} />

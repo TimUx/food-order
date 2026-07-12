@@ -7,8 +7,10 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     env: {
-      MULTI_TENANT_ENABLED: 'false',
+      MULTI_TENANT_ENABLED: 'true',
       PLATFORM_BASE_DOMAIN: 'localhost',
+      PLATFORM_DOMAIN: 'localhost',
+      QA_TENANT_SLUG: 'default',
       TRUSTED_PROXY_HOPS: '1',
     },
     include: ['tests/api/**/*.test.ts', 'tests/integration/**/*.test.ts', 'tests/module/**/*.test.ts', 'tests/security/**/*.test.ts', 'tests/performance/**/*.test.ts'],

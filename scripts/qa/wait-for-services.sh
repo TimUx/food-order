@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_URL="${QA_API_BASE:-http://localhost:3001/api}"
+API_URL="${QA_PLATFORM_API_BASE:-http://localhost:3001/api}"
 FRONTEND_URL="${QA_FRONTEND_BASE:-http://localhost:5173}"
 TIMEOUT="${QA_WAIT_TIMEOUT:-180}"
 

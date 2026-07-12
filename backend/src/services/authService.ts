@@ -4,6 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 import { AuthPayload } from '../middleware/auth';
 import { resolveUserPermissions } from '../core/permissions';
 import { hookSystem, tenantContext, platformContext } from '../platform/bootstrap';
+import { platformDomainService } from '../platform/PlatformDomainService';
 import { requireTenantId } from '../platform/tenant/tenantScope';
 import { CORE_HOOKS } from '../platform/types';
 import { sessionService } from './sessionService';
@@ -60,11 +61,18 @@ async function createAuthSession(userId: string, userAgent?: string) {
 function buildMagicLinkUrl(token: string, path: string): string {
   const tenant = tenantContext.current();
   const platform = platformContext.current();
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const host = tenant?.subdomain
-    ? `${tenant.subdomain}.${platform.baseDomain}`
-    : platform.baseDomain;
-  return `${protocol}://${host}${path}?token=${encodeURIComponent(token)}`;
+  const domains = platformDomainService.getPublicView(platform);
+  const proto = platformDomainService.resolveProto();
+
+  if (tenant?.slug) {
+    const base = platformDomainService.buildTenantUrl(domains, tenant.slug, path, proto);
+    const separator = base.includes('?') ? '&' : '?';
+    return `${base}${separator}token=${encodeURIComponent(token)}`;
+  }
+
+  const origin = platformDomainService.buildAppUrl(domains, path, proto);
+  const separator = origin.includes('?') ? '&' : '?';
+  return `${origin}${separator}token=${encodeURIComponent(token)}`;
 }
 
 export const authService = {

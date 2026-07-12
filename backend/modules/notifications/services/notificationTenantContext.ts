@@ -1,5 +1,4 @@
 import { tenantContext, platformContext } from '../../../src/platform/bootstrap';
-import { config } from '../../../src/config';
 import { platformDomainService, isLocalPlatformDomain } from '../../../src/platform/PlatformDomainService';
 
 /**
@@ -12,29 +11,13 @@ export function resolveTenantPublicBaseUrl(): string {
   const domains = platformDomainService.getPublicView(platform);
   const proto = platformDomainService.resolveProto();
 
-  if (ctx?.subdomain && !isLocalPlatformDomain(domains.platformDomain)) {
-    return platformDomainService.buildTenantUrl(domains, ctx.subdomain, '', proto);
+  if (ctx?.slug) {
+    return platformDomainService.buildTenantUrl(domains, ctx.slug, '', proto);
   }
 
-  if (ctx?.slug && platform?.pathPrefixRoutingEnabled) {
-    const origin = config.corsOrigin.replace(/\/$/, '');
-    return `${origin}/${ctx.slug}`;
+  if (isLocalPlatformDomain(domains.platformDomain)) {
+    return platformDomainService.buildAppUrl(domains, '', proto);
   }
 
-  return config.corsOrigin.replace(/\/$/, '');
-}
-
-export function resolveTenantBrandingDefaults(): {
-  locale: string;
-  timezone: string;
-  logoUrl: string | null;
-  name: string;
-} {
-  const ctx = tenantContext.current();
-  return {
-    locale: ctx?.locale ?? 'de-DE',
-    timezone: ctx?.timezone ?? 'Europe/Berlin',
-    logoUrl: ctx?.logoUrl ?? null,
-    name: ctx?.name ?? 'Veranstalter',
-  };
+  return platformDomainService.buildAppUrl(domains, '', proto);
 }

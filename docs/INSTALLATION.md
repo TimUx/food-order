@@ -1,13 +1,13 @@
 # FestSchmiede – Installationsanleitung
 
-> **Version 2.3.13** – Professioneller interaktiver Installations-Assistent (TUI)
+> **Version 2.0.0** – Pfad-basiertes Mandanten-Routing
 
 ## Schnellstart
 
 ### Online (ohne Git-Clone)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.3.13/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.0.0/install.sh | bash
 ```
 
 **Installationspfad angeben** (Priorität: `--dir` > `FESTSCHMIEDE_INSTALL_DIR` > interaktive Abfrage > Default):
@@ -243,16 +243,41 @@ Wichtige Umgebungsvariablen: `JWT_SECRET`, `APP_ENCRYPTION_KEY`, `DATABASE_URL`,
 ## Produktions-Deployment
 
 ```
-Internet → Traefik (TLS) → Frontend (nginx) → Backend → PostgreSQL
+Internet → Traefik (Per-Host TLS) → Frontend (nginx) → Backend → PostgreSQL
 ```
 
-**Voraussetzungen:** DNS für `<PLATFORM_DOMAIN>` und `*.<PLATFORM_DOMAIN>`, Ports 80/443, starke Secrets.
+### TLS mit Traefik (kein Wildcard-Zertifikat)
+
+Der Installer erzeugt Traefik-Labels mit **nur expliziten Hostnamen**:
+
+- `tls=true`
+- `tls.certresolver=le` (Let's Encrypt HTTP-01)
+- **Keine** `tls.domains`, **keine** `HostRegexp`, **keine** Wildcard-Zertifikate
+
+Traefik erstellt Zertifikate **automatisch beim ersten HTTPS-Aufruf** je Hostname (www und app).
+Mandanten teilen sich den App-Host — **keine zusätzlichen DNS-Einträge oder Zertifikate pro Mandant**.
+
+Im Wizard wählen Sie:
+
+| Frage | Beispiel |
+|-------|----------|
+| Hauptdomain | `festschmiede.de` |
+| Website unter www? | `www.festschmiede.de` |
+| App unter app? | `app.festschmiede.de` |
+
+Mandanten-URLs: `https://app.festschmiede.de/<tenant>/public`
+
+**DNS:** A/AAAA nur für `www` und `app` (kein Wildcard-DNS).
 
 ```env
 ACME_EMAIL=admin@example.test
 PLATFORM_DOMAIN=plattform.de
-PLATFORM_WILDCARD_DOMAIN=*.plattform.de
+ENABLE_WWW_HOST=yes
+ENABLE_APP_HOST=yes
+TRAEFIK_ROUTER_RULE=Host(`www.plattform.de`) || Host(`app.plattform.de`)
+TRAEFIK_CERT_RESOLVER=le
 MULTI_TENANT_ENABLED=true
+PLATFORM_ALLOWED_ORIGINS=https://www.plattform.de,https://app.plattform.de
 JWT_SECRET=<64+ Zeichen>
 APP_ENCRYPTION_KEY=<32+ Zeichen>
 TRUSTED_PROXY_HOPS=2

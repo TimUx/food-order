@@ -56,7 +56,15 @@ CFG[INSTALL_PROFILE]="production"
 CFG[PLATFORM_DOMAIN]="fest.example.de"
 apply_defaults
 [[ "${CFG[MULTI_TENANT_ENABLED]}" == "true" ]] && pass "production multi-tenant" || fail "production multi-tenant"
-[[ "${CFG[PLATFORM_WILDCARD_DOMAIN]}" == "*.fest.example.de" ]] && pass "wildcard domain" || fail "wildcard domain"
+CFG[ENABLE_WWW_HOST]="yes"
+CFG[ENABLE_APP_HOST]="yes"
+migrate_traefik_tls_model
+[[ "${CFG[PLATFORM_ALLOWED_ORIGINS]}" == "https://www.fest.example.de,https://app.fest.example.de" ]] \
+  && pass "explicit allowed origins" || fail "explicit allowed origins"
+[[ "${CFG[TRAEFIK_ROUTER_RULE]}" == "Host(\`www.fest.example.de\`) || Host(\`app.fest.example.de\`)" ]] \
+  && pass "traefik host rule" || fail "traefik host rule"
+! [[ "${CFG[TRAEFIK_ROUTER_RULE]}" == *"HostRegexp"* ]] \
+  && pass "no tenant host regexp" || fail "no tenant host regexp"
 
 echo "--- Idempotenz ---"
 TMP_ENV=$(mktemp)
@@ -122,6 +130,10 @@ grep -q "COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml" "${INSTALL
   && pass "compose file env var" || fail "compose file env var"
 grep -q "traefik.enable=true" "${INSTALL_DIR}/docker-compose.override.yml" \
   && pass "external traefik labels" || fail "external traefik labels"
+! grep -q 'tls.domains' "${INSTALL_DIR}/docker-compose.override.yml" \
+  && pass "compose no wildcard tls domains" || fail "compose no wildcard tls domains"
+grep -q 'tls.certresolver=le' "${INSTALL_DIR}/docker-compose.override.yml" \
+  && pass "compose per-host certresolver" || fail "compose per-host certresolver"
 grep -q "traefik.docker.network=traefik_net" "${INSTALL_DIR}/docker-compose.override.yml" \
   && pass "external traefik network label" || fail "external traefik network label"
 
@@ -163,8 +175,16 @@ grep -q "node.id == abc123node" "${INSTALL_DIR}/stack.yml" \
   && pass "swarm placement constraint" || fail "swarm placement constraint"
 grep -q "traefik.enable=true" "${INSTALL_DIR}/stack.yml" \
   && pass "swarm traefik deploy labels" || fail "swarm traefik deploy labels"
-grep -q 'HostRegexp.*\$\$' "${INSTALL_DIR}/stack.yml" \
-  && pass "swarm traefik regex dollar escaped" || fail "swarm traefik regex dollar escaped"
+! grep -q 'HostRegexp' "${INSTALL_DIR}/stack.yml" \
+  && pass "swarm no tenant host regexp" || fail "swarm no tenant host regexp"
+! grep -q 'tls.domains' "${INSTALL_DIR}/stack.yml" \
+  && pass "no wildcard tls domains in stack" || fail "no wildcard tls domains in stack"
+grep -q 'tls.certresolver=le' "${INSTALL_DIR}/stack.yml" \
+  && pass "swarm per-host certresolver" || fail "swarm per-host certresolver"
+grep -q 'tls=true' "${INSTALL_DIR}/stack.yml" \
+  && pass "swarm tls enabled" || fail "swarm tls enabled"
+grep -q 'www.festschmiede.example.de' "${INSTALL_DIR}/stack.yml" \
+  && pass "swarm explicit www host" || fail "swarm explicit www host"
 grep -q "replicas: 1" "${INSTALL_DIR}/stack.yml" \
   && pass "swarm single replica" || fail "swarm single replica"
 grep -q "external: true" "${INSTALL_DIR}/stack.yml" \

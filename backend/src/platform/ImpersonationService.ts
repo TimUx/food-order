@@ -62,8 +62,8 @@ export class ImpersonationService {
     const domains = platformDomainService.getPublicView(platform);
     const proto = platformDomainService.resolveProto();
     const redirectTo = isLocalPlatformDomain(domains.platformDomain)
-        ? '/admin'
-        : platformDomainService.buildTenantUrl(domains, tenant.subdomain, '/admin', proto);
+        ? `/${tenant.slug}/admin`
+        : platformDomainService.buildTenantUrl(domains, tenant.slug, '/admin', proto);
 
     return {
       token: accessToken,

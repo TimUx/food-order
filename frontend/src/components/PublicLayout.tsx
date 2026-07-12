@@ -63,7 +63,7 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
           <Typography
             variant="h6"
             component={Link}
-            to="/"
+            to="/public"
             sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit', fontWeight: 700 }}
           >
             {club.clubName}

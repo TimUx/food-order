@@ -201,7 +201,7 @@ export function OrderStatusPage() {
             >
               Status abfragen
             </Button>
-            <Button component={Link} to="/" variant="text">
+            <Button component={Link} to="/public" variant="text">
               Zur Bestellseite
             </Button>
           </Stack>

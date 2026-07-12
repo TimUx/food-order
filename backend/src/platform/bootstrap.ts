@@ -289,6 +289,9 @@ export async function initializeTenantInfrastructure(): Promise<void> {
     await migrateModulesTenantSchema(defaultTenant.id);
   }
 
+  const { migratePathRoutingV20 } = await import('../core/tenant/migratePathRoutingV20');
+  await migratePathRoutingV20();
+
   const { ensurePlatformAdmin } = await import('../core/tenant/ensurePlatformAdmin');
   await ensurePlatformAdmin();
 
