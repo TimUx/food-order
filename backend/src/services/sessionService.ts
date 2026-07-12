@@ -94,7 +94,7 @@ export const sessionService = {
 
     const payload: Omit<AuthPayload, 'sessionId'> = {
       userId: session.user.id,
-      email: session.user.email,
+      email: session.user.email ?? session.user.username ?? '',
       role: session.user.role.name,
       scope: 'tenant',
       tenantId: session.user.tenantId,

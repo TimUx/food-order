@@ -10,6 +10,9 @@ import { userController } from '../controllers/userController';
 import { authenticate, requireRole, loadUser, requireDelegatedAdmin, requireStaffPermission, requireAnyStaffPermission, requirePermissionKey } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validation';
 import {
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  updateTenantProfileSchema,
   loginSchema,
   refreshTokenSchema,
   revokeAllSessionsSchema,
@@ -120,12 +123,15 @@ router.get('/public/auth-config', authController.getAuthConfig);
 router.post('/auth/login', loginRateLimiter, validateBody(loginSchema), authController.login);
 router.post('/auth/magic-link', magicLinkRateLimiter, validateBody(magicLinkRequestSchema), authController.requestMagicLink);
 router.post('/auth/login-code', magicLinkRateLimiter, validateBody(loginCodeRequestSchema), authController.requestLoginCode);
+router.post('/auth/forgot-password', magicLinkRateLimiter, validateBody(forgotPasswordSchema), authController.requestPasswordReset);
+router.post('/auth/reset-password', magicLinkRateLimiter, validateBody(resetPasswordSchema), authController.resetPassword);
 router.post('/auth/verify-magic-link', magicLinkRateLimiter, validateBody(verifyMagicLinkSchema), authController.verifyMagicLink);
 router.post('/auth/verify-login-code', magicLinkRateLimiter, validateBody(verifyLoginCodeSchema), authController.verifyLoginCode);
 router.post('/auth/logout', authRefreshRateLimiter, validateBody(refreshTokenSchema), authController.logout);
 router.post('/auth/refresh', authRefreshRateLimiter, validateBody(refreshTokenSchema), authController.refresh);
 router.post('/auth/revoke-all', authenticate, loadUser, requireRole('ADMIN'), validateBody(revokeAllSessionsSchema), authController.revokeAll);
 router.get('/auth/me', authenticate, loadUser, authController.me);
+router.put('/auth/profile', authenticate, loadUser, requireRole('ADMIN'), validateBody(updateTenantProfileSchema), authController.updateProfile);
 
 // Initial Setup Wizard
 router.get('/setup/status', authenticate, loadUser, requireRole('ADMIN'), setupController.getStatus);

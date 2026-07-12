@@ -32,7 +32,7 @@ export class ImpersonationService {
 
     const payload: AuthPayload = {
       userId: adminUser.id,
-      email: adminUser.email,
+      email: adminUser.email ?? adminUser.username ?? '',
       role: adminUser.role.name,
       scope: 'tenant',
       tenantId: tenant.id,

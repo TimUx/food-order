@@ -10,7 +10,8 @@ interface PlatformAuthContextType {
   user: PlatformUser | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<PlatformUser>;
+  login: (identifier: string, password: string) => Promise<PlatformUser>;
+  setSession: (token: string, refreshToken: string | undefined, user: PlatformUser) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -37,8 +38,8 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await platformApi.login(email, password);
+  const login = useCallback(async (identifier: string, password: string) => {
+    const result = await platformApi.login(identifier, password);
     localStorage.setItem(PLATFORM_TOKEN_KEY, result.token);
     if (result.refreshToken) {
       localStorage.setItem(PLATFORM_REFRESH_KEY, result.refreshToken);
@@ -46,6 +47,15 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
     setToken(result.token);
     setUser(result.user);
     return result.user;
+  }, []);
+
+  const setSession = useCallback((accessToken: string, refreshToken: string | undefined, sessionUser: PlatformUser) => {
+    localStorage.setItem(PLATFORM_TOKEN_KEY, accessToken);
+    if (refreshToken) {
+      localStorage.setItem(PLATFORM_REFRESH_KEY, refreshToken);
+    }
+    setToken(accessToken);
+    setUser(sessionUser);
   }, []);
 
   const logout = useCallback(() => {
@@ -67,7 +77,7 @@ export function PlatformAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <PlatformAuthContext.Provider value={{ user, token, loading, login, logout, refreshUser }}>
+    <PlatformAuthContext.Provider value={{ user, token, loading, login, setSession, logout, refreshUser }}>
       {children}
     </PlatformAuthContext.Provider>
   );

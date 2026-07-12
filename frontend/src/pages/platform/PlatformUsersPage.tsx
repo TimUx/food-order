@@ -33,18 +33,24 @@ import {
 
 interface UserForm {
   email: string;
+  username: string;
   password: string;
   firstName: string;
   lastName: string;
   active: boolean;
+  passwordEnabled: boolean;
+  magicLinkEnabled: boolean;
 }
 
 const emptyForm: UserForm = {
   email: '',
+  username: '',
   password: '',
   firstName: '',
   lastName: '',
   active: true,
+  passwordEnabled: false,
+  magicLinkEnabled: true,
 };
 
 export function PlatformUsersPage() {
@@ -79,10 +85,13 @@ export function PlatformUsersPage() {
     setEditingId(user.id);
     setForm({
       email: user.email,
+      username: user.username ?? '',
       password: '',
       firstName: user.firstName,
       lastName: user.lastName,
       active: user.active !== false,
+      passwordEnabled: user.passwordEnabled ?? false,
+      magicLinkEnabled: user.magicLinkEnabled ?? true,
     });
     setError('');
     setDialogOpen(true);
@@ -96,9 +105,12 @@ export function PlatformUsersPage() {
       if (editingId) {
         const payload: UpdatePlatformUserPayload = {
           email: form.email.trim(),
+          username: form.username.trim() || null,
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           active: form.active,
+          passwordEnabled: form.passwordEnabled,
+          magicLinkEnabled: form.magicLinkEnabled,
         };
         if (form.password) payload.password = form.password;
         await platformApi.updateUser(token, editingId, payload);
@@ -106,9 +118,12 @@ export function PlatformUsersPage() {
       } else {
         const payload: CreatePlatformUserPayload = {
           email: form.email.trim(),
-          password: form.password,
+          username: form.username.trim() || undefined,
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
+          passwordEnabled: form.passwordEnabled,
+          magicLinkEnabled: form.magicLinkEnabled,
+          ...(form.passwordEnabled ? { password: form.password } : {}),
         };
         await platformApi.createUser(token, payload);
       }
@@ -211,13 +226,30 @@ export function PlatformUsersPage() {
           />
           <TextField
             fullWidth
-            label={editingId ? 'Neues Passwort (optional)' : 'Passwort'}
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            helperText="Mindestens 8 Zeichen"
+            label="Benutzername (optional)"
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
             sx={{ mb: 2 }}
           />
+          <FormControlLabel
+            control={<Switch checked={form.magicLinkEnabled} onChange={(e) => setForm({ ...form, magicLinkEnabled: e.target.checked })} />}
+            label="Magic-Link-Anmeldung (Standard)"
+          />
+          <FormControlLabel
+            control={<Switch checked={form.passwordEnabled} onChange={(e) => setForm({ ...form, passwordEnabled: e.target.checked })} />}
+            label="Passwort-Anmeldung"
+          />
+          {form.passwordEnabled && (
+            <TextField
+              fullWidth
+              label={editingId ? 'Neues Passwort (optional)' : 'Passwort'}
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              helperText="Mindestens 8 Zeichen"
+              sx={{ mb: 2, mt: 1 }}
+            />
+          )}
           {editingId && (
             <FormControlLabel
               control={

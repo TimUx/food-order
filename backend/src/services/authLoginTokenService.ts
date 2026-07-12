@@ -102,6 +102,65 @@ export const authLoginTokenService = {
     return { code, expiresAt };
   },
 
+  async createPasswordReset(
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{ token: string; expiresAt: Date }> {
+    const tenantId = requireTenantId();
+    await this.invalidateUserTokens(userId);
+
+    const token = generateSecureToken();
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    await prisma.authLoginToken.create({
+      data: {
+        tenantId,
+        userId,
+        tokenHash: hashToken(token),
+        type: AuthTokenType.PASSWORD_RESET,
+        expiresAt,
+        ipAddress,
+        userAgent,
+      },
+    });
+
+    await auditService.log({
+      action: 'auth.password_reset.created',
+      details: { userId, tenantId },
+    });
+
+    return { token, expiresAt };
+  },
+
+  async verifyPasswordReset(token: string): Promise<string> {
+    const record = await prisma.authLoginToken.findUnique({
+      where: { tokenHash: hashToken(token) },
+    });
+
+    if (!record || record.type !== AuthTokenType.PASSWORD_RESET) {
+      throw new AppError(401, 'Ungültiger oder abgelaufener Link');
+    }
+    if (record.usedAt) {
+      throw new AppError(401, 'Dieser Link wurde bereits verwendet');
+    }
+    if (record.expiresAt < new Date()) {
+      throw new AppError(401, 'Dieser Link ist abgelaufen');
+    }
+
+    await prisma.authLoginToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    });
+
+    await auditService.log({
+      action: 'auth.password_reset.used',
+      details: { userId: record.userId, tenantId: record.tenantId },
+    });
+
+    return record.userId;
+  },
+
   async verifyMagicLink(token: string): Promise<string> {
     const record = await prisma.authLoginToken.findUnique({
       where: { tokenHash: hashToken(token) },

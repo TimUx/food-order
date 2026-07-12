@@ -76,7 +76,7 @@ export const platformSessionService = {
     const { parsePlatformPermissions } = await import('../platform/platformPermissions');
     const payload: Omit<AuthPayload, 'sessionId'> = {
       userId: session.user.id,
-      email: session.user.email,
+      email: session.user.email ?? session.user.username ?? '',
       role: 'PLATFORM_ADMIN',
       scope: 'platform',
       permissions: parsePlatformPermissions(session.user.permissions),
@@ -109,6 +109,13 @@ export const platformSessionService = {
         data: { revokedAt: new Date() },
       });
     }
+  },
+
+  async revokeAllUserSessions(userId: string): Promise<void> {
+    await prisma.platformUserSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   },
 
   async validateSession(sessionId: string): Promise<boolean> {

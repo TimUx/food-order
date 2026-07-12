@@ -44,6 +44,9 @@ const AdminShell = lazy(() =>
 const SetupWizardPage = lazy(() =>
   import('@/pages/admin/SetupWizardPage').then((m) => ({ default: m.SetupWizardPage }))
 );
+const AdminProfilePage = lazy(() =>
+  import('@/pages/admin/AdminProfilePage').then((m) => ({ default: m.AdminProfilePage }))
+);
 
 function PageLoader() {
   return (
@@ -79,6 +82,7 @@ export function TenantRoutes() {
         <Route path="/mitarbeiter/speisen" element={<Lazy><ProtectedRoute><StaffFoodAvailabilityPage /></ProtectedRoute></Lazy>} />
 
         <Route path="/admin/login" element={<Lazy><LoginPage /></Lazy>} />
+        <Route path="/admin/profil" element={<Lazy><AdminRoute><AdminProfilePage /></AdminRoute></Lazy>} />
         <Route path="/admin/einrichtung" element={<Lazy><AdminRoute><SetupWizardPage /></AdminRoute></Lazy>} />
         <Route path="/admin/*" element={<Lazy><AdminShell /></Lazy>} />
 

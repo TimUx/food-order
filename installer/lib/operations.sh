@@ -9,12 +9,7 @@ source "${INSTALLER_DIR}/lib/docker.sh"
 source "${INSTALLER_DIR}/lib/rollback.sh"
 
 load_install_env() {
-  if [[ -f "${INSTALL_DIR}/.env" ]]; then
-    set -a
-    # shellcheck disable=SC1091
-    source "${INSTALL_DIR}/.env"
-    set +a
-  fi
+  dotenv_export_file "${INSTALL_DIR}/.env"
 }
 
 _ops_progress() {

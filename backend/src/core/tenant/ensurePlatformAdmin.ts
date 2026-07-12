@@ -25,6 +25,8 @@ export async function ensurePlatformAdmin(): Promise<void> {
     data: {
       email: process.env.PLATFORM_ADMIN_EMAIL || DEFAULT_PLATFORM_ADMIN_EMAIL,
       passwordHash,
+      passwordEnabled: true,
+      magicLinkEnabled: true,
       firstName: 'Plattform',
       lastName: 'Administrator',
       active: true,

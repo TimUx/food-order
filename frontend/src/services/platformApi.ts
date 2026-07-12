@@ -2,11 +2,14 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 
 export interface PlatformUser {
   id: string;
+  username?: string | null;
   email: string;
   firstName: string;
   lastName: string;
   role: 'PLATFORM_ADMIN';
   permissions: string[];
+  passwordEnabled?: boolean;
+  magicLinkEnabled?: boolean;
   lastLoginAt?: string | null;
   mfaEnabled?: boolean;
   active?: boolean;
@@ -17,23 +20,32 @@ export interface UpdatePlatformProfilePayload {
   firstName?: string;
   lastName?: string;
   email?: string;
+  username?: string | null;
+  passwordEnabled?: boolean;
+  magicLinkEnabled?: boolean;
   currentPassword?: string;
   newPassword?: string;
 }
 
 export interface CreatePlatformUserPayload {
   email: string;
-  password: string;
+  username?: string;
+  password?: string;
   firstName: string;
   lastName: string;
+  passwordEnabled?: boolean;
+  magicLinkEnabled?: boolean;
 }
 
 export interface UpdatePlatformUserPayload {
   email?: string;
+  username?: string | null;
   password?: string;
   firstName?: string;
   lastName?: string;
   active?: boolean;
+  passwordEnabled?: boolean;
+  magicLinkEnabled?: boolean;
 }
 
 export interface TenantApplication {
@@ -191,11 +203,26 @@ async function platformRequest<T>(
 }
 
 export const platformApi = {
-  login: (email: string, password: string) =>
+  login: (identifier: string, password: string) =>
     platformRequest<{ token: string; refreshToken?: string; user: PlatformUser }>(
       '/auth/login',
-      { method: 'POST', body: JSON.stringify({ email, password }) }
+      { method: 'POST', body: JSON.stringify({ identifier, password }) }
     ),
+
+  requestMagicLink: (email: string) =>
+    platformRequest<{ sent: boolean }>('/auth/magic-link', { method: 'POST', body: JSON.stringify({ email }) }),
+
+  verifyMagicLink: (token: string) =>
+    platformRequest<{ token: string; refreshToken?: string; user: PlatformUser }>(
+      '/auth/verify-magic-link',
+      { method: 'POST', body: JSON.stringify({ token }) }
+    ),
+
+  requestPasswordReset: (identifier: string) =>
+    platformRequest<{ sent: boolean }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ identifier }) }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    platformRequest<{ success: boolean }>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
 
   logout: (refreshToken: string) =>
     platformRequest<void>('/auth/logout', {

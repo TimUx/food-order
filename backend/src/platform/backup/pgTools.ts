@@ -19,12 +19,16 @@ function waitForClose(child: ReturnType<typeof spawn>, label: string): Promise<v
 
 export async function assertPgToolsAvailable(): Promise<void> {
   for (const cmd of ['pg_dump', 'psql', 'gzip', 'gunzip']) {
-    await new Promise<void>((resolve, reject) => {
-      const child = spawn(cmd, ['--version']);
-      child.on('error', () => reject(new Error(`Befehl '${cmd}' nicht verfügbar`)));
-      child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`Befehl '${cmd}' nicht verfügbar`))));
-    });
+    await assertCommandAvailable(cmd);
   }
+}
+
+async function assertCommandAvailable(cmd: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn('sh', ['-c', `command -v ${cmd} >/dev/null 2>&1`]);
+    child.on('error', () => reject(new Error(`Befehl '${cmd}' nicht verfügbar`)));
+    child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`Befehl '${cmd}' nicht verfügbar`))));
+  });
 }
 
 export async function createPgDumpGzip(outputPath: string, db: DbConnectionConfig): Promise<void> {

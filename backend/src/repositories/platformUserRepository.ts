@@ -1,9 +1,22 @@
 import { prisma } from '../config/database';
 import type { Prisma } from '@prisma/client';
+import { parseLoginIdentifier } from '../services/loginIdentifier';
 
 export const platformUserRepository = {
   findByEmail(email: string) {
-    return prisma.platformUser.findUnique({ where: { email } });
+    return prisma.platformUser.findUnique({ where: { email: email.toLowerCase().trim() } });
+  },
+
+  findByUsername(username: string) {
+    return prisma.platformUser.findUnique({ where: { username: username.toLowerCase().trim() } });
+  },
+
+  findByLoginIdentifier(identifier: string) {
+    const parsed = parseLoginIdentifier(identifier);
+    if (parsed.type === 'email') {
+      return platformUserRepository.findByEmail(parsed.value);
+    }
+    return platformUserRepository.findByUsername(parsed.value);
   },
 
   findById(id: string) {

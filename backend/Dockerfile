@@ -21,7 +21,7 @@ ENV NODE_ENV=production
 ENV MODULES_DIR=/app/modules
 ENV PLUGINS_DIR=/app/plugins
 
-RUN apk add --no-cache postgresql-client
+RUN apk add --no-cache postgresql-client gzip
 
 COPY package*.json ./
 COPY prisma ./prisma/

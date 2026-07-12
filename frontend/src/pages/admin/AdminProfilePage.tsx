@@ -3,19 +3,20 @@ import {
   Alert,
   Box,
   Button,
+  Divider,
+  FormControlLabel,
   Paper,
+  Switch,
   TextField,
   Typography,
   CircularProgress,
-  Divider,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
-import { usePlatformAuth } from '@/contexts/PlatformAuthContext';
-import { platformApi } from '@/services/platformApi';
+import { AdminLayout } from '@/components/AdminLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/services/api';
 
-export function PlatformProfilePage() {
-  const { token, user, refreshUser } = usePlatformAuth();
+export function AdminProfilePage() {
+  const { token, user, setSession } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,7 +33,7 @@ export function PlatformProfilePage() {
     if (!user) return;
     setFirstName(user.firstName);
     setLastName(user.lastName);
-    setEmail(user.email);
+    setEmail(user.email ?? '');
     setUsername(user.username ?? '');
     setPasswordEnabled(user.passwordEnabled ?? false);
     setMagicLinkEnabled(user.magicLinkEnabled ?? true);
@@ -44,16 +45,15 @@ export function PlatformProfilePage() {
       setMessage({ type: 'error', text: 'Neue Passwörter stimmen nicht überein' });
       return;
     }
-    const emailChanged = email.trim().toLowerCase() !== user?.email.toLowerCase();
-    if ((emailChanged || newPassword) && !currentPassword) {
-      setMessage({ type: 'error', text: 'Bitte aktuelles Passwort eingeben' });
+    if (magicLinkEnabled && !email.trim()) {
+      setMessage({ type: 'error', text: 'Magic-Link-Anmeldung erfordert eine E-Mail-Adresse' });
       return;
     }
 
     setSaving(true);
     setMessage(null);
     try {
-      await platformApi.updateProfile(token, {
+      const updated = await api.updateProfile(token, {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
@@ -63,7 +63,8 @@ export function PlatformProfilePage() {
         ...(currentPassword ? { currentPassword } : {}),
         ...(newPassword ? { newPassword } : {}),
       });
-      await refreshUser();
+      const refreshToken = localStorage.getItem('verein_refresh_token');
+      setSession(token, refreshToken ?? undefined, updated);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -78,10 +79,9 @@ export function PlatformProfilePage() {
   if (!user) return <CircularProgress />;
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>Mein Profil</Typography>
+    <AdminLayout title="Mein Profil">
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Persönliche Daten und Passwort für Ihr Plattformadministrator-Konto.
+        Persönliche Daten und Anmeldemethoden für Ihr Administrator-Konto.
       </Typography>
 
       {message && (
@@ -91,39 +91,20 @@ export function PlatformProfilePage() {
       )}
 
       <Paper sx={{ p: 3, maxWidth: 560 }}>
-        <Typography variant="h6" gutterBottom>Stammdaten</Typography>
+        <TextField label="Vorname" fullWidth margin="normal" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+        <TextField label="Nachname" fullWidth margin="normal" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+        <TextField label="E-Mail" type="email" fullWidth margin="normal" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <TextField
-          fullWidth
-          label="Vorname"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Nachname"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="E-Mail"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
           label="Benutzername (optional)"
+          fullWidth
+          margin="normal"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          sx={{ mb: 2 }}
+          helperText="Alternativ zur E-Mail für die Passwort-Anmeldung"
         />
 
-        <Divider sx={{ my: 3 }} />
-        <Typography variant="h6" gutterBottom>Anmeldemethoden</Typography>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="subtitle1" fontWeight={600}>Anmeldemethoden</Typography>
         <FormControlLabel
           control={<Switch checked={magicLinkEnabled} onChange={(e) => setMagicLinkEnabled(e.target.checked)} />}
           label="Magic-Link-Anmeldung"
@@ -135,44 +116,20 @@ export function PlatformProfilePage() {
 
         {passwordEnabled && (
           <>
-        <Divider sx={{ my: 3 }} />
-
-        <Typography variant="h6" gutterBottom>Passwort ändern</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Aktuelles Passwort ist erforderlich, wenn Sie E-Mail oder Passwort ändern.
-        </Typography>
-        <TextField
-          fullWidth
-          label="Aktuelles Passwort"
-          type="password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Neues Passwort"
-          type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          helperText="Mindestens 8 Zeichen — leer lassen, wenn unverändert"
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Neues Passwort bestätigen"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          sx={{ mb: 3 }}
-        />
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" fontWeight={600}>Passwort ändern</Typography>
+            <TextField label="Aktuelles Passwort" type="password" fullWidth margin="normal" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+            <TextField label="Neues Passwort" type="password" fullWidth margin="normal" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+            <TextField label="Neues Passwort bestätigen" type="password" fullWidth margin="normal" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
           </>
         )}
 
-        <Button variant="contained" onClick={save} disabled={saving} sx={{ mt: 3 }}>
-          {saving ? 'Speichern…' : 'Speichern'}
-        </Button>
+        <Box sx={{ mt: 3 }}>
+          <Button variant="contained" onClick={() => void save()} disabled={saving}>
+            {saving ? 'Speichern…' : 'Speichern'}
+          </Button>
+        </Box>
       </Paper>
-    </Box>
+    </AdminLayout>
   );
 }

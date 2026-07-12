@@ -142,12 +142,16 @@ export const api = {
     request<{ mode: string; passwordEnabled: boolean; magicLinkEnabled: boolean; loginCodeEnabled: boolean }>(
       '/public/auth-config'
     ),
-  login: (email: string, password: string) =>
-    request<{ token: string; refreshToken?: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (identifier: string, password: string) =>
+    request<{ token: string; refreshToken?: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) }),
   requestMagicLink: (email: string, loginPath?: string) =>
     request<{ sent: boolean }>('/auth/magic-link', { method: 'POST', body: JSON.stringify({ email, loginPath }) }),
   requestLoginCode: (email: string) =>
     request<{ sent: boolean }>('/auth/login-code', { method: 'POST', body: JSON.stringify({ email }) }),
+  requestPasswordReset: (identifier: string, loginPath?: string) =>
+    request<{ sent: boolean }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ identifier, loginPath }) }),
+  resetPassword: (token: string, newPassword: string) =>
+    request<{ success: boolean }>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
   verifyMagicLink: (token: string) =>
     request<{ token: string; refreshToken?: string; user: User }>('/auth/verify-magic-link', { method: 'POST', body: JSON.stringify({ token }) }),
   verifyLoginCode: (email: string, code: string) =>
@@ -157,6 +161,16 @@ export const api = {
   logout: (refreshToken: string) =>
     request<void>('/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken }) }),
   me: (token: string) => request<User>('/auth/me', {}, token),
+  updateProfile: (token: string, data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    username?: string | null;
+    passwordEnabled?: boolean;
+    magicLinkEnabled?: boolean;
+    currentPassword?: string;
+    newPassword?: string;
+  }) => request<User>('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }, token),
 
   // Staff
   getEvents: (token: string) => request<Event[]>('/staff/events', {}, token),
@@ -314,20 +328,26 @@ export const api = {
 
   getUsers: (token: string) => request<User[]>('/admin/users', {}, token),
   createUser: (token: string, data: {
-    email: string;
-    password: string;
+    email?: string;
+    username?: string;
+    password?: string;
     firstName: string;
     lastName: string;
     role: UserRole;
     roleTemplate?: import('@/types').RoleTemplateId;
+    passwordEnabled?: boolean;
+    magicLinkEnabled?: boolean;
   }) => request<User>('/admin/users', { method: 'POST', body: JSON.stringify(data) }, token),
   updateUser: (token: string, id: string, data: {
-    email?: string;
+    email?: string | null;
+    username?: string | null;
     password?: string;
     firstName?: string;
     lastName?: string;
     role?: UserRole;
     active?: boolean;
+    passwordEnabled?: boolean;
+    magicLinkEnabled?: boolean;
   }) => request<User>(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
 
   getModules: (token: string) =>

@@ -12,13 +12,16 @@ export type RoleTemplateId =
 
 export interface User {
   id: string;
-  email: string;
+  username?: string | null;
+  email?: string | null;
   firstName: string;
   lastName: string;
   role: UserRole;
   roleTemplate?: RoleTemplateId | string | null;
   permissions?: string[];
   active?: boolean;
+  passwordEnabled?: boolean;
+  magicLinkEnabled?: boolean;
   createdAt?: string;
 }
 

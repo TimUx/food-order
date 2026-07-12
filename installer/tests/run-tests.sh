@@ -66,6 +66,14 @@ migrate_traefik_tls_model
 ! [[ "${CFG[TRAEFIK_ROUTER_RULE]}" == *"HostRegexp"* ]] \
   && pass "no tenant host regexp" || fail "no tenant host regexp"
 
+echo "--- .env Quoting ---"
+CFG[TRAEFIK_ROUTER_RULE]="Host(\`www.fest.example.de\`) || Host(\`app.fest.example.de\`)"
+generate_env_file
+grep -q "^TRAEFIK_ROUTER_RULE='Host" "${INSTALL_DIR}/.env" \
+  && pass "traefik rule quoted in env" || fail "traefik rule quoted in env"
+bash -c "set -a; source '${INSTALL_DIR}/.env'; set +a; [[ \"\${TRAEFIK_ROUTER_RULE}\" == 'Host(\`www.fest.example.de\`) || Host(\`app.fest.example.de\`)' ]]" \
+  && pass "env sourceable by bash" || fail "env sourceable by bash"
+
 echo "--- Idempotenz ---"
 TMP_ENV=$(mktemp)
 echo "POSTGRES_USER=testuser" >"$TMP_ENV"

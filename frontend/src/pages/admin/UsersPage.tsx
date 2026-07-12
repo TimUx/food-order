@@ -33,6 +33,7 @@ import { api } from '@/services/api';
 import { User, UserRole, RoleTemplate, RoleTemplateId } from '@/types';
 
 interface UserForm {
+  username: string;
   email: string;
   password: string;
   firstName: string;
@@ -40,9 +41,12 @@ interface UserForm {
   role: UserRole;
   active: boolean;
   roleTemplate: RoleTemplateId | '';
+  passwordEnabled: boolean;
+  magicLinkEnabled: boolean;
 }
 
 const emptyForm: UserForm = {
+  username: '',
   email: '',
   password: '',
   firstName: '',
@@ -50,6 +54,8 @@ const emptyForm: UserForm = {
   role: 'STAFF',
   active: true,
   roleTemplate: 'kueche',
+  passwordEnabled: true,
+  magicLinkEnabled: false,
 };
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -110,16 +116,38 @@ export function UsersPage() {
     setDialogOpen(true);
   };
 
+  const handleRoleChange = (role: UserRole) => {
+    if (role === 'ADMIN') {
+      setForm((prev) => ({
+        ...prev,
+        role,
+        passwordEnabled: false,
+        magicLinkEnabled: true,
+        password: '',
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        role,
+        passwordEnabled: true,
+        magicLinkEnabled: Boolean(prev.email.trim()),
+      }));
+    }
+  };
+
   const openEdit = (user: User) => {
     setEditingId(user.id);
     setForm({
-      email: user.email,
+      email: user.email ?? '',
+      username: user.username ?? '',
       password: '',
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
       active: user.active ?? true,
       roleTemplate: (user.roleTemplate as RoleTemplateId) ?? '',
+      passwordEnabled: user.passwordEnabled ?? false,
+      magicLinkEnabled: user.magicLinkEnabled ?? true,
     });
     setDialogOpen(true);
   };
@@ -137,11 +165,14 @@ export function UsersPage() {
     try {
       if (editingId) {
         await api.updateUser(token, editingId, {
-          email: form.email,
+          email: form.email.trim() || null,
+          username: form.username.trim() || null,
           firstName: form.firstName,
           lastName: form.lastName,
           role: form.role,
           active: form.active,
+          passwordEnabled: form.passwordEnabled,
+          magicLinkEnabled: form.magicLinkEnabled,
           ...(form.password ? { password: form.password } : {}),
         });
         if (form.role === 'STAFF' && form.roleTemplate) {
@@ -155,11 +186,14 @@ export function UsersPage() {
         }
       } else {
         const created = await api.createUser(token, {
-          email: form.email,
-          password: form.password,
+          email: form.email.trim() || undefined,
+          username: form.username.trim() || undefined,
+          password: form.passwordEnabled ? form.password : undefined,
           firstName: form.firstName,
           lastName: form.lastName,
           role: form.role,
+          passwordEnabled: form.passwordEnabled,
+          magicLinkEnabled: form.magicLinkEnabled,
           ...(form.role === 'STAFF' && form.roleTemplate
             ? { roleTemplate: form.roleTemplate }
             : {}),
@@ -228,6 +262,7 @@ export function UsersPage() {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
+              <TableCell>Benutzername</TableCell>
               <TableCell>E-Mail</TableCell>
               <TableCell>Rolle</TableCell>
               <TableCell>Status</TableCell>
@@ -238,7 +273,8 @@ export function UsersPage() {
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.firstName} {user.lastName}</TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.username || '—'}</TableCell>
+                <TableCell>{user.email || '—'}</TableCell>
                 <TableCell>
                   <Chip
                     label={displayRole(user)}
@@ -290,27 +326,62 @@ export function UsersPage() {
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
             />
             <TextField
+              label="Benutzername"
+              fullWidth
+              required={form.role === 'STAFF'}
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              helperText={form.role === 'STAFF' ? 'Eindeutiger Login-Name, z. B. Kasse1' : 'Optional für Passwort-Anmeldung'}
+            />
+            <TextField
               label="E-Mail"
               type="email"
               fullWidth
-              required
+              required={form.role === 'ADMIN'}
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => setForm({
+                ...form,
+                email: e.target.value,
+                magicLinkEnabled: form.role === 'ADMIN' ? true : Boolean(e.target.value.trim()),
+              })}
+              helperText={form.role === 'STAFF' ? 'Optional — erforderlich für Magic Link' : 'Pflicht für Administratoren'}
             />
-            <TextField
-              label={editingId ? 'Neues Passwort (optional)' : 'Passwort'}
-              type="password"
-              fullWidth
-              required={!editingId}
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.magicLinkEnabled}
+                  onChange={(e) => setForm({ ...form, magicLinkEnabled: e.target.checked })}
+                  disabled={!form.email.trim()}
+                />
+              }
+              label="Magic-Link-Anmeldung"
             />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.passwordEnabled}
+                  onChange={(e) => setForm({ ...form, passwordEnabled: e.target.checked })}
+                />
+              }
+              label="Passwort-Anmeldung"
+            />
+            {form.passwordEnabled && (
+              <TextField
+                label={editingId ? 'Neues Passwort (optional)' : (form.role === 'STAFF' ? 'Passwort / PIN' : 'Passwort')}
+                type="password"
+                fullWidth
+                required={!editingId}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                helperText={form.role === 'STAFF' ? 'Mindestens 4 Zeichen' : 'Mindestens 8 Zeichen'}
+              />
+            )}
             <FormControl fullWidth>
               <InputLabel>Rolle</InputLabel>
               <Select
                 label="Rolle"
                 value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
+                onChange={(e) => handleRoleChange(e.target.value as UserRole)}
               >
                 <MenuItem value="STAFF">Mitarbeiter</MenuItem>
                 <MenuItem value="ADMIN">Administrator</MenuItem>

@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
+  login: (identifier: string, password: string) => Promise<User>;
   setSession: (token: string, refreshToken: string | undefined, user: User) => void;
   logout: () => void;
   isAdmin: boolean;
@@ -66,8 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, [token, routing.scope, routing.tenantSlug]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await api.login(email, password);
+  const login = useCallback(async (identifier: string, password: string) => {
+    const result = await api.login(identifier, password);
     writeScopedItem(TOKEN_BASE, routing.scope, routing.tenantSlug, result.token);
     if (result.refreshToken) {
       writeScopedItem(REFRESH_BASE, routing.scope, routing.tenantSlug, result.refreshToken);
