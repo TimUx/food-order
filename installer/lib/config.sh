@@ -105,6 +105,10 @@ apply_defaults() {
   CFG[USES_REVERSE_PROXY]="${CFG[USES_REVERSE_PROXY]:-no}"
   CFG[DEPLOYMENT_MODE]="${CFG[DEPLOYMENT_MODE]:-compose}"
   CFG[STACK_NAME]="${CFG[STACK_NAME]:-festschmiede}"
+  CFG[BACKEND_HOST]="${CFG[BACKEND_HOST]:-backend}"
+  CFG[BACKEND_PORT]="${CFG[BACKEND_PORT]:-3001}"
+  CFG[BACKEND_CONTAINER]="${CFG[BACKEND_CONTAINER]:-festschmiede-backend}"
+  CFG[FRONTEND_CONTAINER]="${CFG[FRONTEND_CONTAINER]:-festschmiede-frontend}"
 
   # Legacy: PROXY_MODE=existing → externer Proxy ohne Typ
   if [[ "${CFG[PROXY_MODE]:-}" == "existing" ]]; then
@@ -139,6 +143,7 @@ apply_defaults() {
     CFG[WWW_SUBDOMAIN]="${CFG[WWW_SUBDOMAIN]:-www}"
     CFG[APP_SUBDOMAIN]="${CFG[APP_SUBDOMAIN]:-app}"
     CFG[API_SUBDOMAIN]="${CFG[API_SUBDOMAIN]:-api}"
+    CFG[PLATFORM_API_DOMAIN]=""
     CFG[ACME_EMAIL]="${CFG[ACME_EMAIL]:-admin@${CFG[PLATFORM_DOMAIN]}}"
     migrate_traefik_tls_model
     if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
@@ -303,6 +308,7 @@ migrate_traefik_tls_model() {
   [[ "${CFG[ENABLE_WWW_HOST]}" == "yes" ]] && CFG[PLATFORM_WWW_DOMAIN]="${CFG[WWW_SUBDOMAIN]:-www}.${CFG[PLATFORM_DOMAIN]}"
   CFG[PLATFORM_APP_DOMAIN]=""
   [[ "${CFG[ENABLE_APP_HOST]}" == "yes" ]] && CFG[PLATFORM_APP_DOMAIN]="${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}"
+  CFG[PLATFORM_API_DOMAIN]=""
 
   CFG[PLATFORM_WILDCARD_DOMAIN]=""
   unset 'CFG[ENABLE_TENANT_HOSTS]'
@@ -557,6 +563,9 @@ $(_swarm_node_placement_yaml)
   frontend:
     image: ${image_prefix}/frontend:${image_tag}
 ${frontend_ports}
+    environment:
+      BACKEND_HOST: "${CFG[BACKEND_HOST]:-backend}"
+      BACKEND_PORT: "${CFG[BACKEND_PORT]:-3001}"
     networks:
 ${frontend_networks}
     deploy:
@@ -940,6 +949,9 @@ ${smtp_env}
     ports: !reset []
     expose:
       - "80"
+    environment:
+      BACKEND_HOST: \${BACKEND_HOST:-backend}
+      BACKEND_PORT: \${BACKEND_PORT:-3001}
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:80 || exit 1"]
       interval: 15s
@@ -1004,6 +1016,9 @@ ${smtp_env}
     ports: !reset []
     expose:
       - "80"
+    environment:
+      BACKEND_HOST: \${BACKEND_HOST:-backend}
+      BACKEND_PORT: \${BACKEND_PORT:-3001}
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:80 || exit 1"]
       interval: 15s
@@ -1089,6 +1104,7 @@ APP_SUBDOMAIN=${CFG[APP_SUBDOMAIN]:-app}
 API_SUBDOMAIN=${CFG[API_SUBDOMAIN]:-api}
 PLATFORM_WWW_DOMAIN=${CFG[PLATFORM_WWW_DOMAIN]:-}
 PLATFORM_APP_DOMAIN=${CFG[PLATFORM_APP_DOMAIN]:-}
+PLATFORM_API_DOMAIN=
 PLATFORM_ALLOWED_ORIGINS=${CFG[PLATFORM_ALLOWED_ORIGINS]:-}
 TRAEFIK_ROUTER_RULE=${CFG[TRAEFIK_ROUTER_RULE]:-}
 DEFAULT_TENANT_SLUG=${CFG[DEFAULT_TENANT_SLUG]}
@@ -1102,6 +1118,8 @@ ACME_EMAIL=${CFG[ACME_EMAIL]:-}
 REDIS_URL=${CFG[REDIS_URL]:-}
 
 FESTSCHMIEDE_INTERNAL_NETWORK=${CFG[DOCKER_INTERNAL_NETWORK]}
+BACKEND_HOST=${CFG[BACKEND_HOST]:-backend}
+BACKEND_PORT=${CFG[BACKEND_PORT]:-3001}
 FESTSCHMIEDE_PROXY_NETWORK=${CFG[DOCKER_PROXY_NETWORK]}
 DOCKER_PROXY_NETWORK=${CFG[DOCKER_PROXY_NETWORK]}
 DOCKER_NETWORK_CREATE=${CFG[DOCKER_NETWORK_CREATE]:-yes}
@@ -1174,6 +1192,12 @@ get_access_urls() {
     echo "Homepage:  https://${CFG[WWW_SUBDOMAIN]:-www}.${CFG[PLATFORM_DOMAIN]}"
     echo "APP:       https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}/platform"
     echo "Mandant:   https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}/<tenant>/public"
+    if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
+      echo "Health:    https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}/api/health"
+    elif [[ "${CFG[ENABLE_WWW_HOST]:-yes}" == "yes" ]]; then
+      echo "Health:    https://${CFG[WWW_SUBDOMAIN]:-www}.${CFG[PLATFORM_DOMAIN]}/api/health"
+    fi
+    echo "Hinweis:   Backend nur intern (Traefik → Frontend → backend:3001)"
   else
     echo "Frontend:  http://localhost:5173"
     echo "Backend:   http://localhost:3001"

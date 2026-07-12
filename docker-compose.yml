@@ -82,6 +82,9 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    environment:
+      BACKEND_HOST: ${BACKEND_HOST:-backend}
+      BACKEND_PORT: ${BACKEND_PORT:-3001}
     ports:
       - "5173:80"
     networks:

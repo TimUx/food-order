@@ -72,6 +72,9 @@ services:
 
   frontend:
     image: ${GHCR_IMAGE_PREFIX:-ghcr.io/timux/festschmiede}/frontend:${IMAGE_TAG:-latest}
+    environment:
+      BACKEND_HOST: ${BACKEND_HOST:-backend}
+      BACKEND_PORT: ${BACKEND_PORT:-3001}
     networks:
       - internal
       - public

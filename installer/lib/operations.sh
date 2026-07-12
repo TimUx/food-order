@@ -64,46 +64,39 @@ run_database_backup() {
 
 verify_health_strict() {
   local timeout="${1:-180}"
-  local api_url="http://localhost:3001/api/health"
-  local backend_container="${CFG[BACKEND_CONTAINER]:-festschmiede-backend}"
+  local probe_url body
+  apply_defaults
+  probe_url=$(describe_backend_health_probe)
 
-  if [[ "${CFG[INSTALL_PROFILE]:-local}" == "production" && -n "${CFG[PLATFORM_DOMAIN]:-}" ]]; then
-    api_url="https://${CFG[API_SUBDOMAIN]:-api}.${CFG[PLATFORM_DOMAIN]}/api/health"
-  fi
-
-  log_info "Health-Check (strikt): $api_url"
-  local i body status db_ok
+  log_info "Health-Check (strikt): $probe_url"
+  local i
   for ((i=1; i<=timeout; i++)); do
-    body=$(curl -kfsS "$api_url" 2>/dev/null || true)
-    if [[ -n "$body" ]]; then
-      status=$(echo "$body" | grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
-      db_ok=$(echo "$body" | grep -o '"ok"[[:space:]]*:[[:space:]]*true' | head -1 || true)
-      if [[ "$status" == "ok" && -n "$db_ok" ]]; then
-        log_info "Health OK nach ${i}s"
+    if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+      body=$(fetch_public_https_health_body 2>/dev/null || true)
+      if parse_health_response_ok "$body"; then
+        log_info "Health OK nach ${i}s (HTTPS über Domain)"
         return 0
       fi
-    fi
-    if container_health_ok "$backend_container"; then
-      log_info "Health OK nach ${i}s (Container: ${backend_container})"
+    elif backend_health_ok; then
+      log_info "Health OK nach ${i}s"
       return 0
     fi
     sleep 1
   done
 
-  installer_fail health_failed "Timeout nach ${timeout}s — API/Container nicht bereit"
+  installer_fail health_failed "Timeout nach ${timeout}s — API nicht über konfigurierte Domain erreichbar"
   return "$EXIT_HEALTH"
 }
 
 wait_for_migration() {
   # Migration läuft beim Backend-Start (prisma db push / migrate deploy im Container)
   _ops_progress "Warte auf Datenbank-Migration..."
-  local i
+  local i body
   for ((i=1; i<=120; i++)); do
-    if docker compose -f "${INSTALL_DIR}/docker-compose.yml" logs backend 2>/dev/null | tail -30 | grep -qE 'migrate|db push|listening|Server'; then
-      if curl -kfsS http://localhost:3001/api/health 2>/dev/null | grep -q '"database"'; then
-        log_info "Migration/Backend bereit nach ${i}s"
-        return 0
-      fi
+    body=$(fetch_internal_backend_health_body 2>/dev/null || true)
+    if [[ -n "$body" ]] && echo "$body" | grep -q '"database"'; then
+      log_info "Migration/Backend bereit nach ${i}s"
+      return 0
     fi
     sleep 2
   done

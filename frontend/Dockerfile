@@ -18,7 +18,10 @@ RUN npm run build
 
 FROM nginx:alpine AS runner
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV BACKEND_HOST=backend
+ENV BACKEND_PORT=3001
+
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80

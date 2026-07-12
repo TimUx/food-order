@@ -73,6 +73,9 @@ services:
     ports: !reset []
     expose:
       - "80"
+    environment:
+      BACKEND_HOST: ${BACKEND_HOST:-backend}
+      BACKEND_PORT: ${BACKEND_PORT:-3001}
     networks:
       - internal
       - public

@@ -176,6 +176,143 @@ reset_postgres_volume_if_requested() {
   return 0
 }
 
+resolve_public_api_health_url() {
+  apply_defaults
+  if [[ "${CFG[INSTALL_PROFILE]:-}" != "production" || -z "${CFG[PLATFORM_DOMAIN]:-}" ]]; then
+    return 1
+  fi
+  if [[ "${CFG[ENABLE_APP_HOST]:-yes}" == "yes" ]]; then
+    echo "https://${CFG[APP_SUBDOMAIN]:-app}.${CFG[PLATFORM_DOMAIN]}/api/health"
+    return 0
+  fi
+  if [[ "${CFG[ENABLE_WWW_HOST]:-yes}" == "yes" ]]; then
+    echo "https://${CFG[WWW_SUBDOMAIN]:-www}.${CFG[PLATFORM_DOMAIN]}/api/health"
+    return 0
+  fi
+  echo "https://${CFG[PLATFORM_DOMAIN]}/api/health"
+  return 0
+}
+
+host_can_reach_backend_port() {
+  apply_defaults
+  [[ "${CFG[INSTALL_PROFILE]:-}" == "local" ]]
+}
+
+parse_health_response_ok() {
+  local body="$1"
+  local status db_ok
+  [[ -n "$body" ]] || return 1
+  status=$(echo "$body" | grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
+  db_ok=$(echo "$body" | grep -o '"ok"[[:space:]]*:[[:space:]]*true' | head -1 || true)
+  [[ "$status" == "ok" && -n "$db_ok" ]]
+}
+
+fetch_public_https_health_body() {
+  local url body
+  url=$(resolve_public_api_health_url) || return 1
+  body=$(curl -kfsS "$url" 2>/dev/null || true)
+  if [[ -n "$body" ]]; then
+    printf '%s' "$body"
+    return 0
+  fi
+  return 1
+}
+
+fetch_internal_backend_health_body() {
+  apply_defaults
+  local backend_host backend_port frontend_id body=""
+  backend_host="${CFG[BACKEND_HOST]:-backend}"
+  backend_port="${CFG[BACKEND_PORT]:-3001}"
+
+  if host_can_reach_backend_port; then
+    body=$(curl -fsS "http://localhost:${backend_port}/api/health" 2>/dev/null || true)
+    if [[ -n "$body" ]]; then
+      printf '%s' "$body"
+      return 0
+    fi
+  fi
+
+  frontend_id=$(find_frontend_container_id)
+  if [[ -n "$frontend_id" ]]; then
+    body=$(docker exec "$frontend_id" wget -q -O- "http://${backend_host}:${backend_port}/api/health" 2>/dev/null || true)
+    if [[ -n "$body" ]]; then
+      printf '%s' "$body"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+find_frontend_container_id() {
+  apply_defaults
+  local name="${CFG[FRONTEND_CONTAINER]:-festschmiede-frontend}"
+  if deployment_uses_swarm; then
+    docker ps -q -f "label=com.docker.swarm.service.name=$(stack_name)_frontend" 2>/dev/null | head -1
+    return 0
+  fi
+  docker ps -q -f "name=^/${name}$" 2>/dev/null | head -1
+}
+
+fetch_backend_health_body() {
+  apply_defaults
+  local body=""
+
+  if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+    body=$(fetch_public_https_health_body 2>/dev/null || true)
+    if [[ -n "$body" ]]; then
+      printf '%s' "$body"
+      return 0
+    fi
+    body=$(fetch_internal_backend_health_body 2>/dev/null || true)
+    if [[ -n "$body" ]]; then
+      printf '%s' "$body"
+      return 0
+    fi
+    return 1
+  fi
+
+  body=$(fetch_internal_backend_health_body 2>/dev/null || true)
+  if [[ -n "$body" ]]; then
+    printf '%s' "$body"
+    return 0
+  fi
+  return 1
+}
+
+backend_health_ok() {
+  local body backend_container
+  apply_defaults
+  if [[ "${CFG[INSTALL_PROFILE]:-}" == "production" ]]; then
+    body=$(fetch_public_https_health_body 2>/dev/null || true)
+    parse_health_response_ok "$body" && return 0
+    return 1
+  fi
+
+  body=$(fetch_backend_health_body) || {
+    backend_container="${CFG[BACKEND_CONTAINER]:-festschmiede-backend}"
+    container_health_ok "$backend_container"
+    return $?
+  }
+  parse_health_response_ok "$body"
+}
+
+describe_backend_health_probe() {
+  apply_defaults
+  local url backend_host backend_port
+  backend_host="${CFG[BACKEND_HOST]:-backend}"
+  backend_port="${CFG[BACKEND_PORT]:-3001}"
+  if url=$(resolve_public_api_health_url 2>/dev/null); then
+    echo "$url (Traefik → Frontend → Backend)"
+    return 0
+  fi
+  if host_can_reach_backend_port; then
+    echo "http://localhost:${backend_port}/api/health"
+    return 0
+  fi
+  echo "http://${backend_host}:${backend_port}/api/health (intern via Frontend-Container)"
+}
+
 container_health_ok() {
   local name="$1"
   local status
@@ -289,10 +426,10 @@ docker_status_report() {
     s+=$'\n'"${containers}"
   fi
   s+=$'\n\n'"Health:"
-  if curl -fsS http://localhost:3001/api/health >/dev/null 2>&1; then
+  if backend_health_ok; then
     s+=$'\n'"  Backend:  OK"
   else
-    s+=$'\n'"  Backend:  nicht erreichbar"
+    s+=$'\n'"  Backend:  nicht erreichbar ($(describe_backend_health_probe))"
   fi
   printf '%s' "$s"
 }

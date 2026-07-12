@@ -150,9 +150,7 @@ export function loadDomainConfigFromEnv(): PlatformDomainConfig {
     process.env.PLATFORM_APP_DOMAIN?.trim() ||
     (isLocalPlatformDomain(platformDomain) ? platformDomain : buildHost(appSubdomain, platformDomain));
 
-  const apiDomain =
-    process.env.PLATFORM_API_DOMAIN?.trim() ||
-    (isLocalPlatformDomain(platformDomain) ? null : buildHost(apiSubdomain, platformDomain));
+  const apiDomain = process.env.PLATFORM_API_DOMAIN?.trim() || null;
 
   const docsDomain = isLocalPlatformDomain(platformDomain)
     ? null
@@ -175,7 +173,6 @@ export function loadDomainConfigFromEnv(): PlatformDomainConfig {
         : [
             `https://${wwwDomain}`,
             `https://${appDomain}`,
-            ...(apiDomain ? [`https://${apiDomain}`] : []),
           ];
 
   return {
@@ -264,10 +261,19 @@ export function buildApiUrl(
   proto?: 'http' | 'https',
   tenantSlug?: string | null
 ): string {
-  const host = domains.apiDomain ?? domains.appDomain;
-  const scheme = proto ?? defaultProto(domains);
   const normalizedPath = normalizePath(path);
   const apiPath = normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
+
+  if (isLocalPlatformDomain(domains.platformDomain)) {
+    const origin = config.corsOrigin.replace(/\/$/, '');
+    if (tenantSlug) {
+      return `${origin}/${tenantSlug}${apiPath}`;
+    }
+    return `${origin}${apiPath}`;
+  }
+
+  const host = domains.appDomain;
+  const scheme = proto ?? defaultProto(domains);
   if (tenantSlug) {
     return `${scheme}://${host}/${tenantSlug}${apiPath}`;
   }

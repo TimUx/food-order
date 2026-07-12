@@ -3,6 +3,16 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.2 - 2026-07-12
+
+### Geändert
+
+- **Container-Kommunikation:** Frontend-nginx leitet `/api/` intern über den Docker-Service-Namen `backend` weiter (`BACKEND_HOST`/`BACKEND_PORT` konfigurierbar), nicht über `localhost`.
+- **Externe Erreichbarkeit:** Produktion ausschließlich über HTTPS auf `www`/`app`-Domain (Traefik → Frontend); Backend nicht von außen exponiert. API-URLs und Health-Checks nutzen `https://app.<domain>/api/…`.
+- **Installer:** Strikter Health-Check in Produktion prüft die öffentliche HTTPS-Route; Migration wartet intern über Docker-Netz.
+
+---
+
 ## 2.4.1 - 2026-07-12
 
 ### Behoben

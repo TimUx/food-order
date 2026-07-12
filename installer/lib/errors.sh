@@ -46,8 +46,9 @@ installer_error_message() {
       ;;
     health_failed)
       echo "Health-Check nach dem Update fehlgeschlagen."
-      echo "→ API prüfen: curl -s http://localhost:3001/api/health"
-      echo "→ Container-Status: docker compose ps"
+      echo "→ API extern prüfen: curl -fsS https://app.<domain>/api/health (HTTPS über Traefik → Frontend)"
+      echo "→ Backend ist nicht von außen erreichbar — nur intern über Docker-Service backend:3001"
+      echo "→ Container-Status: docker compose ps (bzw. docker stack ps <stack>)"
       echo "→ Bei anhaltenden Problemen: Assistent → Reparatur oder Rollback."
       [[ -n "$detail" ]] && echo "→ Technisch: $detail"
       ;;

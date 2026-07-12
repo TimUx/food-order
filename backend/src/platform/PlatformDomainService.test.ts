@@ -29,7 +29,7 @@ describe('PlatformDomainService', () => {
     expect(cfg.platformDomain).toBe('plattform.de');
     expect(cfg.wwwDomain).toBe('www.plattform.de');
     expect(cfg.appDomain).toBe('app.plattform.de');
-    expect(cfg.apiDomain).toBe('api.plattform.de');
+    expect(cfg.apiDomain).toBeNull();
     expect(cfg.wildcardDomain).toBe('*.plattform.de');
     expect(cfg.reservedSubdomains).toContain('www');
     expect(cfg.reservedSubdomains).toContain('app');
@@ -61,7 +61,7 @@ describe('PlatformDomainService', () => {
     expect(buildAppUrl(cfg, '/platform', 'https')).toBe('https://app.example.test/platform');
     expect(buildWwwUrl(cfg, '/', 'https')).toBe('https://www.example.test');
     expect(buildTenantUrl(cfg, 'verein', '/bestellung', 'https')).toBe('https://app.example.test/verein/bestellung');
-    expect(buildApiUrl(cfg, '/api', 'https', 'verein')).toBe('https://api.example.test/verein/api');
+    expect(buildApiUrl(cfg, '/api', 'https', 'verein')).toBe('https://app.example.test/verein/api');
     expect(formatTenantSubdomainExample(cfg, 'mein-verein')).toBe('app.example.test/mein-verein');
   });
 
@@ -102,7 +102,6 @@ describe('PlatformDomainService', () => {
     expect(resolved.corsOrigins).toEqual([
       'https://www.plattform.de',
       'https://app.plattform.de',
-      'https://api.plattform.de',
     ]);
     expect(resolved.allowWildcardSubdomains).toBe(true);
   });
