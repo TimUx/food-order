@@ -3,6 +3,15 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.11 - 2026-07-12
+
+### Behoben
+
+- **Installer-Update (Swarm):** Health-Check wartet zuerst auf Backend-Container und prüft `/api/health` direkt im Task (nicht nur über Frontend).
+- **Installer-Update:** Fortschrittsmeldungen während der Migrations-Wartezeit (alle 30s).
+
+---
+
 ## 2.4.10 - 2026-07-12
 
 ### Behoben

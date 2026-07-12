@@ -220,9 +220,20 @@ fetch_public_https_health_body() {
 
 fetch_internal_backend_health_body() {
   apply_defaults
-  local backend_host backend_port frontend_id body=""
+  local backend_host backend_port frontend_id backend_cid body=""
   backend_host="${CFG[BACKEND_HOST]:-backend}"
   backend_port="${CFG[BACKEND_PORT]:-3001}"
+
+  if deployment_uses_swarm; then
+    backend_cid=$(swarm_task_container_id "$(swarm_service_name backend)" || true)
+    if [[ -n "$backend_cid" ]]; then
+      body=$(docker exec "$backend_cid" wget -q -O- "http://127.0.0.1:${backend_port}/api/health" 2>/dev/null || true)
+      if [[ -n "$body" ]]; then
+        printf '%s' "$body"
+        return 0
+      fi
+    fi
+  fi
 
   if host_can_reach_backend_port; then
     body=$(curl -fsS "http://localhost:${backend_port}/api/health" 2>/dev/null || true)

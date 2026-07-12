@@ -84,18 +84,31 @@ verify_health_strict() {
 }
 
 wait_for_migration() {
-  # Migration läuft beim Backend-Start (prisma db push / migrate deploy im Container)
+  # Migration läuft beim Backend-Start (prisma migrate deploy im Container)
   _ops_progress "Warte auf Datenbank-Migration..."
-  local i body
+  local i body elapsed=0
+
+  if deployment_uses_swarm; then
+    wait_for_swarm_health 180 || {
+      installer_fail migration_failed "Swarm-Backend nicht bereit — docker service ps festschmiede_backend prüfen"
+      return "$EXIT_MIGRATION"
+    }
+  fi
+
   for ((i=1; i<=120; i++)); do
     body=$(fetch_internal_backend_health_body 2>/dev/null || true)
-    if [[ -n "$body" ]] && echo "$body" | grep -q '"database"'; then
-      log_info "Migration/Backend bereit nach ${i}s"
+    if parse_health_response_ok "$body"; then
+      log_info "Migration/Backend bereit nach ${elapsed}s"
       return 0
     fi
+    if (( i % 15 == 0 )); then
+      _ops_progress "Warte auf Backend-Health... (${elapsed}s / max. 240s)"
+      log_info "Backend-Health noch nicht OK (${elapsed}s) — docker service logs festschmiede_backend --tail 30"
+    fi
     sleep 2
+    elapsed=$((elapsed + 2))
   done
-  installer_fail migration_failed "Backend meldet keine erfolgreiche DB-Verbindung"
+  installer_fail migration_failed "Backend meldet keine erfolgreiche DB-Verbindung nach 240s"
   return "$EXIT_MIGRATION"
 }
 
