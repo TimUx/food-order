@@ -115,7 +115,7 @@ export function OrderEditDialog({
                 const unavailable = !item.active || item.soldOut;
                 const inOrder = (quantities[item.id] || 0) > 0;
                 return (
-                  <Grid item xs={12} sm={6} key={item.id}>
+                  <Grid size={{ xs: 12, sm: 6 }} key={item.id}>
                     <FoodItemCard
                       item={item}
                       quantity={quantities[item.id] || 0}

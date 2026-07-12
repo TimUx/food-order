@@ -1,6 +1,20 @@
 import { tenantContext, platformContext } from '../../../src/platform/bootstrap';
 import { platformDomainService, isLocalPlatformDomain } from '../../../src/platform/PlatformDomainService';
 
+export type TenantBrandingDefaults = {
+  logoUrl: string | null;
+};
+
+/**
+ * Mandanten-Standardwerte für E-Mail-Branding (z. B. Logo aus Tenant-Kontext).
+ */
+export function resolveTenantBrandingDefaults(): TenantBrandingDefaults {
+  const ctx = tenantContext.current();
+  return {
+    logoUrl: ctx?.logoUrl ?? null,
+  };
+}
+
 /**
  * Ermittelt die öffentliche Basis-URL des aktuellen Mandanten (ohne Request-Parsing).
  * Wird in E-Mail-Templates und rechtlichen Links verwendet.

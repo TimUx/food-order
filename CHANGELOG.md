@@ -3,6 +3,15 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.3 - 2026-07-12
+
+### Behoben
+
+- **CI/Release:** TypeScript-Fehler in `orderExportService`, fehlende `resolveTenantBrandingDefaults`-Funktion und MUI-Grid in `OrderEditDialog` — Quality Assurance und Release Validation (Docker-Image-Build) laufen wieder durch.
+- **ESLint:** Ungenutzter Parameter in `scripts/qa/linkcheck.ts`.
+
+---
+
 ## 2.4.2 - 2026-07-12
 
 ### Geändert

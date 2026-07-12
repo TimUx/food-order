@@ -20,8 +20,6 @@ type ExportOrder = Order & {
   }>;
 };
 
-export type EventOrdersExport = Awaited<ReturnType<typeof orderExportService.getEventExport>>;
-
 const HEADER_ROW = 7;
 const DATA_START_ROW = 8;
 
@@ -127,8 +125,24 @@ function setCurrencyCell(cell: ExcelJS.Cell, value: number | null | undefined) {
   cell.alignment = { horizontal: 'right' };
 }
 
+type EventExportPayload = {
+  event: {
+    id: string;
+    name: string;
+    date: Date;
+    eventDateLabel: string;
+    startTime: string;
+    endTime: string;
+  };
+  exportedAt: string;
+  orderCount: number;
+  orders: ReturnType<typeof mapExportOrder>[];
+};
+
+export type EventOrdersExport = EventExportPayload;
+
 export const orderExportService = {
-  async getEventExport(eventId: string) {
+  async getEventExport(eventId: string): Promise<EventExportPayload> {
     const event = await eventService.getById(eventId);
     const orders = await orderRepository.findByEvent(eventId);
 
@@ -158,7 +172,7 @@ export const orderExportService = {
     return `bestellungen-${safe}-${date}.${extension}`;
   },
 
-  async buildXlsx(exportData: EventOrdersExport): Promise<Buffer> {
+  async buildXlsx(exportData: EventExportPayload): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'FestSchmiede';
     workbook.created = new Date();

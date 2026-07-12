@@ -48,7 +48,7 @@ function walk(dir: string, fn: (file: string) => void): void {
   }
 }
 
-function shouldCheckFile(file: string): boolean {
+function shouldCheckFile(_file: string): boolean {
   return true;
 }
 
