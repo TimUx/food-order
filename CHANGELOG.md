@@ -3,6 +3,16 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.10 - 2026-07-12
+
+### Behoben
+
+- **Installer-Update:** `--update` lädt veraltete Installer-Dateien automatisch nach (auch im „lokalen“ Modus ohne Git).
+- **Installer:** Fallback für sicheres `.env`-Parsing, wenn `scripts/lib/dotenv.sh` noch fehlt.
+- **Datenbank-Backup:** `postgres-backup.sh` parst `.env` ohne `source` (Backticks in `TRAEFIK_ROUTER_RULE`).
+
+---
+
 ## 2.4.9 - 2026-07-12
 
 ### Behoben

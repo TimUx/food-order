@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.4.9}"
+FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.4.10}"
 FESTSCHMIEDE_GITHUB_REPO="${FESTSCHMIEDE_GITHUB_REPO:-TimUx/FestSchmiede}"
 FESTSCHMIEDE_REF="${FESTSCHMIEDE_REF:-}"
 FESTSCHMIEDE_INSTALL_DIR="${FESTSCHMIEDE_INSTALL_DIR:-}"
@@ -281,6 +281,29 @@ _should_refresh_installation() {
   [[ "$installed" != "${FESTSCHMIEDE_VERSION}" ]]
 }
 
+_refresh_installer_if_needed() {
+  local install_dir="$1"
+
+  if ! _should_refresh_installation "$install_dir"; then
+    return 0
+  fi
+
+  if [[ -d "${install_dir}/.git" ]]; then
+    local installed
+    installed="$(_installed_installer_version "$install_dir" 2>/dev/null || echo unbekannt)"
+    _log "Installer v${installed} — bitte zuerst git pull (lokales Repository)"
+    return 0
+  fi
+
+  if [[ "${FESTSCHMIEDE_FORCE_DOWNLOAD:-}" == "1" ]]; then
+    _log "Erzwinge Neu-Download (FESTSCHMIEDE_FORCE_DOWNLOAD=1)..."
+  else
+    _log "Aktualisiere Installer-Dateien auf v${FESTSCHMIEDE_VERSION}..."
+  fi
+  _bootstrap_download "$install_dir"
+  _bootstrap_verify "$install_dir"
+}
+
 _prompt_install_dir_online() {
   [[ -n "${FESTSCHMIEDE_INSTALL_DIR:-}" ]] && return 0
   [[ "${FESTSCHMIEDE_NONINTERACTIVE:-}" == "1" ]] && return 0
@@ -351,6 +374,9 @@ main() {
       _log "Bootstrap abgeschlossen (lokal)"
       exit 0
     fi
+    if [[ -n "${FESTSCHMIEDE_GUIDED_OP:-}" ]]; then
+      _refresh_installer_if_needed "$target"
+    fi
     _run_installer "$target" "${guided_args[@]}"
     return
   fi
@@ -371,12 +397,7 @@ main() {
       _log "Bestehende Installation gefunden"
     fi
     if _should_refresh_installation "$target"; then
-      if [[ "${FESTSCHMIEDE_FORCE_DOWNLOAD:-}" == "1" ]]; then
-        _log "Erzwinge Neu-Download (FESTSCHMIEDE_FORCE_DOWNLOAD=1)..."
-      else
-        _log "Aktualisiere Plattform-Dateien auf v${FESTSCHMIEDE_VERSION}..."
-      fi
-      _bootstrap_download "$target"
+      _refresh_installer_if_needed "$target"
     fi
   else
     _bootstrap_download "$target"

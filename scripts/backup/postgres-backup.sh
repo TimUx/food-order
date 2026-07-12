@@ -3,8 +3,51 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-# shellcheck source=scripts/lib/dotenv.sh
-source "${ROOT_DIR}/scripts/lib/dotenv.sh"
+if [[ -f "${ROOT_DIR}/scripts/lib/dotenv.sh" ]]; then
+  # shellcheck source=scripts/lib/dotenv.sh
+  source "${ROOT_DIR}/scripts/lib/dotenv.sh"
+else
+  dotenv_unquote_value() {
+    local value="$1"
+    value="${value%$'\r'}"
+    if [[ ${#value} -ge 2 && "$value" == \'*\' ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ ${#value} -ge 2 && "$value" == \"*\" ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    printf '%s' "$value"
+  }
+
+  dotenv_export_file() {
+    local env_file="$1"
+    shift
+    local filter_keys=("$@")
+    local line key value match k
+
+    [[ -f "$env_file" ]] || return 0
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      [[ "$line" =~ ^[[:space:]]*# ]] && continue
+      [[ "$line" =~ ^[A-Z_][A-Z0-9_]*= ]] || continue
+      key="${line%%=*}"
+      value="$(dotenv_unquote_value "${line#*=}")"
+
+      if [[ ${#filter_keys[@]} -gt 0 ]]; then
+        match=0
+        for k in "${filter_keys[@]}"; do
+          if [[ "$key" == "$k" ]]; then
+            match=1
+            break
+          fi
+        done
+        [[ $match -eq 1 ]] || continue
+      fi
+
+      printf -v "$key" '%s' "$value"
+      export "$key"
+    done <"$env_file"
+  }
+fi
 
 dotenv_export_file "${ROOT_DIR}/.env" \
   POSTGRES_USER POSTGRES_DB POSTGRES_CONTAINER BACKUP_DIR STACK_NAME DEPLOYMENT_MODE
