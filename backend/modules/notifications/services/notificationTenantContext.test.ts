@@ -17,9 +17,18 @@ import { tenantContext, platformContext } from '../../../src/platform/bootstrap'
 import { resolveTenantPublicBaseUrl } from './notificationTenantContext';
 
 describe('notificationTenantContext', () => {
+  const envBackup = { ...process.env };
+
   beforeEach(() => {
     vi.mocked(tenantContext.current).mockReset();
     vi.mocked(platformContext.current).mockReset();
+    process.env = { ...envBackup };
+    delete process.env.PLATFORM_DOMAIN;
+    delete process.env.NODE_ENV;
+  });
+
+  afterEach(() => {
+    process.env = { ...envBackup };
   });
 
   it('builds path-based tenant URL on app host', () => {

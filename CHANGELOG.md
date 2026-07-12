@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.4 - 2026-07-12
+
+### Behoben
+
+- **CI/Tests:** Unit-Test-Fehler in `PlatformDomainService`, `TenantResolver` und `notificationTenantContext` — Release Validation kann Docker-Images bauen.
+
+---
+
 ## 2.4.3 - 2026-07-12
 
 ### Behoben

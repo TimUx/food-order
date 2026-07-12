@@ -23,14 +23,10 @@ export function resolveTenantPublicBaseUrl(): string {
   const ctx = tenantContext.current();
   const platform = platformContext.current();
   const domains = platformDomainService.getPublicView(platform);
-  const proto = platformDomainService.resolveProto();
+  const proto: 'http' | 'https' = isLocalPlatformDomain(domains.platformDomain) ? 'http' : 'https';
 
   if (ctx?.slug) {
     return platformDomainService.buildTenantUrl(domains, ctx.slug, '', proto);
-  }
-
-  if (isLocalPlatformDomain(domains.platformDomain)) {
-    return platformDomainService.buildAppUrl(domains, '', proto);
   }
 
   return platformDomainService.buildAppUrl(domains, '', proto);

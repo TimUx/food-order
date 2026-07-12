@@ -65,7 +65,8 @@ export function productionCorsOriginsFromEnv(domainConfig: PlatformDomainConfig)
 
   const httpsOrigins = raw.filter((origin) => {
     try {
-      return new URL(origin).protocol === 'https:';
+      const url = new URL(origin);
+      return url.protocol === 'https:' && !url.hostname.includes('*');
     } catch {
       return false;
     }
@@ -103,11 +104,15 @@ export function resolveCorsNetworkSettings(
     return networkSettings ?? {};
   }
 
+  const envAllowsWildcard =
+    Boolean(domainConfig.wildcardDomain) ||
+    domainConfig.allowedOrigins.some((origin) => origin.includes('*.'));
+
   const allowWildcard =
-    typeof networkSettings?.allowWildcardSubdomains === 'boolean'
+    envAllowsWildcard ||
+    (typeof networkSettings?.allowWildcardSubdomains === 'boolean'
       ? networkSettings.allowWildcardSubdomains
-      : Boolean(domainConfig.wildcardDomain) ||
-        domainConfig.allowedOrigins.some((origin) => origin.includes('*.'));
+      : false);
 
   return {
     ...networkSettings,
