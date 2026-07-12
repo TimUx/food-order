@@ -1,6 +1,6 @@
 {
   "name": "festschmiede-backend",
-  "version": "2.0.0",
+  "version": "2.4.0",
   "description": "Backend für die FestSchmiede-Plattform",
   "main": "dist/src/index.js",
   "scripts": {
