@@ -3,6 +3,18 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.16 - 2026-07-13
+
+### Hinzugefügt
+
+- **Plattform-Admin:** Dark-Mode-Toggle in der App-Bar (wie Mandanten-Admin und öffentliche Website).
+
+### Behoben
+
+- **Marketing-Website:** Hero, CTA-Band und Footer nutzen theme-abhängige Hintergründe — im Dark Mode keine hellen Flächen mit heller Schrift mehr.
+
+---
+
 ## 2.4.15 - 2026-07-12
 
 ### Behoben

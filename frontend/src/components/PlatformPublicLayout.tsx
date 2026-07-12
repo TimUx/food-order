@@ -111,7 +111,7 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
       <Box component="main" sx={{ flexGrow: 1 }}>
         {children}
       </Box>
-      <Box component="footer" sx={{ py: 3, borderTop: 1, borderColor: 'divider', bgcolor: 'grey.50' }}>
+      <Box component="footer" sx={{ py: 3, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Container maxWidth="md">
           {platform.footerText && (
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>

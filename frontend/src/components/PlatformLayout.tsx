@@ -5,6 +5,8 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BusinessIcon from '@mui/icons-material/Business';
 import PeopleIcon from '@mui/icons-material/People';
@@ -19,6 +21,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePlatformAuth } from '@/contexts/PlatformAuthContext';
 import { usePlatform } from '@/contexts/PlatformProvider';
+import { useThemeMode } from '@/contexts/ThemeContext';
 
 const DRAWER_WIDTH = 260;
 
@@ -44,6 +47,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { mode, toggleMode } = useThemeMode();
 
   const drawer = (
     <Box sx={{ width: DRAWER_WIDTH, pt: 1 }}>
@@ -69,7 +73,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="fixed" color="default" elevation={1} sx={{ bgcolor: '#0d47a1', color: 'white' }}>
         <Toolbar>
           <IconButton color="inherit" edge="start" onClick={() => setDrawerOpen(!drawerOpen)} sx={{ mr: 2, display: { md: 'none' } }}>
@@ -79,6 +83,9 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
           <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
             {user?.firstName} {user?.lastName}
           </Typography>
+          <IconButton color="inherit" onClick={toggleMode} aria-label="Design wechseln" sx={{ mr: 0.5 }}>
+            {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
           <IconButton
             color="inherit"
             component={Link}
