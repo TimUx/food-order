@@ -26,9 +26,11 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
 
   const adminHash = await bcrypt.hash('admin123', 12);
   const staffHash = await bcrypt.hash('staff123', 12);
+  const authFlags = { passwordEnabled: true, magicLinkEnabled: true };
+
   await prisma.user.upsert({
     where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'admin@verein.local' } },
-    update: {},
+    update: authFlags,
     create: {
       tenantId: DEFAULT_TENANT_ID,
       email: 'admin@verein.local',
@@ -36,6 +38,7 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
       firstName: 'Admin',
       lastName: 'Verein',
       roleId: adminRole.id,
+      ...authFlags,
     },
   });
 
@@ -44,9 +47,10 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
 
   await prisma.user.upsert({
     where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'kueche@verein.local' } },
-    update: { permissions: kuechePermissions, roleTemplate: 'kueche' },
+    update: { permissions: kuechePermissions, roleTemplate: 'kueche', username: 'kueche', ...authFlags },
     create: {
       tenantId: DEFAULT_TENANT_ID,
+      username: 'kueche',
       email: 'kueche@verein.local',
       passwordHash: staffHash,
       firstName: 'Küche',
@@ -54,14 +58,16 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
       roleId: staffRole.id,
       permissions: kuechePermissions,
       roleTemplate: 'kueche',
+      ...authFlags,
     },
   });
 
   await prisma.user.upsert({
     where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'kasse@verein.local' } },
-    update: { permissions: kassePermissions, roleTemplate: 'kasse' },
+    update: { permissions: kassePermissions, roleTemplate: 'kasse', username: 'kasse', ...authFlags },
     create: {
       tenantId: DEFAULT_TENANT_ID,
+      username: 'kasse',
       email: 'kasse@verein.local',
       passwordHash: staffHash,
       firstName: 'Kasse',
@@ -69,15 +75,17 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
       roleId: staffRole.id,
       permissions: kassePermissions,
       roleTemplate: 'kasse',
+      ...authFlags,
     },
   });
 
   const verkaufHash = staffHash;
   await prisma.user.upsert({
     where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'verkauf@verein.local' } },
-    update: { permissions: kassePermissions, roleTemplate: 'kasse' },
+    update: { permissions: kassePermissions, roleTemplate: 'kasse', username: 'verkauf', ...authFlags },
     create: {
       tenantId: DEFAULT_TENANT_ID,
+      username: 'verkauf',
       email: 'verkauf@verein.local',
       passwordHash: verkaufHash,
       firstName: 'Verkauf',
@@ -85,6 +93,7 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
       roleId: staffRole.id,
       permissions: kassePermissions,
       roleTemplate: 'kasse',
+      ...authFlags,
     },
   });
 

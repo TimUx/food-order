@@ -10,7 +10,7 @@ import { platformAuthLoginTokenService } from './platformAuthLoginTokenService';
 import { mailService } from '../platform/mail/MailService';
 import { platformDomainService } from '../platform/PlatformDomainService';
 import { platformContext } from '../platform/bootstrap';
-import { adminPasswordMinLength, normalizeUserEmail, normalizeUserUsername } from './userAuthPolicy';
+import { adminPasswordMinLength } from './userAuthPolicy';
 
 type PlatformUser = NonNullable<Awaited<ReturnType<typeof platformUserRepository.findById>>>;
 

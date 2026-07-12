@@ -9,7 +9,7 @@ test.use({ baseURL: TENANT_BASE });
 test.describe('Administrator', () => {
   test('anmelden und Funktionen-Seite öffnen', async ({ page }) => {
     await page.goto(tenantPath('/admin/login'));
-    await page.getByLabel('E-Mail').fill(admin.email);
+    await page.getByLabel('Benutzername oder E-Mail').fill(admin.email);
     await page.getByLabel('Passwort').fill(admin.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
     await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 15_000 });
@@ -19,7 +19,7 @@ test.describe('Administrator', () => {
 
   test('Einstellungen und Benutzer erreichbar', async ({ page }) => {
     await page.goto(tenantPath('/admin/login'));
-    await page.getByLabel('E-Mail').fill(admin.email);
+    await page.getByLabel('Benutzername oder E-Mail').fill(admin.email);
     await page.getByLabel('Passwort').fill(admin.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
     await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 15_000 });
@@ -54,7 +54,7 @@ test.describe('Bestellablauf', () => {
 test.describe('Küche & Abholung', () => {
   test('Küchenmonitor und Abholung', async ({ page }) => {
     await page.goto(tenantPath('/mitarbeiter/login'));
-    await page.getByLabel('E-Mail').fill(kitchen.email);
+    await page.getByLabel('Benutzername oder E-Mail').fill(kitchen.email);
     await page.getByLabel('Passwort').fill(kitchen.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
     await expect(page).toHaveURL(/\/mitarbeiter\/?$/, { timeout: 15_000 });
@@ -70,7 +70,7 @@ test.describe('Küche & Abholung', () => {
 test.describe('Logout', () => {
   test('Mitarbeiter abmelden', async ({ page }) => {
     await page.goto(tenantPath('/mitarbeiter/login'));
-    await page.getByLabel('E-Mail').fill(kitchen.email);
+    await page.getByLabel('Benutzername oder E-Mail').fill(kitchen.email);
     await page.getByLabel('Passwort').fill(kitchen.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
     const logout = page.getByRole('button', { name: /abmelden|logout/i });

@@ -46,9 +46,10 @@ async function main() {
   });
 
   const adminPassword = await bcrypt.hash('admin123', 12);
+  const authFlags = { passwordEnabled: true, magicLinkEnabled: true };
   await prisma.user.upsert({
     where: { tenantId_email: { tenantId: DEFAULT_TENANT_ID, email: 'admin@verein.local' } },
-    update: {},
+    update: authFlags,
     create: {
       tenantId: DEFAULT_TENANT_ID,
       email: 'admin@verein.local',
@@ -56,6 +57,7 @@ async function main() {
       firstName: 'Admin',
       lastName: 'Verein',
       roleId: adminRole.id,
+      ...authFlags,
     },
   });
 
@@ -68,9 +70,12 @@ async function main() {
     update: {
       permissions: kuechePermissions,
       roleTemplate: 'kueche',
+      username: 'kueche',
+      ...authFlags,
     },
     create: {
       tenantId: DEFAULT_TENANT_ID,
+      username: 'kueche',
       email: 'kueche@verein.local',
       passwordHash: staffPassword,
       firstName: 'Küche',
@@ -78,6 +83,7 @@ async function main() {
       roleId: staffRole.id,
       permissions: kuechePermissions,
       roleTemplate: 'kueche',
+      ...authFlags,
     },
   });
 
@@ -86,9 +92,12 @@ async function main() {
     update: {
       permissions: kassePermissions,
       roleTemplate: 'kasse',
+      username: 'kasse',
+      ...authFlags,
     },
     create: {
       tenantId: DEFAULT_TENANT_ID,
+      username: 'kasse',
       email: 'kasse@verein.local',
       passwordHash: staffPassword,
       firstName: 'Kasse',
@@ -96,6 +105,7 @@ async function main() {
       roleId: staffRole.id,
       permissions: kassePermissions,
       roleTemplate: 'kasse',
+      ...authFlags,
     },
   });
 

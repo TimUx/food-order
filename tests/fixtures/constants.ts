@@ -1,8 +1,8 @@
 /** Gemeinsame Test-Konstanten für API-, E2E- und Integrationstests. */
 export const QA_USERS = {
-  admin: { email: 'admin@verein.local', password: 'admin123' },
-  kitchen: { email: 'kueche@verein.local', password: 'staff123' },
-  cashier: { email: 'kasse@verein.local', password: 'staff123' },
+  admin: { email: 'admin@verein.local', identifier: 'admin@verein.local', password: 'admin123' },
+  kitchen: { email: 'kueche@verein.local', identifier: 'kueche@verein.local', password: 'staff123' },
+  cashier: { email: 'kasse@verein.local', identifier: 'kasse@verein.local', password: 'staff123' },
 } as const;
 
 export const QA_TENANT_SLUG = process.env.QA_TENANT_SLUG || 'default';

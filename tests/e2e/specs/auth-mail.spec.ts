@@ -5,12 +5,12 @@ test.describe('Authentication', () => {
   test.use({ baseURL: TENANT_BASE });
   test('login page loads with email field', async ({ page }) => {
     await page.goto(tenantPath('/admin/login'));
-    await expect(page.getByLabel('E-Mail')).toBeVisible();
+    await expect(page.getByLabel('Benutzername oder E-Mail')).toBeVisible();
   });
 
   test('staff login page loads', async ({ page }) => {
     await page.goto(tenantPath('/mitarbeiter/login'));
-    await expect(page.getByLabel('E-Mail')).toBeVisible();
+    await expect(page.getByLabel('Benutzername oder E-Mail')).toBeVisible();
   });
 });
 

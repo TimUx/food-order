@@ -11,7 +11,7 @@ function drawerLink(page: Page, name: string) {
 
 async function loginAsAdmin(page: Page) {
   await page.goto(tenantPath('/admin/login'));
-  await page.getByLabel('E-Mail').fill(admin.email);
+  await page.getByLabel('Benutzername oder E-Mail').fill(admin.email);
   await page.getByLabel('Passwort').fill(admin.password);
   await page.getByRole('button', { name: /anmelden/i }).click();
   await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 15_000 });

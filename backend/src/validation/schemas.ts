@@ -1,14 +1,27 @@
 import { z } from 'zod';
 
-export const loginSchema = z.object({
-  identifier: z.string().min(1, 'Benutzername oder E-Mail erforderlich'),
-  password: z.string().min(1, 'Passwort erforderlich'),
-});
+const credentialLoginSchema = z
+  .object({
+    identifier: z.string().min(1).optional(),
+    email: z.string().email('Ungültige E-Mail-Adresse').optional(),
+    password: z.string().min(1, 'Passwort erforderlich'),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.identifier?.trim() && !data.email?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Benutzername oder E-Mail erforderlich',
+        path: ['identifier'],
+      });
+    }
+  })
+  .transform((data) => ({
+    identifier: (data.identifier?.trim() || data.email?.trim())!,
+    password: data.password,
+  }));
 
-export const platformLoginSchema = z.object({
-  identifier: z.string().min(1, 'Benutzername oder E-Mail erforderlich'),
-  password: z.string().min(1, 'Passwort erforderlich'),
-});
+export const loginSchema = credentialLoginSchema;
+export const platformLoginSchema = credentialLoginSchema;
 
 export const forgotPasswordSchema = z.object({
   identifier: z.string().min(1, 'Benutzername oder E-Mail erforderlich'),
