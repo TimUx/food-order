@@ -3,6 +3,29 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.8 - 2026-07-12
+
+### Hinzugefügt
+
+- **Benutzer-Identität:** Eindeutige Benutzernamen für Mitarbeiter (Login mit Benutzername oder E-Mail).
+- **Anmeldemethoden pro User:** Magic Link und/oder Passwort wählbar; Standard für neue Admins ist Magic Link.
+- **Mandanten-Admin-Profil:** Eigenes Profil unter `/admin/profil` (Name, E-Mail, Benutzername, Anmeldemethoden).
+- **Passwort vergessen:** Reset-Flow per E-Mail für Mandanten- und Plattform-Login (wenn Passwort-Anmeldung aktiv).
+- **Plattform-Login:** Magic Link und Passwort-vergessen für Plattformadministratoren.
+
+### Geändert
+
+- **Mitarbeiter:** E-Mail optional; Benutzername Pflicht; Passwort/PIN ab 4 Zeichen; kein eigenes Profil.
+- **Team-Verwaltung:** Formulare für Benutzername, optionale E-Mail und Anmeldemethoden (Mandant + Plattform).
+- **Installer:** Sicheres Laden der `.env` (Traefik-Regeln mit Backticks); Swarm-Postgres-Container-Erkennung beim Backup.
+
+### Behoben
+
+- **Plattform-Backups:** `pg_dump`-Verfügbarkeitscheck auf Alpine (Busybox-`gunzip` unterstützt kein `--version`).
+- **Installer-Update:** Datenbank-Backup schlug fehl, wenn `TRAEFIK_ROUTER_RULE` unquoted in `.env` stand.
+
+---
+
 ## 2.4.7 - 2026-07-12
 
 ### Hinzugefügt

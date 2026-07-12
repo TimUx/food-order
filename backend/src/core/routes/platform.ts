@@ -22,6 +22,11 @@ import {
   restoreBackupSchema,
   createPlatformUserSchema,
   updatePlatformUserSchema,
+  platformLoginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  magicLinkRequestSchema,
+  verifyMagicLinkSchema,
   updatePlatformProfileSchema,
   idParamSchema,
   platformSmtpUpdateSchema,
@@ -32,7 +37,11 @@ import {
 const router = Router();
 
 // Auth (öffentlich)
-router.post('/auth/login', loginRateLimiter, platformAuthController.login);
+router.post('/auth/login', loginRateLimiter, validateBody(platformLoginSchema), platformAuthController.login);
+router.post('/auth/magic-link', loginRateLimiter, validateBody(magicLinkRequestSchema), platformAuthController.requestMagicLink);
+router.post('/auth/verify-magic-link', loginRateLimiter, validateBody(verifyMagicLinkSchema), platformAuthController.verifyMagicLink);
+router.post('/auth/forgot-password', loginRateLimiter, validateBody(forgotPasswordSchema), platformAuthController.requestPasswordReset);
+router.post('/auth/reset-password', loginRateLimiter, validateBody(resetPasswordSchema), platformAuthController.resetPassword);
 router.post('/auth/logout', platformAuthController.logout);
 router.post('/auth/refresh', loginRateLimiter, platformAuthController.refresh);
 

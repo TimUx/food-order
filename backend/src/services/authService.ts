@@ -11,18 +11,39 @@ import { sessionService } from './sessionService';
 import { authConfigService } from './authConfigService';
 import { authLoginTokenService } from './authLoginTokenService';
 import { mailService } from '../platform/mail/MailService';
+import {
+  adminPasswordMinLength,
+  staffPasswordMinLength,
+  validateAuthFlags,
+} from './userAuthPolicy';
 
-async function buildUserResponse(user: Awaited<ReturnType<typeof userRepository.findById>>) {
-  if (!user) throw new AppError(404, 'Benutzer nicht gefunden');
+type TenantUser = NonNullable<Awaited<ReturnType<typeof userRepository.findById>>>;
+
+function userLoginEmail(user: TenantUser): string {
+  return user.email ?? user.username ?? '';
+}
+
+async function buildUserResponse(user: TenantUser) {
   return {
     id: user.id,
+    username: user.username,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role.name,
     permissions: resolveUserPermissions(user),
     roleTemplate: user.roleTemplate ?? null,
+    passwordEnabled: user.passwordEnabled,
+    magicLinkEnabled: user.magicLinkEnabled,
   };
+}
+
+function userAllowsPasswordLogin(user: TenantUser): boolean {
+  return user.passwordEnabled && Boolean(user.passwordHash);
+}
+
+function userAllowsMagicLink(user: TenantUser): boolean {
+  return user.magicLinkEnabled && Boolean(user.email?.trim());
 }
 
 async function createAuthSession(userId: string, userAgent?: string) {
@@ -33,7 +54,7 @@ async function createAuthSession(userId: string, userAgent?: string) {
 
   const payload: Omit<AuthPayload, 'sessionId'> = {
     userId: user.id,
-    email: user.email,
+    email: userLoginEmail(user),
     role: user.role.name,
     scope: 'tenant',
     tenantId: requireTenantId(),
@@ -47,7 +68,7 @@ async function createAuthSession(userId: string, userAgent?: string) {
 
   hookSystem.emitAsync(CORE_HOOKS.USER_LOGIN, {
     userId: user.id,
-    email: user.email,
+    email: userLoginEmail(user),
     role: user.role.name,
   });
 
@@ -75,22 +96,28 @@ function buildMagicLinkUrl(token: string, path: string): string {
   return `${origin}${separator}token=${encodeURIComponent(token)}`;
 }
 
+function buildPasswordResetUrl(token: string, path: string): string {
+  const base = buildMagicLinkUrl('', path).replace(/[?&]token=$/, '');
+  const separator = base.includes('?') ? '&' : '?';
+  return `${base}${separator}resetToken=${encodeURIComponent(token)}`;
+}
+
 export const authService = {
-  async login(email: string, password: string, userAgent?: string) {
+  async login(identifier: string, password: string, userAgent?: string) {
     const config = await authConfigService.getConfig();
     if (!config.passwordEnabled) {
       throw new AppError(400, 'Passwort-Anmeldung ist nicht aktiviert');
     }
 
-    const user = await userRepository.findByEmail(email);
+    const user = await userRepository.findByLoginIdentifier(identifier);
     if (!user || !user.active) {
       throw new AppError(401, 'Ungültige Anmeldedaten');
     }
-    if (!user.passwordHash) {
-      throw new AppError(401, 'Für dieses Konto ist kein Passwort hinterlegt. Bitte Magic Link verwenden.');
+    if (!userAllowsPasswordLogin(user)) {
+      throw new AppError(401, 'Für dieses Konto ist keine Passwort-Anmeldung aktiviert.');
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = await bcrypt.compare(password, user.passwordHash!);
     if (!valid) {
       throw new AppError(401, 'Ungültige Anmeldedaten');
     }
@@ -105,14 +132,14 @@ export const authService = {
     }
 
     const user = await userRepository.findByEmail(email);
-    if (!user || !user.active) {
+    if (!user || !user.active || !userAllowsMagicLink(user)) {
       return { sent: true };
     }
 
     const { token } = await authLoginTokenService.createMagicLink(user.id, ipAddress, userAgent);
     const magicLink = buildMagicLinkUrl(token, loginPath);
 
-    await mailService.sendTemplate('magic-link', user.email, {
+    await mailService.sendTemplate('magic-link', user.email!, {
       magicLink,
       recipientName: user.firstName,
       tenantName: tenantContext.current()?.name,
@@ -129,13 +156,13 @@ export const authService = {
     }
 
     const user = await userRepository.findByEmail(email);
-    if (!user || !user.active) {
+    if (!user || !user.active || !userAllowsMagicLink(user)) {
       return { sent: true };
     }
 
     const { code } = await authLoginTokenService.createLoginCode(user.id, ipAddress, userAgent);
 
-    await mailService.sendTemplate('login-code', user.email, {
+    await mailService.sendTemplate('login-code', user.email!, {
       code,
       recipientName: user.firstName,
       tenantName: tenantContext.current()?.name,
@@ -143,6 +170,47 @@ export const authService = {
     }, requireTenantId());
 
     return { sent: true };
+  },
+
+  async requestPasswordReset(identifier: string, loginPath: string, ipAddress?: string, userAgent?: string) {
+    const user = await userRepository.findByLoginIdentifier(identifier);
+    if (!user || !user.active || !userAllowsPasswordLogin(user) || !user.email?.trim()) {
+      return { sent: true };
+    }
+
+    const { token } = await authLoginTokenService.createPasswordReset(user.id, ipAddress, userAgent);
+    const resetLink = buildPasswordResetUrl(token, loginPath);
+
+    await mailService.sendTemplate('password-reset', user.email, {
+      magicLink: resetLink,
+      recipientName: user.firstName,
+      tenantName: tenantContext.current()?.name,
+      expiresMinutes: 30,
+    }, requireTenantId());
+
+    return { sent: true };
+  },
+
+  async resetPassword(token: string, newPassword: string) {
+    const userId = await authLoginTokenService.verifyPasswordReset(token);
+    const user = await userRepository.findById(userId);
+    if (!user || !user.active) {
+      throw new AppError(401, 'Benutzer nicht gefunden');
+    }
+
+    const minLength = user.role.name === 'STAFF' ? staffPasswordMinLength() : adminPasswordMinLength();
+    if (newPassword.length < minLength) {
+      throw new AppError(400, `Passwort muss mindestens ${minLength} Zeichen haben`);
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await userRepository.update(userId, {
+      passwordHash,
+      passwordEnabled: true,
+    });
+
+    await sessionService.revokeAllUserSessions(userId);
+    return { success: true };
   },
 
   async verifyMagicLink(token: string, userAgent?: string) {
@@ -153,6 +221,88 @@ export const authService = {
   async verifyLoginCode(email: string, code: string, userAgent?: string) {
     const userId = await authLoginTokenService.verifyLoginCode(email, code);
     return createAuthSession(userId, userAgent);
+  },
+
+  async updateProfile(
+    userId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      username?: string;
+      passwordEnabled?: boolean;
+      magicLinkEnabled?: boolean;
+      currentPassword?: string;
+      newPassword?: string;
+    }
+  ) {
+    const user = await userRepository.findById(userId);
+    if (!user || !user.active) {
+      throw new AppError(404, 'Benutzer nicht gefunden');
+    }
+    if (user.role.name !== 'ADMIN') {
+      throw new AppError(403, 'Nur Administratoren können ihr Profil bearbeiten');
+    }
+
+    const nextEmail = data.email !== undefined ? (data.email.trim() || null) : user.email;
+    const nextUsername = data.username !== undefined ? (data.username.trim().toLowerCase() || null) : user.username;
+    const nextPasswordEnabled = data.passwordEnabled ?? user.passwordEnabled;
+    const nextMagicLinkEnabled = data.magicLinkEnabled ?? user.magicLinkEnabled;
+
+    if (!nextEmail?.trim()) {
+      throw new AppError(400, 'Administratoren benötigen eine E-Mail-Adresse');
+    }
+
+    if (nextUsername) {
+      const conflict = await userRepository.findByUsername(nextUsername);
+      if (conflict && conflict.id !== userId) {
+        throw new AppError(409, 'Benutzername bereits vergeben');
+      }
+    }
+
+    if (nextEmail && nextEmail !== user.email) {
+      const conflict = await userRepository.findByEmail(nextEmail);
+      if (conflict && conflict.id !== userId) {
+        throw new AppError(409, 'E-Mail bereits registriert');
+      }
+    }
+
+    let nextPasswordHash = user.passwordHash;
+    if (data.newPassword) {
+      const minLength = adminPasswordMinLength();
+      if (data.newPassword.length < minLength) {
+        throw new AppError(400, `Passwort muss mindestens ${minLength} Zeichen haben`);
+      }
+      if (user.passwordHash) {
+        if (!data.currentPassword) {
+          throw new AppError(400, 'Aktuelles Passwort erforderlich');
+        }
+        const valid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+        if (!valid) throw new AppError(401, 'Aktuelles Passwort ist falsch');
+      }
+      nextPasswordHash = await bcrypt.hash(data.newPassword, 12);
+    } else if (!nextPasswordEnabled) {
+      nextPasswordHash = null;
+    }
+
+    validateAuthFlags(
+      { passwordEnabled: nextPasswordEnabled, magicLinkEnabled: nextMagicLinkEnabled },
+      user.role.name,
+      nextEmail,
+      nextPasswordHash
+    );
+
+    const updated = await userRepository.update(userId, {
+      firstName: data.firstName?.trim() ?? user.firstName,
+      lastName: data.lastName?.trim() ?? user.lastName,
+      email: nextEmail,
+      username: nextUsername,
+      passwordEnabled: nextPasswordEnabled,
+      magicLinkEnabled: nextMagicLinkEnabled,
+      passwordHash: nextPasswordHash,
+    });
+
+    return buildUserResponse(updated);
   },
 
   async logout(refreshToken: string) {
@@ -177,15 +327,22 @@ export const authService = {
   },
 
   async createUser(data: {
-    email: string;
+    email?: string;
+    username?: string;
     password?: string;
     firstName: string;
     lastName: string;
     roleName: 'ADMIN' | 'STAFF';
+    passwordEnabled?: boolean;
+    magicLinkEnabled?: boolean;
   }) {
-    const existing = await userRepository.findByEmail(data.email);
-    if (existing) {
+    const existingEmail = data.email ? await userRepository.findByEmail(data.email) : null;
+    if (existingEmail) {
       throw new AppError(409, 'E-Mail bereits registriert');
+    }
+    const existingUsername = data.username ? await userRepository.findByUsername(data.username) : null;
+    if (existingUsername) {
+      throw new AppError(409, 'Benutzername bereits vergeben');
     }
 
     let passwordHash: string | null = null;
@@ -199,8 +356,11 @@ export const authService = {
     if (!role) throw new AppError(500, 'Rolle nicht gefunden');
 
     return userRepository.create({
-      email: data.email,
+      email: data.email ?? null,
+      username: data.username ?? null,
       passwordHash,
+      passwordEnabled: data.passwordEnabled ?? false,
+      magicLinkEnabled: data.magicLinkEnabled ?? true,
       firstName: data.firstName,
       lastName: data.lastName,
       roleId: role.id,

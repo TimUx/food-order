@@ -23,6 +23,7 @@ installer/lib/log.sh
 installer/lib/errors.sh
 installer/generated/.gitkeep
 installer/logs/.gitkeep
+scripts/lib/dotenv.sh
 scripts/backup/postgres-backup.sh
 scripts/backup/postgres-restore.sh
 scripts/deploy/render-swarm-stack.sh

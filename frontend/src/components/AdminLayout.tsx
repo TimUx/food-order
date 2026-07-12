@@ -25,6 +25,7 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
+import PersonIcon from '@mui/icons-material/Person';
 import { useClub } from '@/contexts/ClubContext';
 import { getImageUrl } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -129,6 +130,10 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
               </Collapse>
             </>
           )}
+          <ListItemButton component={Link} to="/admin/profil" onClick={() => setDrawerOpen(false)}>
+            <ListItemIcon><PersonIcon /></ListItemIcon>
+            <ListItemText primary="Mein Profil" />
+          </ListItemButton>
           <ListItemButton component={Link} to="/mitarbeiter" onClick={() => setDrawerOpen(false)}>
             <ListItemIcon><StorefrontIcon /></ListItemIcon>
             <ListItemText primary="Mitarbeiterbereich" />

@@ -14,9 +14,10 @@ export const authController = {
 
   async login(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { email, password } = req.body;
+      const body = req.body as { identifier?: string; email?: string; password: string };
+      const identifier = body.identifier ?? body.email ?? '';
       const userAgent = req.headers['user-agent'];
-      const result = await authService.login(email, password, userAgent);
+      const result = await authService.login(identifier, body.password, userAgent);
       res.json(result);
     } catch (err) {
       next(err);
@@ -53,6 +54,32 @@ export const authController = {
     }
   },
 
+  async requestPasswordReset(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { identifier, loginPath } = req.body as { identifier: string; loginPath?: string };
+      const path = loginPath ?? '/admin/login';
+      const result = await authService.requestPasswordReset(
+        identifier,
+        path,
+        req.ip,
+        req.headers['user-agent']
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async resetPassword(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { token, newPassword } = req.body as { token: string; newPassword: string };
+      const result = await authService.resetPassword(token, newPassword);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async verifyMagicLink(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { token } = req.body as { token: string };
@@ -67,6 +94,15 @@ export const authController = {
     try {
       const { email, code } = req.body as { email: string; code: string };
       const result = await authService.verifyLoginCode(email, code, req.headers['user-agent']);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updateProfile(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await authService.updateProfile(req.user!.userId, req.body);
       res.json(result);
     } catch (err) {
       next(err);
@@ -116,12 +152,15 @@ export const authController = {
       const permissions = resolveUserPermissions(user);
       res.json({
         id: user.id,
+        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role.name,
         roleTemplate: user.roleTemplate ?? null,
         permissions,
+        passwordEnabled: user.passwordEnabled,
+        magicLinkEnabled: user.magicLinkEnabled,
       });
     } catch (err) {
       next(err);

@@ -88,7 +88,7 @@ export function SetupWizardPage() {
       if (user) {
         setAdminFirstName(user.firstName);
         setAdminLastName(user.lastName);
-        setAdminEmail(user.email);
+        setAdminEmail(user.email ?? '');
       }
     }).finally(() => setLoading(false));
   }, [token, navigate, user]);

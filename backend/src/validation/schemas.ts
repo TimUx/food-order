@@ -1,8 +1,42 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  email: z.string().email('Ungültige E-Mail-Adresse'),
+  identifier: z.string().min(1, 'Benutzername oder E-Mail erforderlich'),
   password: z.string().min(1, 'Passwort erforderlich'),
+});
+
+export const platformLoginSchema = z.object({
+  identifier: z.string().min(1, 'Benutzername oder E-Mail erforderlich'),
+  password: z.string().min(1, 'Passwort erforderlich'),
+});
+
+export const forgotPasswordSchema = z.object({
+  identifier: z.string().min(1, 'Benutzername oder E-Mail erforderlich'),
+  loginPath: z.string().optional(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token erforderlich'),
+  newPassword: z.string().min(4, 'Passwort erforderlich'),
+});
+
+export const updateTenantProfileSchema = z.object({
+  firstName: z.string().min(1, 'Vorname erforderlich').optional(),
+  lastName: z.string().min(1, 'Nachname erforderlich').optional(),
+  email: z.string().email('Ungültige E-Mail-Adresse').optional(),
+  username: z.string().min(3).max(32).optional().nullable(),
+  passwordEnabled: z.boolean().optional(),
+  magicLinkEnabled: z.boolean().optional(),
+  currentPassword: z.string().min(1).optional(),
+  newPassword: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
+}).superRefine((data, ctx) => {
+  if (data.newPassword && !data.currentPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Aktuelles Passwort erforderlich',
+      path: ['currentPassword'],
+    });
+  }
 });
 
 export const magicLinkRequestSchema = z.object({
@@ -66,13 +100,16 @@ export const revokeAllSessionsSchema = z.object({
 });
 
 export const createUserSchema = z.object({
-  email: z.string().email('Ungültige E-Mail-Adresse'),
-  password: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
+  email: z.string().email('Ungültige E-Mail-Adresse').optional().or(z.literal('')),
+  username: z.string().min(3).max(32).optional().or(z.literal('')),
+  password: z.string().min(4, 'Mindestens 4 Zeichen').optional(),
   firstName: z.string().min(1, 'Vorname erforderlich'),
   lastName: z.string().min(1, 'Nachname erforderlich'),
   role: z.enum(['ADMIN', 'STAFF']),
   roleTemplate: z.enum(['kueche', 'abholung', 'kasse', 'speisenpflege', 'finanzen', 'rechtliches']).optional(),
   permissions: z.array(z.string()).optional(),
+  passwordEnabled: z.boolean().optional(),
+  magicLinkEnabled: z.boolean().optional(),
 });
 
 export const updateUserPermissionsSchema = z.object({
@@ -81,12 +118,15 @@ export const updateUserPermissionsSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-  email: z.string().email('Ungültige E-Mail-Adresse').optional(),
-  password: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
+  email: z.string().email('Ungültige E-Mail-Adresse').optional().nullable().or(z.literal('')),
+  username: z.string().min(3).max(32).optional().nullable().or(z.literal('')),
+  password: z.string().min(4, 'Mindestens 4 Zeichen').optional(),
   firstName: z.string().min(1, 'Vorname erforderlich').optional(),
   lastName: z.string().min(1, 'Nachname erforderlich').optional(),
   role: z.enum(['ADMIN', 'STAFF']).optional(),
   active: z.boolean().optional(),
+  passwordEnabled: z.boolean().optional(),
+  magicLinkEnabled: z.boolean().optional(),
 });
 
 export const createEventSchema = z.object({
@@ -318,23 +358,32 @@ export const restoreBackupSchema = z.object({
 
 export const createPlatformUserSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse'),
-  password: z.string().min(8, 'Mindestens 8 Zeichen'),
+  username: z.string().min(3).max(32).optional().or(z.literal('')),
+  password: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
   firstName: z.string().min(1, 'Vorname erforderlich').max(100),
   lastName: z.string().min(1, 'Nachname erforderlich').max(100),
+  passwordEnabled: z.boolean().optional(),
+  magicLinkEnabled: z.boolean().optional(),
 });
 
 export const updatePlatformUserSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse').optional(),
+  username: z.string().min(3).max(32).optional().nullable().or(z.literal('')),
   password: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
   firstName: z.string().min(1, 'Vorname erforderlich').max(100).optional(),
   lastName: z.string().min(1, 'Nachname erforderlich').max(100).optional(),
   active: z.boolean().optional(),
+  passwordEnabled: z.boolean().optional(),
+  magicLinkEnabled: z.boolean().optional(),
 });
 
 export const updatePlatformProfileSchema = z.object({
   firstName: z.string().min(1, 'Vorname erforderlich').max(100).optional(),
   lastName: z.string().min(1, 'Nachname erforderlich').max(100).optional(),
   email: z.string().email('Ungültige E-Mail-Adresse').optional(),
+  username: z.string().min(3).max(32).optional().nullable().or(z.literal('')),
+  passwordEnabled: z.boolean().optional(),
+  magicLinkEnabled: z.boolean().optional(),
   currentPassword: z.string().min(1).optional(),
   newPassword: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
 }).superRefine((data, ctx) => {

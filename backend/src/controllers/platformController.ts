@@ -22,8 +22,57 @@ import { AppError } from '../middleware/errorHandler';
 export const platformAuthController = {
   async login(req: PlatformAuthRequest, res: Response, next: NextFunction) {
     try {
-      const { email, password } = req.body as { email: string; password: string };
-      const result = await platformAuthService.login(email, password, req.headers['user-agent']);
+      const body = req.body as { identifier?: string; email?: string; password: string };
+      const identifier = body.identifier ?? body.email ?? '';
+      const result = await platformAuthService.login(identifier, body.password, req.headers['user-agent']);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async requestMagicLink(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body as { email: string };
+      const result = await platformAuthService.requestMagicLink(
+        email,
+        req.headers['user-agent'],
+        req.ip
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async verifyMagicLink(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { token } = req.body as { token: string };
+      const result = await platformAuthService.verifyMagicLink(token, req.headers['user-agent']);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async requestPasswordReset(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { identifier } = req.body as { identifier: string };
+      const result = await platformAuthService.requestPasswordReset(
+        identifier,
+        req.ip,
+        req.headers['user-agent']
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async resetPassword(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { token, newPassword } = req.body as { token: string; newPassword: string };
+      const result = await platformAuthService.resetPassword(token, newPassword);
       res.json(result);
     } catch (err) {
       next(err);

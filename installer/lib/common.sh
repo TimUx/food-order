@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # FestSchmiede Installer – gemeinsame Variablen und Hilfsfunktionen
 
-INSTALLER_VERSION="2.4.7"
+INSTALLER_VERSION="2.4.8"
 PRODUCT_NAME="FestSchmiede"
 
 # Installationsverzeichnis (Repo-Root) – nur setzen wenn nicht bereits gesetzt
@@ -118,15 +118,16 @@ relocate_install_tree() {
   [[ -d "${from}/backups" ]] && cp -a "${from}/backups" "${to}/" 2>/dev/null || true
 }
 
+# shellcheck source=scripts/lib/dotenv.sh
+source "${INSTALL_DIR}/scripts/lib/dotenv.sh"
+
 load_existing_env() {
   local env_file="${INSTALL_DIR}/.env"
   [[ -f "$env_file" ]] || return 0
   log_info "Lade vorhandene .env: $env_file"
   while IFS='=' read -r key value; do
     [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
-    value="${value%$'\r'}"
-    value="${value#\"}"; value="${value%\"}"
-    CFG["$key"]="$value"
+    CFG["$key"]="$(dotenv_unquote_value "$value")"
   done < <(grep -E '^[A-Z_]+=' "$env_file" 2>/dev/null || true)
 }
 

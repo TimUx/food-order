@@ -44,24 +44,45 @@ enum TenantApplicationStatus {
 enum AuthTokenType {
   MAGIC_LINK
   LOGIN_CODE
+  PASSWORD_RESET
 }
 
 /// Plattformadministrator – gehört keinem Mandanten
 model PlatformUser {
-  id           String                 @id @default(uuid())
-  email        String                 @unique
-  passwordHash String                 @map("password_hash")
-  firstName    String                 @map("first_name")
-  lastName     String                 @map("last_name")
-  active       Boolean                @default(true)
-  permissions  Json                   @default("[]")
-  mfaEnabled   Boolean                @default(false) @map("mfa_enabled")
-  lastLoginAt  DateTime?              @map("last_login_at")
-  createdAt    DateTime               @default(now()) @map("created_at")
-  updatedAt    DateTime               @updatedAt @map("updated_at")
-  sessions     PlatformUserSession[]
+  id                String                    @id @default(uuid())
+  username          String?                   @unique
+  email             String                    @unique
+  passwordHash      String?                   @map("password_hash")
+  passwordEnabled   Boolean                   @default(false) @map("password_enabled")
+  magicLinkEnabled  Boolean                   @default(true) @map("magic_link_enabled")
+  firstName         String                    @map("first_name")
+  lastName          String                    @map("last_name")
+  active            Boolean                   @default(true)
+  permissions       Json                      @default("[]")
+  mfaEnabled        Boolean                   @default(false) @map("mfa_enabled")
+  lastLoginAt       DateTime?                 @map("last_login_at")
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
+  sessions          PlatformUserSession[]
+  loginTokens       PlatformAuthLoginToken[]
 
   @@map("platform_users")
+}
+
+model PlatformAuthLoginToken {
+  id        String        @id @default(uuid())
+  userId    String        @map("user_id")
+  user      PlatformUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String        @unique @map("token_hash")
+  type      AuthTokenType
+  expiresAt DateTime      @map("expires_at")
+  usedAt    DateTime?     @map("used_at")
+  ipAddress String?       @map("ip_address")
+  userAgent String?       @map("user_agent")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("platform_auth_login_tokens")
 }
 
 model PlatformUserSession {
@@ -154,28 +175,33 @@ model Role {
 }
 
 model User {
-  id           String           @id @default(uuid())
-  tenantId     String           @map("tenant_id")
-  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  email        String
-  passwordHash String?          @map("password_hash")
-  firstName    String
-  lastName     String
-  active       Boolean          @default(true)
-  roleId       String
-  role         Role             @relation(fields: [roleId], references: [id])
+  id                String           @id @default(uuid())
+  tenantId          String           @map("tenant_id")
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  username          String?
+  email             String?
+  passwordHash      String?          @map("password_hash")
+  passwordEnabled   Boolean          @default(false) @map("password_enabled")
+  magicLinkEnabled  Boolean          @default(true) @map("magic_link_enabled")
+  firstName         String
+  lastName          String
+  active            Boolean          @default(true)
+  roleId            String
+  role              Role             @relation(fields: [roleId], references: [id])
   /// Per-user permission keys (role templates). Falls back to Role.permissions when empty.
-  permissions  Json             @default("[]")
+  permissions       Json             @default("[]")
   /// Applied role template id, e.g. kueche, kasse (display only)
-  roleTemplate String?          @map("role_template")
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  sessions     UserSession[]
-  loginTokens  AuthLoginToken[]
+  roleTemplate      String?          @map("role_template")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  sessions          UserSession[]
+  loginTokens       AuthLoginToken[]
 
   @@unique([tenantId, email])
+  @@unique([tenantId, username])
   @@index([tenantId])
   @@index([tenantId, email])
+  @@index([tenantId, username])
 }
 
 model AuthLoginToken {

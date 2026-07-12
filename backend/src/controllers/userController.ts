@@ -67,11 +67,7 @@ export const userController = {
     next: NextFunction
   ) {
     try {
-      const result = await userService.updatePermissions(
-        req.params.id,
-        req.body,
-        req.user!.userId
-      );
+      const result = await userService.updatePermissions(req.params.id, req.body);
       res.json(result);
     } catch (err) {
       next(err);

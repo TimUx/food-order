@@ -2,13 +2,28 @@ import { prisma } from '../config/database';
 import { Prisma, RoleName, StatusCode } from '@prisma/client';
 import crypto from 'crypto';
 import { requireTenantId, tenantWhere } from '../platform/tenant/tenantScope';
+import { parseLoginIdentifier } from '../services/loginIdentifier';
 
 export const userRepository = {
   findByEmail: (email: string) =>
-    prisma.user.findUnique({
-      where: { tenantId_email: { tenantId: requireTenantId(), email } },
+    prisma.user.findFirst({
+      where: tenantWhere({ email: email.toLowerCase().trim() }),
       include: { role: true },
     }),
+
+  findByUsername: (username: string) =>
+    prisma.user.findFirst({
+      where: tenantWhere({ username: username.toLowerCase().trim() }),
+      include: { role: true },
+    }),
+
+  findByLoginIdentifier: (identifier: string) => {
+    const parsed = parseLoginIdentifier(identifier);
+    if (parsed.type === 'email') {
+      return userRepository.findByEmail(parsed.value);
+    }
+    return userRepository.findByUsername(parsed.value);
+  },
 
   findById: (id: string) =>
     prisma.user.findFirst({
