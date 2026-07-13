@@ -11,6 +11,7 @@ const DEFAULT_ORDER_SETTINGS = {
   orderFieldEmailRequired: false,
   orderFieldPhoneRequired: false,
   cancellationDeadlineHours: 24,
+  cancellationDeadlineUnit: 'hours',
   dataRetentionDays: 365,
 } as const;
 

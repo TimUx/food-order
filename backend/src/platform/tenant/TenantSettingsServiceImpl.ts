@@ -16,6 +16,7 @@ export class TenantSettingsServiceImpl implements TenantSettingsService {
       orderFieldEmailRequired: row.orderFieldEmailRequired,
       orderFieldPhoneRequired: row.orderFieldPhoneRequired,
       cancellationDeadlineHours: row.cancellationDeadlineHours,
+      cancellationDeadlineUnit: row.cancellationDeadlineUnit,
       dataRetentionDays: row.dataRetentionDays,
     };
   }
@@ -40,6 +41,7 @@ export class TenantSettingsServiceImpl implements TenantSettingsService {
         orderFieldEmailRequired: s.orderFieldEmailRequired,
         orderFieldPhoneRequired: s.orderFieldPhoneRequired,
         cancellationDeadlineHours: s.cancellationDeadlineHours,
+        cancellationDeadlineUnit: s.cancellationDeadlineUnit,
         dataRetentionDays: s.dataRetentionDays,
       };
     }

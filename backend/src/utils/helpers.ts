@@ -87,6 +87,15 @@ export function getCancellationDeadline(
   return new Date(eventStart.getTime() - hoursBefore * 60 * 60 * 1000);
 }
 
+export type CancellationDeadlineUnit = 'hours' | 'days';
+
+export function resolveCancellationDeadlineHours(
+  value: number,
+  unit: CancellationDeadlineUnit | string = 'hours'
+): number {
+  return unit === 'days' ? value * 24 : value;
+}
+
 export function formatDateTimeDE(date: Date): string {
   return date.toLocaleString('de-DE', {
     weekday: 'long',

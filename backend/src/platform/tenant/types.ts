@@ -30,6 +30,7 @@ export interface TenantSettingsRecord {
   orderFieldEmailRequired: boolean;
   orderFieldPhoneRequired: boolean;
   cancellationDeadlineHours: number;
+  cancellationDeadlineUnit: string;
   dataRetentionDays: number;
 }
 
@@ -160,6 +161,7 @@ export const DEFAULT_TENANT_SETTINGS: TenantSettingsRecord = {
   orderFieldEmailRequired: false,
   orderFieldPhoneRequired: false,
   cancellationDeadlineHours: 24,
+  cancellationDeadlineUnit: 'hours',
   dataRetentionDays: 365,
 };
 

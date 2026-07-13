@@ -8,6 +8,7 @@ import {
   getCancellationDeadline,
   canCustomerCancelOrder,
   canStaffEditOrderItems,
+  resolveCancellationDeadlineHours,
 } from './helpers';
 
 describe('helpers', () => {
@@ -44,6 +45,13 @@ describe('helpers', () => {
     expect(canCustomerCancelOrder('NEW', 'ONLINE', '2026-08-15T00:00:00.000Z', '18:00', 24, new Date('2026-08-14T12:00:00.000Z'))).toBe(true);
     expect(canCustomerCancelOrder('NEW', 'ONLINE', '2026-08-15T00:00:00.000Z', '18:00', 24, new Date('2026-08-14T19:00:00.000Z'))).toBe(false);
     expect(canCustomerCancelOrder('READY', 'ONLINE', '2026-08-15T00:00:00.000Z', '18:00', 24)).toBe(false);
+  });
+
+  it('rechnet Stornierungsfrist in Tagen in Stunden um', () => {
+    expect(resolveCancellationDeadlineHours(2, 'days')).toBe(48);
+    expect(resolveCancellationDeadlineHours(24, 'hours')).toBe(24);
+    const deadline = getCancellationDeadline('2026-08-15T00:00:00.000Z', '18:00', resolveCancellationDeadlineHours(1, 'days'));
+    expect(deadline.toISOString()).toBe('2026-08-14T18:00:00.000Z');
   });
 
   it('erlaubt Positionsbearbeitung nur bei offenen Bestellungen', () => {

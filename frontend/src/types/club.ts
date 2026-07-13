@@ -32,6 +32,7 @@ export interface ClubSettings {
   orderFieldEmailRequired?: boolean;
   orderFieldPhoneRequired?: boolean;
   cancellationDeadlineHours?: number;
+  cancellationDeadlineUnit?: 'hours' | 'days';
 }
 
 export interface OrderFieldConfig {
@@ -44,6 +45,7 @@ export interface OrderFieldConfig {
 export interface OrderSettings {
   fields: OrderFieldConfig;
   cancellationDeadlineHours: number;
+  cancellationDeadlineUnit: 'hours' | 'days';
 }
 
 export const DEFAULT_ORDER_FIELD_CONFIG: OrderFieldConfig = {
@@ -56,6 +58,7 @@ export const DEFAULT_ORDER_FIELD_CONFIG: OrderFieldConfig = {
 export const DEFAULT_ORDER_SETTINGS: OrderSettings = {
   fields: DEFAULT_ORDER_FIELD_CONFIG,
   cancellationDeadlineHours: 24,
+  cancellationDeadlineUnit: 'hours',
 };
 
 export const DEFAULT_CLUB: ClubSettings = {

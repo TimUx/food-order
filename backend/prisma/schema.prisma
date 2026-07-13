@@ -148,6 +148,7 @@ model TenantSettings {
   orderFieldEmailRequired     Boolean  @default(false) @map("order_field_email_required")
   orderFieldPhoneRequired     Boolean  @default(false) @map("order_field_phone_required")
   cancellationDeadlineHours   Int      @default(24) @map("cancellation_deadline_hours")
+  cancellationDeadlineUnit    String   @default("hours") @map("cancellation_deadline_unit")
   dataRetentionDays           Int      @default(365) @map("data_retention_days")
   extraJson                   Json     @default("{}") @map("extra_json")
   updatedAt                   DateTime @updatedAt @map("updated_at")
@@ -387,6 +388,7 @@ model ClubSettings {
   orderFieldEmailRequired     Boolean  @default(false)
   orderFieldPhoneRequired     Boolean  @default(false)
   cancellationDeadlineHours   Int      @default(24)
+  cancellationDeadlineUnit    String   @default("hours")
   dataRetentionDays           Int      @default(365)
   smtpHost                    String?
   smtpPort                    Int      @default(587)

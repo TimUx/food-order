@@ -1,5 +1,5 @@
 import { orderRepository } from '../../repositories';
-import { formatOrderNumber, formatEventDate, getCancellationDeadline, formatDateTimeDE } from '../../utils/helpers';
+import { formatOrderNumber, formatEventDate, getCancellationDeadline, formatDateTimeDE, resolveCancellationDeadlineHours } from '../../utils/helpers';
 import { emitOrderCreated } from '../../socket';
 import { clubService } from '../../services/clubService';
 import { hookSystem } from '../../platform/bootstrap';
@@ -71,10 +71,14 @@ export const orderPayableAdapter: PayableResourceAdapter = {
     let cancellationDeadlineLabel: string | undefined;
     if (order.event) {
       const settings = await clubService.getOrderSettings();
+      const deadlineHours = resolveCancellationDeadlineHours(
+        settings.cancellationDeadlineHours,
+        settings.cancellationDeadlineUnit
+      );
       const deadline = getCancellationDeadline(
         order.event.date,
         order.event.startTime,
-        settings.cancellationDeadlineHours
+        deadlineHours
       );
       cancellationDeadlineLabel = formatDateTimeDE(deadline);
     }

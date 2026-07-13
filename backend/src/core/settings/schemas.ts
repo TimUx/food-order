@@ -113,11 +113,22 @@ export const orderSettingsSchema: SettingsSchemaDefinition = {
     {
       key: 'cancellationDeadlineHours',
       group: 'cancellation',
-      label: 'Stornierungsfrist (Stunden vor Veranstaltung)',
+      label: 'Stornierungsfrist',
       type: 'number',
       default: 24,
-      validation: { min: 0, max: 168 },
+      validation: { min: 0 },
       helpText: '0 = Stornierung bis Veranstaltungsbeginn möglich',
+    },
+    {
+      key: 'cancellationDeadlineUnit',
+      group: 'cancellation',
+      label: 'Einheit der Stornierungsfrist',
+      type: 'select',
+      default: 'hours',
+      options: [
+        { value: 'hours', label: 'Stunden vor Veranstaltung' },
+        { value: 'days', label: 'Tage vor Veranstaltung' },
+      ],
     },
   ],
 };

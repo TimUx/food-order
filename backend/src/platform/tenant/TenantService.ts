@@ -122,6 +122,7 @@ export class TenantService {
       orderFieldEmailRequired: row.orderFieldEmailRequired,
       orderFieldPhoneRequired: row.orderFieldPhoneRequired,
       cancellationDeadlineHours: row.cancellationDeadlineHours,
+      cancellationDeadlineUnit: row.cancellationDeadlineUnit,
       dataRetentionDays: row.dataRetentionDays,
     };
   }

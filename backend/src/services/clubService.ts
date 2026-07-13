@@ -29,6 +29,7 @@ function mapClub(values: Record<string, unknown>) {
     orderFieldEmailRequired: Boolean(values.orderFieldEmailRequired ?? false),
     orderFieldPhoneRequired: Boolean(values.orderFieldPhoneRequired ?? false),
     cancellationDeadlineHours: Number(values.cancellationDeadlineHours ?? 24),
+    cancellationDeadlineUnit: String(values.cancellationDeadlineUnit ?? 'hours'),
   };
 }
 
@@ -90,6 +91,7 @@ export const clubService = {
         phoneRequired: Boolean(order.orderFieldPhoneRequired ?? false),
       },
       cancellationDeadlineHours: Number(order.cancellationDeadlineHours ?? 24),
+      cancellationDeadlineUnit: String(order.cancellationDeadlineUnit ?? 'hours'),
     };
   },
 
@@ -146,12 +148,17 @@ export const clubService = {
     orderFieldEmailRequired?: boolean;
     orderFieldPhoneRequired?: boolean;
     cancellationDeadlineHours?: number;
+    cancellationDeadlineUnit?: string;
   }) {
     const clubData: Record<string, unknown> = {};
     const orderData: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(data)) {
-      if (key.startsWith('orderField') || key === 'cancellationDeadlineHours') {
+      if (
+        key.startsWith('orderField') ||
+        key === 'cancellationDeadlineHours' ||
+        key === 'cancellationDeadlineUnit'
+      ) {
         orderData[key] = value;
       } else {
         clubData[key] = value;

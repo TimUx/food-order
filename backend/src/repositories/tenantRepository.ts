@@ -44,6 +44,7 @@ type TenantSettingsClient = {
     orderFieldEmailRequired: boolean;
     orderFieldPhoneRequired: boolean;
     cancellationDeadlineHours: number;
+    cancellationDeadlineUnit: string;
     dataRetentionDays: number;
   } | null>;
   upsert: (args: unknown) => Promise<{
@@ -52,6 +53,7 @@ type TenantSettingsClient = {
     orderFieldEmailRequired: boolean;
     orderFieldPhoneRequired: boolean;
     cancellationDeadlineHours: number;
+    cancellationDeadlineUnit: string;
     dataRetentionDays: number;
   }>;
 };

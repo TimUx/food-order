@@ -1,6 +1,7 @@
 import { AppError } from '../../middleware/errorHandler';
 import type { SettingsFieldMetadata, SettingsSchemaDefinition } from './types';
 import { getByPath } from './pathUtils';
+import { CORE_ORDER_NAMESPACE } from './SettingsNamespaces';
 
 export class SettingsValidation {
   validate(schema: SettingsSchemaDefinition, values: Record<string, unknown>): void {
@@ -10,6 +11,11 @@ export class SettingsValidation {
       const value = getByPath(values, field.key);
       const err = this.validateField(field, value);
       if (err) errors.push(err);
+    }
+
+    if (schema.namespace === CORE_ORDER_NAMESPACE) {
+      const deadlineErr = this.validateCancellationDeadline(values);
+      if (deadlineErr) errors.push(deadlineErr);
     }
 
     if (errors.length > 0) {
@@ -72,6 +78,24 @@ export class SettingsValidation {
       }
     }
 
+    return null;
+  }
+
+  private validateCancellationDeadline(values: Record<string, unknown>): string | null {
+    const unit = String(values.cancellationDeadlineUnit ?? 'hours');
+    const value = Number(values.cancellationDeadlineHours ?? 0);
+    if (Number.isNaN(value) || value < 0) {
+      return 'Stornierungsfrist muss mindestens 0 sein';
+    }
+    if (!['hours', 'days'].includes(unit)) {
+      return 'Ungültige Einheit für die Stornierungsfrist';
+    }
+    if (unit === 'days' && value > 30) {
+      return 'Stornierungsfrist darf höchstens 30 Tage betragen';
+    }
+    if (unit === 'hours' && value > 720) {
+      return 'Stornierungsfrist darf höchstens 720 Stunden betragen';
+    }
     return null;
   }
 }

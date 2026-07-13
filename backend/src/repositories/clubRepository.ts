@@ -37,6 +37,7 @@ export const clubRepository = {
     orderFieldEmailRequired?: boolean;
     orderFieldPhoneRequired?: boolean;
     cancellationDeadlineHours?: number;
+    cancellationDeadlineUnit?: string;
     smtpHost?: string | null;
     smtpPort?: number;
     smtpUser?: string | null;

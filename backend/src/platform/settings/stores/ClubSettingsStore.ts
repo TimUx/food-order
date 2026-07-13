@@ -24,6 +24,7 @@ const ORDER_FIELDS = [
   'orderFieldEmailRequired',
   'orderFieldPhoneRequired',
   'cancellationDeadlineHours',
+  'cancellationDeadlineUnit',
 ] as const;
 
 const EMAIL_FIELDS = [

@@ -19,6 +19,7 @@ import {
   formatDateTimeDE,
   canCustomerCancelOrder,
   canStaffEditOrderItems,
+  resolveCancellationDeadlineHours,
 } from '../utils/helpers';
 import { emitOrderCreated, emitOrderUpdate } from '../socket';
 import { hookSystem } from '../platform/bootstrap';
@@ -50,10 +51,14 @@ async function getCancellationInfo(order: OrderWithRelations): Promise<Cancellat
   }
 
   const settings = await clubService.getOrderSettings();
+  const deadlineHours = resolveCancellationDeadlineHours(
+    settings.cancellationDeadlineHours,
+    settings.cancellationDeadlineUnit
+  );
   const deadline = getCancellationDeadline(
     order.event.date,
     order.event.startTime,
-    settings.cancellationDeadlineHours
+    deadlineHours
   );
 
   return {
@@ -62,7 +67,7 @@ async function getCancellationInfo(order: OrderWithRelations): Promise<Cancellat
       order.source,
       order.event.date,
       order.event.startTime,
-      settings.cancellationDeadlineHours
+      deadlineHours
     ),
     cancellationDeadline: deadline.toISOString(),
     cancellationDeadlineLabel: formatDateTimeDE(deadline),
@@ -443,13 +448,17 @@ export const orderService = {
     }
 
     const settings = await clubService.getOrderSettings();
+    const deadlineHours = resolveCancellationDeadlineHours(
+      settings.cancellationDeadlineHours,
+      settings.cancellationDeadlineUnit
+    );
     if (
       !canCustomerCancelOrder(
         order.status,
         order.source,
         order.event.date,
         order.event.startTime,
-        settings.cancellationDeadlineHours
+        deadlineHours
       )
     ) {
       throw new AppError(400, 'Stornierung nicht mehr möglich – Frist abgelaufen oder Bestellung bereits bearbeitet');

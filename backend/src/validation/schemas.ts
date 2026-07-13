@@ -169,7 +169,8 @@ export const updateClubSchema = z.object({
   orderFieldLastNameRequired: z.boolean().optional(),
   orderFieldEmailRequired: z.boolean().optional(),
   orderFieldPhoneRequired: z.boolean().optional(),
-  cancellationDeadlineHours: z.number().int().min(0, 'Mindestens 0 Stunden').max(720, 'Maximal 720 Stunden').optional(),
+  cancellationDeadlineHours: z.number().int().min(0, 'Mindestens 0').max(720, 'Maximal 720 Stunden').optional(),
+  cancellationDeadlineUnit: z.enum(['hours', 'days']).optional(),
 });
 
 export const createFoodItemSchema = z.object({
