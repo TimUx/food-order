@@ -16,6 +16,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import EmailIcon from '@mui/icons-material/Email';
 import { usePlatformAuth } from '@/contexts/PlatformAuthContext';
 import {
   platformApi,
@@ -90,6 +91,7 @@ export function PlatformTenantDetailPage() {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sendingInfo, setSendingInfo] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -133,6 +135,25 @@ export function PlatformTenantDetailPage() {
     if (tenant) setForm(tenantToForm(tenant));
     setEditing(false);
     setError('');
+  };
+
+  const handleResendAccessInfo = async () => {
+    if (!token || !id) return;
+    setSendingInfo(true);
+    setError('');
+    setMessage('');
+    try {
+      const result = await platformApi.resendTenantAccessInfo(token, id);
+      setMessage(
+        result.adminCreated
+          ? `Zugangsdaten wurden an ${result.email} gesendet (Administrator neu angelegt).`
+          : `Zugangsdaten wurden erneut an ${result.email} gesendet. Das Passwort wurde zurückgesetzt.`
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'E-Mail konnte nicht gesendet werden');
+    } finally {
+      setSendingInfo(false);
+    }
   };
 
   if (loading) return <CircularProgress />;
@@ -298,6 +319,14 @@ export function PlatformTenantDetailPage() {
 
       <Divider sx={{ my: 3 }} />
       <Box display="flex" gap={1} flexWrap="wrap">
+        <Button
+          variant="contained"
+          startIcon={sendingInfo ? <CircularProgress size={18} color="inherit" /> : <EmailIcon />}
+          onClick={() => void handleResendAccessInfo()}
+          disabled={sendingInfo || !tenant.email || tenant.status === 'ARCHIVED'}
+        >
+          Infos senden
+        </Button>
         {actions.filter((a) => a.show).map((a) => (
           <Button
             key={a.label}

@@ -158,6 +158,11 @@ router.get(
   platformController.exportTenant
 );
 router.post(
+  '/tenants/:id/resend-access-info',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_UPDATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  platformController.resendTenantAccessInfo
+);
+router.post(
   '/tenants/:id/impersonate',
   requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_IMPERSONATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
   platformController.impersonate

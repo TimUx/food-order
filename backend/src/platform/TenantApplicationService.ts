@@ -5,6 +5,7 @@ import type { PlatformContext } from './tenant/PlatformContext';
 import type { PlatformTenantAdminService } from './PlatformTenantAdminService';
 import type { AuditLogEntry } from './types';
 import { platformNotificationService } from './notifications/platformNotificationService';
+import { tenantOnboardingService } from './TenantOnboardingService';
 
 export interface SubmitTenantApplicationInput {
   organization: string;
@@ -235,6 +236,17 @@ export class TenantApplicationService {
       tenantId: tenantId ?? undefined,
       details: { applicationId: id },
     });
+
+    if (tenantId) {
+      const tenant = await this.tenantAdmin.getDetail(tenantId);
+      if (tenant) {
+        await tenantOnboardingService.onboardNewTenant(tenant, {
+          contactName: application.contactName,
+          email: application.email,
+          organizationName: application.organization,
+        });
+      }
+    }
 
     return { application: updated, tenantId };
   }

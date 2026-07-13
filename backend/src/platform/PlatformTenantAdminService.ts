@@ -4,6 +4,8 @@ import type { TenantService } from './tenant/TenantService';
 import type { PlatformContext } from './tenant/PlatformContext';
 import type { AuditLogEntry } from './types';
 import type { CreateTenantInput, TenantRecord, UpdateTenantInput } from './tenant/types';
+import { tenantOnboardingService } from './TenantOnboardingService';
+import { AppError } from '../middleware/errorHandler';
 
 export interface TenantListFilter {
   search?: string;
@@ -91,6 +93,13 @@ export class PlatformTenantAdminService {
       tenantId: tenant.id,
       details: { slug: tenant.slug, name: tenant.name },
     });
+    if (tenant.status === 'ACTIVE') {
+      await tenantOnboardingService.onboardNewTenant(tenant, {
+        contactName: input.contactName,
+        email: input.email,
+        organizationName: tenant.name,
+      });
+    }
     return tenant;
   }
 
@@ -134,6 +143,19 @@ export class PlatformTenantAdminService {
   async delete(id: string, actorId: string): Promise<void> {
     await prisma.tenant.delete({ where: { id } });
     await this.audit.log({ action: 'platform.tenant.delete', actorId, tenantId: id });
+  }
+
+  async resendAccessInfo(id: string, actorId: string): Promise<{ email: string; adminCreated: boolean }> {
+    const tenant = await this.tenantService.findById(id);
+    if (!tenant) throw new AppError(404, 'Mandant nicht gefunden');
+    const result = await tenantOnboardingService.resendAccessInfo(tenant);
+    await this.audit.log({
+      action: 'platform.tenant.access_info_resent',
+      actorId,
+      tenantId: id,
+      details: { email: result.email, adminCreated: result.adminCreated },
+    });
+    return result;
   }
 
   async exportTenant(id: string): Promise<Record<string, unknown>> {

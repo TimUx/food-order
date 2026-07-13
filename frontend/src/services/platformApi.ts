@@ -276,6 +276,13 @@ export const platformApi = {
   exportTenant: (token: string, id: string) =>
     platformRequest<Record<string, unknown>>(`/tenants/${id}/export`, {}, token),
 
+  resendTenantAccessInfo: (token: string, id: string) =>
+    platformRequest<{ email: string; adminCreated: boolean }>(
+      `/tenants/${id}/resend-access-info`,
+      { method: 'POST' },
+      token
+    ),
+
   impersonate: (token: string, tenantId: string) =>
     platformRequest<{
       token: string;
