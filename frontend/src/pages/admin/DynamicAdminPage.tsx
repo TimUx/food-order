@@ -56,14 +56,14 @@ function renderPage(page: AdminPageDefinition) {
 export function DynamicAdminPage() {
   const location = useLocation();
   const { user } = useAuth();
-  const { loading, error, findPageByPath } = useAdminUi();
+  const { loading, error, findPageByPath, catalog } = useAdminUi();
 
   const legacyTarget = LEGACY_REDIRECTS[location.pathname];
   if (legacyTarget) {
     return <Navigate to={legacyTarget} replace />;
   }
 
-  if (loading) {
+  if (loading && !catalog) {
     return (
       <AdminLayout title="Administration">
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>

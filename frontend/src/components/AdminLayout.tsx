@@ -56,6 +56,7 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
   const { club } = useClub();
   const logoUrl = getImageUrl(club.logoUrl || undefined);
   const { catalog, loading } = useAdminUi();
+  const showNavLoading = loading && !catalog;
 
   const allNav = (catalog?.navigation ?? [])
     .filter((item) => canAccessPermission(user, item.requiredPermission));
@@ -83,7 +84,7 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
       <Typography variant="h6" sx={{ px: 2, mb: 2, fontWeight: 700 }}>
         Administration
       </Typography>
-      {loading ? (
+      {showNavLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
           <CircularProgress size={24} />
         </Box>

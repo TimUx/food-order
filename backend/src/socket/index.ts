@@ -7,7 +7,7 @@ import { corsPolicy } from '../middleware/corsPolicy';
 import { logger } from '../utils/logger';
 import type { AuthPayload } from '../middleware/auth';
 import { eventRepository, orderRepository } from '../repositories';
-import { tenantContext, tenantResolver } from '../platform/bootstrap';
+import { tenantContext, tenantResolver, tenantService } from '../platform/bootstrap';
 import { performanceMetrics } from '../platform/metrics/performanceMetrics';
 import type { TenantContextData } from '../platform/tenant/types';
 
@@ -42,6 +42,54 @@ function runWithTenant<T>(tenant: TenantContextData, fn: () => T): T {
   return tenantContext.run(tenant, fn);
 }
 
+const NON_TENANT_PATH_SEGMENTS = new Set([
+  'api',
+  'platform',
+  'socket.io',
+  'admin',
+  'mitarbeiter',
+  'public',
+  'screenshots',
+]);
+
+function extractTenantSlugFromReferer(referer?: string | string[]): string | null {
+  const raw = Array.isArray(referer) ? referer[0] : referer;
+  if (!raw) return null;
+  try {
+    const segment = new URL(raw).pathname.split('/').filter(Boolean)[0]?.toLowerCase();
+    if (!segment || NON_TENANT_PATH_SEGMENTS.has(segment)) return null;
+    return segment;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveSocketTenant(socket: Socket): Promise<TenantContextData | null> {
+  const fakeReq = {
+    headers: socket.handshake.headers,
+    hostname: socket.handshake.headers.host?.split(':')[0],
+    path: '/socket.io/',
+  } as Request;
+
+  try {
+    const result = await tenantResolver.resolve(fakeReq);
+    if (result.type === 'tenant' && result.tenant) {
+      return result.tenant;
+    }
+  } catch {
+    // Pfad-basiertes Routing: Mandant über Slug ermitteln
+  }
+
+  const authSlug = (socket.handshake.auth?.tenantSlug as string | undefined)?.trim().toLowerCase();
+  const refererSlug = extractTenantSlugFromReferer(socket.handshake.headers.referer);
+  const slug = authSlug || refererSlug;
+  if (!slug) return null;
+
+  const tenant = await tenantService.findBySlug(slug);
+  if (!tenant) return null;
+  return tenantService.resolveContextData(tenant);
+}
+
 export function initSocket(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
@@ -54,19 +102,13 @@ export function initSocket(httpServer: HttpServer): Server {
   io.use((socket, next) => {
     void (async () => {
       try {
-        const fakeReq = {
-          headers: socket.handshake.headers,
-          hostname: socket.handshake.headers.host?.split(':')[0],
-          path: '/socket.io/',
-        } as Request;
-
-        const result = await tenantResolver.resolve(fakeReq);
-        if (result.type !== 'tenant' || !result.tenant) {
+        const tenant = await resolveSocketTenant(socket);
+        if (!tenant) {
           next(new Error('Mandanten-Kontext erforderlich'));
           return;
         }
 
-        (socket.data as SocketData).tenant = result.tenant;
+        (socket.data as SocketData).tenant = tenant;
 
         const token = socket.handshake.auth?.token as string | undefined;
         if (token) {
@@ -89,7 +131,7 @@ export function initSocket(httpServer: HttpServer): Server {
                 return;
               }
             }
-            if (payload.tenantId && payload.tenantId !== result.tenant.id && !payload.impersonation) {
+            if (payload.tenantId && payload.tenantId !== tenant.id && !payload.impersonation) {
               next(new Error('Token gehört zu einem anderen Mandanten'));
               return;
             }

@@ -21,6 +21,7 @@ export const userController = {
         lastName: string;
         role: 'ADMIN' | 'STAFF';
         roleTemplate?: string;
+        roleTemplates?: string[];
         permissions?: string[];
       };
     },
@@ -61,7 +62,7 @@ export const userController = {
   async updatePermissions(
     req: AuthRequest & {
       params: { id: string };
-      body: { permissions: string[]; roleTemplate?: string | null };
+      body: { permissions: string[]; roleTemplate?: string | null; roleTemplates?: string[] };
     },
     res: Response,
     next: NextFunction

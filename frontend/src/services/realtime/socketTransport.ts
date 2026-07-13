@@ -7,6 +7,7 @@ const WS_URL = import.meta.env.VITE_WS_URL || '';
 
 let socket: Socket | null = null;
 let authToken: string | null = null;
+let tenantSlug: string | null = null;
 let lastJoinedEventId: string | null = null;
 
 type SocketEventHandler = {
@@ -25,7 +26,10 @@ function getOrCreateSocket(): Socket {
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000,
-      auth: { token: authToken ?? undefined },
+      auth: {
+        token: authToken ?? undefined,
+        tenantSlug: tenantSlug ?? undefined,
+      },
     });
   }
   return socket;
@@ -49,7 +53,22 @@ export const socketTransport = {
   setAuthToken(token: string | null): void {
     authToken = token;
     if (socket) {
-      socket.auth = { token: token ?? undefined };
+      socket.auth = {
+        ...(typeof socket.auth === 'object' && socket.auth ? socket.auth : {}),
+        token: token ?? undefined,
+        tenantSlug: tenantSlug ?? undefined,
+      };
+    }
+  },
+
+  setTenantSlug(slug: string | null): void {
+    tenantSlug = slug;
+    if (socket) {
+      socket.auth = {
+        ...(typeof socket.auth === 'object' && socket.auth ? socket.auth : {}),
+        token: authToken ?? undefined,
+        tenantSlug: slug ?? undefined,
+      };
     }
   },
 

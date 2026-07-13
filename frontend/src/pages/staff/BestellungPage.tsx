@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { StaffLayout } from '@/components/StaffLayout';
+import { StaffKioskActions } from '@/components/StaffKioskActions';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
 import { PosPaymentDialog } from '@/components/PosPaymentDialog';
@@ -218,10 +219,11 @@ export function BestellungPage() {
           <Button
             variant="contained"
             onClick={() => setLastOrderNumber(null)}
-            sx={{ ...touchPrimaryButtonSx, minHeight: 80, minWidth: 280, fontSize: '1.25rem' }}
+            sx={{ ...touchPrimaryButtonSx, minHeight: 80, minWidth: 280, fontSize: '1.25rem', mb: 3 }}
           >
             Nächste Bestellung
           </Button>
+          <StaffKioskActions />
         </Box>
       </StaffLayout>
     );

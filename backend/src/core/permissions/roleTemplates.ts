@@ -60,3 +60,23 @@ export const TENANT_ROLE_TEMPLATE_MAP = Object.fromEntries(
 ) as Record<TenantRoleTemplateId, TenantRoleTemplate>;
 
 export const KUECHE_TEMPLATE_PERMISSIONS = TENANT_ROLE_TEMPLATE_MAP.kueche.permissions;
+
+export function isTenantRoleTemplateId(value: string): value is TenantRoleTemplateId {
+  return (TENANT_ROLE_TEMPLATE_IDS as readonly string[]).includes(value);
+}
+
+export function parseStoredRoleTemplates(user: {
+  roleTemplates?: unknown;
+  roleTemplate?: string | null;
+}): TenantRoleTemplateId[] {
+  if (Array.isArray(user.roleTemplates)) {
+    const ids = user.roleTemplates.filter(
+      (id): id is TenantRoleTemplateId => typeof id === 'string' && isTenantRoleTemplateId(id)
+    );
+    if (ids.length > 0) return ids;
+  }
+  if (user.roleTemplate && isTenantRoleTemplateId(user.roleTemplate)) {
+    return [user.roleTemplate];
+  }
+  return [];
+}

@@ -18,6 +18,7 @@ export interface User {
   lastName: string;
   role: UserRole;
   roleTemplate?: RoleTemplateId | string | null;
+  roleTemplates?: RoleTemplateId[];
   permissions?: string[];
   active?: boolean;
   passwordEnabled?: boolean;

@@ -2,10 +2,11 @@ import bcrypt from 'bcryptjs';
 import { RoleName } from '@prisma/client';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
-import { prisma } from '../config/database';
+import { ensureSystemRole } from '../core/roles/ensureSystemRoles';
 import { resolveUserPermissions } from '../core/permissions';
 import { permissionService } from '../platform/bootstrap';
 import type { TenantRoleTemplateId } from '../core/permissions';
+import { parseStoredRoleTemplates } from '../core/permissions';
 import {
   adminPasswordMinLength,
   defaultAuthFlagsForRole,
@@ -27,6 +28,7 @@ function mapUser(user: {
   passwordEnabled: boolean;
   magicLinkEnabled: boolean;
   roleTemplate?: string | null;
+  roleTemplates?: unknown;
   permissions?: unknown;
   role: { name: RoleName; permissions?: unknown };
   createdAt: Date;
@@ -40,6 +42,7 @@ function mapUser(user: {
     active: user.active,
     role: user.role.name,
     roleTemplate: user.roleTemplate ?? null,
+    roleTemplates: parseStoredRoleTemplates(user),
     permissions: resolveUserPermissions(user),
     passwordEnabled: user.passwordEnabled,
     magicLinkEnabled: user.magicLinkEnabled,
@@ -61,6 +64,7 @@ export const userService = {
     lastName: string;
     role: RoleName;
     roleTemplate?: TenantRoleTemplateId | null;
+    roleTemplates?: TenantRoleTemplateId[];
     permissions?: string[];
     passwordEnabled?: boolean;
     magicLinkEnabled?: boolean;
@@ -94,14 +98,22 @@ export const userService = {
       }
     }
 
-    const role = await prisma.role.findUnique({ where: { name: data.role } });
-    if (!role) throw new AppError(500, 'Rolle nicht gefunden');
+    const role = await ensureSystemRole(data.role);
+
+    const templateIds = data.roleTemplates?.length
+      ? data.roleTemplates
+      : data.roleTemplate
+        ? [data.roleTemplate]
+        : [];
 
     let permissions: string[] = [];
-    const roleTemplate: string | null = data.roleTemplate ?? null;
+    let roleTemplates: TenantRoleTemplateId[] = [];
+    let roleTemplate: string | null = null;
     if (data.role === 'STAFF') {
-      if (data.roleTemplate) {
-        permissions = permissionService.resolveTemplatePermissions(data.roleTemplate);
+      if (templateIds.length > 0) {
+        permissions = permissionService.resolveTemplatesPermissions(templateIds);
+        roleTemplates = templateIds;
+        roleTemplate = templateIds[0] ?? null;
       } else if (data.permissions) {
         permissions = permissionService.filterKnownPermissions(data.permissions);
       }
@@ -124,6 +136,7 @@ export const userService = {
       roleId: role.id,
       permissions,
       roleTemplate,
+      roleTemplates,
     });
     return mapUser(user);
   },
@@ -206,8 +219,7 @@ export const userService = {
     updateData.magicLinkEnabled = nextMagicLinkEnabled;
     updateData.passwordHash = nextPasswordHash;
     if (data.role) {
-      const role = await prisma.role.findUnique({ where: { name: data.role } });
-      if (!role) throw new AppError(500, 'Rolle nicht gefunden');
+      const role = await ensureSystemRole(data.role);
       updateData.role = { connect: { id: role.id } };
     }
 
@@ -217,7 +229,7 @@ export const userService = {
 
   async updatePermissions(
     id: string,
-    data: { permissions: string[]; roleTemplate?: string | null }
+    data: { permissions: string[]; roleTemplate?: string | null; roleTemplates?: TenantRoleTemplateId[] }
   ) {
     const user = await userRepository.findById(id);
     if (!user) throw new AppError(404, 'Benutzer nicht gefunden');
@@ -226,9 +238,17 @@ export const userService = {
     }
 
     const permissions = permissionService.filterKnownPermissions(data.permissions);
+    const roleTemplates = data.roleTemplates?.length
+      ? data.roleTemplates
+      : data.roleTemplate
+        ? [data.roleTemplate as TenantRoleTemplateId]
+        : parseStoredRoleTemplates(user);
+    const roleTemplate = roleTemplates[0] ?? data.roleTemplate ?? null;
+
     const updated = await userRepository.update(id, {
       permissions,
-      roleTemplate: data.roleTemplate ?? null,
+      roleTemplate,
+      roleTemplates,
     });
     return mapUser(updated);
   },

@@ -46,6 +46,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     void refresh().finally(() => setLoading(false));
 
     realtimeService.disconnect();
+    realtimeService.configureAuth(null, routing.tenantSlug);
     realtimeService.connect();
 
     const unsub = subscribeTenantUpdates((data) => {

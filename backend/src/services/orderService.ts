@@ -213,7 +213,9 @@ export const orderService = {
     });
     const ids = orders.map((o) => o.id);
     const releasedIds = new Set(await getPaymentServiceRegistry().filterReleasedIds('order', ids));
-    const filtered = orders.filter((o) => releasedIds.has(o.id));
+    const filtered = orders.filter(
+      (o) => o.source === 'CASHIER' || releasedIds.has(o.id)
+    );
     return filtered.map((o) => mapOrder(o as OrderWithRelations));
   },
 
@@ -258,7 +260,7 @@ export const orderService = {
     }));
   },
 
-  async lookupByNumberAndName(orderNumber: number, lastName: string) {
+  async lookupByNumberAndName(orderNumber: number, lastName?: string) {
     const event = await eventService.getActive();
     const orderDate = getEventOrderDate(event.date);
     const order = await orderRepository.findByOrderNumber(
@@ -267,16 +269,29 @@ export const orderService = {
       orderNumber
     );
     if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
-    if (
-      !order.customer ||
-      order.customer.lastName.toLowerCase() !== lastName.toLowerCase()
-    ) {
+
+    const nameQuery = lastName?.trim() ?? '';
+    const requiresName = order.source === 'ONLINE' && Boolean(order.customer);
+    if (requiresName && !nameQuery) {
+      throw new AppError(400, 'Nachname erforderlich');
+    }
+    if (nameQuery && order.customer) {
+      if (order.customer.lastName.toLowerCase() !== nameQuery.toLowerCase()) {
+        throw new AppError(404, 'Bestellung nicht gefunden');
+      }
+    } else if (nameQuery && !order.customer) {
       throw new AppError(404, 'Bestellung nicht gefunden');
     }
+
+    const releasedIds = await getPaymentServiceRegistry().filterReleasedIds('order', [order.id]);
+    if (!releasedIds.includes(order.id) && order.source !== 'CASHIER') {
+      throw new AppError(404, 'Bestellung nicht gefunden');
+    }
+
     return mapOrderWithCancellation(order as OrderWithRelations);
   },
 
-  async lookupByNumber(orderNumber: number, lastName: string) {
+  async lookupByNumber(orderNumber: number, lastName?: string) {
     return this.lookupByNumberAndName(orderNumber, lastName);
   },
 

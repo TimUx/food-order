@@ -3,6 +3,27 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.31 - 2026-07-13
+
+### Hinzugefügt
+
+- **Kassenbereich:** Hub mit großen Buttons (Abholung, Bestellung, Mitarbeiterbereich) und „Übersicht“-Link im Fokusmodus.
+- **Team:** Mehrere Rollenvorlagen pro Mitarbeiter (Checkbox-Auswahl), Berechtigungen werden zusammengeführt.
+
+### Geändert
+
+- **Abholung:** Nachname optional bei Vor-Ort-Bestellungen; Suche nur mit Abholnummer möglich.
+- **Realtime:** Polling-Fallback ohne dauerhaften Warnhinweis; Warnung nur bei Offline/Reconnect/Degradierung.
+
+### Behoben
+
+- **Kassenmodus:** Vor-Ort-Bestellungen erscheinen in Küche und Bestellliste; Abholung per Nummer ohne Kundennamen.
+- **Team:** „Rolle nicht gefunden“ beim Anlegen von Mitarbeitern (STAFF-Rolle wird automatisch angelegt).
+- **Admin Funktionen:** Endlosschleife/Flackern auf der Modul-Seite behoben.
+- **Mitarbeiterbereich:** WebSocket-Verbindung bei pfadbasiertem Mandanten-Routing (Mandanten-Slug wird mitgegeben).
+
+---
+
 ## 2.4.27 - 2026-07-13
 
 ### Behoben

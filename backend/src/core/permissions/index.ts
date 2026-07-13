@@ -8,6 +8,8 @@ export {
   TENANT_ROLE_TEMPLATES,
   TENANT_ROLE_TEMPLATE_MAP,
   KUECHE_TEMPLATE_PERMISSIONS,
+  isTenantRoleTemplateId,
+  parseStoredRoleTemplates,
   type TenantRoleTemplateId,
   type TenantRoleTemplate,
 } from './roleTemplates';

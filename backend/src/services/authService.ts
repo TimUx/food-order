@@ -2,12 +2,13 @@ import bcrypt from 'bcryptjs';
 import { userRepository } from '../repositories';
 import { AppError } from '../middleware/errorHandler';
 import { AuthPayload } from '../middleware/auth';
-import { resolveUserPermissions } from '../core/permissions';
+import { resolveUserPermissions, parseStoredRoleTemplates } from '../core/permissions';
 import { hookSystem, tenantContext, platformContext } from '../platform/bootstrap';
 import { platformDomainService } from '../platform/PlatformDomainService';
 import { requireTenantId } from '../platform/tenant/tenantScope';
 import { CORE_HOOKS } from '../platform/types';
 import { sessionService } from './sessionService';
+import { ensureSystemRole } from '../core/roles/ensureSystemRoles';
 import { authConfigService } from './authConfigService';
 import { authLoginTokenService } from './authLoginTokenService';
 import { mailService } from '../platform/mail/MailService';
@@ -33,6 +34,7 @@ async function buildUserResponse(user: TenantUser) {
     role: user.role.name,
     permissions: resolveUserPermissions(user),
     roleTemplate: user.roleTemplate ?? null,
+    roleTemplates: parseStoredRoleTemplates(user),
     passwordEnabled: user.passwordEnabled,
     magicLinkEnabled: user.magicLinkEnabled,
   };
@@ -350,10 +352,7 @@ export const authService = {
       passwordHash = await bcrypt.hash(data.password, 12);
     }
 
-    const role = await import('../config/database').then(({ prisma }) =>
-      prisma.role.findUnique({ where: { name: data.roleName } })
-    );
-    if (!role) throw new AppError(500, 'Rolle nicht gefunden');
+    const role = await ensureSystemRole(data.roleName);
 
     return userRepository.create({
       email: data.email ?? null,

@@ -23,6 +23,9 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
+  FormGroup,
+  FormLabel,
+  Checkbox,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -40,7 +43,7 @@ interface UserForm {
   lastName: string;
   role: UserRole;
   active: boolean;
-  roleTemplate: RoleTemplateId | '';
+  roleTemplates: RoleTemplateId[];
   passwordEnabled: boolean;
   magicLinkEnabled: boolean;
 }
@@ -53,7 +56,7 @@ const emptyForm: UserForm = {
   lastName: '',
   role: 'STAFF',
   active: true,
-  roleTemplate: 'kueche',
+  roleTemplates: ['kueche'],
   passwordEnabled: true,
   magicLinkEnabled: false,
 };
@@ -67,12 +70,78 @@ const TEMPLATE_LABELS: Record<string, string> = {
   rechtliches: 'Rechtliches',
 };
 
+function mergeTemplatePermissions(templates: RoleTemplate[], selectedIds: RoleTemplateId[]): string[] {
+  const keys = new Set<string>();
+  for (const id of selectedIds) {
+    const template = templates.find((t) => t.id === id);
+    template?.permissions.forEach((key) => keys.add(key));
+  }
+  return Array.from(keys);
+}
+
 function displayRole(user: User): string {
   if (user.role === 'ADMIN') return 'Administrator';
-  if (user.roleTemplate && TEMPLATE_LABELS[user.roleTemplate]) {
-    return TEMPLATE_LABELS[user.roleTemplate];
-  }
+  const ids = user.roleTemplates?.length
+    ? user.roleTemplates
+    : user.roleTemplate
+      ? [user.roleTemplate as RoleTemplateId]
+      : [];
+  const labels = ids.map((id) => TEMPLATE_LABELS[id]).filter(Boolean);
+  if (labels.length > 0) return labels.join(', ');
   return 'Mitarbeiter';
+}
+
+function resolveUserTemplates(user: User): RoleTemplateId[] {
+  if (user.roleTemplates?.length) return user.roleTemplates;
+  if (user.roleTemplate) return [user.roleTemplate as RoleTemplateId];
+  return ['kueche'];
+}
+
+function toggleTemplateSelection(
+  current: RoleTemplateId[],
+  id: RoleTemplateId,
+  checked: boolean
+): RoleTemplateId[] {
+  if (checked) {
+    return current.includes(id) ? current : [...current, id];
+  }
+  return current.filter((entry) => entry !== id);
+}
+
+interface RoleTemplatePickerProps {
+  templates: RoleTemplate[];
+  selected: RoleTemplateId[];
+  onChange: (next: RoleTemplateId[]) => void;
+}
+
+function RoleTemplatePicker({ templates, selected, onChange }: RoleTemplatePickerProps) {
+  return (
+    <FormControl component="fieldset" fullWidth>
+      <FormLabel component="legend" sx={{ mb: 1, fontWeight: 600 }}>
+        Bereiche (mehrere möglich)
+      </FormLabel>
+      <FormGroup>
+        {templates.map((template) => (
+          <FormControlLabel
+            key={template.id}
+            control={
+              <Checkbox
+                checked={selected.includes(template.id)}
+                onChange={(e) => onChange(toggleTemplateSelection(selected, template.id, e.target.checked))}
+              />
+            }
+            label={
+              <Box>
+                <Typography fontWeight={600}>{template.label}</Typography>
+                <Typography variant="caption" color="text.secondary">{template.description}</Typography>
+              </Box>
+            }
+            sx={{ alignItems: 'flex-start', mb: 0.5 }}
+          />
+        ))}
+      </FormGroup>
+    </FormControl>
+  );
 }
 
 export function UsersPage() {
@@ -86,7 +155,7 @@ export function UsersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [permUserId, setPermUserId] = useState<string | null>(null);
   const [form, setForm] = useState<UserForm>(emptyForm);
-  const [selectedTemplate, setSelectedTemplate] = useState<RoleTemplateId | ''>('kueche');
+  const [selectedTemplates, setSelectedTemplates] = useState<RoleTemplateId[]>(['kueche']);
   const [saving, setSaving] = useState(false);
 
   const loadUsers = () => {
@@ -124,11 +193,13 @@ export function UsersPage() {
         passwordEnabled: false,
         magicLinkEnabled: true,
         password: '',
+        roleTemplates: [],
       }));
     } else {
       setForm((prev) => ({
         ...prev,
         role,
+        roleTemplates: prev.roleTemplates.length ? prev.roleTemplates : ['kueche'],
         passwordEnabled: true,
         magicLinkEnabled: Boolean(prev.email.trim()),
       }));
@@ -145,7 +216,7 @@ export function UsersPage() {
       lastName: user.lastName,
       role: user.role,
       active: user.active ?? true,
-      roleTemplate: (user.roleTemplate as RoleTemplateId) ?? '',
+      roleTemplates: resolveUserTemplates(user),
       passwordEnabled: user.passwordEnabled ?? false,
       magicLinkEnabled: user.magicLinkEnabled ?? true,
     });
@@ -154,12 +225,25 @@ export function UsersPage() {
 
   const openPermissions = (user: User) => {
     setPermUserId(user.id);
-    setSelectedTemplate((user.roleTemplate as RoleTemplateId) ?? 'kueche');
+    setSelectedTemplates(resolveUserTemplates(user));
     setPermDialogOpen(true);
+  };
+
+  const applyStaffTemplates = async (userId: string, templateIds: RoleTemplateId[]) => {
+    const permissions = mergeTemplatePermissions(templates, templateIds);
+    await api.updateUserPermissions(token!, userId, {
+      permissions,
+      roleTemplates: templateIds,
+      roleTemplate: templateIds[0] ?? null,
+    });
   };
 
   const handleSave = async () => {
     if (!token) return;
+    if (form.role === 'STAFF' && form.roleTemplates.length === 0) {
+      setError('Bitte mindestens einen Bereich auswählen.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -175,14 +259,8 @@ export function UsersPage() {
           magicLinkEnabled: form.magicLinkEnabled,
           ...(form.password ? { password: form.password } : {}),
         });
-        if (form.role === 'STAFF' && form.roleTemplate) {
-          const template = templates.find((t) => t.id === form.roleTemplate);
-          if (template) {
-            await api.updateUserPermissions(token, editingId, {
-              permissions: template.permissions,
-              roleTemplate: template.id,
-            });
-          }
+        if (form.role === 'STAFF' && form.roleTemplates.length > 0) {
+          await applyStaffTemplates(editingId, form.roleTemplates);
         }
       } else {
         const created = await api.createUser(token, {
@@ -194,18 +272,12 @@ export function UsersPage() {
           role: form.role,
           passwordEnabled: form.passwordEnabled,
           magicLinkEnabled: form.magicLinkEnabled,
-          ...(form.role === 'STAFF' && form.roleTemplate
-            ? { roleTemplate: form.roleTemplate }
+          ...(form.role === 'STAFF' && form.roleTemplates.length
+            ? { roleTemplates: form.roleTemplates }
             : {}),
         });
-        if (form.role === 'STAFF' && form.roleTemplate && !created.permissions?.length) {
-          const template = templates.find((t) => t.id === form.roleTemplate);
-          if (template) {
-            await api.updateUserPermissions(token, created.id, {
-              permissions: template.permissions,
-              roleTemplate: template.id,
-            });
-          }
+        if (form.role === 'STAFF' && form.roleTemplates.length && !created.permissions?.length) {
+          await applyStaffTemplates(created.id, form.roleTemplates);
         }
       }
       setDialogOpen(false);
@@ -219,15 +291,14 @@ export function UsersPage() {
 
   const handleSavePermissions = async () => {
     if (!token || !permUserId) return;
-    const template = templates.find((t) => t.id === selectedTemplate);
-    if (!template) return;
+    if (selectedTemplates.length === 0) {
+      setError('Bitte mindestens einen Bereich auswählen.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      await api.updateUserPermissions(token, permUserId, {
-        permissions: template.permissions,
-        roleTemplate: template.id,
-      });
+      await applyStaffTemplates(permUserId, selectedTemplates);
       setPermDialogOpen(false);
       loadUsers();
     } catch (err) {
@@ -293,7 +364,7 @@ export function UsersPage() {
                   <Stack direction="row" spacing={1} justifyContent="flex-end">
                     {user.role === 'STAFF' && (
                       <Button size="small" startIcon={<SecurityIcon />} onClick={() => openPermissions(user)}>
-                        Vorlage
+                        Bereiche
                       </Button>
                     )}
                     <Button size="small" startIcon={<EditIcon />} onClick={() => openEdit(user)}>
@@ -388,20 +459,11 @@ export function UsersPage() {
               </Select>
             </FormControl>
             {form.role === 'STAFF' && (
-              <FormControl fullWidth>
-                <InputLabel>Rollenvorlage</InputLabel>
-                <Select
-                  label="Rollenvorlage"
-                  value={form.roleTemplate}
-                  onChange={(e) => setForm({ ...form, roleTemplate: e.target.value as RoleTemplateId })}
-                >
-                  {templates.map((t) => (
-                    <MenuItem key={t.id} value={t.id}>
-                      {t.label} — {t.description}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <RoleTemplatePicker
+                templates={templates}
+                selected={form.roleTemplates}
+                onChange={(roleTemplates) => setForm({ ...form, roleTemplates })}
+              />
             )}
             {editingId && (
               <FormControlLabel
@@ -418,40 +480,28 @@ export function UsersPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Abbrechen</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving}>
+          <Button variant="contained" onClick={() => void handleSave()} disabled={saving}>
             {saving ? 'Speichern…' : 'Speichern'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={permDialogOpen} onClose={() => setPermDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Rollenvorlage ändern</DialogTitle>
+        <DialogTitle>Bereiche zuweisen</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Fachliche Vorlagen ersetzen technische Berechtigungslisten. Jeder Mitarbeiter erhält eigene Rechte.
+            Wählen Sie einen oder mehrere Bereiche. Die Berechtigungen werden automatisch zusammengeführt.
           </Typography>
-          <FormControl fullWidth>
-            <InputLabel>Vorlage</InputLabel>
-            <Select
-              label="Vorlage"
-              value={selectedTemplate}
-              onChange={(e) => setSelectedTemplate(e.target.value as RoleTemplateId)}
-            >
-              {templates.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  <Box>
-                    <Typography fontWeight={600}>{t.label}</Typography>
-                    <Typography variant="caption" color="text.secondary">{t.description}</Typography>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <RoleTemplatePicker
+            templates={templates}
+            selected={selectedTemplates}
+            onChange={setSelectedTemplates}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPermDialogOpen(false)}>Abbrechen</Button>
           <Button variant="contained" onClick={() => void handleSavePermissions()} disabled={saving}>
-            {saving ? 'Speichern…' : 'Vorlage zuweisen'}
+            {saving ? 'Speichern…' : 'Bereiche speichern'}
           </Button>
         </DialogActions>
       </Dialog>

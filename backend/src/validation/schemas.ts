@@ -113,6 +113,8 @@ export const revokeAllSessionsSchema = z.object({
   userId: z.string().uuid('Ungültige Benutzer-ID'),
 });
 
+const roleTemplateIdSchema = z.enum(['kueche', 'abholung', 'kasse', 'speisenpflege', 'finanzen', 'rechtliches']);
+
 export const createUserSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse').optional().or(z.literal('')),
   username: z.string().min(3).max(32).optional().or(z.literal('')),
@@ -120,7 +122,8 @@ export const createUserSchema = z.object({
   firstName: z.string().min(1, 'Vorname erforderlich'),
   lastName: z.string().min(1, 'Nachname erforderlich'),
   role: z.enum(['ADMIN', 'STAFF']),
-  roleTemplate: z.enum(['kueche', 'abholung', 'kasse', 'speisenpflege', 'finanzen', 'rechtliches']).optional(),
+  roleTemplate: roleTemplateIdSchema.optional(),
+  roleTemplates: z.array(roleTemplateIdSchema).min(1).optional(),
   permissions: z.array(z.string()).optional(),
   passwordEnabled: z.boolean().optional(),
   magicLinkEnabled: z.boolean().optional(),
@@ -128,7 +131,8 @@ export const createUserSchema = z.object({
 
 export const updateUserPermissionsSchema = z.object({
   permissions: z.array(z.string()).default([]),
-  roleTemplate: z.string().nullable().optional(),
+  roleTemplate: roleTemplateIdSchema.nullable().optional(),
+  roleTemplates: z.array(roleTemplateIdSchema).min(1).optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -235,7 +239,7 @@ export const lookupOrderSchema = z.object({
 
 export const lookupByNumberSchema = z.object({
   orderNumber: z.coerce.number().int().positive(),
-  lastName: z.string().min(1, 'Nachname erforderlich'),
+  lastName: z.string().max(100).optional(),
 });
 
 export const refundPaymentSchema = z.object({

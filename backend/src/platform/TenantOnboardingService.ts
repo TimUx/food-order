@@ -8,7 +8,7 @@ import { sessionService } from '../services/sessionService';
 import type { TenantRecord } from './tenant/types';
 import { platformNotificationService } from './notifications/platformNotificationService';
 import { platformDomainService } from './PlatformDomainService';
-import { ensureSystemRole } from '../core/roles/ensureSystemRoles';
+import { ensureSystemRoles } from '../core/roles/ensureSystemRoles';
 
 export interface ProvisionedAdminCredentials {
   userId: string;
@@ -120,7 +120,7 @@ async function ensureAdministrator(
     };
   }
 
-  const adminRole = await ensureSystemRole(RoleName.ADMIN);
+  const { admin: adminRole } = await ensureSystemRoles();
   const { firstName, lastName } = splitContactName(contact?.contactName ?? tenant.contactName);
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await bcrypt.hash(temporaryPassword, 12);

@@ -16,6 +16,7 @@ import {
   Avatar,
   Alert,
   Snackbar,
+  Button,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
@@ -35,6 +36,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { canAccessAnyPermission } from '@/utils/permissions';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useRouting } from '@/contexts/RoutingProvider';
 import { startPrintJobListener } from '@/modules/printer/printBridge';
 import { realtimeService, useRealtimeConnectionState } from '@/services/realtime';
 import type { ConnectionState } from '@/services/realtime';
@@ -79,10 +81,10 @@ interface StaffLayoutProps {
 
 function connectionBanner(state: ConnectionState): { show: boolean; severity: 'warning' | 'error'; text: string } {
   switch (state) {
-    case 'POLLING':
     case 'RECONNECTING':
+      return { show: true, severity: 'warning', text: 'Verbindung wird wiederhergestellt…' };
     case 'DEGRADED':
-      return { show: true, severity: 'warning', text: 'Verbindung eingeschränkt – Aktualisierung per Polling' };
+      return { show: true, severity: 'warning', text: 'Verbindung eingeschränkt – Aktualisierung verzögert' };
     case 'DISCONNECTED':
       return { show: true, severity: 'error', text: 'Offline – Verbindung wird automatisch wiederhergestellt' };
     default:
@@ -98,6 +100,7 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
   const banner = connectionBanner(connectionState);
   const wasDisconnected = useRef(false);
   const { user, logout, isAdmin, token } = useAuth();
+  const { routing } = useRouting();
   const { mode, toggleMode } = useThemeMode();
   const location = useLocation();
   const navigate = useNavigate();
@@ -112,9 +115,9 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
   }, [location.pathname]);
 
   useEffect(() => {
-    realtimeService.configureAuth(token);
+    realtimeService.configureAuth(token, routing.tenantSlug);
     realtimeService.connect(token);
-  }, [token]);
+  }, [token, routing.tenantSlug]);
 
   useEffect(() => {
     if (connectionState === 'DISCONNECTED' || connectionState === 'POLLING') {
@@ -219,6 +222,28 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
                 {title || club.clubName}
               </Box>
             </Typography>
+            {isFocusModePath(location.pathname) && (
+              <>
+                <Button
+                  component={Link}
+                  to="/mitarbeiter"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<DashboardIcon />}
+                  sx={{ mr: 1, display: { xs: 'none', sm: 'inline-flex' } }}
+                >
+                  Übersicht
+                </Button>
+                <IconButton
+                  component={Link}
+                  to="/mitarbeiter"
+                  aria-label="Zur Übersicht"
+                  sx={{ mr: 1, display: { xs: 'inline-flex', sm: 'none' } }}
+                >
+                  <DashboardIcon />
+                </IconButton>
+              </>
+            )}
             <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' }, flexShrink: 0 }}>
               {user?.firstName} {user?.lastName}
             </Typography>

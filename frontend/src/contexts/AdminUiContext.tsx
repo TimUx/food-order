@@ -17,7 +17,6 @@ let cachedCatalog: AdminUiCatalog | null = null;
 const listeners = new Set<() => void>();
 
 export function invalidateAdminUiCache(): void {
-  cachedCatalog = null;
   listeners.forEach((listener) => listener());
 }
 
@@ -48,8 +47,9 @@ export function AdminUiProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async () => {
     if (!token) return;
+    const hasCatalog = Boolean(cachedCatalog);
     try {
-      setLoading(true);
+      if (!hasCatalog) setLoading(true);
       const data = await api.getAdminUi(token);
       cachedCatalog = data;
       setCatalog(data);

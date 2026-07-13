@@ -1,30 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import {
-  TENANT_ROLE_TEMPLATES,
-  TENANT_ROLE_TEMPLATE_MAP,
-  resolveUserPermissions,
-  hasDelegatedAdminAccess,
-} from './index';
+import { parseStoredRoleTemplates, isTenantRoleTemplateId } from './roleTemplates';
 
-describe('tenant role templates', () => {
-  it('defines six fachliche Vorlagen', () => {
-    expect(TENANT_ROLE_TEMPLATES).toHaveLength(6);
-    expect(TENANT_ROLE_TEMPLATE_MAP.kasse.permissions).toContain('payment.view');
-    expect(TENANT_ROLE_TEMPLATE_MAP.kasse.permissions).not.toContain('team.manage');
-    expect(TENANT_ROLE_TEMPLATE_MAP.kasse.permissions).not.toContain('payment.settings');
+describe('roleTemplates helpers', () => {
+  it('erkennt gültige Vorlagen-IDs', () => {
+    expect(isTenantRoleTemplateId('kasse')).toBe(true);
+    expect(isTenantRoleTemplateId('invalid')).toBe(false);
   });
 
-  it('resolves per-user permissions before global role fallback', () => {
-    const perms = resolveUserPermissions({
-      permissions: ['orders.manage'],
-      role: { permissions: ['team.manage'] },
-    });
-    expect(perms).toEqual(['orders.manage']);
+  it('liest mehrere gespeicherte Vorlagen', () => {
+    expect(parseStoredRoleTemplates({ roleTemplates: ['kasse', 'abholung'], roleTemplate: 'kueche' }))
+      .toEqual(['kasse', 'abholung']);
   });
 
-  it('grants delegated admin only with fachlichen Rechten', () => {
-    expect(hasDelegatedAdminAccess('STAFF', TENANT_ROLE_TEMPLATE_MAP.kasse.permissions)).toBe(true);
-    expect(hasDelegatedAdminAccess('STAFF', TENANT_ROLE_TEMPLATE_MAP.kueche.permissions)).toBe(false);
-    expect(hasDelegatedAdminAccess('ADMIN', [])).toBe(true);
+  it('fällt auf einzelne Legacy-Vorlage zurück', () => {
+    expect(parseStoredRoleTemplates({ roleTemplates: [], roleTemplate: 'abholung' }))
+      .toEqual(['abholung']);
+  });
+
+  it('filtert unbekannte Vorlagen-IDs', () => {
+    expect(parseStoredRoleTemplates({ roleTemplates: ['kasse', 'unknown'], roleTemplate: null }))
+      .toEqual(['kasse']);
   });
 });

@@ -191,8 +191,10 @@ model User {
   role              Role             @relation(fields: [roleId], references: [id])
   /// Per-user permission keys (role templates). Falls back to Role.permissions when empty.
   permissions       Json             @default("[]")
-  /// Applied role template id, e.g. kueche, kasse (display only)
+  /// Applied role template id, e.g. kueche, kasse (legacy display)
   roleTemplate      String?          @map("role_template")
+  /// Selected role template ids, e.g. ["kasse","abholung"]
+  roleTemplates     Json             @default("[]") @map("role_templates")
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   sessions          UserSession[]

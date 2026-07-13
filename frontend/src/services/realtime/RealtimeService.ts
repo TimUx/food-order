@@ -165,9 +165,12 @@ class RealtimeServiceImpl {
     return snapshot;
   }
 
-  configureAuth(token: string | null): void {
+  configureAuth(token: string | null, tenantSlug?: string | null): void {
     this.authToken = token;
     socketTransport.setAuthToken(token);
+    if (tenantSlug !== undefined) {
+      socketTransport.setTenantSlug(tenantSlug);
+    }
     if (this.connectStarted && socketTransport.isConnected()) {
       socketTransport.disconnect();
       socketTransport.connect();

@@ -6,7 +6,6 @@ import {
   Box,
   CircularProgress,
   Alert,
-  Button,
 } from '@mui/material';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
@@ -14,10 +13,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import EuroIcon from '@mui/icons-material/Euro';
 import TimerIcon from '@mui/icons-material/Timer';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import { Link } from 'react-router-dom';
-import { touchSquareActionSx } from '@/theme/touch';
 import { StaffLayout } from '@/components/StaffLayout';
+import { StaffKioskActions } from '@/components/StaffKioskActions';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
 import { DashboardStats } from '@/types';
@@ -108,35 +105,14 @@ export function DashboardPage() {
         ))}
       </Box>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr 1fr', md: '220px 220px' },
-          gap: 2,
-          maxWidth: 480,
-          mx: { md: 0 },
-        }}
-      >
-        <Button
-          component={Link}
-          to="/mitarbeiter/abholung"
-          variant="contained"
-          color="success"
-          sx={touchSquareActionSx}
-        >
-          <DoneAllIcon />
-          Abholung
-        </Button>
-        <Button
-          component={Link}
-          to="/mitarbeiter/bestellung"
-          variant="contained"
-          color="primary"
-          sx={touchSquareActionSx}
-        >
-          <AddShoppingCartIcon />
-          Bestellung
-        </Button>
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h5" fontWeight={800} gutterBottom>
+          Kassenbereich
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Schnellzugriff für Bestellung vor Ort und Abholung.
+        </Typography>
+        <StaffKioskActions maxWidth={960} />
       </Box>
     </StaffLayout>
   );

@@ -107,6 +107,20 @@ export class TenantResolver {
       return platformResult('app', surface === 'reserved' ? 'reserved' : 'app', 'subdomain');
     }
 
+    if (surface === 'tenant' && subdomain) {
+      const tenant = await this.tenantService.findBySubdomain(subdomain);
+      if (!tenant) {
+        throw new TenantNotFoundError();
+      }
+      const contextData = await this.tenantService.resolveContextData(tenant);
+      return {
+        type: 'tenant',
+        scope: 'tenant',
+        tenant: contextData,
+        matchedBy: 'subdomain',
+      };
+    }
+
     throw new TenantNotFoundError();
   }
 

@@ -16,7 +16,6 @@ export function useModules() {
       setLoading(true);
       const data = await api.getModules(token);
       setModules(data);
-      invalidateAdminUiCache();
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Laden');
@@ -31,6 +30,7 @@ export function useModules() {
     if (!token) return;
     await action(token, id);
     await load();
+    invalidateAdminUiCache();
   };
 
   return {

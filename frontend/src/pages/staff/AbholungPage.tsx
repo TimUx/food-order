@@ -13,6 +13,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import { StaffLayout } from '@/components/StaffLayout';
+import { StaffKioskActions } from '@/components/StaffKioskActions';
 import { Numpad } from '@/components/Numpad';
 import { StatusChip } from '@/components/StatusChip';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,7 +36,11 @@ export function AbholungPage() {
     setError('');
     setOrder(null);
     try {
-      const result = await api.lookupOrderByNumber(token, parseInt(orderNumber, 10), lastName.trim());
+      const result = await api.lookupOrderByNumber(
+        token,
+        parseInt(orderNumber, 10),
+        lastName.trim() || undefined
+      );
       setOrder(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bestellung nicht gefunden');
@@ -44,12 +49,20 @@ export function AbholungPage() {
     }
   };
 
+  const resetForNext = () => {
+    setOrderNumber('');
+    setLastName('');
+    setOrder(null);
+    setError('');
+  };
+
   const handleConfirmPickup = async () => {
     if (!token || !order) return;
     setConfirming(true);
     try {
       const updated = await api.updateOrderStatus(token, order.id, 'PICKED_UP');
       setOrder(updated);
+      setTimeout(resetForNext, 2500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler bei Abholung');
     } finally {
@@ -82,8 +95,8 @@ export function AbholungPage() {
             />
             <Button
               variant="contained"
-              onClick={handleLookup}
-              disabled={loading || !orderNumber || !lastName.trim()}
+              onClick={() => void handleLookup()}
+              disabled={loading || !orderNumber}
               aria-label="Suchen"
               sx={{ ...touchIconButtonSx, minWidth: 72, minHeight: 72, width: 72, height: 72, flexShrink: 0 }}
             >
@@ -91,12 +104,13 @@ export function AbholungPage() {
             </Button>
           </Stack>
           <TextField
-            label="Nachname"
+            label="Nachname (optional bei Vor-Ort-Bestellungen)"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             fullWidth
             sx={touchFieldSx}
-            onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
+            onKeyDown={(e) => e.key === 'Enter' && void handleLookup()}
+            helperText="Bei Online-Bestellungen zur Verifikation erforderlich"
           />
           <Numpad value={orderNumber} onChange={setOrderNumber} />
         </Stack>
@@ -156,7 +170,9 @@ export function AbholungPage() {
           )}
 
           {order.status === 'PICKED_UP' && (
-            <Alert severity="success" sx={{ fontSize: '1.1rem' }}>Bereits abgeholt</Alert>
+            <Alert severity="success" sx={{ fontSize: '1.1rem', mb: 2 }}>
+              Abholung bestätigt – Formular wird zurückgesetzt…
+            </Alert>
           )}
 
           {order.status !== 'READY' && order.status !== 'PICKED_UP' && (
@@ -166,6 +182,10 @@ export function AbholungPage() {
           )}
         </Paper>
       )}
+
+      <Box sx={{ mt: 4 }}>
+        <StaffKioskActions />
+      </Box>
     </StaffLayout>
   );
 }

@@ -253,8 +253,12 @@ export const api = {
     request<Order>('/staff/orders/cashier', { method: 'POST', body: JSON.stringify({ items, paymentMethodId }) }, token),
   abortCashierPayment: (token: string, orderId: string, sessionId: string) =>
     request<Order>(`/staff/orders/${orderId}/abort-payment`, { method: 'POST', body: JSON.stringify({ sessionId }) }, token),
-  lookupOrderByNumber: (token: string, orderNumber: number, lastName: string) =>
-    request<Order>('/staff/orders/lookup', { method: 'POST', body: JSON.stringify({ orderNumber, lastName }) }, token),
+  lookupOrderByNumber: (token: string, orderNumber: number, lastName?: string) =>
+    request<Order>(
+      '/staff/orders/lookup',
+      { method: 'POST', body: JSON.stringify({ orderNumber, ...(lastName ? { lastName } : {}) }) },
+      token
+    ),
   updateOrderStatus: (token: string, id: string, status: OrderStatus) =>
     request<Order>(`/staff/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }, token),
   updateOrderItems: (token: string, id: string, items: { foodItemId: string; quantity: number }[]) =>
@@ -357,6 +361,7 @@ export const api = {
     lastName: string;
     role: UserRole;
     roleTemplate?: import('@/types').RoleTemplateId;
+    roleTemplates?: import('@/types').RoleTemplateId[];
     passwordEnabled?: boolean;
     magicLinkEnabled?: boolean;
   }) => request<User>('/admin/users', { method: 'POST', body: JSON.stringify(data) }, token),
@@ -567,7 +572,11 @@ export const api = {
       {},
       token
     ),
-  updateUserPermissions: (token: string, userId: string, data: { permissions: string[]; roleTemplate?: string | null }) =>
+  updateUserPermissions: (token: string, userId: string, data: {
+    permissions: string[];
+    roleTemplate?: string | null;
+    roleTemplates?: import('@/types').RoleTemplateId[];
+  }) =>
     request<{ permissions: string[] }>(
       `/admin/users/${userId}/permissions`,
       { method: 'PUT', body: JSON.stringify(data) },

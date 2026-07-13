@@ -57,7 +57,7 @@ export const orderController = {
     }
   },
 
-  async lookup(req: { body: { orderNumber: number; lastName: string } }, res: Response, next: NextFunction) {
+  async lookup(req: { body: { orderNumber: number; lastName?: string } }, res: Response, next: NextFunction) {
     try {
       const order = await orderService.lookupByNumberAndName(req.body.orderNumber, req.body.lastName);
       res.json(order);
@@ -66,7 +66,7 @@ export const orderController = {
     }
   },
 
-  async lookupByNumber(req: { body: { orderNumber: number; lastName: string } }, res: Response, next: NextFunction) {
+  async lookupByNumber(req: { body: { orderNumber: number; lastName?: string } }, res: Response, next: NextFunction) {
     try {
       const order = await orderService.lookupByNumber(req.body.orderNumber, req.body.lastName);
       res.json(order);

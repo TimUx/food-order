@@ -40,6 +40,11 @@ export class PermissionService {
     return this.filterKnownPermissions(template.permissions);
   }
 
+  resolveTemplatesPermissions(templateIds: TenantRoleTemplateId[]): string[] {
+    const merged = templateIds.flatMap((id) => this.resolveTemplatePermissions(id));
+    return this.filterKnownPermissions(merged);
+  }
+
   filterKnownPermissions(permissions: string[]): string[] {
     const allowed = new Set(this.getAvailablePermissions().map((p) => p.key));
     return Array.from(new Set(permissions)).filter((p) => allowed.has(p));
@@ -88,7 +93,8 @@ export class PermissionService {
     userId: string,
     permissions: string[],
     actorId: string,
-    roleTemplate?: string | null
+    roleTemplate?: string | null,
+    roleTemplates?: TenantRoleTemplateId[]
   ): Promise<string[]> {
     const desired = this.filterKnownPermissions(permissions);
 
@@ -96,6 +102,7 @@ export class PermissionService {
       await userRepository.update(userId, {
         permissions: desired,
         ...(roleTemplate !== undefined ? { roleTemplate } : {}),
+        ...(roleTemplates !== undefined ? { roleTemplates } : {}),
       });
     } catch (err) {
       if (err instanceof Error && err.message === 'Benutzer nicht gefunden') {
@@ -107,7 +114,7 @@ export class PermissionService {
     await this.auditService.log({
       action: 'permissions.user.updated',
       actorId,
-      details: { userId, permissions: desired, roleTemplate },
+      details: { userId, permissions: desired, roleTemplate, roleTemplates },
     });
 
     return desired;
