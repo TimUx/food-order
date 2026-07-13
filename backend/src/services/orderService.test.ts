@@ -4,7 +4,8 @@ import { AppError } from '../middleware/errorHandler';
 const mockFindByEvent = vi.fn();
 const mockFindByOrderNumber = vi.fn();
 const mockGetActive = vi.fn();
-const mockFilterReleasedIds = vi.fn();
+const mockFindLatestByResources = vi.fn();
+const mockFindByResource = vi.fn();
 
 vi.mock('../repositories', () => ({
   orderRepository: {
@@ -13,6 +14,13 @@ vi.mock('../repositories', () => ({
   },
   customerRepository: {},
   foodItemRepository: {},
+}));
+
+vi.mock('../../modules/payment/repositories/paymentRepository', () => ({
+  paymentRepository: {
+    findLatestByResources: (...args: unknown[]) => mockFindLatestByResources(...args),
+    findByResource: (...args: unknown[]) => mockFindByResource(...args),
+  },
 }));
 
 vi.mock('./eventService', () => ({
@@ -31,7 +39,7 @@ vi.mock('./eventService', () => ({
 
 vi.mock('../core/extensionPoints', () => ({
   getPaymentServiceRegistry: () => ({
-    filterReleasedIds: (...args: unknown[]) => mockFilterReleasedIds(...args),
+    isAvailable: vi.fn().mockResolvedValue(false),
   }),
   getPayableResourceRegistry: vi.fn(),
 }));
@@ -42,12 +50,21 @@ vi.mock('../socket', () => ({
 }));
 
 vi.mock('../platform/bootstrap', () => ({
-  hookSystem: { emit: vi.fn() },
+  hookSystem: { emit: vi.fn(), emitAsync: vi.fn() },
 }));
 
 vi.mock('./clubService', () => ({
   clubService: {
-    getOrderSettings: vi.fn(),
+    getOrderSettings: vi.fn().mockResolvedValue({
+      cancellationDeadlineHours: 24,
+      cancellationDeadlineUnit: 'hours',
+      fields: {
+        firstNameRequired: true,
+        lastNameRequired: true,
+        emailRequired: false,
+        phoneRequired: false,
+      },
+    }),
     getCancellationSettings: vi.fn(),
   },
 }));
@@ -66,6 +83,7 @@ function buildOrder(overrides: Record<string, unknown> = {}) {
     source: 'CASHIER',
     status: 'NEW',
     totalPrice: 10,
+    releasedToKitchen: true,
     createdAt: new Date('2026-07-11T12:00:00.000Z'),
     readyAt: null,
     pickedUpAt: null,
@@ -89,6 +107,7 @@ function buildOrder(overrides: Record<string, unknown> = {}) {
 describe('orderService.getByEvent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFindLatestByResources.mockResolvedValue(new Map());
   });
 
   it('liefert Kassenbestellungen auch ohne freigegebene Zahlung', async () => {
@@ -96,28 +115,39 @@ describe('orderService.getByEvent', () => {
     const onlineOrder = buildOrder({
       id: 'online-1',
       source: 'ONLINE',
+      releasedToKitchen: false,
       customer: { firstName: 'Max', lastName: 'Mustermann', email: null, phone: null },
     });
     mockFindByEvent.mockResolvedValue([cashierOrder, onlineOrder]);
-    mockFilterReleasedIds.mockResolvedValue(['online-1']);
 
     const result = await orderService.getByEvent('event-1');
 
     expect(result.map((o) => o.id)).toEqual(['cashier-1', 'online-1']);
   });
 
-  it('blendet Online-Bestellungen ohne freigegebene Zahlung aus', async () => {
+  it('liefert Online-Bestellungen auch ohne Küchenfreigabe für den Mitarbeiterbereich', async () => {
     const onlineOrder = buildOrder({
       id: 'online-1',
       source: 'ONLINE',
+      releasedToKitchen: false,
       customer: { firstName: 'Max', lastName: 'Mustermann', email: null, phone: null },
     });
     mockFindByEvent.mockResolvedValue([onlineOrder]);
-    mockFilterReleasedIds.mockResolvedValue([]);
 
     const result = await orderService.getByEvent('event-1');
 
-    expect(result).toHaveLength(0);
+    expect(result).toHaveLength(1);
+    expect(result[0]?.paymentLabel).toBe('Zahlung ausstehend');
+  });
+
+  it('filtert bei kitchenOnly nur freigegebene Bestellungen', async () => {
+    const released = buildOrder({ id: 'released-1', releasedToKitchen: true });
+    const pending = buildOrder({ id: 'pending-1', source: 'ONLINE', releasedToKitchen: false });
+    mockFindByEvent.mockResolvedValue([released, pending]);
+
+    const result = await orderService.getByEvent('event-1', undefined, { kitchenOnly: true });
+
+    expect(result.map((o) => o.id)).toEqual(['released-1']);
   });
 });
 
@@ -126,7 +156,7 @@ describe('orderService.getStats', () => {
     vi.clearAllMocks();
   });
 
-  it('zählt nur für Mitarbeiter sichtbare Bestellungen', async () => {
+  it('zählt alle nicht stornierten Bestellungen', async () => {
     const visibleOnline = buildOrder({
       id: 'online-1',
       source: 'ONLINE',
@@ -137,16 +167,16 @@ describe('orderService.getStats', () => {
       id: 'online-2',
       source: 'ONLINE',
       status: 'NEW',
+      releasedToKitchen: false,
       customer: { firstName: 'Erika', lastName: 'Beispiel', email: null, phone: null },
     });
     mockFindByEvent.mockResolvedValue([visibleOnline, hiddenOnline]);
-    mockFilterReleasedIds.mockResolvedValue(['online-1']);
 
     const stats = await orderService.getStats('event-1');
 
-    expect(stats.totalOrders).toBe(1);
-    expect(stats.openOrders).toBe(1);
-    expect(stats.revenue).toBe(10);
+    expect(stats.totalOrders).toBe(2);
+    expect(stats.openOrders).toBe(2);
+    expect(stats.revenue).toBe(20);
   });
 });
 
@@ -154,11 +184,11 @@ describe('orderService.lookupByNumberAndName', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetActive.mockResolvedValue({ id: 'event-1', date: eventDate });
+    mockFindByResource.mockResolvedValue(null);
   });
 
   it('findet Vor-Ort-Bestellungen nur anhand der Nummer', async () => {
     mockFindByOrderNumber.mockResolvedValue(buildOrder({ source: 'CASHIER', customer: null }));
-    mockFilterReleasedIds.mockResolvedValue([]);
 
     const result = await orderService.lookupByNumberAndName('event-1', 42);
 
@@ -186,7 +216,6 @@ describe('orderService.lookupByNumberAndName', () => {
         customer: { firstName: 'Max', lastName: 'Mustermann', email: null, phone: null },
       })
     );
-    mockFilterReleasedIds.mockResolvedValue(['order-1']);
 
     await expect(orderService.lookupByNumberAndName('event-1', 42, 'Falsch')).rejects.toEqual(
       new AppError(404, 'Bestellung nicht gefunden')
