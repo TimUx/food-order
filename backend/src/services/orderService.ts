@@ -25,8 +25,8 @@ import { emitOrderCreated, emitOrderUpdate } from '../socket';
 import { hookSystem } from '../platform/bootstrap';
 import { CORE_HOOKS } from '../platform/types';
 import { getPaymentServiceRegistry, getPayableResourceRegistry } from '../core/extensionPoints';
-import { paymentRepository } from '../modules/payment/repositories/paymentRepository';
-import { resolvePaymentStatus } from '../modules/payment/types';
+import { paymentRepository } from '../../modules/payment/repositories/paymentRepository';
+import { resolvePaymentStatus } from '../../modules/payment/types';
 
 type OrderWithRelations = Order & {
   customer?: { firstName: string; lastName: string; email?: string | null; phone?: string | null } | null;

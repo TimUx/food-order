@@ -60,6 +60,7 @@ import adminUiRoutes from '../core/routes/adminUi';
 import { tenantController, healthService, tenantService } from '../platform/bootstrap';
 import platformRoutes from '../core/routes/platform';
 import { platformPublicController } from '../controllers/platformPublicController';
+import { orderService } from '../services/orderService';
 
 const upload = uploadService.memory;
 
