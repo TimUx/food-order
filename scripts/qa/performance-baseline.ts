@@ -61,7 +61,7 @@ async function main(): Promise<void> {
   const health = await measure('health', `${platformApiBase}/health`);
   results.healthMs = health.ms;
 
-  const menu = await measure('menu', `${apiBase}/public/menu`, { headers: tenantHeaders() });
+  const menu = await measure('menu', `${apiBase}/public/menu?eventId=${encodeURIComponent(eventId)}`, { headers: tenantHeaders() });
   results.publicMenuMs = menu.ms;
   results.publicMenuBytes = menu.bytes ?? 0;
 
