@@ -5,7 +5,7 @@ vi.mock('../config/database', () => ({
   prisma: {
     clubSettings: { upsert: vi.fn() },
     user: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
-    role: { findUnique: vi.fn() },
+    role: { upsert: vi.fn() },
   },
 }));
 
@@ -58,7 +58,7 @@ describe('tenantOnboardingService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.role.findUnique).mockResolvedValue({ id: 'role-admin', name: 'ADMIN', permissions: [] } as never);
+    vi.mocked(prisma.role.upsert).mockResolvedValue({ id: 'role-admin', name: 'ADMIN', permissions: [] } as never);
     vi.mocked(prisma.clubSettings.upsert).mockResolvedValue({} as never);
     vi.mocked(platformNotificationService.notifyTenantApproved).mockResolvedValue(undefined);
   });

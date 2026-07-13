@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.27 - 2026-07-13
+
+### Behoben
+
+- **Mandanten-Onboarding:** ADMIN- und STAFF-Rollen werden beim Genehmigen automatisch angelegt, wenn sie in der Datenbank noch fehlen (z. B. ohne `prisma db seed`).
+
+---
+
 ## 2.4.26 - 2026-07-13
 
 ### Behoben

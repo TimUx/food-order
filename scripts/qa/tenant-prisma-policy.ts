@@ -74,6 +74,7 @@ export const ALLOWLIST_INFRASTRUCTURE = [
   'backend/src/core/tenant/migratePlatformV21Schema.ts',
   'backend/src/core/tenant/migrateTenantApplicationSchema.ts',
   'backend/src/core/tenant/ensurePlatformAdmin.ts',
+  'backend/src/core/roles/ensureSystemRoles.ts',
 ] as const;
 
 export const ALLOWLIST_ALL = [

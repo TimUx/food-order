@@ -8,6 +8,7 @@ import { sessionService } from '../services/sessionService';
 import type { TenantRecord } from './tenant/types';
 import { platformNotificationService } from './notifications/platformNotificationService';
 import { platformDomainService } from './PlatformDomainService';
+import { ensureSystemRole } from '../core/roles/ensureSystemRoles';
 
 export interface ProvisionedAdminCredentials {
   userId: string;
@@ -119,11 +120,7 @@ async function ensureAdministrator(
     };
   }
 
-  const adminRole = await prisma.role.findUnique({ where: { name: RoleName.ADMIN } });
-  if (!adminRole) {
-    throw new AppError(500, 'ADMIN-Rolle nicht gefunden. Bitte Datenbank-Seed ausführen.');
-  }
-
+  const adminRole = await ensureSystemRole(RoleName.ADMIN);
   const { firstName, lastName } = splitContactName(contact?.contactName ?? tenant.contactName);
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await bcrypt.hash(temporaryPassword, 12);
