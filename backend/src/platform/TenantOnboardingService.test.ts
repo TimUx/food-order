@@ -19,10 +19,6 @@ vi.mock('./notifications/platformNotificationService', () => ({
   },
 }));
 
-vi.mock('./bootstrap', () => ({
-  platformContext: { current: () => ({ name: 'FestSchmiede' }) },
-}));
-
 vi.mock('./PlatformDomainService', () => ({
   platformDomainService: {
     getPublicView: () => ({ platformDomain: 'localhost' }),
@@ -33,6 +29,7 @@ vi.mock('./PlatformDomainService', () => ({
 
 import { prisma } from '../config/database';
 import { platformNotificationService } from './notifications/platformNotificationService';
+import { sessionService } from '../services/sessionService';
 
 describe('tenantOnboardingService', () => {
   const tenant = {
@@ -89,23 +86,51 @@ describe('tenantOnboardingService', () => {
         organizationName: 'Testverein',
         adminUrl: 'http://localhost:5173/test-verein/admin/login',
         publicUrl: 'http://localhost:5173/test-verein/public',
+        resent: false,
       })
     );
   });
 
-  it('skips mail when admin already exists', async () => {
+  it('resets password and sends mail when admin already exists', async () => {
     vi.mocked(prisma.user.findFirst).mockResolvedValue({
       id: 'existing',
       email: 'max@verein.test',
       username: null,
       firstName: 'Max',
       lastName: 'Mustermann',
+      active: true,
     } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
     const result = await tenantOnboardingService.onboardNewTenant(tenant);
 
     expect(result?.created).toBe(false);
-    expect(platformNotificationService.notifyTenantApproved).not.toHaveBeenCalled();
+    expect(prisma.user.update).toHaveBeenCalled();
+    expect(sessionService.revokeAllUserSessions).toHaveBeenCalledWith('existing');
+    expect(platformNotificationService.notifyTenantApproved).toHaveBeenCalledWith(
+      expect.objectContaining({ resent: false })
+    );
+  });
+
+  it('creates admin even when mail delivery fails', async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.create).mockResolvedValue({
+      id: 'user-1',
+      email: 'max@verein.test',
+      username: null,
+      firstName: 'Max',
+      lastName: 'Mustermann',
+    } as never);
+    vi.mocked(platformNotificationService.notifyTenantApproved).mockRejectedValue(
+      new Error('SMTP nicht konfiguriert')
+    );
+
+    const result = await tenantOnboardingService.onboardNewTenant(tenant, {
+      email: 'max@verein.test',
+    });
+
+    expect(result?.userId).toBe('user-1');
+    expect(prisma.user.create).toHaveBeenCalled();
   });
 
   it('resends access info with new password for existing admin', async () => {

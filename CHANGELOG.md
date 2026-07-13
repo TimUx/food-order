@@ -3,6 +3,26 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.23 - 2026-07-13
+
+### Hinzugefügt
+
+- **Landingpage:** Übersichtlichere Navigation mit Burger-Menü; „Start“ und „Mandant beantragen“ bleiben direkt sichtbar.
+- **Mandantenantrag:** Hinweis-Symbole mit Beispieltexten zu den Begründungsfeldern im Bewerbungsformular.
+
+### Geändert
+
+- **Branding:** Logo in Header, Menü und Footer vergrößert (einheitliche Größen-Presets).
+- **Mandantenantrag:** Begriff „Slug“ in der Oberfläche durch „Internetadresse“ ersetzt.
+
+### Behoben
+
+- **Mandanten-Onboarding:** Administrator wird beim Genehmigen, Aktivieren und Verknüpfen zuverlässig angelegt – unabhängig vom E-Mail-Versand.
+- **Mandanten-Onboarding:** Erneutes Genehmigen bei bestehender Verknüpfung führt Onboarding erneut aus (Bug in v2.4.22).
+- **Plattform:** „Infos senden“ und „Als Admin anmelden“ funktionieren auch wenn zuvor kein Admin existierte; klare Fehlermeldungen bei SMTP-Problemen.
+
+---
+
 ## 2.4.22 - 2026-07-13
 
 ### Hinzugefügt

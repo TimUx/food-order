@@ -277,7 +277,7 @@ export const submitTenantApplicationSchema = z.object({
   freeTierJustification: z.string().min(20, 'Bitte Begründung angeben').max(3000),
   plannedUsage: z.string().min(10, 'Geplante Nutzung angeben').max(3000),
   notes: z.string().max(3000).optional(),
-  requestedSubdomain: z.string().min(3, 'Subdomain mind. 3 Zeichen').max(48).regex(/^[a-z0-9-]+$/i, 'Nur Buchstaben, Zahlen und Bindestriche'),
+  requestedSubdomain: z.string().min(3, 'Internetadresse: mindestens 3 Zeichen').max(48).regex(/^[a-z0-9-]+$/i, 'Nur Buchstaben, Zahlen und Bindestriche'),
   privacyAccepted: z.literal(true, { errorMap: () => ({ message: 'Datenschutzerklärung muss akzeptiert werden' }) }),
   termsAccepted: z.literal(true, { errorMap: () => ({ message: 'Nutzungsbedingungen müssen akzeptiert werden' }) }),
 });

@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import type { TenantApplicationStatus } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
+import { logger } from '../utils/logger';
 import type { PlatformContext } from './tenant/PlatformContext';
 import type { PlatformTenantAdminService } from './PlatformTenantAdminService';
 import type { AuditLogEntry } from './types';
@@ -65,10 +66,10 @@ export class TenantApplicationService {
 
     const subdomain = normalizeSubdomain(input.requestedSubdomain);
     if (!subdomain || subdomain.length < 3) {
-      throw new AppError(400, 'Bitte eine gültige Subdomain (mind. 3 Zeichen) angeben.');
+      throw new AppError(400, 'Bitte eine gültige Internetadresse angeben (mind. 3 Zeichen, nur Kleinbuchstaben, Zahlen und Bindestriche).');
     }
     if ((platform.reservedSubdomains ?? []).includes(subdomain)) {
-      throw new AppError(400, 'Diese Subdomain ist reserviert.');
+      throw new AppError(400, 'Diese Internetadresse ist reserviert.');
     }
 
     const [existingTenant, existingApp] = await Promise.all([
@@ -84,7 +85,7 @@ export class TenantApplicationService {
     ]);
 
     if (existingTenant || existingApp) {
-      throw new AppError(409, 'Diese Subdomain ist bereits vergeben oder beantragt.');
+      throw new AppError(409, 'Diese Internetadresse ist bereits vergeben oder beantragt.');
     }
 
     const application = await prisma.tenantApplication.create({
@@ -212,6 +213,20 @@ export class TenantApplicationService {
           reviewedAt: new Date(),
         },
       });
+      const tenant = await this.tenantAdmin.getDetail(application.tenantId);
+      if (tenant) {
+        await tenantOnboardingService.ensureAdministrator(tenant, {
+          contactName: application.contactName,
+          email: application.email,
+        });
+        if (options.createTenant !== false) {
+          await tenantOnboardingService.onboardNewTenant(tenant, {
+            contactName: application.contactName,
+            email: application.email,
+            organizationName: application.organization,
+          });
+        }
+      }
       return { application: updated, tenantId: application.tenantId };
     }
 
@@ -261,11 +276,28 @@ export class TenantApplicationService {
     if (tenantId) {
       const tenant = await this.tenantAdmin.getDetail(tenantId);
       if (tenant) {
-        await tenantOnboardingService.onboardNewTenant(tenant, {
-          contactName: application.contactName,
-          email: application.email,
-          organizationName: application.organization,
-        });
+        try {
+          await tenantOnboardingService.ensureAdministrator(tenant, {
+            contactName: application.contactName,
+            email: application.email,
+          });
+          if (options.createTenant !== false) {
+            await tenantOnboardingService.onboardNewTenant(tenant, {
+              contactName: application.contactName,
+              email: application.email,
+              organizationName: application.organization,
+            });
+          }
+        } catch (err) {
+          logger.error('Mandanten-Onboarding nach Genehmigung fehlgeschlagen', {
+            tenantId,
+            applicationId: id,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          throw err instanceof AppError
+            ? err
+            : new AppError(500, 'Mandant wurde angelegt, aber der Administrator konnte nicht eingerichtet werden.');
+        }
       }
     }
 
@@ -336,6 +368,11 @@ export class TenantApplicationService {
       actorId,
       tenantId,
       details: { applicationId: id },
+    });
+
+    await tenantOnboardingService.ensureAdministrator(tenant, {
+      contactName: application.contactName,
+      email: application.email,
     });
 
     return updated;

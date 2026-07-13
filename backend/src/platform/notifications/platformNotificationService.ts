@@ -5,6 +5,7 @@
 import type { TenantApplication } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { logger } from '../../utils/logger';
+import { AppError } from '../../middleware/errorHandler';
 import { mailService } from '../mail/MailService';
 
 export interface TenantApprovedAdminInfo {
@@ -47,6 +48,12 @@ async function getAdminEmails(): Promise<string[]> {
 async function sendEmail(payload: PlatformNotificationPayload): Promise<void> {
   const smtp = await mailService.loadConfig();
   if (!smtp) {
+    if (payload.recipientEmail) {
+      throw new AppError(
+        503,
+        'E-Mail-Versand ist nicht konfiguriert. Bitte SMTP unter Plattform → Einstellungen einrichten.'
+      );
+    }
     logger.warn('Plattform-SMTP nicht konfiguriert – Benachrichtigung nur geloggt', {
       event: payload.event,
       title: payload.title,
@@ -68,6 +75,9 @@ async function sendEmail(payload: PlatformNotificationPayload): Promise<void> {
     });
     if (!result.ok) {
       logger.error('Plattform-E-Mail fehlgeschlagen', { event: payload.event, email, error: result.error });
+      if (payload.recipientEmail) {
+        throw new AppError(502, result.error ?? 'E-Mail konnte nicht gesendet werden.');
+      }
     }
   }
 }
@@ -87,7 +97,7 @@ export const platformNotificationService = {
         `Typ: ${application.organizationType}`,
         `Ansprechpartner: ${application.contactName}`,
         `E-Mail: ${application.email}`,
-        `Subdomain: ${application.requestedSubdomain}`,
+        `Internetadresse: ${application.requestedSubdomain}`,
         '',
         application.reason,
       ].join('\n'),
@@ -97,7 +107,7 @@ export const platformNotificationService = {
           <li><strong>Typ:</strong> ${application.organizationType}</li>
           <li><strong>Ansprechpartner:</strong> ${application.contactName}</li>
           <li><strong>E-Mail:</strong> ${application.email}</li>
-          <li><strong>Subdomain:</strong> ${application.requestedSubdomain}</li>
+          <li><strong>Internetadresse:</strong> ${application.requestedSubdomain}</li>
         </ul>
         <p>${application.reason}</p>`,
     });
@@ -113,7 +123,7 @@ export const platformNotificationService = {
         '',
         'vielen Dank für Ihre Bewerbung als FestSchmiede-Mandant.',
         `Wir haben Ihren Antrag für „${application.organization}" erhalten`,
-        `(Subdomain: ${application.requestedSubdomain}).`,
+        `(Internetadresse: ${application.requestedSubdomain}).`,
         '',
         'Unser Team prüft Ihre Angaben und meldet sich bei Ihnen.',
         '',
@@ -123,7 +133,7 @@ export const platformNotificationService = {
       html: `<p>Hallo ${application.contactName},</p>
         <p>vielen Dank für Ihre Bewerbung als FestSchmiede-Mandant.</p>
         <p>Wir haben Ihren Antrag für <strong>${application.organization}</strong> erhalten
-        (Subdomain: <strong>${application.requestedSubdomain}</strong>).</p>
+        (Internetadresse: <strong>${application.requestedSubdomain}</strong>).</p>
         <p>Unser Team prüft Ihre Angaben und meldet sich bei Ihnen.</p>
         <p>Mit freundlichen Grüßen<br/>Ihr FestSchmiede-Team</p>`,
     });
@@ -169,7 +179,6 @@ export const platformNotificationService = {
         'Wichtige Links:',
         `Administration: ${adminUrl}`,
         `Öffentliche Bestellseite: ${publicUrl}`,
-        `Mandanten-Pfad: /${tenantSlug}`,
         '',
         'Bitte melden Sie sich an und ändern Sie das Passwort unter „Mein Profil".',
         resent ? '' : 'Beim ersten Login führt ein Einrichtungsassistent Sie durch die Grundeinstellungen.',
@@ -189,7 +198,6 @@ export const platformNotificationService = {
         <ul>
           <li><a href="${adminUrl}">Administration öffnen</a></li>
           <li><a href="${publicUrl}">Öffentliche Bestellseite</a></li>
-          <li><strong>Mandanten-Pfad:</strong> /${tenantSlug}</li>
         </ul>
         <p>Bitte melden Sie sich an und ändern Sie das Passwort unter „Mein Profil".${
           resent ? '' : ' Beim ersten Login führt ein Einrichtungsassistent Sie durch die Grundeinstellungen.'

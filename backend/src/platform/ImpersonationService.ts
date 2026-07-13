@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { RoleName } from '@prisma/client';
 import { config } from '../config';
 import { prisma } from '../config/database';
 import type { AuthPayload } from '../middleware/platformAuth';
@@ -7,9 +8,38 @@ import type { AuditLogEntry } from './types';
 import { platformSessionService } from '../services/platformSessionService';
 import { platformContext } from './bootstrap';
 import { platformDomainService, isLocalPlatformDomain } from './PlatformDomainService';
+import { tenantOnboardingService } from './TenantOnboardingService';
+import type { TenantRecord } from './tenant/types';
 
 export class ImpersonationService {
   constructor(private readonly audit: { log: (entry: AuditLogEntry) => Promise<void> }) {}
+
+  private toTenantRecord(tenant: {
+    id: string;
+    name: string;
+    shortName: string | null;
+    slug: string;
+    subdomain: string;
+    status: TenantRecord['status'];
+    contactName: string | null;
+    email: string | null;
+    phone: string | null;
+    logoUrl: string | null;
+    locale: string;
+    timezone: string;
+    currency: string;
+    theme: string;
+    description: string | null;
+    address: string | null;
+    website: string | null;
+    activatedAt: Date | null;
+    archivedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): TenantRecord {
+    return tenant;
+  }
+
   async startImpersonation(
     platformUserId: string,
     platformSessionId: string,
@@ -21,13 +51,36 @@ export class ImpersonationService {
       throw new AppError(400, 'Nur aktive Mandanten können impersoniert werden');
     }
 
-    const adminUser = await prisma.user.findFirst({
-      where: { tenantId, active: true, role: { name: 'ADMIN' } },
+    let adminUser = await prisma.user.findFirst({
+      where: { tenantId, role: { name: RoleName.ADMIN } },
       include: { role: true },
       orderBy: { createdAt: 'asc' },
     });
+
     if (!adminUser) {
-      throw new AppError(400, 'Kein Administrator im Mandanten vorhanden');
+      await tenantOnboardingService.ensureAdministrator(this.toTenantRecord(tenant), {
+        contactName: tenant.contactName,
+        email: tenant.email,
+      });
+      adminUser = await prisma.user.findFirst({
+        where: { tenantId, role: { name: RoleName.ADMIN }, active: true },
+        include: { role: true },
+        orderBy: { createdAt: 'asc' },
+      });
+    }
+
+    if (!adminUser) {
+      throw new AppError(
+        400,
+        'Kein Administrator im Mandanten vorhanden. Bitte E-Mail-Adresse am Mandanten hinterlegen oder „Infos senden“ nutzen.'
+      );
+    }
+
+    if (!adminUser.active) {
+      await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { active: true },
+      });
     }
 
     const payload: AuthPayload = {

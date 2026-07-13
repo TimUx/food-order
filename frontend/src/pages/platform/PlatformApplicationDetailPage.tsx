@@ -102,7 +102,7 @@ export function PlatformApplicationDetailPage() {
           <Typography><strong>E-Mail:</strong> {application.email}</Typography>
           <Typography><strong>Telefon:</strong> {application.phone ?? '–'}</Typography>
           <Typography><strong>Adresse:</strong> {application.street}, {application.postalCode} {application.city}, {application.country}</Typography>
-          <Typography><strong>Gewünschter Pfad (Slug):</strong> {application.requestedSubdomain}</Typography>
+          <Typography><strong>Gewünschte Internetadresse:</strong> {application.requestedSubdomain}</Typography>
           <Typography><strong>Mitglieder:</strong> {application.memberCount ?? '–'}</Typography>
           <Typography><strong>Veranstaltungen/Jahr:</strong> {application.eventsPerYear ?? '–'}</Typography>
         </Stack>
@@ -125,7 +125,7 @@ export function PlatformApplicationDetailPage() {
             <Link component={RouterLink} to={`/platform/mandanten/${application.linkedTenant.id}`}>
               {application.linkedTenant.name}
             </Link>
-            {' '}({application.linkedTenant.slug})
+            {' '}(Adresse: {application.linkedTenant.slug})
           </Alert>
         ) : (
           <Alert severity="warning" sx={{ mb: 2 }}>

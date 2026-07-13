@@ -53,7 +53,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
   const drawer = (
     <Box sx={{ width: DRAWER_WIDTH, pt: 1 }}>
       <Box sx={{ px: 2, py: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <FestSchmiedeLogo height={36} variant="onSurface" />
+        <FestSchmiedeLogo size="drawer" variant="onSurface" />
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle2" color="text.secondary">Plattform</Typography>
           <Typography variant="h6" fontWeight={700} noWrap>{platform?.name ?? 'FestSchmiede'}</Typography>
@@ -83,7 +83,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
           <IconButton color="inherit" edge="start" onClick={() => setDrawerOpen(!drawerOpen)} sx={{ mr: 2, display: { md: 'none' } }}>
             <MenuIcon />
           </IconButton>
-          <FestSchmiedeLogo height={28} variant="onPrimary" sx={{ mr: 1.5, display: { xs: 'none', sm: 'block' } }} />
+          <FestSchmiedeLogo size="header" variant="onPrimary" sx={{ mr: 1.5 }} />
           <Typography variant="h6" sx={{ flexGrow: 1 }}>Plattform-Administration</Typography>
           <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
             {user?.firstName} {user?.lastName}

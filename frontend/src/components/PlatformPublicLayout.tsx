@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
-  AppBar, Toolbar, Typography, Button, Box, Container, IconButton, Drawer, List, ListItemButton, ListItemText,
+  AppBar, Toolbar, Typography, Button, Box, Container, IconButton, Drawer, List,
+  ListItemButton, ListItemText, ListSubheader, Divider,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -21,23 +22,122 @@ function isNavActive(path: string, pathname: string, hash: string): boolean {
   return pathname === path;
 }
 
-const NAV_ITEMS = [
+type PrimaryNavItem = {
+  label: string;
+  path: string;
+  shortLabel?: string;
+  cta?: boolean;
+};
+
+const PRIMARY_NAV: PrimaryNavItem[] = [
   { label: 'Start', path: '/' },
-  { label: 'Bestellprozess', path: '/#bestellprozess' },
-  { label: 'Funktionen', path: '/funktionen' },
-  { label: 'Screenshots', path: '/screenshots' },
-  { label: 'Open Source', path: '/open-source' },
-  { label: 'Über das Projekt', path: '/ueber-das-projekt' },
-  { label: 'Über den Entwickler', path: '/ueber-den-entwickler' },
-  { label: 'Für Vereine', path: '/fuer-vereine' },
-  { label: 'Mandant beantragen', path: '/mandant-beantragen' },
-  { label: 'FAQ', path: '/faq' },
-  { label: 'Kontakt', path: '/kontakt' },
-  { label: 'Dokumentation', path: '/dokumentation' },
+  { label: 'Mandant beantragen', path: '/mandant-beantragen', shortLabel: 'Beantragen', cta: true },
 ];
+
+const NAV_GROUPS = [
+  {
+    title: 'Produkt',
+    items: [
+      { label: 'Bestellprozess', path: '/#bestellprozess' },
+      { label: 'Funktionen', path: '/funktionen' },
+      { label: 'Screenshots', path: '/screenshots' },
+    ],
+  },
+  {
+    title: 'Projekt',
+    items: [
+      { label: 'Open Source', path: '/open-source' },
+      { label: 'Über das Projekt', path: '/ueber-das-projekt' },
+      { label: 'Über den Entwickler', path: '/ueber-den-entwickler' },
+      { label: 'Für Vereine', path: '/fuer-vereine' },
+    ],
+  },
+  {
+    title: 'Hilfe & Kontakt',
+    items: [
+      { label: 'FAQ', path: '/faq' },
+      { label: 'Kontakt', path: '/kontakt' },
+      { label: 'Dokumentation', path: '/dokumentation' },
+    ],
+  },
+] as const;
 
 interface PlatformPublicLayoutProps {
   children: React.ReactNode;
+}
+
+function NavDrawer({
+  open,
+  onClose,
+  platformName,
+  pathname,
+  hash,
+  loginUrl,
+}: {
+  open: boolean;
+  onClose: () => void;
+  platformName: string;
+  pathname: string;
+  hash: string;
+  loginUrl: string;
+}) {
+  return (
+    <Drawer open={open} onClose={onClose} anchor="right">
+      <Box sx={{ width: { xs: 300, sm: 320 }, pt: 1 }} role="navigation" aria-label="Seitennavigation">
+        <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+          <FestSchmiedeLogo size="drawer" variant="onSurface" />
+          <Typography variant="subtitle1" fontWeight={700} noWrap>
+            {platformName}
+          </Typography>
+        </Box>
+
+        <List dense disablePadding>
+          <ListSubheader sx={{ bgcolor: 'background.paper', lineHeight: '36px' }}>Direkt</ListSubheader>
+          {PRIMARY_NAV.map((item) => (
+            <ListItemButton
+              key={item.path}
+              component={Link}
+              to={item.path}
+              selected={isNavActive(item.path, pathname, hash)}
+              onClick={onClose}
+              sx={item.cta ? { bgcolor: 'action.hover' } : undefined}
+            >
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{ fontWeight: item.cta ? 700 : 500 }}
+              />
+            </ListItemButton>
+          ))}
+        </List>
+
+        {NAV_GROUPS.map((group) => (
+          <List key={group.title} dense disablePadding>
+            <ListSubheader sx={{ bgcolor: 'background.paper', lineHeight: '36px' }}>
+              {group.title}
+            </ListSubheader>
+            {group.items.map((item) => (
+              <ListItemButton
+                key={item.path}
+                component={Link}
+                to={item.path}
+                selected={isNavActive(item.path, pathname, hash)}
+                onClick={onClose}
+              >
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
+          </List>
+        ))}
+
+        <Divider sx={{ my: 1 }} />
+        <List dense disablePadding>
+          <ListItemButton component="a" href={loginUrl} onClick={onClose}>
+            <ListItemText primary="Anmelden" />
+          </ListItemButton>
+        </List>
+      </Box>
+    </Drawer>
+  );
 }
 
 export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
@@ -65,49 +165,75 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="fixed" elevation={1} color="primary">
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={() => setDrawerOpen(true)}
-            sx={{ mr: 1, display: { md: 'none' } }}
-            aria-label="Navigation öffnen"
-          >
-            <MenuIcon />
-          </IconButton>
+        <Toolbar sx={{ gap: 0.5 }}>
           <Box
             component={Link}
             to="/"
             sx={{
-              flexGrow: 1,
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
               textDecoration: 'none',
               color: 'inherit',
               minWidth: 0,
+              mr: { xs: 0.5, sm: 1 },
             }}
           >
-            <FestSchmiedeLogo height={36} variant="onPrimary" />
-            <Typography variant="h6" fontWeight={700} noWrap>
+            <FestSchmiedeLogo size="header" variant="onPrimary" />
+            <Typography variant="h6" fontWeight={700} noWrap sx={{ display: { xs: 'none', sm: 'block' } }}>
               {platform.name}
             </Typography>
           </Box>
-          <Box sx={{ display: { xs: 'none', lg: 'flex' }, gap: 0.5, mr: 2, flexWrap: 'wrap' }}>
-            {NAV_ITEMS.map((item) => (
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexGrow: 1 }}>
+            {PRIMARY_NAV.map((item) => (
               <Button
                 key={item.path}
                 component={Link}
                 to={item.path}
                 color="inherit"
                 size="small"
-                sx={{ fontWeight: isNavActive(item.path, location.pathname, location.hash) ? 700 : 400 }}
+                variant={item.cta ? 'contained' : 'text'}
+                sx={{
+                  fontWeight: isNavActive(item.path, location.pathname, location.hash) ? 700 : 500,
+                  whiteSpace: 'nowrap',
+                  ...(item.cta && {
+                    bgcolor: 'primary.contrastText',
+                    color: 'primary.main',
+                    '&:hover': { bgcolor: 'grey.100' },
+                  }),
+                }}
               >
-                {item.label}
+                {item.cta ? (
+                  <>
+                    <Box component="span" sx={{ display: { xs: 'none', lg: 'inline' } }}>{item.label}</Box>
+                    <Box component="span" sx={{ display: { xs: 'inline', lg: 'none' } }}>{item.shortLabel}</Box>
+                  </>
+                ) : (
+                  item.label
+                )}
               </Button>
             ))}
           </Box>
-          <Button component="a" href={loginUrl} color="inherit" size="small" sx={{ mr: 1 }}>
+
+          <IconButton
+            color="inherit"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Menü öffnen"
+            sx={{ ml: 0.5 }}
+          >
+            <MenuIcon />
+          </IconButton>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'rgba(255,255,255,0.25)', display: { xs: 'none', sm: 'block' } }} />
+
+          <Button
+            component="a"
+            href={loginUrl}
+            color="inherit"
+            size="small"
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          >
             Anmelden
           </Button>
           <IconButton onClick={toggleMode} color="inherit" aria-label="Design wechseln">
@@ -116,29 +242,14 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
         </Toolbar>
       </AppBar>
 
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box sx={{ width: 280, pt: 1 }} role="navigation" aria-label="Hauptnavigation">
-          <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-            <FestSchmiedeLogo height={32} variant="onSurface" />
-            <Typography variant="subtitle1" fontWeight={700} noWrap>
-              {platform.name}
-            </Typography>
-          </Box>
-          <List>
-            {NAV_ITEMS.map((item) => (
-              <ListItemButton
-                key={item.path}
-                component={Link}
-                to={item.path}
-                selected={isNavActive(item.path, location.pathname, location.hash)}
-                onClick={() => setDrawerOpen(false)}
-              >
-                <ListItemText primary={item.label} />
-              </ListItemButton>
-            ))}
-          </List>
-        </Box>
-      </Drawer>
+      <NavDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        platformName={platform.name}
+        pathname={location.pathname}
+        hash={location.hash}
+        loginUrl={loginUrl}
+      />
 
       <Toolbar />
       <Box component="main" sx={{ flexGrow: 1 }}>
@@ -168,7 +279,7 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
             </Box>
           )}
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 1 }}>
-            <FestSchmiedeLogo height={28} variant="onSurface" />
+            <FestSchmiedeLogo size="footer" variant="onSurface" />
           </Box>
           <Typography variant="caption" color="text.secondary" display="block" align="center">
             © {new Date().getFullYear()} {platform.name}

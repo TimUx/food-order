@@ -114,7 +114,7 @@ export function PlatformLoginPage() {
     <Box minHeight="100vh" display="flex" alignItems="center" bgcolor="#0d47a1">
       <Container maxWidth="sm">
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <FestSchmiedeLogo height={72} variant="onPrimary" />
+          <FestSchmiedeLogo size="auth" variant="onPrimary" />
         </Box>
         <Paper sx={{ p: 4 }}>
           <Typography variant="h5" gutterBottom fontWeight={700}>

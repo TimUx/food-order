@@ -56,9 +56,9 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
       <AppBar position="fixed" elevation={1}>
         <Toolbar>
           {logoUrl ? (
-            <Avatar src={logoUrl} alt={club.clubName} sx={{ width: 36, height: 36, mr: 1.5 }} />
+            <Avatar src={logoUrl} alt={club.clubName} sx={{ width: 48, height: 48, mr: 1.5 }} />
           ) : (
-            <FestSchmiedeLogo height={36} variant="onPrimary" sx={{ mr: 1.5 }} />
+            <FestSchmiedeLogo size="header" variant="onPrimary" sx={{ mr: 1.5 }} />
           )}
           <Typography
             variant="h6"

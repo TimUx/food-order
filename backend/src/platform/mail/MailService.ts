@@ -26,7 +26,13 @@ function readBool(value: unknown, fallback = false): boolean {
 
 function resolvePass(pass: unknown): string {
   if (typeof pass !== 'string') return '';
-  return isEncryptedValue(pass) ? decryptValue(pass) : pass;
+  if (!isEncryptedValue(pass)) return pass;
+  try {
+    return decryptValue(pass);
+  } catch (err) {
+    logger.error('SMTP-Passwort konnte nicht entschlüsselt werden', { err });
+    return '';
+  }
 }
 
 function formatFrom(smtp: PlatformSmtpConfig): string {

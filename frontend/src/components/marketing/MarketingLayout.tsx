@@ -65,7 +65,7 @@ export function MarketingHero({ title, subtitle, children, showLogo = false }: H
     >
       <Container maxWidth="lg">
         {showLogo && (
-          <FestSchmiedeLogo height={80} variant="onSurface" sx={{ mb: 3 }} />
+          <FestSchmiedeLogo size="hero" variant="onSurface" sx={{ mb: 3 }} />
         )}
         <Typography variant="h2" fontWeight={900} sx={{ fontSize: { xs: '2rem', md: '3rem' }, mb: 2 }}>
           {title}

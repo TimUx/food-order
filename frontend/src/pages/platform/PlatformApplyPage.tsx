@@ -7,7 +7,9 @@ import { PlatformPublicLayout } from '@/components/PlatformPublicLayout';
 import { BrandingHead } from '@/components/BrandingHead';
 import { MarketingSection } from '@/components/marketing/MarketingLayout';
 import { api } from '@/services/api';
+import { FormHintTextField } from '@/components/marketing/FormHintTextField';
 import { ORGANIZATION_TYPES } from '@/content/platformMarketing';
+import { TENANT_APPLICATION_FIELD_HINTS } from '@/content/tenantApplicationHints';
 import type { PlatformLegalLink } from '@/types/tenant';
 import { Link } from 'react-router-dom';
 import { usePlatform } from '@/contexts/PlatformProvider';
@@ -137,17 +139,79 @@ export function PlatformApplyPage() {
               <TextField
                 required
                 fullWidth
-                label="Gewünschter Mandanten-Slug"
-                helperText={`z. B. mein-verein → ${routing.appUrl}/mein-verein`}
+                label="Gewünschte Internetadresse"
+                helperText={`Der Name in Ihrer Adresse, z. B. mein-verein → ${routing.appUrl}/mein-verein`}
                 value={form.requestedSubdomain}
                 onChange={(e) => update('requestedSubdomain', e.target.value)}
               />
             </Grid>
-            <Grid size={12}><TextField required fullWidth multiline minRows={3} label="Warum wird FestSchmiede benötigt?" value={form.reason} onChange={(e) => update('reason', e.target.value)} /></Grid>
-            <Grid size={12}><TextField required fullWidth multiline minRows={2} label="Welche Funktionen sollen genutzt werden?" value={form.desiredFeatures} onChange={(e) => update('desiredFeatures', e.target.value)} /></Grid>
-            <Grid size={12}><TextField required fullWidth multiline minRows={2} label="Warum sollte ein kostenloser Mandant bereitgestellt werden?" value={form.freeTierJustification} onChange={(e) => update('freeTierJustification', e.target.value)} /></Grid>
-            <Grid size={12}><TextField required fullWidth multiline minRows={2} label="Geplante Nutzung" value={form.plannedUsage} onChange={(e) => update('plannedUsage', e.target.value)} /></Grid>
-            <Grid size={12}><TextField fullWidth multiline minRows={2} label="Bemerkungen" value={form.notes} onChange={(e) => update('notes', e.target.value)} /></Grid>
+            <Grid size={12}>
+              <Typography variant="subtitle1" fontWeight={700} sx={{ mt: 1 }}>
+                Ihre Bewerbung im Detail
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Bitte beschreiben Sie Ihr Vorhaben möglichst konkret. Über das Hinweis-Symbol neben jedem Feld sehen Sie Beispiele.
+              </Typography>
+            </Grid>
+            <Grid size={12}>
+              <FormHintTextField
+                required
+                fullWidth
+                multiline
+                minRows={3}
+                label="Warum wird FestSchmiede benötigt?"
+                hint={TENANT_APPLICATION_FIELD_HINTS.reason}
+                value={form.reason}
+                onChange={(e) => update('reason', e.target.value)}
+              />
+            </Grid>
+            <Grid size={12}>
+              <FormHintTextField
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                label="Welche Funktionen sollen genutzt werden?"
+                hint={TENANT_APPLICATION_FIELD_HINTS.desiredFeatures}
+                value={form.desiredFeatures}
+                onChange={(e) => update('desiredFeatures', e.target.value)}
+              />
+            </Grid>
+            <Grid size={12}>
+              <FormHintTextField
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                label="Warum sollte ein kostenloser Mandant bereitgestellt werden?"
+                hint={TENANT_APPLICATION_FIELD_HINTS.freeTierJustification}
+                value={form.freeTierJustification}
+                onChange={(e) => update('freeTierJustification', e.target.value)}
+              />
+            </Grid>
+            <Grid size={12}>
+              <FormHintTextField
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                label="Geplante Nutzung"
+                hint={TENANT_APPLICATION_FIELD_HINTS.plannedUsage}
+                value={form.plannedUsage}
+                onChange={(e) => update('plannedUsage', e.target.value)}
+              />
+            </Grid>
+            <Grid size={12}>
+              <FormHintTextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Bemerkungen"
+                hint={TENANT_APPLICATION_FIELD_HINTS.notes}
+                value={form.notes}
+                onChange={(e) => update('notes', e.target.value)}
+              />
+            </Grid>
             <Grid size={12}>
               <FormControlLabel
                 control={<Checkbox checked={form.privacyAccepted} onChange={(e) => update('privacyAccepted', e.target.checked)} required />}

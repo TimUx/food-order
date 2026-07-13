@@ -64,7 +64,7 @@ export function PlatformApplicationsPage() {
           <TableHead>
             <TableRow>
               <TableCell>Organisation</TableCell>
-              <TableCell>Pfad (Slug)</TableCell>
+              <TableCell>Internetadresse</TableCell>
               <TableCell>Ansprechpartner</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Datum</TableCell>

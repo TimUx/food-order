@@ -125,6 +125,10 @@ export class PlatformTenantAdminService {
       archivedAt: null,
     });
     await this.audit.log({ action: 'platform.tenant.activate', actorId, tenantId: id });
+    await tenantOnboardingService.ensureAdministrator(tenant, {
+      contactName: tenant.contactName,
+      email: tenant.email,
+    });
     return tenant;
   }
 
