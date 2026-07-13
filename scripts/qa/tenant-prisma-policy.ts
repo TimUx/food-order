@@ -44,6 +44,7 @@ export const ALLOWLIST_PLATFORM = [
   'backend/src/platform/PlatformTenantAdminService.ts',
   'backend/src/platform/PlatformDashboardService.ts',
   'backend/src/platform/ImpersonationService.ts',
+  'backend/src/platform/TenantOnboardingService.ts',
   'backend/src/platform/backup/TenantBackupService.ts',
   'backend/src/platform/tenant/TenantSettingsServiceImpl.ts',
   'backend/src/services/tenantSetupService.ts',

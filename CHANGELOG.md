@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.20 - 2026-07-13
+
+### Behoben
+
+- **CI:** Tenant-Prisma-Guard-Allowlist um `TenantOnboardingService` ergänzt (QA und Release Validation für v2.4.19).
+
+---
+
 ## 2.4.19 - 2026-07-13
 
 ### Hinzugefügt
