@@ -57,12 +57,12 @@ describe('PlatformTenantAdminService module entitlements', () => {
         preview: false,
       },
       {
-        id: 'loyalty',
-        name: 'Treueprogramm',
-        description: 'Vorschau',
-        version: '0.1.0',
-        productionReady: false,
-        preview: true,
+        id: 'legal',
+        name: 'Rechtliches',
+        description: 'Impressum & Datenschutz',
+        version: '1.0.0',
+        productionReady: true,
+        preview: false,
       },
     ] as never);
   });
@@ -85,9 +85,9 @@ describe('PlatformTenantAdminService module entitlements', () => {
       available: true,
       enabled: true,
     });
-    expect(result.find((m) => m.moduleId === 'loyalty')).toMatchObject({
+    expect(result.find((m) => m.moduleId === 'legal')).toMatchObject({
       available: false,
-      preview: true,
+      preview: false,
     });
   });
 
