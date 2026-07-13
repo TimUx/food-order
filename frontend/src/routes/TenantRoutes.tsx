@@ -41,6 +41,9 @@ const StaffFoodAvailabilityPage = lazy(() =>
 const AdminShell = lazy(() =>
   import('@/pages/admin/AdminShell').then((m) => ({ default: m.AdminShell }))
 );
+const AdminUiScope = lazy(() =>
+  import('@/pages/admin/AdminShell').then((m) => ({ default: m.AdminUiScope }))
+);
 const SetupWizardPage = lazy(() =>
   import('@/pages/admin/SetupWizardPage').then((m) => ({ default: m.SetupWizardPage }))
 );
@@ -82,8 +85,8 @@ export function TenantRoutes() {
         <Route path="/mitarbeiter/speisen" element={<Lazy><ProtectedRoute><StaffFoodAvailabilityPage /></ProtectedRoute></Lazy>} />
 
         <Route path="/admin/login" element={<Lazy><LoginPage /></Lazy>} />
-        <Route path="/admin/profil" element={<Lazy><AdminRoute><AdminProfilePage /></AdminRoute></Lazy>} />
-        <Route path="/admin/einrichtung" element={<Lazy><AdminRoute><SetupWizardPage /></AdminRoute></Lazy>} />
+        <Route path="/admin/profil" element={<Lazy><AdminRoute><AdminUiScope><AdminProfilePage /></AdminUiScope></AdminRoute></Lazy>} />
+        <Route path="/admin/einrichtung" element={<Lazy><AdminRoute><AdminUiScope><SetupWizardPage /></AdminUiScope></AdminRoute></Lazy>} />
         <Route path="/admin/*" element={<Lazy><AdminShell /></Lazy>} />
 
         <Route path="/platform/*" element={<Navigate to="/public" replace />} />

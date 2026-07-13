@@ -23,6 +23,7 @@ import {
   type PlatformTenant,
   type UpdatePlatformTenantPayload,
 } from '@/services/platformApi';
+import { PlatformTenantModulesSection } from './PlatformTenantModulesSection';
 
 type TenantForm = {
   name: string;
@@ -316,6 +317,8 @@ export function PlatformTenantDetailPage() {
           </Paper>
         </Grid>
       </Grid>
+
+      {token && id && <PlatformTenantModulesSection token={token} tenantId={id} />}
 
       <Divider sx={{ my: 3 }} />
       <Box display="flex" gap={1} flexWrap="wrap">

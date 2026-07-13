@@ -423,6 +423,8 @@ model TenantModule {
   tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   moduleVersion    String    @default("0.0.0") @map("module_version")
   installed        Boolean   @default(false)
+  /// Vom Plattform-Admin freigegeben – Mandant darf Modul installieren/aktivieren
+  available        Boolean   @default(false)
   enabled          Boolean   @default(false)
   installedAt      DateTime? @map("installed_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")

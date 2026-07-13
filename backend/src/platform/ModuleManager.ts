@@ -287,6 +287,9 @@ export class ModuleManager {
     if (!mod || !manifest) throw new AppError(404, 'Modul nicht gefunden');
 
     const row = await this.deps.moduleRegistry.getDbRow(moduleId);
+    if (!row?.available) {
+      throw new AppError(403, 'Modul steht diesem Mandanten nicht zur Verfügung');
+    }
     if (row?.installed) throw new AppError(400, 'Modul ist bereits installiert');
 
     try {
@@ -364,6 +367,9 @@ export class ModuleManager {
     if (!mod || !manifest) throw new AppError(404, 'Modul nicht gefunden');
 
     const row = persist ? await moduleRegistry.getDbRow(moduleId) : await tenantModuleRepository.findFirstInstalled(moduleId);
+    if (persist && !row?.available) {
+      throw new AppError(403, 'Modul steht diesem Mandanten nicht zur Verfügung');
+    }
     const installed = persist ? Boolean(row?.installed) : await tenantModuleRepository.isInstalledForAnyTenant(moduleId);
     if (!installed) throw new AppError(400, 'Modul muss zuerst installiert werden');
 

@@ -107,10 +107,11 @@ export class ModuleRegistry {
       (manifest) => showPreview || !isPreviewModule(manifest)
     );
 
-    return Promise.all(
+    const infos = await Promise.all(
       manifests.map(async (manifest) => {
         const mod = this.getModule(manifest.id)!;
         const row = rowMap.get(manifest.id) ?? null;
+        const entitled = Boolean(row?.available);
         const status = deriveModuleStatus(row);
         const enabled = status === 'ENABLED';
         const installed = Boolean(row?.installed);
@@ -162,6 +163,7 @@ export class ModuleRegistry {
           schemaVersion: row?.schemaVersion ?? undefined,
           upgradeAvailable,
           productionReady: manifest.productionReady,
+          entitled,
           dependencyStatus: {
             satisfied: depCheck.ok,
             missing: depCheck.missing,
@@ -170,6 +172,8 @@ export class ModuleRegistry {
         };
       })
     );
+
+    return infos.filter((info) => info.entitled);
   }
 
   setMenuItems(items: ModuleMenuItem[]): void {

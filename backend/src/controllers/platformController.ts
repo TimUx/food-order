@@ -250,6 +250,29 @@ export const platformController = {
     }
   },
 
+  async getTenantModules(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const modules = await platformTenantAdminService.listModuleEntitlements(req.params.id as string);
+      res.json({ modules });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async updateTenantModules(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { moduleIds } = req.body as { moduleIds: string[] };
+      const modules = await platformTenantAdminService.updateModuleEntitlements(
+        req.params.id as string,
+        moduleIds,
+        req.platformUser!.userId
+      );
+      res.json({ modules });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async impersonate(req: PlatformAuthRequest, res: Response, next: NextFunction) {
     try {
       const result = await impersonationService.startImpersonation(

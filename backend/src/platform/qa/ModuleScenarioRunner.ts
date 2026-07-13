@@ -3,6 +3,7 @@ import type { ModuleRegistry } from '../ModuleRegistry';
 import type { HealthService } from '../HealthService';
 import type { FeatureContext } from '../types';
 import type { QaRegistry } from './QaRegistry';
+import { tenantModuleRepository } from '../../repositories/tenantModuleRepository';
 
 export interface ModuleScenario {
   id: string;
@@ -81,6 +82,7 @@ export class ModuleScenarioRunner {
   private async applyScenario(activeIds: string[]): Promise<void> {
     const moduleIds = this.qaRegistry.scenarioModuleIds();
 
+    await this.ensureEntitlements(moduleIds);
     await this.deactivateAllScenarioModules(moduleIds);
 
     for (const moduleId of moduleIds) {
@@ -92,6 +94,16 @@ export class ModuleScenarioRunner {
 
     for (const moduleId of activeIds) {
       await this.activateWithDependencies(moduleId);
+    }
+  }
+
+  private async ensureEntitlements(moduleIds: string[]): Promise<void> {
+    for (const moduleId of moduleIds) {
+      await tenantModuleRepository.upsert(
+        moduleId,
+        { available: true, installed: false, enabled: false },
+        { available: true }
+      );
     }
   }
 

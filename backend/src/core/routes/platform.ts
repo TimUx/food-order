@@ -17,6 +17,7 @@ import {
   platformLegalPageTypeParamSchema,
   createPlatformTenantSchema,
   updatePlatformTenantSchema,
+  updateTenantModuleEntitlementsSchema,
   applicationIdParamSchema,
   backupFilenameParamSchema,
   createTenantBackupSchema,
@@ -162,6 +163,19 @@ router.post(
   '/tenants/:id/resend-access-info',
   requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_UPDATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
   platformController.resendTenantAccessInfo
+);
+router.get(
+  '/tenants/:id/modules',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_VIEW, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateParams(idParamSchema),
+  platformController.getTenantModules
+);
+router.put(
+  '/tenants/:id/modules',
+  requirePlatformPermission(PLATFORM_PERMISSIONS.TENANT_UPDATE, PLATFORM_PERMISSIONS.TENANT_MANAGE),
+  validateParams(idParamSchema),
+  validateBody(updateTenantModuleEntitlementsSchema),
+  platformController.updateTenantModules
 );
 router.post(
   '/tenants/:id/impersonate',

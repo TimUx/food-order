@@ -57,6 +57,8 @@ export interface ModuleInfo {
     missing: string[];
     inactive: string[];
   };
+  /** Vom Plattform-Admin für diesen Mandanten freigegeben */
+  entitled?: boolean;
 }
 
 export interface ModuleHealthResult {

@@ -51,6 +51,7 @@ const baseRow = {
   lastError: null,
   schemaVersion: '0',
   imageVersion: '1.0.0',
+  available: true,
 } as TenantModule;
 
 describe('HookSystem', () => {

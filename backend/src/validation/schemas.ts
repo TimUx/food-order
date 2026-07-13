@@ -361,6 +361,10 @@ export const createPlatformTenantSchema = z.object({
 
 export const updatePlatformTenantSchema = createPlatformTenantSchema.partial();
 
+export const updateTenantModuleEntitlementsSchema = z.object({
+  moduleIds: z.array(z.string().min(1).max(64)),
+});
+
 export const updatePlatformLegalPageSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   slug: z.string().min(1).max(100).optional(),

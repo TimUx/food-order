@@ -136,6 +136,8 @@ export interface ModuleInfo {
     inactive: string[];
   };
   productionReady?: boolean;
+  /** Vom Plattform-Admin für diesen Mandanten freigegeben */
+  entitled?: boolean;
 }
 
 export const CORE_HOOKS = {

@@ -11,10 +11,8 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { AdminLayout } from '@/components/AdminLayout';
 import { useModules, type ModuleInfo } from '@/module-system';
 
-const PRODUCTION_MODULE_IDS = ['payment', 'notifications', 'printer', 'legal'];
-
-function isProductionModule(mod: ModuleInfo): boolean {
-  return PRODUCTION_MODULE_IDS.includes(mod.id);
+function isEntitledModule(mod: ModuleInfo): boolean {
+  return mod.entitled === true;
 }
 
 function publicStatus(mod: ModuleInfo): 'Aktiv' | 'Deaktiviert' {
@@ -34,7 +32,7 @@ export function FeatureModulesPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const visibleModules = modules.filter(isProductionModule);
+  const visibleModules = modules.filter(isEntitledModule);
 
   const handleToggle = async (mod: ModuleInfo, enable: boolean) => {
     setBusyId(mod.id);

@@ -6,6 +6,20 @@ import type { AuditLogEntry } from './types';
 import type { CreateTenantInput, TenantRecord, UpdateTenantInput } from './tenant/types';
 import { tenantOnboardingService } from './TenantOnboardingService';
 import { AppError } from '../middleware/errorHandler';
+import type { ModuleRegistry } from './ModuleRegistry';
+import { isPreviewModule } from './manifest';
+
+export interface TenantModuleEntitlement {
+  moduleId: string;
+  name: string;
+  description: string;
+  version: string;
+  productionReady: boolean;
+  preview: boolean;
+  available: boolean;
+  installed: boolean;
+  enabled: boolean;
+}
 
 export interface TenantListFilter {
   search?: string;
@@ -29,7 +43,8 @@ export class PlatformTenantAdminService {
     private readonly tenantService: TenantService,
     private readonly tenantRepository: TenantRepository,
     private readonly platformContext: PlatformContext,
-    private readonly audit: { log: (entry: AuditLogEntry) => Promise<void> }
+    private readonly audit: { log: (entry: AuditLogEntry) => Promise<void> },
+    private readonly moduleRegistry: ModuleRegistry
   ) {}
 
   async list(filter: TenantListFilter = {}): Promise<{ items: TenantListItem[]; total: number }> {
@@ -166,6 +181,102 @@ export class PlatformTenantAdminService {
     return result;
   }
 
+  async listModuleEntitlements(tenantId: string): Promise<TenantModuleEntitlement[]> {
+    const tenant = await this.tenantService.findById(tenantId);
+    if (!tenant) throw new AppError(404, 'Mandant nicht gefunden');
+
+    const showPreview = process.env.SHOW_PREVIEW_MODULES === '1';
+    const manifests = this.moduleRegistry.getAllManifests().filter(
+      (manifest) => showPreview || !isPreviewModule(manifest)
+    );
+    const rows = await prisma.tenantModule.findMany({ where: { tenantId } });
+    const rowMap = new Map(rows.map((row) => [row.moduleId, row]));
+
+    return manifests.map((manifest) => {
+      const row = rowMap.get(manifest.id);
+      return {
+        moduleId: manifest.id,
+        name: manifest.name,
+        description: manifest.description,
+        version: manifest.version,
+        productionReady: manifest.productionReady,
+        preview: isPreviewModule(manifest),
+        available: Boolean(row?.available),
+        installed: Boolean(row?.installed),
+        enabled: Boolean(row?.enabled),
+      };
+    });
+  }
+
+  async updateModuleEntitlements(
+    tenantId: string,
+    moduleIds: string[],
+    actorId: string
+  ): Promise<TenantModuleEntitlement[]> {
+    const tenant = await this.tenantService.findById(tenantId);
+    if (!tenant) throw new AppError(404, 'Mandant nicht gefunden');
+
+    const showPreview = process.env.SHOW_PREVIEW_MODULES === '1';
+    const knownIds = new Set(
+      this.moduleRegistry.getAllManifests()
+        .filter((manifest) => showPreview || !isPreviewModule(manifest))
+        .map((manifest) => manifest.id)
+    );
+    const uniqueIds = [...new Set(moduleIds)];
+    for (const moduleId of uniqueIds) {
+      if (!knownIds.has(moduleId)) {
+        throw new AppError(400, `Unbekanntes Modul: ${moduleId}`);
+      }
+    }
+
+    const selected = new Set(uniqueIds);
+    const existingRows = await prisma.tenantModule.findMany({ where: { tenantId } });
+    const existingMap = new Map(existingRows.map((row) => [row.moduleId, row]));
+
+    for (const moduleId of knownIds) {
+      const shouldBeAvailable = selected.has(moduleId);
+      const row = existingMap.get(moduleId);
+
+      if (shouldBeAvailable) {
+        await prisma.tenantModule.upsert({
+          where: { tenantId_moduleId: { tenantId, moduleId } },
+          create: {
+            tenantId,
+            moduleId,
+            available: true,
+            installed: false,
+            enabled: false,
+          },
+          update: { available: true },
+        });
+        continue;
+      }
+
+      if (!row?.available) continue;
+
+      if (row.enabled) {
+        await prisma.tenantModule.update({
+          where: { tenantId_moduleId: { tenantId, moduleId } },
+          data: { available: false, enabled: false },
+        });
+      } else {
+        await prisma.tenantModule.update({
+          where: { tenantId_moduleId: { tenantId, moduleId } },
+          data: { available: false },
+        });
+      }
+    }
+
+    await this.audit.log({
+      action: 'platform.tenant.modules.updated',
+      actorId,
+      tenantId,
+      details: { moduleIds: uniqueIds },
+    });
+
+    return this.listModuleEntitlements(tenantId);
+  }
+
   async exportTenant(id: string): Promise<Record<string, unknown>> {
     const tenant = await this.tenantService.findById(id);
     if (!tenant) throw new Error('Mandant nicht gefunden');
@@ -207,8 +318,8 @@ export class PlatformTenantAdminService {
     for (const moduleId of moduleIds) {
       await prisma.tenantModule.upsert({
         where: { tenantId_moduleId: { tenantId, moduleId } },
-        create: { tenantId, moduleId, installed: false, enabled: false },
-        update: {},
+        create: { tenantId, moduleId, available: true, installed: false, enabled: false },
+        update: { available: true },
       });
     }
   }

@@ -163,6 +163,18 @@ export interface PlatformTenant {
   };
 }
 
+export interface TenantModuleEntitlement {
+  moduleId: string;
+  name: string;
+  description: string;
+  version: string;
+  productionReady: boolean;
+  preview: boolean;
+  available: boolean;
+  installed: boolean;
+  enabled: boolean;
+}
+
 export interface UpdatePlatformTenantPayload {
   name?: string;
   shortName?: string | null;
@@ -281,6 +293,16 @@ export const platformApi = {
     platformRequest<{ email: string; adminCreated: boolean }>(
       `/tenants/${id}/resend-access-info`,
       { method: 'POST' },
+      token
+    ),
+
+  getTenantModules: (token: string, id: string) =>
+    platformRequest<{ modules: TenantModuleEntitlement[] }>(`/tenants/${id}/modules`, {}, token),
+
+  updateTenantModules: (token: string, id: string, moduleIds: string[]) =>
+    platformRequest<{ modules: TenantModuleEntitlement[] }>(
+      `/tenants/${id}/modules`,
+      { method: 'PUT', body: JSON.stringify({ moduleIds }) },
       token
     ),
 
