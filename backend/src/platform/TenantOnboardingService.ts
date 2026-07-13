@@ -187,7 +187,7 @@ export const tenantOnboardingService = {
         },
       });
       const { sessionService } = await import('../services/sessionService');
-      await sessionService.revokeAllForUser(existingAdmin.id);
+      await sessionService.revokeAllUserSessions(existingAdmin.id);
 
       admin = {
         userId: existingAdmin.id,

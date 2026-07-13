@@ -10,7 +10,7 @@ vi.mock('../config/database', () => ({
 }));
 
 vi.mock('../services/sessionService', () => ({
-  sessionService: { revokeAllForUser: vi.fn() },
+  sessionService: { revokeAllUserSessions: vi.fn() },
 }));
 
 vi.mock('./notifications/platformNotificationService', () => ({

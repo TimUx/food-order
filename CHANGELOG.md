@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.21 - 2026-07-13
+
+### Behoben
+
+- **CI:** TypeScript-Fehler in `TenantOnboardingService` (`revokeAllUserSessions` statt falscher Methodenname).
+
+---
+
 ## 2.4.20 - 2026-07-13
 
 ### Behoben
