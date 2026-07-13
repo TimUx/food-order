@@ -2,10 +2,11 @@ import type { FeatureContext } from '../../src/platform/module-api';
 import type { ClubContactData, OrderEmailData } from '../../src/platform/extension-points/NotificationService';
 import { orderRepository } from '../../src/repositories';
 import { CORE_CLUB_NAMESPACE } from '../../src/platform/settings/SettingsNamespaces';
-import { formatOrderNumber, formatPrice } from '../../src/utils/helpers';
+import { formatOrderNumber, formatPrice, formatEventDate } from '../../src/utils/helpers';
 import { logger } from '../../src/utils/logger';
 import { requireTenantId } from '../../src/platform/tenant/tenantScope';
 import type { NotificationConfig, NotificationEventType } from './config';
+import { mergeNotificationConfig } from './config';
 import { isChannelEnabledForEvent, type NotificationMessage } from './NotificationChannel';
 import { notificationRegistry } from './NotificationRegistry';
 import { notificationDeliveryRepository } from './repositories/notificationDeliveryRepository';
@@ -39,6 +40,7 @@ type PaymentFailedHookPayload = {
   resourceId: string;
   reason?: string;
   displayNumber?: string;
+  amountCents?: number;
 };
 
 type PaymentRefundedHookPayload = {
@@ -97,9 +99,39 @@ async function resolveOrderDisplayNumber(
   return resourceId.slice(0, 8);
 }
 
+async function loadOrderNotificationData(
+  resourceType: string,
+  resourceId: string,
+  displayNumber: string
+): Promise<{ order: OrderEmailData; recipientEmail: string } | null> {
+  if (resourceType !== 'order' || !resourceId) return null;
+
+  const order = await orderRepository.findById(resourceId);
+  if (!order) return null;
+
+  const recipientEmail = order.customer?.email?.trim();
+  if (!recipientEmail) return null;
+
+  return {
+    recipientEmail,
+    order: {
+      id: order.id,
+      displayNumber,
+      totalPrice: Number(order.totalPrice),
+      eventDateLabel: formatEventDate(order.orderDate),
+      items: order.items.map((item) => ({
+        name: item.foodItem.name,
+        quantity: item.quantity,
+        lineTotal: Number(item.lineTotal),
+      })),
+    },
+  };
+}
+
 class NotificationManager {
   private async loadConfig(context: FeatureContext): Promise<NotificationConfig> {
-    return context.getConfig<NotificationConfig>('notifications');
+    const current = await context.getConfig<Partial<NotificationConfig>>('notifications');
+    return mergeNotificationConfig(current);
   }
 
   private async resolveConfig(context: FeatureContext): Promise<NotificationConfig> {
@@ -138,6 +170,25 @@ class NotificationManager {
     if (!channel?.testConnection) {
       return { ok: false, message: 'Kanal nicht gefunden' };
     }
+
+    if (channelId === 'email') {
+      const { mailService } = await import('../../src/platform/mail/MailService');
+      const result = await mailService.testConnection();
+      if (!result.ok) {
+        return result;
+      }
+
+      try {
+        const tenantConfig = await this.loadConfig(context);
+        const branding = tenantConfig.smtp ?? {};
+        const override = [branding.senderName, branding.from].map((v) => String(v ?? '').trim()).filter(Boolean);
+        const suffix = override.length > 0 ? ` – Absender-Override: ${override.join(' / ')}` : '';
+        return { ok: true, message: `${result.message}${suffix}` };
+      } catch {
+        return result;
+      }
+    }
+
     const config = await this.resolveConfig(context);
     return channel.testConnection(config);
   }
@@ -248,12 +299,22 @@ class NotificationManager {
       payload.resourceId,
       payload.displayNumber
     );
-    const template = buildPaymentFailedMessage({
-      displayNumber,
-      reason: payload.reason,
-    });
+    const club = await loadClubContact(context);
+    const config = await this.resolveConfig(context);
+    const orderData = await loadOrderNotificationData(
+      payload.resourceType,
+      payload.resourceId,
+      displayNumber
+    );
+    const template = await buildPaymentFailedMessage(
+      { displayNumber, reason: payload.reason },
+      club,
+      config,
+      orderData?.order
+    );
     await this.dispatch(context, 'paymentFailed', {
       ...template,
+      recipientEmail: orderData?.recipientEmail,
       priority: 'high',
     });
   }

@@ -656,6 +656,7 @@ async function setupPage(page: Page, auth = false) {
 }
 
 async function prepareOrderPage(page: Page) {
+  await page.getByTestId('order-customer-form').scrollIntoViewIfNeeded();
   await page.getByLabel(/^Vorname/).fill('Max');
   await page.getByLabel(/^Nachname/).fill('Mustermann');
   const dishesScroll = page.getByTestId('order-dishes-scroll');
@@ -830,7 +831,7 @@ async function captureOrderPageDevices(browser: Awaited<ReturnType<typeof chromi
     const page = await context.newPage();
     await setupPage(page, false);
 
-    await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' });
+    await page.goto(`http://localhost:${PORT}/public`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(800);
     await prepareOrderPageForDevice(page, device);
     await page.evaluate(() => window.scrollTo(0, 0));

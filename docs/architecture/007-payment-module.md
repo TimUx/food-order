@@ -281,7 +281,10 @@ Die Bestellseite ruft `GET /api/public/payment/methods` **lazy** auf (erst wenn 
 
 ### Küche
 
-Unbezahlte Kassenbestellungen erscheinen nicht (`filterReleasedIds` + `skipKitchenNotify`).
+Bestellungen erscheinen in der Küche, wenn sie **für die Küche freigegeben** sind.
+
+- Vor-Ort-Bestellungen: sofort freigegeben
+- Online-Bestellungen: automatisch nach erfolgreicher Zahlung (Payment-Callback) oder manuell aus der Bestellliste
 
 ### API (Staff)
 
@@ -302,7 +305,7 @@ Netzwerkfehler im Dialog → Hinweis, Barzahlung weiter möglich nach Abbruch.
 | Onlinezahlung + QR + Live-Status | ✅ |
 | Automatischer Abschluss | ✅ |
 | Keine zusätzlichen Klicks (Bar Default) | ✅ |
-| Küche nur bei Bar / PAYMENT_PAID | ✅ |
+| Küche nur bei freigegebenen Bestellungen | ✅ |
 | Tablet/Touch/Barrierefrei | ✅ |
 | Keine technischen Begriffe | ✅ |
 

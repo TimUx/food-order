@@ -577,11 +577,12 @@ Administratoren erhalten weiterhin Vollzugriff. Eine Kassenkraft kann weder Team
 
 ### 5. Erste Veranstaltung anlegen
 
-Unter **Veranstaltungen** (`/admin/veranstaltungen`) eine Veranstaltung mit korrektem **Veranstaltungsdatum** anlegen und **aktivieren**.
+Unter **Veranstaltungen** (`/admin/veranstaltungen`) eine Veranstaltung mit korrektem **Veranstaltungsdatum** anlegen und den Schalter **Veranstaltung aktiv** einschalten.
 
 ### 6. Speisen pflegen
 
-Unter **Speisen** (`/admin/speisen`) Gerichte für die aktive Veranstaltung anlegen.
+1. Unter **Speisen** (`/admin/speisen`) Gerichte im **mandantenweiten Katalog** anlegen.
+2. Unter **Veranstaltungen → Speisen** festlegen, welche Gerichte bei der Veranstaltung angeboten werden.
 
 ### 7. Testbestellung durchführen
 
@@ -714,14 +715,35 @@ Navigieren Sie zu **Veranstaltungen** (`/admin/veranstaltungen`).
    - **Beginn / Ende** – Öffnungszeiten
 3. Speichern
 
-### Veranstaltung aktivieren
+### Veranstaltung aktiv schalten
 
-Es kann **immer genau eine** Veranstaltung aktiv sein. Klicken Sie bei der gewünschten Veranstaltung auf **Aktivieren**.
+Mehrere Veranstaltungen können **gleichzeitig aktiv** sein. Im Bearbeitungsdialog den Schalter **Veranstaltung aktiv** verwenden.
 
-Die aktive Veranstaltung bestimmt:
-- Welche Speisekarte öffentlich sichtbar ist
-- Für welches Event Bestellungen angenommen werden
-- Welche Bestellnummern vergeben werden
+Eine aktive Veranstaltung nimmt Bestellungen entgegen, wenn zusätzlich gilt:
+
+| Schalter | Bedeutung |
+|----------|-----------|
+| **Onlinebestellungen aktiv** | Gäste können online vorbestellen (sofern im Katalog zugeordnete Speisen existieren) |
+| **Bestellung vor Ort aktiv** | Kassenbereich `/mitarbeiter/bestellung` |
+| **Bestellungen geschlossen** | Aus = Bestellungen möglich; Ein = komplett geschlossen |
+
+### Speisen je Veranstaltung zuordnen
+
+1. Klicken Sie bei der Veranstaltung auf **Speisen**
+2. Wählen Sie die Gerichte aus dem Katalog per Checkbox
+3. Speichern
+
+Nicht jede Veranstaltung muss alle definierten Speisen anbieten.
+
+### Mehrere Veranstaltungen parallel
+
+| Bereich | Verhalten |
+|---------|-----------|
+| **Online-Bestellung** | Bei mehreren buchbaren Events: Gäste wählen zuerst die Veranstaltung (Touch-Grid) |
+| **Bestellung vor Ort** | Dropdown **Veranstaltung** — Vorauswahl: heutiges Veranstaltungsdatum |
+| **Abholung** | Dropdown **Veranstaltung** — gleiche Logik |
+| **Abholboard** | Bei mehreren Events: Veranstaltung wählen; Monitor zeigt nur fertige Nummern dieser Veranstaltung |
+| **Küche / Dashboard** | Beziehen sich auf die Veranstaltung mit heutigem Datum (falls eindeutig) bzw. die gewählte Standard-Veranstaltung |
 
 ---
 
@@ -732,9 +754,10 @@ Kunden können **Tage oder Wochen vor** der Veranstaltung bestellen.
 ### So funktioniert es
 
 1. Legen Sie die Veranstaltung mit dem **korrekten Veranstaltungsdatum** an
-2. Aktivieren Sie die Veranstaltung
-3. Schalten Sie **Onlinebestellungen aktiv** ein
-4. Stellen Sie sicher, dass **Bestellungen geschlossen** aus ist
+2. Schalten Sie **Veranstaltung aktiv** ein
+3. Ordnen Sie unter **Veranstaltungen → Speisen** die gewünschten Gerichte zu
+4. Schalten Sie **Onlinebestellungen aktiv** ein
+5. Stellen Sie sicher, dass **Bestellungen geschlossen** aus ist
 
 Die öffentliche Bestellseite zeigt dann z. B.:
 
@@ -765,6 +788,8 @@ Navigieren Sie zu **Speisen** (`/admin/speisen`).
 
 ![Speisenverwaltung](screenshots/11-speisenverwaltung.png)
 
+Der **Speisen-Katalog** ist mandantenweit. Welche Gerichte bei einer Veranstaltung angeboten werden, legen Sie unter **Veranstaltungen → Speisen** fest.
+
 ### Gericht anlegen
 
 | Feld | Beschreibung |
@@ -773,9 +798,10 @@ Navigieren Sie zu **Speisen** (`/admin/speisen`).
 | Beschreibung | Kurzbeschreibung für Kunden |
 | Preis | in Euro |
 | Reihenfolge | Sortierung (1 = oben) |
-| Aktiv | Sichtbar auf der Bestellseite |
-| Ausverkauft | Temporär nicht bestellbar |
+| Aktiv | Im Katalog verfügbar (inaktive Gerichte können keiner Veranstaltung zugeordnet werden) |
 | Max. Bestellmenge | Optional, pro Bestellung |
+
+**Ausverkauft** markieren Sie pro Veranstaltung unter **Mitarbeiter → Verfügbarkeit** (nicht im Katalog).
 
 ### Bild hochladen
 
@@ -799,7 +825,12 @@ Zeigt live:
 
 ![Bestellungen](screenshots/10-bestellungen.png)
 
-Alle Bestellungen chronologisch – mit **Name, E-Mail und Telefonnummer** (bei Online-Bestellungen) für Rückfragen.
+Alle Bestellungen chronologisch – mit **Kontaktdaten** (bei Online-Bestellungen) für Rückfragen.
+
+Neu:
+
+- **Zahlstatus** wird als Label angezeigt (z. B. „Bezahlt“, „Zahlung ausstehend“, „Vor Ort“).
+- Online-Bestellungen können bei Bedarf über **„Für Küche freigeben“** in die Küchenansicht übergeben werden.
 
 ```
 Neu → In Bearbeitung → Fertig → Abgeholt
@@ -1048,7 +1079,13 @@ Das Abholboard (`/abholboard`) ist für Fernseher oder Monitore gedacht.
 
 ### Kann ich mehrere Veranstaltungen gleichzeitig aktiv haben?
 
-Nein. Es ist immer genau **eine** Veranstaltung aktiv. Diese steuert Speisekarte, Bestellannahme und Abholnummern.
+Ja. Mehrere Veranstaltungen können parallel **aktiv** sein. Jede hat eigene Speisen-Zuordnung, Abholnummern (pro Veranstaltungstag) und Schalter für Online-/Vor-Ort-Bestellung.
+
+| Bereich | Verhalten bei mehreren aktiven Events |
+|---------|--------------------------------------|
+| **Online-Bestellung** | Gäste wählen zuerst die Veranstaltung (Touch-Grid) |
+| **Bestellung vor Ort / Abholung** | Mitarbeiter wählen die Veranstaltung im Dropdown (Vorauswahl: heutiges Datum) |
+| **Abholboard** | Veranstaltung wählen — Monitor zeigt nur Nummern dieser Veranstaltung |
 
 ### Wann beginnen die Abholnummern bei 001?
 
@@ -1106,10 +1143,11 @@ Nein. Module sind optional. Vereine mit reiner Barzahlung können alle Module de
 
 | Ursache | Lösung |
 |---------|--------|
-| Keine Veranstaltung aktiv | Veranstaltung anlegen und **aktivieren** |
+| Keine Veranstaltung aktiv | Veranstaltung anlegen und **Veranstaltung aktiv** einschalten |
 | Onlinebestellungen aus | Schalter **Onlinebestellungen aktiv** einschalten |
 | Bestellungen geschlossen | Schalter **Bestellungen geschlossen** ausschalten |
-| Keine aktiven Speisen | Unter **Speisen** Gerichte anlegen und auf **Aktiv** setzen |
+| Keine Speisen zugeordnet | Katalog unter **Speisen** pflegen, dann **Veranstaltungen → Speisen** |
+| Mehrere Veranstaltungen | Gäste müssen die Veranstaltung auf der Bestellseite auswählen |
 
 ### Login funktioniert nicht
 
@@ -1129,7 +1167,7 @@ Nein. Module sind optional. Vereine mit reiner Barzahlung können alle Module de
 
 1. Bestellung muss den Status **Fertig** haben (in Küche oder Bestellübersicht setzen)
 2. Abholboard-Seite neu laden
-3. Gleiche aktive Veranstaltung wie in der Küche verwenden
+3. **Gleiche Veranstaltung** wie in Küche/Abholung wählen (bei mehreren Events auf dem Monitor auswählen)
 
 ### E-Mails kommen nicht an
 

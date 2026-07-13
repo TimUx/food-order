@@ -32,8 +32,11 @@ export const notificationTemplates: Record<NotificationLocale, {
     pushBody: string;
   };
   paymentFailed: {
+    emailSubject: string;
     pushTitle: string;
     pushBody: string;
+    html: string;
+    text: string;
   };
   paymentRefunded: {
     pushTitle: string;
@@ -140,8 +143,40 @@ export const notificationTemplates: Record<NotificationLocale, {
       pushBody: '{{eventDateLabel}}\nGesamt: {{totalPrice}}',
     },
     paymentFailed: {
+      emailSubject: 'Onlinezahlung fehlgeschlagen – Abholnummer {{displayNumber}}',
       pushTitle: 'Onlinezahlung fehlgeschlagen',
       pushBody: 'Bestellung {{displayNumber}} – {{reason}}',
+      html: `
+<div style="font-family: Arial, sans-serif; max-width: 600px; color: #333;">
+  <h2>Onlinezahlung fehlgeschlagen</h2>
+  <p>Die Online-Zahlung für Ihre Bestellung bei <strong>{{clubName}}</strong> konnte leider nicht abgeschlossen werden.</p>
+  <p><strong>Ihre Abholnummer: {{displayNumber}}</strong></p>
+  <p><strong>Grund:</strong> {{reason}}</p>
+  {{eventDateBlockHtml}}
+  <p><strong>Betrag:</strong> {{totalPrice}}</p>
+  <p>Ihre Bestellung ist noch nicht bezahlt. Auf der Bestellstatus-Seite können Sie die Zahlung erneut versuchen.</p>
+  <p style="margin-top: 24px;">
+    <a href="{{statusUrl}}" style="display: inline-block; padding: 12px 24px; background: {{primaryColor}}; color: #fff; text-decoration: none; border-radius: 4px;">
+      Zahlung erneut versuchen
+    </a>
+  </p>
+  <p style="font-size: 0.85em; color: #666;">
+    Direktlink: <a href="{{statusUrl}}">{{statusUrl}}</a>
+  </p>
+  <h3>Veranstalter</h3>
+  <p><strong>{{clubName}}</strong></p>
+  {{contactHtml}}
+  <p style="font-size: 0.9em; line-height: 1.5; color: #666;">
+    Es wurde kein Betrag abgebucht. Bei wiederholten Problemen wenden Sie sich bitte an den Veranstalter.
+  </p>
+</div>`.trim(),
+      text: [
+        'Onlinezahlung fehlgeschlagen – Abholnummer {{displayNumber}}',
+        'Veranstalter: {{clubName}}',
+        'Grund: {{reason}}',
+        'Betrag: {{totalPrice}}',
+        'Zahlung erneut versuchen: {{statusUrl}}',
+      ].join('\n'),
     },
     paymentRefunded: {
       pushTitle: 'Rückerstattung – {{displayNumber}}',

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { defaultNotificationConfig } from '../config';
+import { defaultNotificationConfig, type NotificationConfig } from '../config';
 
 vi.mock('../../../src/platform/mail/MailService', () => ({
   mailService: {
@@ -77,6 +77,31 @@ describe('smtpResolver', () => {
 
     const resolved = await resolveSmtpConfig(defaultNotificationConfig);
     expect(resolved.enabled).toBe(false);
+    expect(resolved.source).toBe('platform');
+  });
+
+  it('tolerates missing tenant smtp branding when platform SMTP exists', async () => {
+    vi.mocked(mailService.loadConfig).mockResolvedValue({
+      enabled: true,
+      host: 'smtp.platform.test',
+      port: 587,
+      user: 'mailer',
+      pass: 'secret',
+      from: 'noreply@platform.test',
+      senderName: 'Platform',
+      replyTo: '',
+      secure: false,
+      useTls: true,
+      timeout: 30000,
+    });
+
+    const resolved = await resolveSmtpConfig({
+      ...defaultNotificationConfig,
+      smtp: undefined as unknown as NotificationConfig['smtp'],
+    });
+
+    expect(resolved.host).toBe('smtp.platform.test');
+    expect(resolved.from).toBe('noreply@platform.test');
     expect(resolved.source).toBe('platform');
   });
 });

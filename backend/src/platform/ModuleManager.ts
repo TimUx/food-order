@@ -15,7 +15,7 @@ import type { ModuleLoader } from './ModuleLoader';
 import type { ModuleRegistry } from './ModuleRegistry';
 import { compareVersions, CORE_HOOKS } from './types';
 import type { SettingsService } from './settings/SettingsService';
-import { registerModuleSettingsFromManifest } from '../core/settings/registerCoreSettings';
+import { registerModuleSettingsFromManifest, registerModuleSettingsFromContract } from '../core/settings/registerCoreSettings';
 import { ModuleMigrationService } from './ModuleMigrationService';
 import { requirePermission } from '../middleware/permission';
 
@@ -82,6 +82,17 @@ export class ModuleManager {
       const mod = await this.deps.moduleLoader.load(manifest);
       this.deps.moduleRegistry.register(mod, manifest);
       registerModuleSettingsFromManifest(this.deps.settingsService, manifest);
+      if (!manifest.settings?.fields?.length) {
+        const contract = mod.getConfigContract?.();
+        if (contract) {
+          registerModuleSettingsFromContract(
+            this.deps.settingsService,
+            manifest.id,
+            manifest,
+            contract
+          );
+        }
+      }
       await this.ensureDbRow(manifest.id, manifest.version);
       logger.info(`Modul registriert: ${manifest.id} v${manifest.version}`);
     }

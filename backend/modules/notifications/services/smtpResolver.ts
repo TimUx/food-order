@@ -34,7 +34,7 @@ export async function resolveSmtpConfig(
   tenantConfig: NotificationConfig
 ): Promise<NotificationConfig['smtp']> {
   const platformSmtp = await loadPlatformSmtp();
-  const tenantBranding = tenantConfig.smtp;
+  const tenantBranding = tenantConfig.smtp ?? {};
 
   if (platformSmtp) {
     return {

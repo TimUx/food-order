@@ -5,7 +5,7 @@ import {
   type ModuleRouteRegistration,
 } from '../../src/platform/module-api';
 import { notificationServiceRegistry } from '../../src/platform/module-api';
-import { defaultNotificationConfig, notificationsConfigSchema } from './config';
+import { notificationsConfigSchema, defaultNotificationConfig, mergeNotificationConfig, type NotificationConfig } from './config';
 import { createNotificationHookSubscriptions } from './hooks';
 import { migrateLegacyEmailSettings } from './migrateLegacyEmail';
 import { notificationManager } from './NotificationManager';
@@ -26,9 +26,15 @@ class NotificationsModule extends BaseModule {
   }
 
   async initialize(context: FeatureContext): Promise<void> {
-    const config = await context.getConfig(this.id);
-    if (!config || Object.keys(config).length === 0) {
-      await context.setConfig(this.id, defaultNotificationConfig);
+    const current = await context.getConfig<Partial<NotificationConfig>>(this.id);
+    const merged = mergeNotificationConfig(current);
+    const needsPersist =
+      !current ||
+      Object.keys(current).length === 0 ||
+      !current.smtp ||
+      !current.events;
+    if (needsPersist) {
+      await context.setConfig(this.id, merged);
     }
     await migrateLegacyEmailSettings(context);
   }
@@ -62,17 +68,24 @@ class NotificationsModule extends BaseModule {
   }
 
   async healthCheck(context: FeatureContext): Promise<ModuleHealthCheckResult> {
-    const active = await notificationManager.hasActiveChannel(context);
-    if (!active) {
-      return { status: 'degraded', message: 'Kein Benachrichtigungskanal konfiguriert' };
+    try {
+      const active = await notificationManager.hasActiveChannel(context);
+      if (!active) {
+        return { status: 'degraded', message: 'Kein Benachrichtigungskanal konfiguriert' };
+      }
+      const checks = await notificationManager.runHealthChecks(context);
+      const ok = Object.values(checks).filter((c) => c.ok);
+      return {
+        status: ok.length > 0 ? 'healthy' : 'degraded',
+        message: `${ok.length} Kanal/Kanäle bereit`,
+        details: checks,
+      };
+    } catch (err) {
+      return {
+        status: 'degraded',
+        message: err instanceof Error ? err.message : 'Health-Check fehlgeschlagen',
+      };
     }
-    const checks = await notificationManager.runHealthChecks(context);
-    const ok = Object.values(checks).filter((c) => c.ok);
-    return {
-      status: ok.length > 0 ? 'healthy' : 'degraded',
-      message: `${ok.length} Kanal/Kanäle bereit`,
-      details: checks,
-    };
   }
 
   getConfigContract() {

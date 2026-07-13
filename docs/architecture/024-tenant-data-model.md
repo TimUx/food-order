@@ -88,7 +88,8 @@ Folgende bestehende Tabellen erhalten `tenant_id`:
 |---------|-----------|
 | `Event` | Direkt mandantengebunden |
 | `Order`, `OrderItem`, `OrderStatus` | Über Event oder direkt |
-| `FoodItem` | Über Event |
+| `FoodItem` | Mandantenweiter Speisen-Katalog |
+| `EventFoodItem` | Zuordnung Speise ↔ Veranstaltung (`soldOut` pro Event) |
 | `Customer` | Mandantenisoliert (gleiche E-Mail in zwei Mandanten erlaubt) |
 | `DailyOrderCounter` | Über Event |
 | `ClubSettings` | Wird zu `TenantSettings` (1:1 pro Mandant) |

@@ -195,13 +195,21 @@ export class SettingsService {
       if (typeof raw !== 'string' || !raw) continue;
 
       if (options.decrypt) {
-        setByPath(output, field.key, isEncryptedValue(raw) ? decryptValue(raw) : raw);
+        setByPath(output, field.key, this.safeDecryptField(raw));
       } else {
-        const plain = isEncryptedValue(raw) ? decryptValue(raw) : raw;
-        setByPath(output, field.key, maskValue(plain));
+        setByPath(output, field.key, maskValue(this.safeDecryptField(raw)));
       }
     }
     return output;
+  }
+
+  private safeDecryptField(value: unknown): string {
+    if (typeof value !== 'string' || !value) return '';
+    try {
+      return isEncryptedValue(value) ? decryptValue(value) : value;
+    } catch {
+      return '';
+    }
   }
 
   private toStorageShape(namespace: string, values: Record<string, unknown>): Record<string, unknown> {

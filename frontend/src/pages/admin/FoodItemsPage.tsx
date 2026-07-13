@@ -35,7 +35,6 @@ interface FoodForm {
   price: string;
   sortOrder: string;
   active: boolean;
-  soldOut: boolean;
   maxQuantity: string;
 }
 
@@ -45,14 +44,12 @@ const emptyForm: FoodForm = {
   price: '',
   sortOrder: '0',
   active: true,
-  soldOut: false,
   maxQuantity: '',
 };
 
 export function FoodItemsPage() {
   const { token } = useAuth();
   const [items, setItems] = useState<FoodItem[]>([]);
-  const [eventId, setEventId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -60,19 +57,15 @@ export function FoodItemsPage() {
   const [form, setForm] = useState<FoodForm>(emptyForm);
 
   const loadItems = () => {
-    if (!token || !eventId) return;
-    api.getFoodItems(token, eventId).then(setItems).catch((err) => setError(err.message));
+    if (!token) return;
+    api.getFoodCatalog(token).then(setItems).catch((err) => setError(err.message));
   };
 
   useEffect(() => {
     if (!token) return;
-    api.getActiveEvent(token)
-      .then((event) => setEventId(event.id))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    loadItems();
+    setLoading(false);
   }, [token]);
-
-  useEffect(() => { loadItems(); }, [eventId, token]);
 
   const openCreate = () => {
     setEditing(null);
@@ -88,7 +81,6 @@ export function FoodItemsPage() {
       price: String(item.price),
       sortOrder: String(item.sortOrder),
       active: item.active,
-      soldOut: item.soldOut,
       maxQuantity: item.maxQuantity ? String(item.maxQuantity) : '',
     });
     setDialogOpen(true);
@@ -102,14 +94,13 @@ export function FoodItemsPage() {
       price: parseFloat(form.price),
       sortOrder: parseInt(form.sortOrder, 10) || 0,
       active: form.active,
-      soldOut: form.soldOut,
       maxQuantity: form.maxQuantity ? parseInt(form.maxQuantity, 10) : null,
     };
     try {
       if (editing) {
         await api.updateFoodItem(token, editing.id, data);
       } else {
-        await api.createFoodItem(token, eventId, data);
+        await api.createFoodCatalogItem(token, data);
       }
       setDialogOpen(false);
       loadItems();
@@ -119,7 +110,7 @@ export function FoodItemsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !confirm('Gericht wirklich löschen?')) return;
+    if (!token || !confirm('Gericht wirklich löschen? Es wird von allen Veranstaltungen entfernt.')) return;
     try {
       await api.deleteFoodItem(token, id);
       loadItems();
@@ -138,16 +129,6 @@ export function FoodItemsPage() {
     }
   };
 
-  const handleSoldOutToggle = async (item: FoodItem, soldOut: boolean) => {
-    if (!token) return;
-    try {
-      await api.setFoodSoldOut(token, item.id, soldOut);
-      loadItems();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
-    }
-  };
-
   if (loading) {
     return (
       <AdminLayout title="Speisenverwaltung">
@@ -161,6 +142,10 @@ export function FoodItemsPage() {
   return (
     <AdminLayout title="Speisenverwaltung" fullWidth>
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
+
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Hier verwalten Sie den mandantenweiten Speisenkatalog. Welche Gerichte bei einer Veranstaltung angeboten werden, legen Sie unter Veranstaltungen fest.
+      </Typography>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h5" fontWeight={700}>Gerichte verwalten</Typography>
@@ -176,7 +161,6 @@ export function FoodItemsPage() {
             <TableCell>Name</TableCell>
             <TableCell>Preis</TableCell>
             <TableCell>Aktiv</TableCell>
-            <TableCell>Ausverkauft</TableCell>
             <TableCell>Max. Menge</TableCell>
             <TableCell align="right">Aktionen</TableCell>
           </TableRow>
@@ -188,15 +172,6 @@ export function FoodItemsPage() {
               <TableCell>{item.name}</TableCell>
               <TableCell>{formatPrice(Number(item.price))}</TableCell>
               <TableCell>{item.active ? 'Ja' : 'Nein'}</TableCell>
-              <TableCell>
-                <Switch
-                  checked={item.soldOut}
-                  color="error"
-                  size="small"
-                  onChange={(e) => void handleSoldOutToggle(item, e.target.checked)}
-                  inputProps={{ 'aria-label': `${item.name} als ausverkauft markieren` }}
-                />
-              </TableCell>
               <TableCell>{item.maxQuantity ?? '–'}</TableCell>
               <TableCell align="right">
                 <IconButton component="label" size="small">
@@ -233,7 +208,6 @@ export function FoodItemsPage() {
             <TextField label="Reihenfolge" type="number" fullWidth value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} />
             <TextField label="Max. Bestellmenge (optional)" type="number" fullWidth value={form.maxQuantity} onChange={(e) => setForm({ ...form, maxQuantity: e.target.value })} />
             <FormControlLabel control={<Switch checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />} label="Aktiv" />
-            <FormControlLabel control={<Switch checked={form.soldOut} onChange={(e) => setForm({ ...form, soldOut: e.target.checked })} />} label="Ausverkauft" />
           </Stack>
         </DialogContent>
         <DialogActions>

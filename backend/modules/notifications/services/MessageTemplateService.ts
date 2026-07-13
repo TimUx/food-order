@@ -246,16 +246,54 @@ export function buildOrderPaidMessage(order: OrderEmailData, club: ClubContactDa
   return { title, body };
 }
 
-export function buildPaymentFailedMessage(payload: { displayNumber: string; reason?: string }) {
-  const t = getTemplates();
-  const vars = {
-    displayNumber: payload.displayNumber,
-    reason: payload.reason?.trim() || 'Unbekannter Fehler',
-  };
-  return {
-    title: renderTemplate(t.paymentFailed.pushTitle, vars),
-    body: renderTemplate(t.paymentFailed.pushBody, vars),
-  };
+export function buildPaymentFailedMessage(
+  payload: { displayNumber: string; reason?: string },
+  club: ClubContactData,
+  config: NotificationConfig,
+  order?: OrderEmailData | null
+): Promise<{ title: string; body: string; html?: string }> {
+  return (async () => {
+    const t = getTemplates(DEFAULT_LOCALE, config);
+    const reason = payload.reason?.trim() || 'Unbekannter Fehler';
+    const pushVars = {
+      displayNumber: payload.displayNumber,
+      reason,
+    };
+
+    if (!order) {
+      return {
+        title: renderTemplate(t.paymentFailed.pushTitle, pushVars),
+        body: renderTemplate(t.paymentFailed.pushBody, pushVars),
+      };
+    }
+
+    const vars = {
+      ...baseOrderVars(order, club, config),
+      reason: escapeHtml(reason),
+      reasonText: reason,
+    };
+    const legalFooter = await buildLegalFooter(club.clubName);
+    const branding = resolveEmailBranding(config);
+    const innerHtml = renderTemplate(t.paymentFailed.html, vars);
+
+    return {
+      title: renderTemplate(t.paymentFailed.emailSubject, {
+        ...vars,
+        reason: reason,
+      }),
+      body: [
+        renderTemplate(t.paymentFailed.text, {
+          ...vars,
+          reason: reason,
+        }),
+        legalFooter.text,
+        branding.signatureText,
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
+      html: [wrapEmailHtml(innerHtml, branding), legalFooter.html].filter(Boolean).join('\n'),
+    };
+  })();
 }
 
 export function buildPaymentRefundedMessage(payload: {

@@ -20,7 +20,7 @@ Weitere Bilder: [docs/screenshots/](docs/screenshots/README.md)
 
 - **Gäste:** Speisekarte, Vorausbestellung, Live-Status, Abholboard
 - **Mitarbeiter:** Küchenmonitor, Abholung, Kassenbestellung, Bestellübersicht mit Bearbeitung
-- **Administration:** Veranstaltungen, Speisekarte, Team & Rollen, Bestell-Einstellungen
+- **Administration:** Veranstaltungen (mehrere parallel), Speisen-Katalog mit Zuordnung, Team & Rollen
 - **Plattform:** Mehrere Mandanten (Vereine) auf einer Instanz
 - **Optional:** Online-Zahlung, E-Mail/Push-Benachrichtigungen, Bondruck, Rechtstexte
 

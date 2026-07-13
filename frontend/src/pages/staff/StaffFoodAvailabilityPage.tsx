@@ -47,7 +47,7 @@ export function StaffFoodAvailabilityPage() {
     setUpdatingId(item.id);
     setError('');
     try {
-      await api.setFoodSoldOut(token, item.id, soldOut);
+      await api.setFoodSoldOut(token, item.id, soldOut, eventId);
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, soldOut } : i)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');

@@ -48,9 +48,19 @@ export interface Event {
 
 export type CreateEventInput = Partial<Event> & { activateOnCreate?: boolean };
 
+export interface PublicEvent {
+  id: string;
+  name: string;
+  description?: string;
+  date: string;
+  eventDateLabel: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface FoodItem {
   id: string;
-  eventId: string;
+  eventId?: string;
   name: string;
   description?: string;
   price: number;
@@ -59,6 +69,7 @@ export interface FoodItem {
   active: boolean;
   soldOut: boolean;
   maxQuantity?: number | null;
+  assigned?: boolean;
 }
 
 export interface OrderItem {
@@ -82,6 +93,7 @@ export interface Order {
   status: OrderStatus;
   statusLabel: string;
   paymentLabel?: string;
+  releasedToKitchen?: boolean;
   totalPrice: number;
   createdAt: string;
   readyAt?: string;

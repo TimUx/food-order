@@ -58,13 +58,13 @@ export async function getOrderEventStats(eventId: string): Promise<OrderEventSta
       take: 5,
     }),
     prisma.$queryRaw<[{ avg_minutes: number | null }]>`
-      SELECT AVG(EXTRACT(EPOCH FROM ("ready_at" - "created_at")) / 60.0)::float AS avg_minutes
+      SELECT AVG(EXTRACT(EPOCH FROM ("readyAt" - "createdAt")) / 60.0)::float AS avg_minutes
       FROM "Order"
       WHERE "tenant_id" = ${tenantId}
-        AND "event_id" = ${eventId}
+        AND "eventId" = ${eventId}
         AND "status"::text != 'CANCELLED'
-        AND "ready_at" IS NOT NULL
-    `,
+        AND "readyAt" IS NOT NULL
+    `.catch(() => [{ avg_minutes: null }]),
   ]);
 
   const statusCounts: Partial<Record<StatusCode, number>> = {};

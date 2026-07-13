@@ -156,6 +156,7 @@ export const createEventSchema = z.object({
   onlineOrdersActive: z.boolean().optional(),
   cashierActive: z.boolean().optional(),
   ordersClosed: z.boolean().optional(),
+  isActive: z.boolean().optional(),
   activateOnCreate: z.boolean().optional(),
 });
 
@@ -191,6 +192,11 @@ export const updateFoodItemSchema = createFoodItemSchema.partial();
 
 export const setFoodSoldOutSchema = z.object({
   soldOut: z.boolean(),
+  eventId: z.string().uuid().optional(),
+});
+
+export const setEventFoodAssignmentsSchema = z.object({
+  foodItemIds: z.array(z.string().uuid()),
 });
 
 export const orderItemSchema = z.object({
@@ -203,6 +209,7 @@ export const createOrderCheckoutSchema = z.object({
 });
 
 export const createOnlineOrderSchema = z.object({
+  eventId: z.string().uuid('Veranstaltung erforderlich'),
   firstName: z.string().optional().or(z.literal('')),
   lastName: z.string().optional().or(z.literal('')),
   email: z.string().email('Ungültige E-Mail').optional().or(z.literal('')),
@@ -216,6 +223,7 @@ export const createOnlineOrderSchema = z.object({
 });
 
 export const createCashierOrderSchema = z.object({
+  eventId: z.string().uuid('Veranstaltung erforderlich'),
   items: z.array(orderItemSchema).min(1, 'Mindestens ein Gericht erforderlich'),
   paymentMethodId: z.string().optional(),
 });
@@ -233,11 +241,13 @@ export const updateOrderItemsSchema = z.object({
 });
 
 export const lookupOrderSchema = z.object({
+  eventId: z.string().uuid('Veranstaltung erforderlich'),
   orderNumber: z.coerce.number().int().positive(),
   lastName: z.string().min(1, 'Nachname erforderlich'),
 });
 
 export const lookupByNumberSchema = z.object({
+  eventId: z.string().uuid('Veranstaltung erforderlich'),
   orderNumber: z.coerce.number().int().positive(),
   lastName: z.string().max(100).optional(),
 });

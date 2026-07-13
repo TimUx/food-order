@@ -58,6 +58,7 @@
       { "key": "events.kitchenCompleted.discord", "group": "events", "label": "Küche fertig → Discord", "type": "boolean", "default": false },
       { "key": "events.kitchenCompleted.slack", "group": "events", "label": "Küche fertig → Slack", "type": "boolean", "default": false },
       { "key": "events.kitchenCompleted.teams", "group": "events", "label": "Küche fertig → Teams", "type": "boolean", "default": false },
+      { "key": "events.paymentFailed.email", "group": "events", "label": "Onlinezahlung fehlgeschlagen → E-Mail", "type": "boolean", "default": true, "helpText": "E-Mail an die beim Checkout angegebene Adresse" },
       { "key": "events.paymentFailed.ntfy", "group": "events", "label": "Onlinezahlung fehlgeschlagen → ntfy", "type": "boolean", "default": true },
       { "key": "events.paymentFailed.discord", "group": "events", "label": "Onlinezahlung fehlgeschlagen → Discord", "type": "boolean", "default": false },
       { "key": "events.paymentFailed.slack", "group": "events", "label": "Onlinezahlung fehlgeschlagen → Slack", "type": "boolean", "default": false },

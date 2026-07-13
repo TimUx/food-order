@@ -56,17 +56,18 @@ export class TenantService {
 
   async getPublicData(tenant: TenantRecord): Promise<TenantPublicData> {
     this.assertTenantAccessible(tenant);
+    const club = await this.getClubOrganizationSettings();
     return {
-      name: tenant.name,
+      name: club?.clubName ?? tenant.name,
       shortName: tenant.shortName,
       slug: tenant.slug,
-      logoUrl: tenant.logoUrl,
-      description: tenant.description,
-      contactName: tenant.contactName,
-      email: tenant.email,
-      phone: tenant.phone,
-      address: tenant.address,
-      website: tenant.website,
+      logoUrl: club?.logoUrl ?? tenant.logoUrl,
+      description: club?.description ?? tenant.description,
+      contactName: club?.contactName ?? tenant.contactName,
+      email: club?.email ?? tenant.email,
+      phone: club?.phone ?? tenant.phone,
+      address: club?.address ?? tenant.address,
+      website: club?.website ?? tenant.website,
       theme: tenant.theme,
       locale: tenant.locale,
       timezone: tenant.timezone,
@@ -112,6 +113,34 @@ export class TenantService {
       website: tenant.website,
       settings,
     };
+  }
+
+  private async getClubOrganizationSettings(): Promise<{
+    clubName: string;
+    description: string | null;
+    contactName: string | null;
+    email: string | null;
+    phone: string | null;
+    address: string | null;
+    website: string | null;
+    logoUrl: string | null;
+  } | null> {
+    try {
+      const { clubRepository } = await import('../../repositories/clubRepository');
+      const club = await clubRepository.get();
+      return {
+        clubName: club.clubName,
+        description: club.description,
+        contactName: club.contactName,
+        email: club.email,
+        phone: club.phone,
+        address: club.address,
+        website: club.website,
+        logoUrl: club.logoUrl,
+      };
+    } catch {
+      return null;
+    }
   }
 
   private async getSettingsRecord(tenantId: string): Promise<TenantSettingsRecord> {

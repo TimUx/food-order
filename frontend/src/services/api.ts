@@ -115,9 +115,13 @@ async function request<T>(
 
 export const api = {
   // Public
+  getPublicEvents: () => request<import('@/types').PublicEvent[]>('/public/events'),
+  getPublicPickupEvents: () => request<import('@/types').PublicEvent[]>('/public/events/pickup'),
   getPublicEvent: () => request<{ id: string; name: string; onlineOrdersActive: boolean; ordersClosed: boolean }>('/public/event'),
-  getPublicMenu: () => request<{ event: Event; items: FoodItem[] }>('/public/menu'),
+  getPublicMenu: (eventId: string) =>
+    request<{ event: Event; items: FoodItem[] }>(`/public/menu?eventId=${encodeURIComponent(eventId)}`),
   createOrder: (data: {
+    eventId: string;
     firstName: string;
     lastName: string;
     email?: string;
@@ -128,8 +132,11 @@ export const api = {
     _hp?: string;
     turnstileToken?: string;
   }) => request<Order>('/public/orders', { method: 'POST', body: JSON.stringify(data) }),
-  lookupOrder: (orderNumber: number, lastName: string) =>
-    request<Order>('/public/orders/lookup', { method: 'POST', body: JSON.stringify({ orderNumber, lastName }) }),
+  lookupOrder: (eventId: string, orderNumber: number, lastName: string) =>
+    request<Order>('/public/orders/lookup', {
+      method: 'POST',
+      body: JSON.stringify({ eventId, orderNumber, lastName }),
+    }),
   getOrderByToken: (lookupToken: string, lastName: string) => {
     const q = new URLSearchParams({ lastName });
     return request<Order>(`/public/orders/status/${encodeURIComponent(lookupToken)}?${q}`);
@@ -144,7 +151,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ lastName }),
     }),
-  getPickupBoard: () => request<PickupBoardOrder[]>('/public/pickup-board'),
+  getPickupBoard: (eventId: string) =>
+    request<PickupBoardOrder[]>(`/public/pickup-board?eventId=${encodeURIComponent(eventId)}`),
   getClub: () => request<import('@/types/club').ClubSettings>('/public/club'),
   getTenant: () => request<import('@/types/tenant').TenantPublicData>('/public/tenant'),
   getPlatform: () =>
@@ -196,6 +204,8 @@ export const api = {
 
   // Staff
   getEvents: (token: string) => request<Event[]>('/staff/events', {}, token),
+  getCashierEvents: (token: string) => request<import('@/types').PublicEvent[]>('/staff/events/cashier', {}, token),
+  getPickupEvents: (token: string) => request<import('@/types').PublicEvent[]>('/staff/events/pickup', {}, token),
   getActiveEvent: (token: string) => request<Event>('/staff/events/active', {}, token),
   createEvent: (token: string, data: CreateEventInput) =>
     request<Event>('/staff/events', { method: 'POST', body: JSON.stringify(data) }, token),
@@ -204,14 +214,28 @@ export const api = {
   activateEvent: (token: string, id: string) =>
     request<Event>(`/staff/events/${id}/activate`, { method: 'POST' }, token),
 
+  getFoodCatalog: (token: string) =>
+    request<FoodItem[]>('/staff/food-items', {}, token),
+  createFoodCatalogItem: (token: string, data: Partial<FoodItem>) =>
+    request<FoodItem>('/staff/food-items', { method: 'POST', body: JSON.stringify(data) }, token),
   getFoodItems: (token: string, eventId: string) =>
     request<FoodItem[]>(`/staff/events/${eventId}/food-items`, {}, token),
+  getEventFoodAssignments: (token: string, eventId: string) =>
+    request<FoodItem[]>(`/staff/events/${eventId}/food-item-assignments`, {}, token),
+  setEventFoodAssignments: (token: string, eventId: string, foodItemIds: string[]) =>
+    request<FoodItem[]>(`/staff/events/${eventId}/food-item-assignments`, {
+      method: 'PUT',
+      body: JSON.stringify({ foodItemIds }),
+    }, token),
   createFoodItem: (token: string, eventId: string, data: Partial<FoodItem>) =>
     request<FoodItem>(`/staff/events/${eventId}/food-items`, { method: 'POST', body: JSON.stringify(data) }, token),
   updateFoodItem: (token: string, id: string, data: Partial<FoodItem>) =>
     request<FoodItem>(`/staff/food-items/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
-  setFoodSoldOut: (token: string, id: string, soldOut: boolean) =>
-    request<FoodItem>(`/staff/food-items/${id}/sold-out`, { method: 'PATCH', body: JSON.stringify({ soldOut }) }, token),
+  setFoodSoldOut: (token: string, id: string, soldOut: boolean, eventId?: string) =>
+    request<FoodItem>(`/staff/food-items/${id}/sold-out`, {
+      method: 'PATCH',
+      body: JSON.stringify({ soldOut, eventId }),
+    }, token),
   deleteFoodItem: (token: string, id: string) =>
     request<void>(`/staff/food-items/${id}`, { method: 'DELETE' }, token),
   uploadFoodImage: async (token: string, id: string, file: File) => {
@@ -230,9 +254,12 @@ export const api = {
     return res.json() as Promise<FoodItem>;
   },
 
-  getOrders: (token: string, eventId: string, status?: string) => {
-    const query = status ? `?status=${status}` : '';
-    return request<Order[]>(`/staff/events/${eventId}/orders${query}`, {}, token);
+  getOrders: (token: string, eventId: string, status?: string, kitchenOnly?: boolean) => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (kitchenOnly) params.set('kitchenOnly', '1');
+    const q = params.toString();
+    return request<Order[]>(`/staff/events/${eventId}/orders${q ? `?${q}` : ''}`, {}, token);
   },
   getOrdersExport: (token: string, eventId: string) =>
     request<import('@/types/ordersExport').EventOrdersExport>(`/staff/events/${eventId}/orders/export`, {}, token),
@@ -249,14 +276,22 @@ export const api = {
   },
   getStats: (token: string, eventId: string) =>
     request<DashboardStats>(`/staff/events/${eventId}/stats`, {}, token),
-  createCashierOrder: (token: string, items: { foodItemId: string; quantity: number }[], paymentMethodId?: string) =>
-    request<Order>('/staff/orders/cashier', { method: 'POST', body: JSON.stringify({ items, paymentMethodId }) }, token),
+  createCashierOrder: (
+    token: string,
+    eventId: string,
+    items: { foodItemId: string; quantity: number }[],
+    paymentMethodId?: string
+  ) =>
+    request<Order>('/staff/orders/cashier', {
+      method: 'POST',
+      body: JSON.stringify({ eventId, items, paymentMethodId }),
+    }, token),
   abortCashierPayment: (token: string, orderId: string, sessionId: string) =>
     request<Order>(`/staff/orders/${orderId}/abort-payment`, { method: 'POST', body: JSON.stringify({ sessionId }) }, token),
-  lookupOrderByNumber: (token: string, orderNumber: number, lastName?: string) =>
+  lookupOrderByNumber: (token: string, eventId: string, orderNumber: number, lastName?: string) =>
     request<Order>(
       '/staff/orders/lookup',
-      { method: 'POST', body: JSON.stringify({ orderNumber, ...(lastName ? { lastName } : {}) }) },
+      { method: 'POST', body: JSON.stringify({ eventId, orderNumber, ...(lastName ? { lastName } : {}) }) },
       token
     ),
   updateOrderStatus: (token: string, id: string, status: OrderStatus) =>
@@ -265,11 +300,14 @@ export const api = {
     request<Order>(`/staff/orders/${id}/items`, { method: 'PATCH', body: JSON.stringify({ items }) }, token),
   advanceOrder: (token: string, id: string) =>
     request<Order>(`/staff/orders/${id}/advance`, { method: 'POST' }, token),
+  releaseOrderToKitchen: (token: string, id: string) =>
+    request<Order>(`/staff/orders/${id}/release-to-kitchen`, { method: 'POST' }, token),
 
   // Realtime sync (delta/ETag)
-  syncEventOrders: (token: string, eventId: string, status?: string, etag?: string) => {
+  syncEventOrders: (token: string, eventId: string, status?: string, etag?: string, kitchenOnly?: boolean) => {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
+    if (kitchenOnly) params.set('kitchenOnly', '1');
     if (etag) params.set('etag', etag);
     const q = params.toString();
     return request<SyncResult<Order[]>>(`/realtime/events/${eventId}/orders${q ? `?${q}` : ''}`, {}, token);
@@ -278,9 +316,10 @@ export const api = {
     const q = etag ? `?etag=${encodeURIComponent(etag)}` : '';
     return request<SyncResult<DashboardStats>>(`/realtime/events/${eventId}/stats${q}`, {}, token);
   },
-  syncPickupBoard: (etag?: string) => {
-    const q = etag ? `?etag=${encodeURIComponent(etag)}` : '';
-    return request<SyncResult<PickupBoardOrder[]>>(`/realtime/pickup-board${q}`, {});
+  syncPickupBoard: (eventId: string, etag?: string) => {
+    const params = new URLSearchParams({ eventId });
+    if (etag) params.set('etag', etag);
+    return request<SyncResult<PickupBoardOrder[]>>(`/realtime/pickup-board?${params.toString()}`, {});
   },
   syncOrder: (lookupToken: string, lastName: string | undefined, etag?: string) => {
     const params = new URLSearchParams();

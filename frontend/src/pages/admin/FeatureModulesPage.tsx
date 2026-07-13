@@ -15,8 +15,16 @@ function isEntitledModule(mod: ModuleInfo): boolean {
   return mod.entitled === true;
 }
 
-function publicStatus(mod: ModuleInfo): 'Aktiv' | 'Deaktiviert' {
-  return mod.status === 'ENABLED' ? 'Aktiv' : 'Deaktiviert';
+function publicStatus(mod: ModuleInfo): string {
+  if (mod.status === 'ENABLED') return 'Aktiv';
+  if (mod.status === 'FAILED') return 'Fehler';
+  return 'Deaktiviert';
+}
+
+function statusChipColor(mod: ModuleInfo): 'success' | 'warning' | 'default' {
+  if (mod.status === 'ENABLED') return 'success';
+  if (mod.status === 'FAILED') return 'warning';
+  return 'default';
 }
 
 function hasTechnicalDetails(mod: ModuleInfo): boolean {
@@ -122,7 +130,7 @@ export function FeatureModulesPage() {
                         <Chip
                           size="small"
                           label={publicStatus(mod)}
-                          color={isOn ? 'success' : 'default'}
+                          color={statusChipColor(mod)}
                           variant={isOn ? 'filled' : 'outlined'}
                         />
                       </TableCell>

@@ -65,8 +65,8 @@ repositories/ + Prisma   ← Datenzugriff
 | Domäne | Service | Verantwortung |
 |--------|---------|---------------|
 | Bestellungen | `orderService` | Online/Kassen-Bestellungen, Status, Küchen-Freigabe |
-| Veranstaltungen | `eventService` | Events, Aktivierung, Schalter |
-| Speisen | `foodItemService` | Menü pro Event |
+| Veranstaltungen | `eventService` | Events, Aktiv-Schalter, Mehrfach-Aktivierung |
+| Speisen | `foodItemService` | Mandanten-Katalog + Zuordnung pro Event (`EventFoodItem`) |
 | Verein | `clubService` | Branding, SMTP, Bestell-Einstellungen |
 | Auth | `authService` | JWT, Login |
 | E-Mail | `emailService` | Bestätigungen (Core, nicht Modul) |

@@ -15,8 +15,8 @@ Ausführlichere Admin-Themen: [Admin Guide](ADMIN_GUIDE.md) · Einführung ohne 
 3. **Health prüfen** — siehe Abschnitt [Health prüfen](#health-prüfen).
 4. **`.env` sichern** — Datei mit Passwörtern und Secrets kopieren (USB-Stick oder Passwort-Manager), nicht ins öffentliche Git legen.
 5. **Backup erstellen** — siehe [Backup](#backup-vor-updates-und-regelmäßig).
-6. **Aktive Veranstaltung** — Im Admin unter Veranstaltungen: richtiges Event aktiv, Datum und Uhrzeiten stimmen.
-7. **Speisekarte** — Gerichte angelegt, Preise korrekt, ausverkaufte Artikel markiert.
+6. **Aktive Veranstaltung(en)** — Im Admin: gewünschte Events mit **Veranstaltung aktiv** einschalten; Datum und Uhrzeiten prüfen.
+7. **Speisekatalog & Zuordnung** — Gerichte unter **Speisen** pflegen; pro Veranstaltung unter **Veranstaltungen → Speisen** zuordnen.
 8. **Online-Bestellung** — Schalter „Online-Bestellungen“ am Event eingeschaltet (falls gewünscht).
 9. **Mitarbeiter** — Konten für Küche, Kasse und Abholung angelegt, **keine Demo-Passwörter** in Produktion.
 10. **Testbestellung** — Einmal von Handy/Tablet bestellen und in der Küche sichtbar?

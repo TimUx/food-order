@@ -2,6 +2,33 @@ import { Response, NextFunction } from 'express';
 import { eventService } from '../services/eventService';
 
 export const eventController = {
+  async getPublicEvents(_req: unknown, res: Response, next: NextFunction) {
+    try {
+      const events = await eventService.getPublicOnlineEvents();
+      res.json(events);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getPickupEvents(_req: unknown, res: Response, next: NextFunction) {
+    try {
+      const events = await eventService.getPickupEvents();
+      res.json(events);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getCashierEvents(_req: unknown, res: Response, next: NextFunction) {
+    try {
+      const events = await eventService.getCashierEvents();
+      res.json(events);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async getActive(_req: unknown, res: Response, next: NextFunction) {
     try {
       const event = await eventService.getActive();

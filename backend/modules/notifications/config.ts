@@ -35,7 +35,7 @@ export const notificationsConfigSchema = z.object({
       teams: z.boolean().default(false),
     }).default({}),
     paymentFailed: z.object({
-      email: z.boolean().default(false),
+      email: z.boolean().default(true),
       ntfy: z.boolean().default(true),
       discord: z.boolean().default(false),
       slack: z.boolean().default(false),
@@ -110,7 +110,7 @@ export const defaultNotificationConfig: NotificationConfig = {
     orderCancelled: { email: true, ntfy: false, discord: false, slack: false, teams: false },
     orderPaid: { email: false, ntfy: false, discord: false, slack: false, teams: false },
     kitchenCompleted: { email: false, ntfy: true, discord: false, slack: false, teams: false },
-    paymentFailed: { email: false, ntfy: true, discord: false, slack: false, teams: false },
+    paymentFailed: { email: true, ntfy: true, discord: false, slack: false, teams: false },
     paymentRefunded: { email: false, ntfy: false, discord: false, slack: false, teams: false },
     moduleActivated: { email: false, ntfy: false, discord: false, slack: false, teams: false },
     moduleDeactivated: { email: false, ntfy: false, discord: false, slack: false, teams: false },
@@ -122,6 +122,46 @@ export const defaultNotificationConfig: NotificationConfig = {
   slack: { enabled: false },
   teams: { enabled: false },
 };
+
+export function mergeNotificationConfig(
+  current: Partial<NotificationConfig> | null | undefined
+): NotificationConfig {
+  const input = current ?? {};
+  return {
+    ...defaultNotificationConfig,
+    ...input,
+    events: {
+      ...defaultNotificationConfig.events,
+      ...(input.events ?? {}),
+    },
+    smtp: {
+      ...defaultNotificationConfig.smtp,
+      ...(input.smtp ?? {}),
+    },
+    branding: {
+      ...defaultNotificationConfig.branding,
+      ...(input.branding ?? {}),
+    },
+    ntfy: {
+      ...defaultNotificationConfig.ntfy,
+      ...(input.ntfy ?? {}),
+    },
+    discord: {
+      ...defaultNotificationConfig.discord,
+      ...(input.discord ?? {}),
+    },
+    slack: {
+      ...defaultNotificationConfig.slack,
+      ...(input.slack ?? {}),
+    },
+    teams: {
+      ...defaultNotificationConfig.teams,
+      ...(input.teams ?? {}),
+    },
+    emailCustomText: input.emailCustomText ?? defaultNotificationConfig.emailCustomText,
+    templates: input.templates ?? defaultNotificationConfig.templates,
+  };
+}
 
 export type NotificationEventType =
   | 'orderCreated'

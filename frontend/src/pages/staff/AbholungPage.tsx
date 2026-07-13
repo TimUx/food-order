@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Typography,
   TextField,
@@ -9,6 +9,11 @@ import {
   Stack,
   Divider,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
@@ -19,10 +24,14 @@ import { StatusChip } from '@/components/StatusChip';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
 import { Order } from '@/types';
+import { resolvePreferredEventId } from '@/utils/eventSelection';
 import { touchFieldSx, touchPrimaryButtonSx, touchIconButtonSx } from '@/theme/touch';
 
 export function AbholungPage() {
   const { token } = useAuth();
+  const [pickupEvents, setPickupEvents] = useState<import('@/types').PublicEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [orderNumber, setOrderNumber] = useState('');
   const [lastName, setLastName] = useState('');
   const [order, setOrder] = useState<Order | null>(null);
@@ -30,14 +39,26 @@ export function AbholungPage() {
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
+  useEffect(() => {
+    if (!token) return;
+    api.getPickupEvents(token)
+      .then((events) => {
+        setPickupEvents(events);
+        setSelectedEventId(resolvePreferredEventId(events));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setEventsLoading(false));
+  }, [token]);
+
   const handleLookup = async () => {
-    if (!token || !orderNumber) return;
+    if (!token || !selectedEventId || !orderNumber) return;
     setLoading(true);
     setError('');
     setOrder(null);
     try {
       const result = await api.lookupOrderByNumber(
         token,
+        selectedEventId,
         parseInt(orderNumber, 10),
         lastName.trim() || undefined
       );
@@ -70,14 +91,60 @@ export function AbholungPage() {
     }
   };
 
+  if (eventsLoading) {
+    return (
+      <StaffLayout title="Abholung" fullWidth>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </StaffLayout>
+    );
+  }
+
   return (
     <StaffLayout title="Abholung" fullWidth>
       <Typography variant="h4" fontWeight={800} gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}>
         Abholung bestätigen
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: '1.1rem' }}>
-        Abholnummer eingeben und Abholung bestätigen.
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 2, fontSize: '1.1rem' }}>
+        Veranstaltung wählen, Abholnummer eingeben und Abholung bestätigen.
       </Typography>
+
+      {pickupEvents.length === 0 ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Derzeit sind keine Veranstaltungen für Abholungen verfügbar.
+        </Alert>
+      ) : (
+        <FormControl fullWidth sx={{ mb: 3, maxWidth: 560, ...touchFieldSx }}>
+          <InputLabel id="pickup-event-label">Veranstaltung</InputLabel>
+          <Select
+            labelId="pickup-event-label"
+            label="Veranstaltung"
+            value={selectedEventId}
+            onChange={(e) => {
+              setSelectedEventId(e.target.value);
+              setOrder(null);
+              setError('');
+            }}
+            displayEmpty
+          >
+            <MenuItem value="">
+              <em>Veranstaltung wählen</em>
+            </MenuItem>
+            {pickupEvents.map((event) => (
+              <MenuItem key={event.id} value={event.id}>
+                {event.name} · {event.eventDateLabel}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
+
+      {!selectedEventId && pickupEvents.length > 0 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Bitte wählen Sie zuerst eine Veranstaltung aus.
+        </Alert>
+      )}
 
       <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 3, maxWidth: 560 }}>
         <Stack spacing={2}>
@@ -89,14 +156,15 @@ export function AbholungPage() {
               placeholder="z.B. 042"
               fullWidth
               autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
+              disabled={!selectedEventId}
+              onKeyDown={(e) => e.key === 'Enter' && void handleLookup()}
               sx={touchFieldSx}
               inputProps={{ style: { fontSize: '1.75rem', textAlign: 'center', fontWeight: 700 }, inputMode: 'numeric' }}
             />
             <Button
               variant="contained"
               onClick={() => void handleLookup()}
-              disabled={loading || !orderNumber}
+              disabled={loading || !selectedEventId || !orderNumber}
               aria-label="Suchen"
               sx={{ ...touchIconButtonSx, minWidth: 72, minHeight: 72, width: 72, height: 72, flexShrink: 0 }}
             >
@@ -108,6 +176,7 @@ export function AbholungPage() {
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             fullWidth
+            disabled={!selectedEventId}
             sx={touchFieldSx}
             onKeyDown={(e) => e.key === 'Enter' && void handleLookup()}
             helperText="Bei Online-Bestellungen zur Verifikation erforderlich"

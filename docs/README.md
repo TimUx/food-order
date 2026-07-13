@@ -26,7 +26,7 @@ Drei Zielgruppen — wählen Sie Ihre Rolle:
 **In drei Schritten:**
 
 1. **[Installation](INSTALLATION.md)** — `./install.sh`, Docker, erste Anmeldung
-2. **[Ersteinrichtung](ADMIN_GUIDE.md#erste-schritte-nach-der-installation)** — Verein, Event, Speisekarte, Team
+2. **[Ersteinrichtung](ADMIN_GUIDE.md#erste-schritte-nach-der-installation)** — Verein, Event, Speisen-Katalog, Team
 3. **[Checkliste Veranstaltungstag](OPERATIONS.md#vor-dem-sommerfest-checkliste)** — Backup, Health, Tablets testen
 
 | Weitere Themen | Anleitung |

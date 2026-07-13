@@ -61,7 +61,7 @@ async function main(): Promise<void> {
   const health = await measure('health', `${platformApiBase}/health`);
   results.healthMs = health.ms;
 
-  const menu = await measure('menu', `${apiBase}/public/menu`, { headers: tenantHeaders() });
+  const menu = await measure('menu', `${apiBase}/public/menu?eventId=${encodeURIComponent(eventId)}`, { headers: tenantHeaders() });
   results.publicMenuMs = menu.ms;
   results.publicMenuBytes = menu.bytes ?? 0;
 
@@ -74,16 +74,16 @@ async function main(): Promise<void> {
   const routing = await measure('routing', `${platformApiBase}/public/routing-config`);
   results.routingConfigMs = routing.ms;
 
-  const realtime1 = await measure('realtime-pickup', `${apiBase}/realtime/pickup-board`, {
+  const realtime1 = await measure('realtime-pickup', `${apiBase}/realtime/pickup-board?eventId=${encodeURIComponent(eventId)}`, {
     headers: tenantHeaders(),
   });
   results.realtimePickupColdMs = realtime1.ms;
-  const etagRes = await fetch(`${apiBase}/realtime/pickup-board`, { headers: tenantHeaders() });
+  const etagRes = await fetch(`${apiBase}/realtime/pickup-board?eventId=${encodeURIComponent(eventId)}`, { headers: tenantHeaders() });
   const etag = etagRes.headers.get('etag') ?? '';
   if (etag) {
     const realtime2 = await measure(
       'realtime-pickup-etag',
-      `${apiBase}/realtime/pickup-board?etag=${encodeURIComponent(etag)}`,
+      `${apiBase}/realtime/pickup-board?eventId=${encodeURIComponent(eventId)}&etag=${encodeURIComponent(etag)}`,
       { headers: tenantHeaders() }
     );
     results.realtimePickupEtagMs = realtime2.ms;

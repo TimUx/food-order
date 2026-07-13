@@ -8,6 +8,10 @@ import {
   Alert,
   CircularProgress,
   Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { StaffLayout } from '@/components/StaffLayout';
@@ -17,10 +21,11 @@ import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
 import { PosPaymentDialog } from '@/components/PosPaymentDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
-import { FoodItem, Order } from '@/types';
+import { FoodItem, Order, PublicEvent } from '@/types';
 import type { PaymentChoiceId, PaymentMethodsResponse } from '@/types/payment';
 import { buildPosPaymentSelection, isOnlineChoice } from '@/utils/paymentSelection';
-import { touchPrimaryButtonSx } from '@/theme/touch';
+import { resolvePreferredEventId } from '@/utils/eventSelection';
+import { touchPrimaryButtonSx, touchFieldSx } from '@/theme/touch';
 
 export function BestellungPage() {
   const { token } = useAuth();
@@ -29,7 +34,8 @@ export function BestellungPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [eventName, setEventName] = useState('');
+  const [cashierEvents, setCashierEvents] = useState<PublicEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
   const [lastOrderNumber, setLastOrderNumber] = useState<string | null>(null);
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsResponse | null>(null);
@@ -41,21 +47,30 @@ export function BestellungPage() {
 
   useEffect(() => {
     if (!token) return;
-    Promise.all([
-      api.getActiveEvent(token).then((event) => {
-        setEventName(event.name);
-        return api.getFoodItems(token, event.id);
-      }),
-    ])
-      .then(([foodItems]) => {
+    api.getCashierEvents(token)
+      .then((events) => {
+        setCashierEvents(events);
+        const todayEvent = resolvePreferredEventId(events);
+        setSelectedEventId(todayEvent);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !selectedEventId) {
+      setItems([]);
+      return;
+    }
+    api.getFoodItems(token, selectedEventId)
+      .then((foodItems) => {
         setItems(foodItems.filter((i) => i.active));
         const initial: Record<string, number> = {};
         foodItems.forEach((i) => { initial[i.id] = 0; });
         setQuantities(initial);
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [token]);
+      .catch((err) => setError(err.message));
+  }, [token, selectedEventId]);
 
   const loadPaymentMethods = useCallback(async () => {
     if (paymentMethods !== null || paymentMethodsLoading) return;
@@ -108,7 +123,7 @@ export function BestellungPage() {
   };
 
   const handleSubmit = async () => {
-    if (!token || selectedItems.length === 0) return;
+    if (!token || !selectedEventId || selectedItems.length === 0) return;
     setSubmitting(true);
     setError('');
     try {
@@ -120,6 +135,7 @@ export function BestellungPage() {
 
       const order = await api.createCashierOrder(
         token,
+        selectedEventId,
         selectedItems,
         isOnlineChoice(effectiveChoice) ? effectiveChoice : undefined
       );
@@ -229,15 +245,43 @@ export function BestellungPage() {
     );
   }
 
+  const selectedEvent = cashierEvents.find((event) => event.id === selectedEventId);
+
   return (
     <StaffLayout title="Bestellung" fullWidth>
       <Typography variant="h4" fontWeight={800} gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}>
         Bestellung vor Ort
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: '1.1rem' }}>
-        Gerichte auswählen und Bestellung speichern.
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 2, fontSize: '1.1rem' }}>
+        Veranstaltung wählen und Gerichte auswählen.
       </Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      <FormControl fullWidth sx={{ mb: 3, ...touchFieldSx }}>
+        <InputLabel id="cashier-event-label">Veranstaltung</InputLabel>
+        <Select
+          labelId="cashier-event-label"
+          label="Veranstaltung"
+          value={selectedEventId}
+          onChange={(e) => setSelectedEventId(e.target.value)}
+          displayEmpty
+        >
+          <MenuItem value="">
+            <em>Veranstaltung wählen</em>
+          </MenuItem>
+          {cashierEvents.map((event) => (
+            <MenuItem key={event.id} value={event.id}>
+              {event.name} · {event.eventDateLabel}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      {!selectedEventId && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Bitte wählen Sie zuerst eine Veranstaltung aus.
+        </Alert>
+      )}
 
       {changeMethodMode && pendingOrder && (
         <Paper sx={{ p: 2, mb: 2, border: 2, borderColor: 'warning.main' }}>
@@ -324,7 +368,7 @@ export function BestellungPage() {
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={submitting || totalCount === 0 || paymentMethodsLoading || posPaymentOpen}
+            disabled={submitting || !selectedEventId || totalCount === 0 || paymentMethodsLoading || posPaymentOpen}
             sx={{
               ...touchPrimaryButtonSx,
               minHeight: 72,
@@ -345,7 +389,7 @@ export function BestellungPage() {
           open={posPaymentOpen}
           order={pendingOrder}
           payment={pendingOrder.payment}
-          eventName={eventName}
+          eventName={selectedEvent?.name ?? ''}
           paymentMethods={paymentMethods?.methods ?? []}
           paymentLabel={paymentSelection.options.find((o) => o.id === paymentChoice)?.label ?? 'Online bezahlen'}
           token={token}

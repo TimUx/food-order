@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { renderTemplate } from './render';
-import { buildOrderConfirmationMessage, buildOrderCancellationMessage, buildKitchenCompletedMessage } from '../services/MessageTemplateService';
+import { buildOrderConfirmationMessage, buildOrderCancellationMessage, buildKitchenCompletedMessage, buildPaymentFailedMessage } from '../services/MessageTemplateService';
 import { defaultNotificationConfig } from '../config';
 
 const testConfig = {
@@ -61,5 +61,37 @@ describe('notification templates', () => {
     });
     expect(msg.title).toContain('043');
     expect(msg.body).toContain('Gesamt:');
+  });
+
+  it('builds payment failed email for customers', async () => {
+    const msg = await buildPaymentFailedMessage(
+      { displayNumber: '042', reason: 'Karte abgelehnt' },
+      { clubName: 'Feuerwehr Musterstadt', email: 'kontakt@example.de' },
+      testConfig,
+      {
+        id: 'order-3',
+        displayNumber: '042',
+        totalPrice: 18.5,
+        eventDateLabel: 'Samstag, 15. August 2026',
+        items: [{ name: 'Bratwurst', quantity: 2, lineTotal: 9 }],
+      }
+    );
+    expect(msg.title).toContain('042');
+    expect(msg.html).toContain('Onlinezahlung fehlgeschlagen');
+    expect(msg.html).toContain('Karte abgelehnt');
+    expect(msg.html).toContain('Zahlung erneut versuchen');
+    expect(msg.body).toContain('Karte abgelehnt');
+    expect(msg.body).toContain('Feuerwehr Musterstadt');
+  });
+
+  it('builds payment failed push text without order context', async () => {
+    const msg = await buildPaymentFailedMessage(
+      { displayNumber: '042', reason: 'Timeout' },
+      { clubName: 'Feuerwehr Musterstadt' },
+      testConfig
+    );
+    expect(msg.title).toBe('Onlinezahlung fehlgeschlagen');
+    expect(msg.body).toContain('042');
+    expect(msg.html).toBeUndefined();
   });
 });

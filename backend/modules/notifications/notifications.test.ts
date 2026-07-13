@@ -27,6 +27,7 @@ describe('Notification channels', () => {
     expect(isChannelEnabledForEvent(defaultNotificationConfig, 'orderCreated', 'email')).toBe(true);
     expect(isChannelEnabledForEvent(defaultNotificationConfig, 'kitchenCompleted', 'ntfy')).toBe(true);
     expect(isChannelEnabledForEvent(defaultNotificationConfig, 'kitchenCompleted', 'email')).toBe(false);
+    expect(isChannelEnabledForEvent(defaultNotificationConfig, 'paymentFailed', 'email')).toBe(true);
     expect(isChannelEnabledForEvent(defaultNotificationConfig, 'paymentFailed', 'ntfy')).toBe(true);
     expect(isChannelEnabledForEvent(defaultNotificationConfig, 'moduleActivated', 'ntfy')).toBe(false);
   });

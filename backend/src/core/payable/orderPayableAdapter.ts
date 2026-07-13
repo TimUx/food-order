@@ -37,6 +37,9 @@ export const orderPayableAdapter: PayableResourceAdapter = {
     const order = await orderRepository.findById(id);
     if (!order) return;
 
+    // Nach erfolgreicher Zahlung automatisch für die Küche freigeben.
+    await orderRepository.setReleasedToKitchen(id, true);
+
     const mapped = {
       id: order.id,
       eventId: order.eventId,

@@ -168,21 +168,33 @@ async function main() {
   ];
 
   for (const item of foodItems) {
+    const id = `00000000-0000-0000-0001-${item.sortOrder.toString().padStart(12, '0')}`;
     await prisma.foodItem.upsert({
-      where: {
-        id: `00000000-0000-0000-0001-${item.sortOrder.toString().padStart(12, '0')}`,
-      },
+      where: { id },
       update: {},
       create: {
-        id: `00000000-0000-0000-0001-${item.sortOrder.toString().padStart(12, '0')}`,
+        id,
         tenantId: DEFAULT_TENANT_ID,
-        eventId: event.id,
         name: item.name,
         description: item.description,
         price: item.price,
         sortOrder: item.sortOrder,
         active: true,
-        soldOut: false,
+      },
+    });
+    await prisma.eventFoodItem.upsert({
+      where: {
+        eventId_foodItemId: {
+          eventId: event.id,
+          foodItemId: id,
+        },
+      },
+      update: {},
+      create: {
+        tenantId: DEFAULT_TENANT_ID,
+        eventId: event.id,
+        foodItemId: id,
+        sortOrder: item.sortOrder,
       },
     });
   }

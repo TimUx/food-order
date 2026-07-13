@@ -7,7 +7,12 @@ import { resolveSmtpTransportOptions } from '../../../src/platform/mail/smtpTran
 
 function resolveSmtpPass(pass: unknown): string {
   if (typeof pass !== 'string') return '';
-  return isEncryptedValue(pass) ? decryptValue(pass) : pass;
+  if (!isEncryptedValue(pass)) return pass;
+  try {
+    return decryptValue(pass);
+  } catch {
+    return '';
+  }
 }
 
 function createTransporter(smtp: NotificationConfig['smtp']): Transporter | null {
@@ -40,7 +45,8 @@ export class SmtpChannel implements NotificationChannel {
   readonly label = 'E-Mail (SMTP)';
 
   isConfigured(config: NotificationConfig): boolean {
-    return Boolean(config.smtp.enabled && String(config.smtp.host ?? '').trim());
+    const smtp = config.smtp;
+    return Boolean(smtp?.enabled && String(smtp.host ?? '').trim());
   }
 
   async send(config: NotificationConfig, message: NotificationMessage): Promise<ChannelSendResult> {

@@ -58,14 +58,21 @@ class LegalModule extends BaseModule {
   }
 
   async healthCheck(_context: FeatureContext): Promise<ModuleHealthCheckResult> {
-    const pages = await legalPageService.listAdminPages();
-    const published = pages.filter((page) => page.isPubliclyVisible);
-    return {
-      status: published.length > 0 ? 'healthy' : 'degraded',
-      message: published.length > 0
-        ? `${published.length} Seite(n) veroeffentlicht`
-        : 'Keine rechtlichen Seiten veroeffentlicht',
-    };
+    try {
+      const pages = await legalPageService.listAdminPages();
+      const published = pages.filter((page) => page.isPubliclyVisible);
+      return {
+        status: published.length > 0 ? 'healthy' : 'degraded',
+        message: published.length > 0
+          ? `${published.length} Seite(n) veroeffentlicht`
+          : 'Keine rechtlichen Seiten veroeffentlicht',
+      };
+    } catch (err) {
+      return {
+        status: 'degraded',
+        message: err instanceof Error ? err.message : 'Health-Check fehlgeschlagen',
+      };
+    }
   }
 
   getConfigContract() {

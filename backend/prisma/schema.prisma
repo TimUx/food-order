@@ -127,6 +127,7 @@ model Tenant {
   events        Event[]
   customers     Customer[]
   foodItems     FoodItem[]
+  eventFoodItems EventFoodItem[]
   orders        Order[]
   dailyCounters DailyOrderCounter[]
   legalPages    LegalPage[]
@@ -255,7 +256,7 @@ model Event {
   isActive            Boolean    @default(false)
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
-  foodItems           FoodItem[]
+  foodItems           EventFoodItem[]
   orders              Order[]
   dailyCounters       DailyOrderCounter[]
 
@@ -292,26 +293,42 @@ model Customer {
 }
 
 model FoodItem {
-  id          String      @id @default(uuid())
-  tenantId    String      @map("tenant_id")
-  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  eventId     String
-  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id          String           @id @default(uuid())
+  tenantId    String           @map("tenant_id")
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
   description String?
-  price       Decimal     @db.Decimal(10, 2)
+  price       Decimal          @db.Decimal(10, 2)
   imageUrl    String?
-  sortOrder   Int         @default(0)
-  active      Boolean     @default(true)
-  soldOut     Boolean     @default(false)
+  sortOrder   Int              @default(0)
+  active      Boolean          @default(true)
   maxQuantity Int?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   orderItems  OrderItem[]
+  eventLinks  EventFoodItem[]
 
   @@index([tenantId])
-  @@index([tenantId, eventId])
+}
+
+model EventFoodItem {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  eventId    String   @map("event_id")
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  foodItemId String   @map("food_item_id")
+  foodItem   FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+  sortOrder  Int      @default(0) @map("sort_order")
+  soldOut    Boolean  @default(false) @map("sold_out")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([eventId, foodItemId])
+  @@index([tenantId])
   @@index([eventId])
+  @@index([foodItemId])
+  @@map("event_food_items")
 }
 
 model Order {
@@ -327,6 +344,7 @@ model Order {
   orderDate       DateTime      @db.Date
   source          OrderSource
   status          StatusCode    @default(NEW)
+  releasedToKitchen Boolean     @default(false) @map("released_to_kitchen")
   totalPrice      Decimal       @db.Decimal(10, 2)
   readyAt         DateTime?
   pickedUpAt      DateTime?
@@ -346,6 +364,7 @@ model Order {
   @@index([tenantId, updatedAt])
   @@index([eventId, status, readyAt])
   @@index([tenantId, lookupToken])
+  @@index([tenantId, eventId, releasedToKitchen])
 }
 
 model OrderItem {

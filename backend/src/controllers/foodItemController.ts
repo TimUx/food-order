@@ -2,10 +2,37 @@ import { Response, NextFunction } from 'express';
 import { foodItemService } from '../services/foodItemService';
 
 export const foodItemController = {
-  async getPublic(_req: unknown, res: Response, next: NextFunction) {
+  async getPublic(req: { query: { eventId?: string } }, res: Response, next: NextFunction) {
     try {
-      const result = await foodItemService.getPublicItems();
+      const eventId = req.query.eventId;
+      if (!eventId) {
+        res.status(400).json({ error: 'Veranstaltung erforderlich' });
+        return;
+      }
+      const result = await foodItemService.getPublicItems(eventId);
       res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getCatalog(_req: unknown, res: Response, next: NextFunction) {
+    try {
+      const items = await foodItemService.getCatalog();
+      res.json(items);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async createCatalog(
+    req: { body: Parameters<typeof foodItemService.createCatalogItem>[0] },
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const item = await foodItemService.createCatalogItem(req.body);
+      res.status(201).json(item);
     } catch (err) {
       next(err);
     }
@@ -20,13 +47,35 @@ export const foodItemController = {
     }
   },
 
-  async create(
-    req: { params: { eventId: string }; body: Parameters<typeof foodItemService.create>[1] },
+  async getEventAssignments(req: { params: { eventId: string } }, res: Response, next: NextFunction) {
+    try {
+      const items = await foodItemService.getEventAssignments(req.params.eventId);
+      res.json(items);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async setEventAssignments(
+    req: { params: { eventId: string }; body: { foodItemIds: string[] } },
     res: Response,
     next: NextFunction
   ) {
     try {
-      const item = await foodItemService.create(req.params.eventId, req.body);
+      const items = await foodItemService.setEventAssignments(req.params.eventId, req.body.foodItemIds);
+      res.json(items);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async create(
+    req: { params: { eventId: string }; body: Parameters<typeof foodItemService.createForEvent>[1] },
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const item = await foodItemService.createForEvent(req.params.eventId, req.body);
       res.status(201).json(item);
     } catch (err) {
       next(err);
@@ -47,12 +96,12 @@ export const foodItemController = {
   },
 
   async setSoldOut(
-    req: { params: { id: string }; body: { soldOut: boolean } },
+    req: { params: { id: string }; body: { soldOut: boolean; eventId?: string } },
     res: Response,
     next: NextFunction
   ) {
     try {
-      const item = await foodItemService.setSoldOut(req.params.id, req.body.soldOut);
+      const item = await foodItemService.setSoldOut(req.params.id, req.body.soldOut, req.body.eventId);
       res.json(item);
     } catch (err) {
       next(err);

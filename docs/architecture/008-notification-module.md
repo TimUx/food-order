@@ -80,7 +80,7 @@ Wenn das optionale Legal-Modul aktiv ist, ergaenzt `MessageTemplateService` Kund
 | `orderCancelled` | E-Mail | Hook `ORDER_CANCELLED` |
 | `orderPaid` | optional Team | Hook `ORDER_PAID` |
 | `kitchenCompleted` | ntfy | Hook `KITCHEN_COMPLETED` |
-| `paymentFailed` | ntfy | Hook `PAYMENT_FAILED` |
+| `paymentFailed` | E-Mail, ntfy | Hook `PAYMENT_FAILED` |
 | `paymentRefunded` | optional | Hook `PAYMENT_REFUNDED` |
 | `moduleActivated` / `moduleDeactivated` | optional | Hook `MODULE_*` |
 

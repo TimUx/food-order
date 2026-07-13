@@ -66,6 +66,9 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!token || !eventId) return;
+    api.getStats(token, eventId)
+      .then(setStats)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Fehler'));
     return subscribeEventStats(token, eventId, setStats, 'normal');
   }, [eventId, token]);
 

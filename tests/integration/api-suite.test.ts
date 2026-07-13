@@ -24,7 +24,7 @@ describe.skipIf(!hasDb)('API integration', () => {
   });
 
   it('returns public menu', async () => {
-    const res = await tenantApi(app).get('/api/public/menu');
+    const res = await tenantApi(app).get(`/api/public/menu?eventId=${QA_EVENT_ID}`);
     expect(res.status).toBe(200);
     expect(res.body.event).toBeDefined();
     expect(Array.isArray(res.body.items)).toBe(true);

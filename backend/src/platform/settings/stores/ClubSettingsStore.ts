@@ -1,4 +1,9 @@
 import { clubRepository } from '../../../repositories/clubRepository';
+import { requireTenantId } from '../../tenant/tenantScope';
+import {
+  pickOrganizationFields,
+  syncClubOrganizationToTenant,
+} from '../../tenant/syncClubOrganizationToTenant';
 import {
   CORE_CLUB_NAMESPACE,
   CORE_EMAIL_NAMESPACE,
@@ -69,5 +74,14 @@ export class ClubSettingsStore implements SettingsStore {
     }
 
     await clubRepository.update(update as Parameters<typeof clubRepository.update>[0]);
+
+    if (namespace === CORE_CLUB_NAMESPACE) {
+      const tenantId = requireTenantId();
+      await syncClubOrganizationToTenant(tenantId, pickOrganizationFields(update));
+
+      const { clubService } = await import('../../../services/clubService');
+      const { emitClubUpdate } = await import('../../../socket');
+      emitClubUpdate(await clubService.getPublic());
+    }
   }
 }

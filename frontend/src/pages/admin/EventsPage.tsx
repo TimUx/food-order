@@ -18,14 +18,21 @@ import {
   CircularProgress,
   Stack,
   Grid,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { AdminLayout } from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/services/api';
-import { Event } from '@/types';
+import { api, formatPrice } from '@/services/api';
+import { Event, FoodItem } from '@/types';
 
 interface EventForm {
   name: string;
@@ -36,7 +43,7 @@ interface EventForm {
   onlineOrdersActive: boolean;
   cashierActive: boolean;
   ordersClosed: boolean;
-  activateOnCreate: boolean;
+  isActive: boolean;
 }
 
 const emptyForm: EventForm = {
@@ -48,7 +55,7 @@ const emptyForm: EventForm = {
   onlineOrdersActive: true,
   cashierActive: true,
   ordersClosed: false,
-  activateOnCreate: true,
+  isActive: true,
 };
 
 export function EventsPage() {
@@ -59,6 +66,11 @@ export function EventsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Event | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
+  const [foodDialogOpen, setFoodDialogOpen] = useState(false);
+  const [foodEvent, setFoodEvent] = useState<Event | null>(null);
+  const [foodAssignments, setFoodAssignments] = useState<FoodItem[]>([]);
+  const [foodLoading, setFoodLoading] = useState(false);
+  const [foodSaving, setFoodSaving] = useState(false);
 
   const loadEvents = () => {
     if (!token) return;
@@ -87,33 +99,62 @@ export function EventsPage() {
       onlineOrdersActive: event.onlineOrdersActive,
       cashierActive: event.cashierActive,
       ordersClosed: event.ordersClosed,
-      activateOnCreate: false,
+      isActive: event.isActive,
     });
     setDialogOpen(true);
   };
 
+  const openFoodAssignments = async (event: Event) => {
+    if (!token) return;
+    setFoodEvent(event);
+    setFoodDialogOpen(true);
+    setFoodLoading(true);
+    setError('');
+    try {
+      const assignments = await api.getEventFoodAssignments(token, event.id);
+      setFoodAssignments(assignments);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Speisen konnten nicht geladen werden');
+    } finally {
+      setFoodLoading(false);
+    }
+  };
+
+  const toggleFoodAssignment = (id: string) => {
+    setFoodAssignments((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, assigned: !item.assigned } : item))
+    );
+  };
+
+  const handleSaveFoodAssignments = async () => {
+    if (!token || !foodEvent) return;
+    setFoodSaving(true);
+    setError('');
+    try {
+      const foodItemIds = foodAssignments.filter((item) => item.assigned).map((item) => item.id);
+      await api.setEventFoodAssignments(token, foodEvent.id, foodItemIds);
+      setFoodDialogOpen(false);
+      setFoodEvent(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
+    } finally {
+      setFoodSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!token) return;
+    const payload = { ...form };
     try {
       if (editing) {
-        await api.updateEvent(token, editing.id, form);
+        await api.updateEvent(token, editing.id, payload);
       } else {
-        await api.createEvent(token, form);
+        await api.createEvent(token, { ...payload, activateOnCreate: payload.isActive });
       }
       setDialogOpen(false);
       loadEvents();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
-    }
-  };
-
-  const handleActivate = async (id: string) => {
-    if (!token) return;
-    try {
-      await api.activateEvent(token, id);
-      loadEvents();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Aktivierung fehlgeschlagen');
     }
   };
 
@@ -126,6 +167,8 @@ export function EventsPage() {
       </AdminLayout>
     );
   }
+
+  const assignedCount = foodAssignments.filter((item) => item.assigned).length;
 
   return (
     <AdminLayout title="Veranstaltungen" fullWidth>
@@ -145,7 +188,9 @@ export function EventsPage() {
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="h6" fontWeight={700}>{event.name}</Typography>
-                  {event.isActive && <Chip label="Aktiv" color="primary" size="small" icon={<CheckCircleIcon />} />}
+                  {event.isActive
+                    ? <Chip label="Aktiv" color="primary" size="small" icon={<CheckCircleIcon />} />
+                    : <Chip label="Inaktiv" size="small" />}
                 </Box>
                 {event.description && (
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{event.description}</Typography>
@@ -161,9 +206,7 @@ export function EventsPage() {
               </CardContent>
               <CardActions>
                 <Button size="small" startIcon={<EditIcon />} onClick={() => openEdit(event)}>Bearbeiten</Button>
-                {!event.isActive && (
-                  <Button size="small" color="primary" onClick={() => handleActivate(event.id)}>Aktivieren</Button>
-                )}
+                <Button size="small" startIcon={<RestaurantMenuIcon />} onClick={() => void openFoodAssignments(event)}>Speisen</Button>
               </CardActions>
             </Card>
           </Grid>
@@ -182,14 +225,66 @@ export function EventsPage() {
             <FormControlLabel control={<Switch checked={form.onlineOrdersActive} onChange={(e) => setForm({ ...form, onlineOrdersActive: e.target.checked })} />} label="Onlinebestellungen aktiv" />
             <FormControlLabel control={<Switch checked={form.cashierActive} onChange={(e) => setForm({ ...form, cashierActive: e.target.checked })} />} label="Bestellung vor Ort aktiv" />
             <FormControlLabel control={<Switch checked={form.ordersClosed} onChange={(e) => setForm({ ...form, ordersClosed: e.target.checked })} />} label="Bestellungen geschlossen" />
-            {!editing && (
-              <FormControlLabel control={<Switch checked={form.activateOnCreate} onChange={(e) => setForm({ ...form, activateOnCreate: e.target.checked })} />} label="Nach dem Erstellen sofort aktivieren" />
-            )}
+            <FormControlLabel control={<Switch checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />} label="Veranstaltung aktiv" />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Abbrechen</Button>
           <Button variant="contained" onClick={handleSave}>Speichern</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={foodDialogOpen} onClose={() => setFoodDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Speisen für {foodEvent?.name}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Wählen Sie die Gerichte aus dem Katalog, die bei dieser Veranstaltung angeboten werden sollen.
+          </Typography>
+          {foodLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : foodAssignments.length === 0 ? (
+            <Alert severity="info">
+              Noch keine Gerichte im Katalog. Legen Sie zuerst Speisen unter Speisenverwaltung an.
+            </Alert>
+          ) : (
+            <List dense disablePadding>
+              {foodAssignments.map((item) => (
+                <ListItem key={item.id} disablePadding>
+                  <ListItemButton onClick={() => toggleFoodAssignment(item.id)}>
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <Checkbox
+                        edge="start"
+                        checked={!!item.assigned}
+                        tabIndex={-1}
+                        disableRipple
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.name}
+                      secondary={`${formatPrice(Number(item.price))}${item.active ? '' : ' · inaktiv'}`}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Typography variant="body2" color="text.secondary" sx={{ flex: 1, pl: 2 }}>
+            {assignedCount} von {foodAssignments.length} ausgewählt
+          </Typography>
+          <Button onClick={() => setFoodDialogOpen(false)}>Abbrechen</Button>
+          <Button
+            variant="contained"
+            onClick={() => void handleSaveFoodAssignments()}
+            disabled={foodLoading || foodSaving || foodAssignments.length === 0}
+          >
+            Speichern
+          </Button>
         </DialogActions>
       </Dialog>
     </AdminLayout>

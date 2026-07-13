@@ -318,13 +318,15 @@ Basis-URL: `/api`
 |---------|------|-------------|
 | GET | `/public/club` | Veranstalterdaten (öffentlich) |
 | GET | `/public/order-settings` | Pflichtfelder & Stornierungsfrist |
-| GET | `/public/event` | Aktive Veranstaltung |
-| GET | `/public/menu` | Speisekarte + Event-Info |
-| POST | `/public/orders` | Online-Bestellung |
-| POST | `/public/orders/lookup` | Status per Nummer + Nachname |
+| GET | `/public/event` | Standard-Veranstaltung (heutiges Datum, falls eindeutig) |
+| GET | `/public/events` | Online-buchbare Veranstaltungen |
+| GET | `/public/events/pickup` | Veranstaltungen für Abholboard/Abholung |
+| GET | `/public/menu?eventId=` | Speisekarte + Event-Info |
+| POST | `/public/orders` | Online-Bestellung (Body: `eventId`, …) |
+| POST | `/public/orders/lookup` | Status per Nummer + Nachname (Body: `eventId`, …) |
 | GET | `/public/orders/:id` | Bestellung per ID (inkl. Storno-Infos) |
 | POST | `/public/orders/:id/cancel` | Online-Bestellung stornieren (Nachname) |
-| GET | `/public/pickup-board` | Fertige Bestellungen |
+| GET | `/public/pickup-board?eventId=` | Fertige Bestellungen einer Veranstaltung |
 | GET | `/public/payment/status` | Onlinezahlung verfügbar? |
 | GET | `/public/legal-links` | Veröffentlichte Rechtslinks für Footer/E-Mail |
 | GET | `/public/legal/:slug` | Veröffentlichte Rechtsseite nach URL-Slug |
@@ -351,7 +353,12 @@ Vollständige Modul-API: siehe [ADR-003](architecture/003-module-system.md) und 
 |---------|------|-------|
 | POST | `/auth/login` | – |
 | GET | `/staff/events` | ADMIN, STAFF |
-| POST | `/staff/orders/cashier` | ADMIN, STAFF |
+| GET | `/staff/events/cashier` | Kassen-Veranstaltungen |
+| GET | `/staff/events/pickup` | Abhol-Veranstaltungen |
+| GET | `/staff/food-items` | Speisen-Katalog |
+| PUT | `/staff/events/:id/food-item-assignments` | Speisen-Zuordnung |
+| POST | `/staff/orders/cashier` | Body: `eventId`, `items`, … |
+| POST | `/staff/orders/lookup` | Body: `eventId`, `orderNumber`, optional `lastName` |
 | PATCH | `/staff/orders/:id/status` | ADMIN, STAFF |
 | PUT | `/staff/club` | ADMIN |
 | POST | `/staff/club/logo` | ADMIN |
@@ -412,7 +419,12 @@ Implementierung in `backend/src/utils/helpers.ts`:
 
 Küche und Abholung sehen am Veranstaltungstag alle Bestellungen – auch solche, die Wochen vorher aufgegeben wurden.
 
-Bei aktivem **Payment-Modul** erscheinen Online-Bestellungen erst in der Küche, nachdem die Zahlung abgeschlossen wurde. Unbezahlte Bestellungen werden per `paymentServiceRegistry.filterReleasedIds()` ausgefiltert.
+**Wichtig (Zahlung & Küchenfreigabe):**
+
+- Im **Mitarbeiterbereich** sind Bestellungen **immer sichtbar** (unabhängig vom Zahlstatus). Der Zahlstatus wird als Label angezeigt.
+- In der **Küche** erscheinen Bestellungen erst, wenn sie **für die Küche freigegeben** wurden (`Order.released_to_kitchen`).
+  - Vor-Ort-Bestellungen werden sofort freigegeben.
+  - Online-Bestellungen werden nach erfolgreicher Online-Zahlung automatisch freigegeben oder können in der Bestellliste manuell freigegeben werden.
 
 ---
 

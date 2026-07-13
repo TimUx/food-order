@@ -15,7 +15,7 @@ import { ModuleRegistry } from './ModuleRegistry';
 import { ModuleManager } from './ModuleManager';
 import { DependencyResolver } from './DependencyResolver';
 import { SettingsService } from './settings/SettingsService';
-import { registerModuleSettingsFromManifest } from '../core/settings/registerCoreSettings';
+import { registerModuleSettingsFromManifest, registerModuleSettingsFromContract } from '../core/settings/registerCoreSettings';
 import type { TenantModule } from '@prisma/client';
 import type { ModuleManifest } from './manifest';
 import { filterDiscoveredManifests } from './manifest';
@@ -212,6 +212,51 @@ describe('registerModuleSettingsFromManifest', () => {
     registerModuleSettingsFromManifest(settings, manifest);
     expect(registerSchema).toHaveBeenCalledWith(
       expect.objectContaining({ namespace: 'module.payment' })
+    );
+  });
+});
+
+describe('registerModuleSettingsFromContract', () => {
+  it('registers fallback schema from module config contract', () => {
+    const registerSchema = vi.fn();
+    const settings = { registerSchema } as unknown as SettingsService;
+
+    const manifest: ModuleManifest = {
+      id: 'legal',
+      name: 'Rechtliche Informationen',
+      description: 'Legal pages',
+      version: '1.4.0',
+      author: 'test',
+      license: 'MIT',
+      entry: 'index',
+      dependencies: { required: [], optional: [] },
+      permissions: [],
+      menus: [],
+      widgets: [],
+      reports: [],
+      developerPages: [],
+      healthChecks: [],
+      routes: [],
+      minimumCoreVersion: '1.0.0',
+      productionReady: true,
+      preview: false,
+    };
+
+    registerModuleSettingsFromContract(settings, 'legal', manifest, {
+      defaults: {
+        appendClubContactToImprint: true,
+        showFooterLinks: true,
+      },
+      schema: {} as never,
+    });
+
+    expect(registerSchema).toHaveBeenCalledWith(
+      expect.objectContaining({
+        namespace: 'module.legal',
+        fields: expect.arrayContaining([
+          expect.objectContaining({ key: 'appendClubContactToImprint', type: 'boolean' }),
+        ]),
+      })
     );
   });
 });

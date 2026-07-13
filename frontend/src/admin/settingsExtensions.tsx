@@ -20,6 +20,7 @@ function ClubLogoExtension() {
       setSuccess('Logo hochgeladen');
       setError('');
     } catch (err) {
+      setSuccess('');
       setError(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
     }
   };
@@ -32,7 +33,7 @@ function ClubLogoExtension() {
       {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
         {logoUrl ? (
-          <Avatar src={logoUrl} sx={{ width: 80, height: 80 }} />
+          <Avatar key={club.logoUrl ?? 'no-logo'} src={logoUrl} sx={{ width: 80, height: 80 }} />
         ) : (
           <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main' }}>
             <RestaurantMenuIcon fontSize="large" />
@@ -129,7 +130,7 @@ function NotificationSmtpTestExtension() {
         SMTP-Verbindung testen
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        Einstellungen zuerst speichern. SMTP wird ausschließlich in der WebUI konfiguriert.
+        SMTP wird zentral in den Plattform-Einstellungen konfiguriert. Optional können hier nur Absendername und Reply-To überschrieben werden.
       </Typography>
       {testError && <Alert severity="error" sx={{ mb: 2 }}>{testError}</Alert>}
       <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">

@@ -39,6 +39,39 @@
       "requiredPermission": "legal.view"
     }
   ],
+  "settings": {
+    "namespace": "module.legal",
+    "label": "Rechtliche Informationen",
+    "description": "Footer-Links und Impressum-Ergaenzungen",
+    "adminPath": "/admin/legal",
+    "permission": "legal.manage",
+    "groups": [
+      { "id": "general", "label": "Allgemein" }
+    ],
+    "fields": [
+      {
+        "key": "appendClubContactToImprint",
+        "group": "general",
+        "label": "Kontaktinformationen automatisch im Impressum ergaenzen",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "showFooterLinks",
+        "group": "general",
+        "label": "Veroeffentlichte Seiten im Footer der Bestellseite anzeigen",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "showNotificationLinks",
+        "group": "general",
+        "label": "Veroeffentlichte Seiten in Benachrichtigungs-E-Mails verlinken",
+        "type": "boolean",
+        "default": true
+      }
+    ]
+  },
   "healthChecks": [
     {
       "id": "pages",

@@ -19,12 +19,14 @@ import { FoodItemCard } from '@/components/FoodItemCard';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
 import { PaymentDialog } from '@/components/PaymentDialog';
+import EventIcon from '@mui/icons-material/Event';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { api, formatPrice } from '@/services/api';
-import { FoodItem, Order } from '@/types';
+import { FoodItem, Order, PublicEvent } from '@/types';
 import { OrderFieldConfig, DEFAULT_ORDER_FIELD_CONFIG } from '@/types/club';
 import type { PaymentChoiceId, PaymentMethodsResponse } from '@/types/payment';
 import { buildPaymentSelection, isOnlineChoice, getPaymentOptionLabel } from '@/utils/paymentSelection';
-import { touchFieldSx, touchPrimaryButtonSx, touchButtonSx } from '@/theme/touch';
+import { touchFieldSx, touchPrimaryButtonSx, touchButtonSx, touchSquareActionSx } from '@/theme/touch';
 
 function fieldLabel(name: string, required: boolean): string {
   return required ? `${name} *` : `${name} (optional)`;
@@ -47,6 +49,8 @@ export function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [availableEvents, setAvailableEvents] = useState<PublicEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [eventName, setEventName] = useState('');
   const [eventDateLabel, setEventDateLabel] = useState('');
   const [items, setItems] = useState<FoodItem[]>([]);
@@ -68,20 +72,46 @@ export function OrderPage() {
 
   const turnstileRequired = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY);
 
-  useEffect(() => {
-    Promise.all([api.getPublicMenu(), api.getOrderSettings()])
-      .then(([menuData, settings]) => {
-        setEventName(menuData.event.name);
-        setEventDateLabel((menuData.event as { eventDateLabel?: string }).eventDateLabel || '');
-        setItems(menuData.items);
-        setFieldConfig(settings.fields);
-        const initial: Record<string, number> = {};
-        menuData.items.forEach((i) => { initial[i.id] = 0; });
-        setQuantities(initial);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+  const loadMenu = useCallback(async (eventId: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      const menuData = await api.getPublicMenu(eventId);
+      setEventName(menuData.event.name);
+      setEventDateLabel((menuData.event as { eventDateLabel?: string }).eventDateLabel || '');
+      setItems(menuData.items);
+      const initial: Record<string, number> = {};
+      menuData.items.forEach((i) => { initial[i.id] = 0; });
+      setQuantities(initial);
+    } catch (err) {
+      setItems([]);
+      setError(err instanceof Error ? err.message : 'Speisekarte konnte nicht geladen werden');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  const handleSelectEvent = (eventId: string) => {
+    setSelectedEventId(eventId);
+    void loadMenu(eventId);
+  };
+
+  useEffect(() => {
+    Promise.all([api.getPublicEvents(), api.getOrderSettings()])
+      .then(([events, settings]) => {
+        setAvailableEvents(events);
+        setFieldConfig(settings.fields);
+        if (events.length === 1) {
+          setSelectedEventId(events[0].id);
+          return loadMenu(events[0].id);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [loadMenu]);
 
   const { totalCount, totalPrice, selectedItems } = useMemo(() => {
     let count = 0;
@@ -138,6 +168,10 @@ export function OrderPage() {
       setError('Bitte alle Pflichtfelder ausfüllen');
       return;
     }
+    if (!selectedEventId) {
+      setError('Bitte wählen Sie eine Veranstaltung');
+      return;
+    }
     if (selectedItems.length === 0) {
       setError('Bitte mindestens ein Gericht auswählen');
       return;
@@ -155,6 +189,7 @@ export function OrderPage() {
         : paymentSelection.defaultChoice;
 
       const order = await api.createOrder({
+        eventId: selectedEventId,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim() || undefined,
@@ -233,6 +268,50 @@ export function OrderPage() {
     );
   }
 
+  if (availableEvents.length === 0) {
+    return (
+      <PublicLayout>
+        <Alert severity="info">Derzeit sind keine Bestellungen möglich.</Alert>
+      </PublicLayout>
+    );
+  }
+
+  if (!selectedEventId) {
+    return (
+      <PublicLayout fillHeight>
+        <Typography variant="h4" fontWeight={800} gutterBottom>
+          Veranstaltung wählen
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Bitte wählen Sie die Veranstaltung, für die Sie bestellen möchten.
+        </Typography>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <Grid container spacing={2}>
+          {availableEvents.map((event) => (
+            <Grid key={event.id} size={{ xs: 12, sm: 6, md: 4 }}>
+              <Button
+                variant="outlined"
+                onClick={() => handleSelectEvent(event.id)}
+                startIcon={<EventIcon />}
+                sx={touchSquareActionSx}
+              >
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h6" fontWeight={800}>{event.name}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {event.eventDateLabel}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {event.startTime} – {event.endTime}
+                  </Typography>
+                </Box>
+              </Button>
+            </Grid>
+          ))}
+        </Grid>
+      </PublicLayout>
+    );
+  }
+
   if (items.length === 0 && !error) {
     return (
       <PublicLayout>
@@ -252,6 +331,19 @@ export function OrderPage() {
         }}
       >
         <Box sx={{ flexShrink: 0 }}>
+          {availableEvents.length > 1 && (
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => {
+                setSelectedEventId(null);
+                setItems([]);
+                setError('');
+              }}
+              sx={{ mb: 2, ...touchButtonSx }}
+            >
+              Veranstaltung wechseln
+            </Button>
+          )}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="h4" fontWeight={800} gutterBottom sx={{ mb: { xs: 0.5, sm: 1 } }}>

@@ -69,7 +69,7 @@ Keine vollständigen Datenübertragungen wenn sich nichts geändert hat.
 |----------|--------|
 | `/realtime/events/:id/orders` | Küche, Bestellliste |
 | `/realtime/events/:id/stats` | Dashboard |
-| `/realtime/pickup-board` | Abholmonitor |
+| `/realtime/pickup-board?eventId=` | Abholmonitor (pro Veranstaltung) |
 | `/realtime/orders/:token` | Kunden-Bestellstatus |
 | `/realtime/payment/:sessionId` | Zahlungsdialog |
 | `/realtime/club` | Vereins-Branding |

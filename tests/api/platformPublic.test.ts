@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import supertest from 'supertest';
 import type { Express } from 'express';
 import { createTestApp, tenantApi, tenantApiPath, QA_TENANT_SLUG } from './setup';
+import { QA_EVENT_ID } from '../fixtures/constants';
 
 const request = typeof supertest === 'function'
   ? supertest
@@ -74,7 +75,7 @@ describe('API platform public', () => {
   });
 
   it('GET /:tenant/api/public/menu via tenantApi helper', async () => {
-    const res = await tenantApi(app).get('/api/public/menu');
+    const res = await tenantApi(app).get(`/api/public/menu?eventId=${QA_EVENT_ID}`);
     expect(res.status).toBe(200);
     expect(res.body.items).toBeDefined();
   });

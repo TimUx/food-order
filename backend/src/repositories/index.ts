@@ -76,6 +76,41 @@ export const eventRepository = {
   findById: (id: string) =>
     prisma.event.findFirst({ where: tenantWhere({ id }) }),
 
+  findActiveEvents: () =>
+    prisma.event.findMany({
+      where: tenantWhere({ isActive: true }),
+      orderBy: [{ date: 'asc' }, { name: 'asc' }],
+    }),
+
+  findOnlineOrderableEvents: () =>
+    prisma.event.findMany({
+      where: tenantWhere({
+        isActive: true,
+        onlineOrdersActive: true,
+        ordersClosed: false,
+      }),
+      orderBy: [{ date: 'asc' }, { name: 'asc' }],
+    }),
+
+  findCashierOrderableEvents: () =>
+    prisma.event.findMany({
+      where: tenantWhere({
+        isActive: true,
+        cashierActive: true,
+        ordersClosed: false,
+      }),
+      orderBy: [{ date: 'asc' }, { name: 'asc' }],
+    }),
+
+  findPickupEvents: () =>
+    prisma.event.findMany({
+      where: tenantWhere({
+        isActive: true,
+        ordersClosed: false,
+      }),
+      orderBy: [{ date: 'asc' }, { name: 'asc' }],
+    }),
+
   findActive: () =>
     prisma.event.findFirst({ where: tenantWhere({ isActive: true }) }),
 
@@ -98,31 +133,117 @@ export const eventRepository = {
     return event;
   },
 
-  setActive: async (id: string) => {
-    const tenantId = requireTenantId();
-    return prisma.$transaction(async (tx) => {
-      await tx.event.updateMany({
-        where: { tenantId, isActive: true },
-        data: { isActive: false },
-      });
-      await tx.event.updateMany({
-        where: { tenantId, id },
-        data: { isActive: true },
-      });
-      return tx.event.findFirst({ where: { tenantId, id } });
-    });
-  },
+  setIsActive: async (id: string, isActive: boolean) =>
+    eventRepository.update(id, { isActive }),
 };
 
 export const foodItemRepository = {
-  findByEvent: (eventId: string, activeOnly = false) =>
+  mapForEvent(
+    assignment: {
+      eventId: string;
+      sortOrder: number;
+      soldOut: boolean;
+      foodItem: {
+        id: string;
+        name: string;
+        description: string | null;
+        price: Prisma.Decimal;
+        imageUrl: string | null;
+        sortOrder: number;
+        active: boolean;
+        maxQuantity: number | null;
+      };
+    }
+  ) {
+    return {
+      id: assignment.foodItem.id,
+      eventId: assignment.eventId,
+      name: assignment.foodItem.name,
+      description: assignment.foodItem.description,
+      price: Number(assignment.foodItem.price),
+      imageUrl: assignment.foodItem.imageUrl,
+      sortOrder: assignment.sortOrder,
+      active: assignment.foodItem.active,
+      soldOut: assignment.soldOut,
+      maxQuantity: assignment.foodItem.maxQuantity,
+    };
+  },
+
+  findCatalog: (activeOnly = false) =>
     prisma.foodItem.findMany({
-      where: tenantWhere({
-        eventId,
-        ...(activeOnly ? { active: true } : {}),
-      }),
+      where: tenantWhere(activeOnly ? { active: true } : {}),
       orderBy: { sortOrder: 'asc' },
     }),
+
+  findByEvent: async (eventId: string, activeOnly = false) => {
+    const assignments = await prisma.eventFoodItem.findMany({
+      where: tenantWhere({ eventId }),
+      include: { foodItem: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return assignments
+      .filter((assignment) => !activeOnly || assignment.foodItem.active)
+      .map((assignment) => foodItemRepository.mapForEvent(assignment));
+  },
+
+  findAssignmentsByEvent: (eventId: string) =>
+    prisma.eventFoodItem.findMany({
+      where: tenantWhere({ eventId }),
+      include: { foodItem: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
+
+  findAssignment: (eventId: string, foodItemId: string) =>
+    prisma.eventFoodItem.findFirst({
+      where: tenantWhere({ eventId, foodItemId }),
+      include: { foodItem: true },
+    }),
+
+  setEventAssignments: async (eventId: string, foodItemIds: string[]) => {
+    const tenantId = requireTenantId();
+    const existing = await prisma.eventFoodItem.findMany({
+      where: tenantWhere({ eventId }),
+    });
+    const existingByFoodId = new Map(existing.map((row) => [row.foodItemId, row]));
+    const targetIds = [...new Set(foodItemIds)];
+
+    await prisma.eventFoodItem.deleteMany({
+      where: tenantWhere({
+        eventId,
+        foodItemId: { notIn: targetIds.length > 0 ? targetIds : ['__none__'] },
+      }),
+    });
+
+    const catalog = await prisma.foodItem.findMany({
+      where: tenantWhere({ id: { in: targetIds } }),
+    });
+    const catalogById = new Map(catalog.map((item) => [item.id, item]));
+
+    for (const foodItemId of targetIds) {
+      const foodItem = catalogById.get(foodItemId);
+      if (!foodItem) continue;
+      if (existingByFoodId.has(foodItemId)) continue;
+      await prisma.eventFoodItem.create({
+        data: {
+          tenantId,
+          eventId,
+          foodItemId,
+          sortOrder: foodItem.sortOrder,
+        },
+      });
+    }
+  },
+
+  updateAssignmentSoldOut: async (eventId: string, foodItemId: string, soldOut: boolean) => {
+    const result = await prisma.eventFoodItem.updateMany({
+      where: tenantWhere({ eventId, foodItemId }),
+      data: { soldOut },
+    });
+    if (result.count === 0) throw new Error('Gericht ist dieser Veranstaltung nicht zugeordnet');
+    const assignment = await foodItemRepository.findAssignment(eventId, foodItemId);
+    if (!assignment) throw new Error('Gericht ist dieser Veranstaltung nicht zugeordnet');
+    return foodItemRepository.mapForEvent(assignment);
+  },
 
   findById: (id: string) =>
     prisma.foodItem.findFirst({ where: tenantWhere({ id }) }),
@@ -134,7 +255,7 @@ export const foodItemRepository = {
     });
   },
 
-  create: (data: Prisma.FoodItemUncheckedCreateWithoutTenantInput) =>
+  create: (data: Omit<Prisma.FoodItemUncheckedCreateWithoutTenantInput, 'tenantId'>) =>
     prisma.foodItem.create({
       data: {
         ...data,
@@ -153,8 +274,18 @@ export const foodItemRepository = {
     return item;
   },
 
-  delete: (id: string) =>
-    prisma.foodItem.deleteMany({ where: tenantWhere({ id }) }),
+  findEventIdsForFoodItem: async (foodItemId: string) => {
+    const rows = await prisma.eventFoodItem.findMany({
+      where: tenantWhere({ foodItemId }),
+      select: { eventId: true },
+    });
+    return [...new Set(rows.map((row) => row.eventId))];
+  },
+
+  delete: async (id: string) => {
+    await prisma.eventFoodItem.deleteMany({ where: tenantWhere({ foodItemId: id }) });
+    return prisma.foodItem.deleteMany({ where: tenantWhere({ id }) });
+  },
 };
 
 export const orderRepository = {
@@ -235,6 +366,16 @@ export const orderRepository = {
         items: { include: { foodItem: true } },
       },
     }),
+
+  setReleasedToKitchen: async (id: string, released: boolean) => {
+    const tenantId = requireTenantId();
+    const result = await prisma.order.updateMany({
+      where: { tenantId, id },
+      data: { releasedToKitchen: released },
+    });
+    if (result.count === 0) throw new Error('Bestellung nicht gefunden');
+    return orderRepository.findById(id);
+  },
 
   updateStatus: async (
     id: string,

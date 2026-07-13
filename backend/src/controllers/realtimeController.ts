@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const realtimeController = {
   async syncEventOrders(
-    req: AuthRequest & { params: { eventId: string }; query: { status?: string; etag?: string } },
+    req: AuthRequest & { params: { eventId: string }; query: { status?: string; kitchenOnly?: string; etag?: string } },
     res: Response,
     next: NextFunction
   ) {
@@ -15,9 +15,11 @@ export const realtimeController = {
         statusFilter = req.query.status.split(',').filter(Boolean) as StatusCode[];
         if (statusFilter.length === 0) statusFilter = undefined;
       }
+      const kitchenOnly = req.query.kitchenOnly === '1' || req.query.kitchenOnly === 'true';
       const result = await realtimeSyncService.syncEventOrders(
         req.params.eventId,
         statusFilter,
+        kitchenOnly,
         req.query.etag
       );
       res.json(result);
@@ -39,9 +41,17 @@ export const realtimeController = {
     }
   },
 
-  async syncPickupBoard(req: { query: { etag?: string } }, res: Response, next: NextFunction) {
+  async syncPickupBoard(
+    req: { query: { eventId?: string; etag?: string } },
+    res: Response,
+    next: NextFunction
+  ) {
     try {
-      const result = await realtimeSyncService.syncPickupBoard(req.query.etag);
+      if (!req.query.eventId) {
+        res.status(400).json({ error: 'Veranstaltung erforderlich' });
+        return;
+      }
+      const result = await realtimeSyncService.syncPickupBoard(req.query.eventId, req.query.etag);
       res.json(result);
     } catch (err) {
       next(err);

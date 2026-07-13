@@ -39,6 +39,7 @@ import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useRouting } from '@/contexts/RoutingProvider';
 import { startPrintJobListener } from '@/modules/printer/printBridge';
 import { realtimeService, useRealtimeConnectionState } from '@/services/realtime';
+import { SponsorLinks } from '@/components/SponsorLinks';
 import type { ConnectionState } from '@/services/realtime';
 
 const DRAWER_WIDTH = 260;
@@ -146,11 +147,11 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
   });
 
   const drawerContent = (
-    <Box sx={{ width: DRAWER_WIDTH, pt: 2 }}>
+    <Box sx={{ width: DRAWER_WIDTH, pt: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h6" sx={{ px: 2, mb: 2, fontWeight: 700 }}>
         Mitarbeiterbereich
       </Typography>
-      <List>
+      <List sx={{ flexGrow: 1 }}>
         {filteredNav.map((item) => (
           <ListItemButton
             key={item.path}
@@ -174,6 +175,9 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
           <ListItemText primary="Abmelden" />
         </ListItemButton>
       </List>
+      <Box sx={{ px: 2, pb: 2 }}>
+        <SponsorLinks variant="compact" />
+      </Box>
     </Box>
   );
 
@@ -187,7 +191,7 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
           sx={{
             width: DRAWER_WIDTH,
             flexShrink: 0,
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
+            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' },
           }}
         >
           {drawerContent}
@@ -265,6 +269,10 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
         >
           {children}
         </Container>
+
+        <Box sx={{ px: { xs: 2, sm: 3 }, pb: 3 }}>
+          <SponsorLinks variant="banner" />
+        </Box>
       </Box>
 
       <Drawer

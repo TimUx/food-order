@@ -127,16 +127,30 @@ export async function runQaSeed(options: { orderCount?: number; demoMode?: boole
   for (const dish of dishes) {
     await prisma.foodItem.upsert({
       where: { id: dish.id },
-      update: { active: true, soldOut: false },
+      update: { active: true },
       create: {
         id: dish.id,
         tenantId: DEFAULT_TENANT_ID,
-        eventId: event.id,
         name: dish.name,
         description: `${dish.name} – QA`,
         price: dish.price,
         sortOrder: dish.sortOrder,
         active: true,
+      },
+    });
+    await prisma.eventFoodItem.upsert({
+      where: {
+        eventId_foodItemId: {
+          eventId: event.id,
+          foodItemId: dish.id,
+        },
+      },
+      update: { soldOut: false },
+      create: {
+        tenantId: DEFAULT_TENANT_ID,
+        eventId: event.id,
+        foodItemId: dish.id,
+        sortOrder: dish.sortOrder,
         soldOut: false,
       },
     });
