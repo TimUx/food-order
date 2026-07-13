@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.26 - 2026-07-13
+
+### Behoben
+
+- **CI:** Migrations-Test robuster (deploy + status in einer Session, Retry und klarere Fehlerausgabe).
+
+---
+
 ## 2.4.25 - 2026-07-13
 
 ### Hinzugefügt
