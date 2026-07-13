@@ -93,6 +93,7 @@ export interface Order {
   status: OrderStatus;
   statusLabel: string;
   paymentLabel?: string;
+  releasedToKitchen?: boolean;
   totalPrice: number;
   createdAt: string;
   readyAt?: string;

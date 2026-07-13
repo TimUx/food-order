@@ -251,9 +251,12 @@ export const api = {
     return res.json() as Promise<FoodItem>;
   },
 
-  getOrders: (token: string, eventId: string, status?: string) => {
-    const query = status ? `?status=${status}` : '';
-    return request<Order[]>(`/staff/events/${eventId}/orders${query}`, {}, token);
+  getOrders: (token: string, eventId: string, status?: string, kitchenOnly?: boolean) => {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (kitchenOnly) params.set('kitchenOnly', '1');
+    const q = params.toString();
+    return request<Order[]>(`/staff/events/${eventId}/orders${q ? `?${q}` : ''}`, {}, token);
   },
   getOrdersExport: (token: string, eventId: string) =>
     request<import('@/types/ordersExport').EventOrdersExport>(`/staff/events/${eventId}/orders/export`, {}, token),
@@ -294,11 +297,14 @@ export const api = {
     request<Order>(`/staff/orders/${id}/items`, { method: 'PATCH', body: JSON.stringify({ items }) }, token),
   advanceOrder: (token: string, id: string) =>
     request<Order>(`/staff/orders/${id}/advance`, { method: 'POST' }, token),
+  releaseOrderToKitchen: (token: string, id: string) =>
+    request<Order>(`/staff/orders/${id}/release-to-kitchen`, { method: 'POST' }, token),
 
   // Realtime sync (delta/ETag)
-  syncEventOrders: (token: string, eventId: string, status?: string, etag?: string) => {
+  syncEventOrders: (token: string, eventId: string, status?: string, etag?: string, kitchenOnly?: boolean) => {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
+    if (kitchenOnly) params.set('kitchenOnly', '1');
     if (etag) params.set('etag', etag);
     const q = params.toString();
     return request<SyncResult<Order[]>>(`/realtime/events/${eventId}/orders${q ? `?${q}` : ''}`, {}, token);

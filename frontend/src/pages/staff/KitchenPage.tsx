@@ -34,7 +34,7 @@ export function KitchenPage() {
     const statuses: OrderStatus[] = ['NEW', 'IN_PROGRESS'];
     if (showReady) statuses.push('READY');
     if (showPickedUp) statuses.push('PICKED_UP');
-    api.getOrders(token, eventId, statuses.join(','))
+    api.getOrders(token, eventId, statuses.join(','), true)
       .then(setOrders)
       .catch((err) => setError(err.message));
   };
@@ -53,7 +53,7 @@ export function KitchenPage() {
     const statuses: OrderStatus[] = ['NEW', 'IN_PROGRESS'];
     if (showReady) statuses.push('READY');
     if (showPickedUp) statuses.push('PICKED_UP');
-    return subscribeEventOrders(token, eventId, statuses.join(','), setOrders, 'high');
+    return subscribeEventOrders(token, eventId, statuses.join(','), setOrders, 'high', { kitchenOnly: true });
   }, [eventId, token, showReady, showPickedUp]);
 
   const handleAction = async (order: Order) => {

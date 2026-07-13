@@ -344,6 +344,7 @@ model Order {
   orderDate       DateTime      @db.Date
   source          OrderSource
   status          StatusCode    @default(NEW)
+  releasedToKitchen Boolean     @default(false) @map("released_to_kitchen")
   totalPrice      Decimal       @db.Decimal(10, 2)
   readyAt         DateTime?
   pickedUpAt      DateTime?
@@ -363,6 +364,7 @@ model Order {
   @@index([tenantId, updatedAt])
   @@index([eventId, status, readyAt])
   @@index([tenantId, lookupToken])
+  @@index([tenantId, eventId, releasedToKitchen])
 }
 
 model OrderItem {

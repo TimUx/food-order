@@ -20,6 +20,7 @@ interface OrderCardProps {
   onStatusChange?: (status: OrderStatus) => void;
   onAdvance?: () => void;
   onEdit?: () => void;
+  onReleaseToKitchen?: () => void;
   showActions?: boolean;
   compact?: boolean;
   kitchenMode?: boolean;
@@ -30,6 +31,7 @@ export function OrderCard({
   onStatusChange,
   onAdvance,
   onEdit,
+  onReleaseToKitchen,
   showActions = false,
   compact = false,
   kitchenMode = false,
@@ -131,6 +133,11 @@ export function OrderCard({
 
         {showActions && (
           <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap" useFlexGap>
+            {!kitchenMode && onReleaseToKitchen && order.source === 'ONLINE' && order.releasedToKitchen === false && (
+              <Button variant="contained" color="primary" size="small" onClick={onReleaseToKitchen}>
+                Für Küche freigeben
+              </Button>
+            )}
             {!kitchenMode && onEdit && ['NEW', 'IN_PROGRESS'].includes(order.status) && (
               <Button variant="outlined" size="small" onClick={onEdit}>
                 Bearbeiten

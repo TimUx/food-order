@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 import { api, getImageUrl } from '@/services/api';
 import { useEffect, useState } from 'react';
 import type { PublicLegalLink } from '@/types/legal';
+import { SponsorLinks } from '@/components/SponsorLinks';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -71,6 +72,17 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
           <Button
             component={Link}
             to="/status"
+            variant="contained"
+            color="primary"
+            size="medium"
+            startIcon={<SearchIcon />}
+            sx={{ mr: 1, display: { xs: 'inline-flex', sm: 'none' }, minHeight: 44 }}
+          >
+            Status
+          </Button>
+          <Button
+            component={Link}
+            to="/status"
             color="inherit"
             size="small"
             startIcon={<SearchIcon />}
@@ -99,9 +111,12 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
       >
         {children}
       </Container>
-      {legalLinks.length > 0 && (
-        <Box component="footer" sx={{ px: 2, py: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Container maxWidth="md">
+      <Box component="footer" sx={{ px: 2, py: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Container maxWidth="md">
+          <Box sx={{ mb: legalLinks.length > 0 ? 2 : 0 }}>
+            <SponsorLinks compact />
+          </Box>
+          {legalLinks.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
               {legalLinks.map((link) => (
                 <Typography
@@ -114,9 +129,9 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
                 </Typography>
               ))}
             </Box>
-          </Container>
-        </Box>
-      )}
+          )}
+        </Container>
+      </Box>
     </Box>
   );
 }

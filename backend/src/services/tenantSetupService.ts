@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { requireTenantId } from '../platform/tenant/tenantScope';
 import { mailService } from '../platform/mail/MailService';
 import { tenantContext } from '../platform/bootstrap';
+import { platformDomainService } from '../platform/PlatformDomainService';
+import { config } from '../config';
 
 export type OrganizationType =
   | 'verein'
@@ -230,9 +232,20 @@ export const tenantSetupService = {
     const tenant = tenantContext.current();
     const admin = await prisma.user.findUnique({ where: { id: adminUserId } });
     if (admin?.email) {
+      const domains = platformDomainService.getPublicView(undefined);
+      const proto = platformDomainService.resolveProto();
+      const slug = tenant?.slug ?? '';
+      const base = slug
+        ? platformDomainService.buildTenantUrl(domains, slug, '', proto)
+        : config.corsOrigin;
+
       await mailService.sendTemplate('initial-setup', admin.email, {
         tenantName: finalData.organization?.name ?? tenant?.name,
         recipientName: admin.firstName,
+        adminUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/admin', proto) : `${base}/admin`,
+        staffUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/mitarbeiter', proto) : `${base}/mitarbeiter`,
+        publicUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/public', proto) : `${base}/public`,
+        statusUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/status', proto) : `${base}/status`,
       }, tenantId);
     }
 

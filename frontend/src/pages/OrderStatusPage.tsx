@@ -21,7 +21,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/PublicLayout';
 import { StatusChip } from '@/components/StatusChip';
-import { api } from '@/services/api';
+import { api, formatPrice } from '@/services/api';
 import { subscribeOrderStatus } from '@/services/realtime/channels';
 import { Order } from '@/types';
 
@@ -270,6 +270,29 @@ export function OrderStatusPage() {
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <StatusChip status={order.status} />
+        </Box>
+
+        <Box sx={{ mt: 2, textAlign: 'left', maxWidth: 520, mx: 'auto' }}>
+          <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
+            Zusammenfassung
+          </Typography>
+          <Stack spacing={0.5} sx={{ mb: 1.5 }}>
+            {order.items.map((item) => (
+              <Box key={item.id || item.foodItemId} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                <Typography variant="body1" sx={{ minWidth: 0 }}>
+                  {item.quantity}× {item.name}
+                </Typography>
+                {item.lineTotal !== undefined && (
+                  <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+                    {formatPrice(item.lineTotal)}
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </Stack>
+          <Typography variant="h6" fontWeight={800} sx={{ textAlign: 'right' }}>
+            {formatPrice(order.totalPrice)}
+          </Typography>
         </Box>
 
         {order.status === 'PICKED_UP' && (

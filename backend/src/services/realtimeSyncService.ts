@@ -40,27 +40,20 @@ export const realtimeSyncService = {
   async syncEventOrders(
     eventId: string,
     statusFilter: StatusCode[] | undefined,
+    kitchenOnly: boolean,
     clientEtag?: string
   ): Promise<SyncResult<Awaited<ReturnType<typeof orderService.getByEvent>>>> {
     return trackRealtimePoll('event-orders', async () => {
-      const where = tenantWhere({
-        eventId,
-        ...(statusFilter?.length ? { status: { in: statusFilter } } : {}),
-      });
-      const agg = await prisma.order.aggregate({
-        where,
-        _max: { updatedAt: true },
-        _count: true,
-      });
+      const data = await orderService.getByEvent(eventId, statusFilter, { kitchenOnly });
       const etag = buildEtag([
-        'orders',
+        'orders-v2',
         eventId,
         statusFilter?.join(',') ?? '',
-        agg._count,
-        agg._max.updatedAt?.toISOString(),
+        kitchenOnly ? 'kitchen' : 'all',
+        data.length,
+        data.map((o) => `${o.id}:${o.status}:${o.createdAt}`).join('|'),
       ]);
       if (clientEtag && clientEtag === etag) return unchanged(etag);
-      const data = await orderService.getByEvent(eventId, statusFilter);
       return { changed: true, etag, serverTime: new Date().toISOString(), data };
     });
   },
@@ -70,14 +63,19 @@ export const realtimeSyncService = {
     clientEtag?: string
   ): Promise<SyncResult<Awaited<ReturnType<typeof orderService.getStats>>>> {
     return trackRealtimePoll('event-stats', async () => {
-      const agg = await prisma.order.aggregate({
-        where: tenantWhere({ eventId, status: { not: StatusCode.CANCELLED } }),
-        _max: { updatedAt: true },
-        _count: true,
-      });
-      const etag = buildEtag(['stats', eventId, agg._count, agg._max.updatedAt?.toISOString()]);
-      if (clientEtag && clientEtag === etag) return unchanged(etag);
       const data = await orderService.getStats(eventId);
+      const etag = buildEtag([
+        'stats-v2',
+        eventId,
+        data.totalOrders,
+        data.openOrders,
+        data.readyOrders,
+        data.pickedUpOrders,
+        data.revenue,
+        data.avgProcessingMinutes,
+        data.popularDishes.map((d) => `${d.name}:${d.count}`).join('|'),
+      ]);
+      if (clientEtag && clientEtag === etag) return unchanged(etag);
       return { changed: true, etag, serverTime: new Date().toISOString(), data };
     });
   },

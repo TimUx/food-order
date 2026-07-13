@@ -39,6 +39,7 @@ import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useRouting } from '@/contexts/RoutingProvider';
 import { startPrintJobListener } from '@/modules/printer/printBridge';
 import { realtimeService, useRealtimeConnectionState } from '@/services/realtime';
+import { SponsorLinks } from '@/components/SponsorLinks';
 import type { ConnectionState } from '@/services/realtime';
 
 const DRAWER_WIDTH = 260;
@@ -174,6 +175,9 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
           <ListItemText primary="Abmelden" />
         </ListItemButton>
       </List>
+      <Box sx={{ px: 2, pt: 2, pb: 2 }}>
+        <SponsorLinks compact />
+      </Box>
     </Box>
   );
 

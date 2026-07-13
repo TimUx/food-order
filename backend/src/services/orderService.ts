@@ -25,10 +25,13 @@ import { emitOrderCreated, emitOrderUpdate } from '../socket';
 import { hookSystem } from '../platform/bootstrap';
 import { CORE_HOOKS } from '../platform/types';
 import { getPaymentServiceRegistry, getPayableResourceRegistry } from '../core/extensionPoints';
+import { paymentRepository } from '../../modules/payment/repositories/paymentRepository';
+import { resolvePaymentStatus } from '../../modules/payment/types';
 
 type OrderWithRelations = Order & {
   customer?: { firstName: string; lastName: string; email?: string | null; phone?: string | null } | null;
   event?: { date: Date; startTime: string };
+  releasedToKitchen?: boolean;
   items: Array<{
     id: string;
     foodItemId: string;
@@ -74,7 +77,41 @@ async function getCancellationInfo(order: OrderWithRelations): Promise<Cancellat
   };
 }
 
-function mapOrder(order: OrderWithRelations, cancellation?: CancellationInfo) {
+function paymentLabelForOrder(input: {
+  orderSource: Order['source'];
+  paymentRow?: { status: string; payment_status: string | null; released_to_kitchen: boolean } | null;
+  releasedToKitchen?: boolean;
+}): string | undefined {
+  if (input.orderSource === 'CASHIER') return 'Vor Ort';
+  if (!input.paymentRow) return 'Bar vor Ort';
+
+  const status = resolvePaymentStatus(input.paymentRow as never);
+  switch (status) {
+    case 'PAYMENT_PAID':
+    case 'ORDER_CONFIRMED':
+      return 'Bezahlt';
+    case 'PAYMENT_FAILED':
+      return 'Zahlung fehlgeschlagen';
+    case 'PAYMENT_CANCELLED':
+      return 'Zahlung abgebrochen';
+    case 'PAYMENT_TIMEOUT':
+      return 'Zahlung abgelaufen';
+    case 'PAYMENT_REFUNDED':
+      return 'Rückerstattet';
+    case 'PAYMENT_PROCESSING':
+      return 'Zahlung wird geprüft';
+    case 'PAYMENT_PENDING':
+    case 'CREATED':
+    default:
+      return input.releasedToKitchen ? 'Freigegeben (unbezahlt)' : 'Zahlung ausstehend';
+  }
+}
+
+function mapOrder(
+  order: OrderWithRelations,
+  cancellation?: CancellationInfo,
+  extra?: { paymentLabel?: string }
+) {
   return {
     id: order.id,
     lookupToken: order.lookupToken,
@@ -87,6 +124,8 @@ function mapOrder(order: OrderWithRelations, cancellation?: CancellationInfo) {
     sourceLabel: SOURCE_LABELS[order.source],
     status: order.status,
     statusLabel: STATUS_LABELS[order.status],
+    paymentLabel: extra?.paymentLabel,
+    releasedToKitchen: order.releasedToKitchen,
     totalPrice: Number(order.totalPrice),
     createdAt: order.createdAt,
     readyAt: order.readyAt,
@@ -120,7 +159,13 @@ function mapOrder(order: OrderWithRelations, cancellation?: CancellationInfo) {
 
 async function mapOrderWithCancellation(order: OrderWithRelations) {
   const cancellation = await getCancellationInfo(order);
-  return mapOrder(order, cancellation);
+  const session = await paymentRepository.findByResource('order', order.id);
+  const paymentLabel = paymentLabelForOrder({
+    orderSource: order.source,
+    paymentRow: session,
+    releasedToKitchen: order.releasedToKitchen,
+  });
+  return mapOrder(order, cancellation, { paymentLabel });
 }
 
 function validateOrderFields(
@@ -172,7 +217,6 @@ async function buildOrderItems(
     lineTotal: Prisma.Decimal;
   }[] = [];
 
-  const foodItemIds = merged.map((i) => i.foodItemId);
   const eventItems = await foodItemRepository.findByEvent(eventId, true);
   const eventItemMap = new Map(eventItems.map((f) => [f.id, f]));
 
@@ -207,16 +251,30 @@ async function buildOrderItems(
 export const orderService = {
   mapOrder,
 
-  async getByEvent(eventId: string, statusFilter?: StatusCode[]) {
+  async getByEvent(
+    eventId: string,
+    statusFilter?: StatusCode[],
+    options?: { kitchenOnly?: boolean }
+  ) {
     const orders = await orderRepository.findByEvent(eventId, {
       status: statusFilter,
     });
-    const ids = orders.map((o) => o.id);
-    const releasedIds = new Set(await getPaymentServiceRegistry().filterReleasedIds('order', ids));
-    const filtered = orders.filter(
-      (o) => o.source === 'CASHIER' || releasedIds.has(o.id)
+    const filtered = options?.kitchenOnly ? orders.filter((o) => (o as OrderWithRelations).releasedToKitchen) : orders;
+
+    const sessions = await paymentRepository.findLatestByResources(
+      'order',
+      filtered.map((o) => o.id)
     );
-    return filtered.map((o) => mapOrder(o as OrderWithRelations));
+
+    return filtered.map((o) => {
+      const session = sessions.get(o.id) ?? null;
+      const paymentLabel = paymentLabelForOrder({
+        orderSource: o.source,
+        paymentRow: session,
+        releasedToKitchen: (o as OrderWithRelations).releasedToKitchen,
+      });
+      return mapOrder(o as OrderWithRelations, undefined, { paymentLabel });
+    });
   },
 
   async getByLookupToken(token: string, lastName?: string) {
@@ -233,20 +291,12 @@ export const orderService = {
       throw new AppError(404, 'Bestellung nicht gefunden');
     }
 
-    const releasedIds = await getPaymentServiceRegistry().filterReleasedIds('order', [order.id]);
-    if (!releasedIds.includes(order.id)) {
-      throw new AppError(404, 'Bestellung nicht gefunden');
-    }
     return mapOrderWithCancellation(order as OrderWithRelations);
   },
 
   async getById(id: string) {
     const order = await orderRepository.findById(id);
     if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
-    const releasedIds = await getPaymentServiceRegistry().filterReleasedIds('order', [id]);
-    if (!releasedIds.includes(id)) {
-      throw new AppError(404, 'Bestellung nicht gefunden');
-    }
     return mapOrderWithCancellation(order as OrderWithRelations);
   },
 
@@ -283,11 +333,6 @@ export const orderService = {
       throw new AppError(404, 'Bestellung nicht gefunden');
     }
 
-    const releasedIds = await getPaymentServiceRegistry().filterReleasedIds('order', [order.id]);
-    if (!releasedIds.includes(order.id) && order.source !== 'CASHIER') {
-      throw new AppError(404, 'Bestellung nicht gefunden');
-    }
-
     return mapOrderWithCancellation(order as OrderWithRelations);
   },
 
@@ -320,7 +365,9 @@ export const orderService = {
     const payOnline = Boolean(paymentAvailable && data.paymentMethodId);
 
     const mapped = await this._createOrder(event, 'ONLINE', data.items, customerData, {
-      skipKitchenNotify: payOnline,
+      // Online-Bestellungen werden erst nach expliziter Freigabe an die Küche übergeben
+      // (oder automatisch nach erfolgreicher Online-Zahlung).
+      skipKitchenNotify: true,
     });
 
     if (payOnline && data.paymentMethodId) {
@@ -345,7 +392,7 @@ export const orderService = {
           };
         }
       }
-      await orderService._releaseOrderToKitchen(event, mapped, customerData);
+      // Falls Checkout nicht erstellt werden konnte, bleibt die Bestellung gespeichert und ist im Mitarbeiterbereich sichtbar.
     }
 
     return mapped;
@@ -398,7 +445,8 @@ export const orderService = {
     const payOnline = Boolean(paymentAvailable && paymentMethodId);
 
     const mapped = await this._createOrder(event, 'CASHIER', items, undefined, {
-      skipKitchenNotify: payOnline,
+      // Vor-Ort Bestellungen sind sofort für die Küche freigegeben – unabhängig vom Zahlstatus.
+      skipKitchenNotify: false,
     });
 
     if (payOnline && paymentMethodId) {
@@ -426,6 +474,27 @@ export const orderService = {
       await orderService._releaseOrderToKitchen(event, mapped);
     }
 
+    return mapped;
+  },
+
+  async releaseToKitchen(orderId: string) {
+    const order = await orderRepository.findById(orderId);
+    if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
+
+    // Markiere Bestellung als freigegeben.
+    await orderRepository.setReleasedToKitchen(orderId, true);
+
+    // Falls es eine Payment-Session gibt, ebenfalls auf "freigegeben" setzen (damit pending Sessions nicht mehr blockieren).
+    const session = await paymentRepository.findByResource('order', orderId);
+    if (session && !session.released_to_kitchen) {
+      await paymentRepository.updatePayment(session.id, { releasedToKitchen: true });
+    }
+
+    const full = await orderRepository.findById(orderId);
+    if (!full) throw new AppError(404, 'Bestellung nicht gefunden');
+    const mapped = await mapOrderWithCancellation(full as OrderWithRelations);
+    emitOrderCreated(full.eventId, mapped);
+    hookSystem.emitAsync(CORE_HOOKS.ORDER_CREATED, mapped);
     return mapped;
   },
 
@@ -508,6 +577,7 @@ export const orderService = {
       orderNumber,
       orderDate,
       source,
+      releasedToKitchen: source === 'CASHIER',
       status: 'NEW',
       totalPrice,
       items: {
@@ -594,6 +664,51 @@ export const orderService = {
   },
 
   async getStats(eventId: string) {
-    return orderRepository.getStats(eventId);
+    const { buildOrderEventStats } = await import('../repositories/orderStats');
+    const orders = await orderRepository.findByEvent(eventId);
+    const visible = orders.filter((o) => o.status !== 'CANCELLED');
+
+    const statusCounts: Partial<Record<StatusCode, number>> = {};
+    for (const order of visible) {
+      statusCounts[order.status] = (statusCounts[order.status] ?? 0) + 1;
+    }
+
+    const revenue = visible.reduce((sum, order) => sum + Number(order.totalPrice), 0);
+
+    const itemCounts = new Map<string, { name: string; count: number }>();
+    for (const order of visible) {
+      for (const item of order.items) {
+        const existing = itemCounts.get(item.foodItemId);
+        if (existing) {
+          existing.count += item.quantity;
+        } else {
+          itemCounts.set(item.foodItemId, {
+            name: item.foodItem.name,
+            count: item.quantity,
+          });
+        }
+      }
+    }
+    const popularDishes = [...itemCounts.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const readyOrders = visible.filter((o) => o.readyAt);
+    const avgProcessingMinutes =
+      readyOrders.length > 0
+        ? Math.round(
+            readyOrders.reduce(
+              (sum, o) => sum + (o.readyAt!.getTime() - o.createdAt.getTime()) / 60_000,
+              0
+            ) / readyOrders.length
+          )
+        : 0;
+
+    return buildOrderEventStats({
+      statusCounts,
+      revenue,
+      popularDishes,
+      avgProcessingMinutes,
+    });
   },
 };

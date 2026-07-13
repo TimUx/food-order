@@ -121,6 +121,35 @@ describe('orderService.getByEvent', () => {
   });
 });
 
+describe('orderService.getStats', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('zählt nur für Mitarbeiter sichtbare Bestellungen', async () => {
+    const visibleOnline = buildOrder({
+      id: 'online-1',
+      source: 'ONLINE',
+      status: 'NEW',
+      customer: { firstName: 'Max', lastName: 'Mustermann', email: null, phone: null },
+    });
+    const hiddenOnline = buildOrder({
+      id: 'online-2',
+      source: 'ONLINE',
+      status: 'NEW',
+      customer: { firstName: 'Erika', lastName: 'Beispiel', email: null, phone: null },
+    });
+    mockFindByEvent.mockResolvedValue([visibleOnline, hiddenOnline]);
+    mockFilterReleasedIds.mockResolvedValue(['online-1']);
+
+    const stats = await orderService.getStats('event-1');
+
+    expect(stats.totalOrders).toBe(1);
+    expect(stats.openOrders).toBe(1);
+    expect(stats.revenue).toBe(10);
+  });
+});
+
 describe('orderService.lookupByNumberAndName', () => {
   beforeEach(() => {
     vi.clearAllMocks();

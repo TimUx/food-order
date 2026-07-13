@@ -367,6 +367,16 @@ export const orderRepository = {
       },
     }),
 
+  setReleasedToKitchen: async (id: string, released: boolean) => {
+    const tenantId = requireTenantId();
+    const result = await prisma.order.updateMany({
+      where: { tenantId, id },
+      data: { releasedToKitchen: released },
+    });
+    if (result.count === 0) throw new Error('Bestellung nicht gefunden');
+    return orderRepository.findById(id);
+  },
+
   updateStatus: async (
     id: string,
     status: StatusCode,

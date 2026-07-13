@@ -12,7 +12,8 @@ export function subscribeEventOrders(
   eventId: string,
   statusFilter: string,
   onData: (orders: Order[]) => void,
-  activity: ActivityLevel = 'high'
+  activity: ActivityLevel = 'high',
+  options?: { kitchenOnly?: boolean }
 ): () => void {
   realtimeService.joinEvent(eventId);
   return realtimeService.subscribe(
@@ -22,7 +23,7 @@ export function subscribeEventOrders(
       wsEvents: ORDER_WS_EVENTS,
       join: () => realtimeService.joinEvent(eventId),
       activity,
-      poll: (etag) => api.syncEventOrders(token, eventId, statusFilter || undefined, etag),
+      poll: (etag) => api.syncEventOrders(token, eventId, statusFilter || undefined, etag, options?.kitchenOnly),
       onPollData: (data) => onData(data as Order[]),
     }
   );

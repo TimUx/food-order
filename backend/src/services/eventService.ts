@@ -145,7 +145,8 @@ export const eventService = {
     activateOnCreate?: boolean;
   }>) {
     await this.getById(id);
-    const { activateOnCreate: _ignored, ...raw } = data;
+    const { activateOnCreate: _activateOnCreate, ...raw } = data;
+    void _activateOnCreate;
     const updateData: Record<string, unknown> = { ...raw };
     if (raw.date) updateData.date = new Date(raw.date);
     const event = await eventRepository.update(id, updateData);

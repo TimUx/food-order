@@ -43,13 +43,18 @@ export const orderController = {
     }
   },
 
-  async getByEvent(req: { params: { eventId: string }; query: { status?: string } }, res: Response, next: NextFunction) {
+  async getByEvent(
+    req: { params: { eventId: string }; query: { status?: string; kitchenOnly?: string } },
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       let statusFilter: StatusCode[] | undefined;
       if (req.query.status) {
         statusFilter = req.query.status.split(',') as StatusCode[];
       }
-      const orders = await orderService.getByEvent(req.params.eventId, statusFilter);
+      const kitchenOnly = req.query.kitchenOnly === '1' || req.query.kitchenOnly === 'true';
+      const orders = await orderService.getByEvent(req.params.eventId, statusFilter, { kitchenOnly });
       res.json(orders);
     } catch (err) {
       next(err);

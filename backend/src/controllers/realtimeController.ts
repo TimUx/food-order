@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const realtimeController = {
   async syncEventOrders(
-    req: AuthRequest & { params: { eventId: string }; query: { status?: string; etag?: string } },
+    req: AuthRequest & { params: { eventId: string }; query: { status?: string; kitchenOnly?: string; etag?: string } },
     res: Response,
     next: NextFunction
   ) {
@@ -15,9 +15,11 @@ export const realtimeController = {
         statusFilter = req.query.status.split(',').filter(Boolean) as StatusCode[];
         if (statusFilter.length === 0) statusFilter = undefined;
       }
+      const kitchenOnly = req.query.kitchenOnly === '1' || req.query.kitchenOnly === 'true';
       const result = await realtimeSyncService.syncEventOrders(
         req.params.eventId,
         statusFilter,
+        kitchenOnly,
         req.query.etag
       );
       res.json(result);

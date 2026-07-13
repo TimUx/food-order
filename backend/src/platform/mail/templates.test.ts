@@ -25,8 +25,15 @@ describe('mail templates', () => {
   });
 
   it('renders initial-setup template', () => {
-    const result = renderMailTemplate('initial-setup', { tenantName: 'SV Test' });
+    const result = renderMailTemplate('initial-setup', {
+      tenantName: 'SV Test',
+      adminUrl: 'https://example.test/admin',
+      publicUrl: 'https://example.test/public',
+      staffUrl: 'https://example.test/mitarbeiter',
+      statusUrl: 'https://example.test/status',
+    });
     expect(result.subject).toContain('Willkommen');
     expect(result.text).toContain('SV Test');
+    expect(result.text).toContain('https://example.test/admin');
   });
 });

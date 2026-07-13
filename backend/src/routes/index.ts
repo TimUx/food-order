@@ -61,6 +61,7 @@ import adminUiRoutes from '../core/routes/adminUi';
 import { tenantController, healthService, tenantService } from '../platform/bootstrap';
 import platformRoutes from '../core/routes/platform';
 import { platformPublicController } from '../controllers/platformPublicController';
+import { orderService } from '../services/orderService';
 
 const upload = uploadService.memory;
 
@@ -206,17 +207,25 @@ router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), up
 router.get('/staff/events/:eventId/orders', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.getByEvent);
 router.get('/staff/events/:eventId/orders/export', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.exportEventOrdersJson);
 router.get('/staff/events/:eventId/orders/export.xlsx', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.exportEventOrdersXlsx);
-router.get('/staff/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage'), orderController.getStats);
+router.get('/staff/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), orderController.getStats);
 router.post('/staff/orders/cashier', requireStaffPermission('orders.manage'), validateBody(createCashierOrderSchema), orderController.createCashier);
 router.post('/staff/orders/:id/abort-payment', requireStaffPermission('orders.manage'), validateParams(idParamSchema), validateBody(abortCashierPaymentSchema), orderController.abortCashierPayment);
 router.post('/staff/orders/lookup', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), validateBody(lookupByNumberSchema), orderController.lookupByNumber);
+router.post('/staff/orders/:id/release-to-kitchen', requireAnyStaffPermission('orders.kitchen', 'orders.manage'), validateParams(idParamSchema), async (req, res, next) => {
+  try {
+    const order = await orderService.releaseToKitchen(req.params.id);
+    res.json(order);
+  } catch (err) {
+    next(err);
+  }
+});
 router.patch('/staff/orders/:id/status', requireAnyStaffPermission('orders.kitchen', 'orders.manage'), validateParams(idParamSchema), validateBody(updateOrderStatusSchema), orderController.updateStatus);
 router.patch('/staff/orders/:id/items', requireAnyStaffPermission('orders.kitchen', 'orders.manage'), validateParams(idParamSchema), validateBody(updateOrderItemsSchema), orderController.updateItems);
 router.post('/staff/orders/:id/advance', requireAnyStaffPermission('orders.kitchen', 'orders.pickup', 'orders.manage'), validateParams(idParamSchema), orderController.advanceStatus);
 
 // Realtime sync (delta/ETag) — für Polling-Fallback
 router.get('/realtime/events/:eventId/orders', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), realtimeController.syncEventOrders);
-router.get('/realtime/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage'), realtimeController.syncEventStats);
+router.get('/realtime/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), realtimeController.syncEventStats);
 router.get('/realtime/pickup-board', realtimeController.syncPickupBoard);
 router.get('/realtime/orders/:token', realtimeController.syncOrder);
 router.get('/realtime/payment/:sessionId', realtimeController.syncPayment);

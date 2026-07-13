@@ -162,6 +162,27 @@ export const paymentRepository = {
     return rows[0] ?? null;
   },
 
+  async findLatestByResources(
+    resourceType: string,
+    ids: string[]
+  ): Promise<Map<string, Pick<PaymentRow, 'id' | 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>>> {
+    if (ids.length === 0) return new Map();
+
+    const tenantId = requireTenantId();
+    const rows = await prisma.$queryRaw<
+      Pick<PaymentRow, 'id' | 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>[]
+    >`
+      SELECT DISTINCT ON (resource_id) id, resource_id, status, payment_status, released_to_kitchen
+      FROM payments
+      WHERE resource_type = ${resourceType}
+        AND resource_id = ANY(${ids})
+        AND tenant_id = ${tenantId}
+      ORDER BY resource_id, created_at DESC
+    `;
+
+    return new Map(rows.map((r) => [r.resource_id, r]));
+  },
+
   async getReleasedResourceIds(resourceType: string, ids: string[]): Promise<string[]> {
     if (ids.length === 0) return [];
 
