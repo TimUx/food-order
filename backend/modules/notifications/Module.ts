@@ -5,7 +5,7 @@ import {
   type ModuleRouteRegistration,
 } from '../../src/platform/module-api';
 import { notificationServiceRegistry } from '../../src/platform/module-api';
-import { notificationsConfigSchema, mergeNotificationConfig, type NotificationConfig } from './config';
+import { notificationsConfigSchema, defaultNotificationConfig, mergeNotificationConfig, type NotificationConfig } from './config';
 import { createNotificationHookSubscriptions } from './hooks';
 import { migrateLegacyEmailSettings } from './migrateLegacyEmail';
 import { notificationManager } from './NotificationManager';

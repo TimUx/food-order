@@ -213,7 +213,7 @@ router.post('/staff/orders/:id/abort-payment', requireStaffPermission('orders.ma
 router.post('/staff/orders/lookup', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), validateBody(lookupByNumberSchema), orderController.lookupByNumber);
 router.post('/staff/orders/:id/release-to-kitchen', requireAnyStaffPermission('orders.kitchen', 'orders.manage'), validateParams(idParamSchema), async (req, res, next) => {
   try {
-    const order = await orderService.releaseToKitchen(req.params.id);
+    const order = await orderService.releaseToKitchen(req.params.id as string);
     res.json(order);
   } catch (err) {
     next(err);
