@@ -49,7 +49,7 @@ jobs:
 
       - name: Large database seed (1000 orders)
         run: |
-          cd backend && npx prisma generate && npm run seed
+          (cd backend && npx prisma generate && npm run seed)
           npm run qa:seed:nightly
 
       - name: Module scenarios (all modules)
