@@ -137,7 +137,7 @@ describe('orderService.getByEvent', () => {
     const result = await orderService.getByEvent('event-1');
 
     expect(result).toHaveLength(1);
-    expect(result[0]?.paymentLabel).toBe('Zahlung ausstehend');
+    expect(result[0]?.paymentLabel).toBe('Bar vor Ort');
   });
 
   it('filtert bei kitchenOnly nur freigegebene Bestellungen', async () => {
