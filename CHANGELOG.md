@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.18 - 2026-07-13
+
+### Hinzugefügt
+
+- **Marketing:** Ausführliche Seite „Über den Entwickler“ mit Beruf, Ehrenamt, Motivation und Open-Source-Projekten (timobraun.de, GitHub @TimUx).
+
+---
+
 ## 2.4.17 - 2026-07-13
 
 ### Hinzugefügt
