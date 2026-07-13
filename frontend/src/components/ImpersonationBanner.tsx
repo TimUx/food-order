@@ -8,10 +8,12 @@ import {
   PLATFORM_REFRESH_KEY,
   platformApi,
 } from '@/services/platformApi';
+import { clearTenantImpersonationTokens } from '@/utils/impersonation';
 
 interface ImpersonationMeta {
   id?: string;
   name?: string;
+  slug?: string;
   platformSessionId?: string;
 }
 
@@ -64,8 +66,7 @@ export function ImpersonationBanner() {
       }
 
       localStorage.removeItem(IMPERSONATION_META_KEY);
-      localStorage.removeItem('verein_token');
-      localStorage.removeItem('verein_refresh_token');
+      clearTenantImpersonationTokens(meta.slug);
 
       if (platformToken) {
         localStorage.setItem(PLATFORM_TOKEN_KEY, platformToken);

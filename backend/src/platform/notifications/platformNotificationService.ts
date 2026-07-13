@@ -7,10 +7,22 @@ import { prisma } from '../../config/database';
 import { logger } from '../../utils/logger';
 import { mailService } from '../mail/MailService';
 
+export interface TenantApprovedAdminInfo {
+  userId: string;
+  email: string;
+  username: string | null;
+  temporaryPassword: string;
+  firstName: string;
+  lastName: string;
+  created: boolean;
+}
+
 export type PlatformNotificationEvent =
   | 'tenant.created'
   | 'tenant.application.submitted'
   | 'tenant.application.confirmed'
+  | 'tenant.application.approved'
+  | 'tenant.access_info.resent'
   | 'smtp.misconfigured'
   | 'backup.failed'
   | 'health.warning';
@@ -113,6 +125,75 @@ export const platformNotificationService = {
         <p>Wir haben Ihren Antrag für <strong>${application.organization}</strong> erhalten
         (Subdomain: <strong>${application.requestedSubdomain}</strong>).</p>
         <p>Unser Team prüft Ihre Angaben und meldet sich bei Ihnen.</p>
+        <p>Mit freundlichen Grüßen<br/>Ihr FestSchmiede-Team</p>`,
+    });
+  },
+
+  async notifyTenantApproved(params: {
+    organizationName: string;
+    admin: TenantApprovedAdminInfo;
+    adminUrl: string;
+    publicUrl: string;
+    tenantSlug: string;
+    resent?: boolean;
+  }): Promise<void> {
+    const { admin, organizationName, adminUrl, publicUrl, tenantSlug, resent = false } = params;
+    const loginHint = admin.username
+      ? `Benutzername: ${admin.username}\nE-Mail: ${admin.email}`
+      : `E-Mail: ${admin.email}`;
+    const intro = resent
+      ? [
+          `anbei erhalten Sie erneut die Zugangsdaten für Ihren FestSchmiede-Mandanten „${organizationName}".`,
+          'Falls Sie bereits angemeldet waren, wurde das Passwort zurückgesetzt.',
+        ]
+      : [
+          `Ihr Mandantenantrag für „${organizationName}" wurde genehmigt.`,
+          'Ihr Mandant wurde eingerichtet und ist jetzt aktiv.',
+        ];
+
+    await this.notify({
+      event: resent ? 'tenant.access_info.resent' : 'tenant.application.approved',
+      title: resent
+        ? `Ihre FestSchmiede-Zugangsdaten – ${organizationName}`
+        : `Ihr FestSchmiede-Mandant „${organizationName}" ist bereit`,
+      recipientEmail: admin.email,
+      body: [
+        `Hallo ${admin.firstName},`,
+        '',
+        ...intro,
+        '',
+        'Zugangsdaten für die Administration:',
+        loginHint,
+        `Temporäres Passwort: ${admin.temporaryPassword}`,
+        '',
+        'Wichtige Links:',
+        `Administration: ${adminUrl}`,
+        `Öffentliche Bestellseite: ${publicUrl}`,
+        `Mandanten-Pfad: /${tenantSlug}`,
+        '',
+        'Bitte melden Sie sich an und ändern Sie das Passwort unter „Mein Profil".',
+        resent ? '' : 'Beim ersten Login führt ein Einrichtungsassistent Sie durch die Grundeinstellungen.',
+        '',
+        'Mit freundlichen Grüßen',
+        'Ihr FestSchmiede-Team',
+      ].filter(Boolean).join('\n'),
+      html: `<p>Hallo ${admin.firstName},</p>
+        <p>${intro.join(' ')}</p>
+        <h3>Zugangsdaten für die Administration</h3>
+        <ul>
+          ${admin.username ? `<li><strong>Benutzername:</strong> ${admin.username}</li>` : ''}
+          <li><strong>E-Mail:</strong> ${admin.email}</li>
+          <li><strong>Temporäres Passwort:</strong> <code>${admin.temporaryPassword}</code></li>
+        </ul>
+        <h3>Wichtige Links</h3>
+        <ul>
+          <li><a href="${adminUrl}">Administration öffnen</a></li>
+          <li><a href="${publicUrl}">Öffentliche Bestellseite</a></li>
+          <li><strong>Mandanten-Pfad:</strong> /${tenantSlug}</li>
+        </ul>
+        <p>Bitte melden Sie sich an und ändern Sie das Passwort unter „Mein Profil".${
+          resent ? '' : ' Beim ersten Login führt ein Einrichtungsassistent Sie durch die Grundeinstellungen.'
+        }</p>
         <p>Mit freundlichen Grüßen<br/>Ihr FestSchmiede-Team</p>`,
     });
   },

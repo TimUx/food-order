@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, TextField, Button, Table, TableBody, TableCell,
-  TableHead, TableRow, Paper, Chip, IconButton, MenuItem, Select, FormControl, InputLabel,
+  TableHead, TableRow, Paper, Chip, IconButton, MenuItem, Select, FormControl, InputLabel, Alert,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LoginIcon from '@mui/icons-material/Login';
 import AddIcon from '@mui/icons-material/Add';
 import { usePlatformAuth } from '@/contexts/PlatformAuthContext';
-import { platformApi, type PlatformTenant, PLATFORM_TOKEN_KEY, PLATFORM_REFRESH_KEY, PLATFORM_SESSION_BACKUP_KEY, IMPERSONATION_META_KEY } from '@/services/platformApi';
+import { platformApi, type PlatformTenant } from '@/services/platformApi';
+import { startTenantImpersonation } from '@/utils/impersonation';
 
 const STATUS_COLORS: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   ACTIVE: 'success',
@@ -25,6 +26,8 @@ export function PlatformTenantsPage() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '',
     slug: '',
@@ -54,19 +57,14 @@ export function PlatformTenantsPage() {
 
   const handleImpersonate = async (tenantId: string) => {
     if (!token) return;
-    const platformToken = localStorage.getItem(PLATFORM_TOKEN_KEY);
-    const platformRefresh = localStorage.getItem(PLATFORM_REFRESH_KEY);
-    const result = await platformApi.impersonate(token, tenantId);
-    localStorage.setItem(PLATFORM_SESSION_BACKUP_KEY, JSON.stringify({ platformToken, platformRefresh }));
-    localStorage.setItem(
-      IMPERSONATION_META_KEY,
-      JSON.stringify({
-        ...result.tenant,
-        platformSessionId: result.impersonation.platformSessionId,
-      })
-    );
-    localStorage.setItem('verein_token', result.token);
-    window.location.href = result.redirectTo;
+    setActionError('');
+    setImpersonatingId(tenantId);
+    try {
+      await startTenantImpersonation(token, tenantId);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Anmeldung als Mandanten-Admin fehlgeschlagen');
+      setImpersonatingId(null);
+    }
   };
 
   return (
@@ -105,6 +103,12 @@ export function PlatformTenantsPage() {
         </FormControl>
       </Box>
 
+      {actionError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setActionError('')}>
+          {actionError}
+        </Alert>
+      )}
+
       <Paper>
         <Table>
           <TableHead>
@@ -135,7 +139,12 @@ export function PlatformTenantsPage() {
                   <IconButton size="small" onClick={() => navigate(`/platform/mandanten/${t.id}`)} title="Details">
                     <VisibilityIcon />
                   </IconButton>
-                  <IconButton size="small" onClick={() => handleImpersonate(t.id)} title="Als Admin anmelden" disabled={t.status !== 'ACTIVE'}>
+                  <IconButton
+                    size="small"
+                    onClick={() => void handleImpersonate(t.id)}
+                    title="Als Admin anmelden"
+                    disabled={t.status !== 'ACTIVE' || impersonatingId === t.id}
+                  >
                     <LoginIcon />
                   </IconButton>
                 </TableCell>

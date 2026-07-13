@@ -238,6 +238,18 @@ export const platformController = {
     }
   },
 
+  async resendTenantAccessInfo(req: PlatformAuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await platformTenantAdminService.resendAccessInfo(
+        req.params.id as string,
+        req.platformUser!.userId
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async impersonate(req: PlatformAuthRequest, res: Response, next: NextFunction) {
     try {
       const result = await impersonationService.startImpersonation(

@@ -3,6 +3,19 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.19 - 2026-07-13
+
+### Hinzugefügt
+
+- **Mandanten-Onboarding:** Zugangs-Mail nach Genehmigung oder manueller Erstellung mit Admin-Zugangsdaten, Links und temporärem Passwort.
+- **Plattform-Admin:** Button „Infos senden“ auf der Mandanten-Detailseite zum erneuten Versand der Zugangsdaten.
+
+### Behoben
+
+- **Impersonation:** „Als Admin anmelden“ speichert den Token korrekt (scoped Storage) und zeigt Fehler an.
+
+---
+
 ## 2.4.18 - 2026-07-13
 
 ### Hinzugefügt
