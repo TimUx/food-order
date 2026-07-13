@@ -69,7 +69,7 @@ Optimiert für Tablets mit großen Buttons.
 
 ### Ablauf
 
-1. Neue Bestellungen erscheinen automatisch mit Status **Neu**
+1. Neue Bestellungen erscheinen automatisch, sobald sie **für die Küche freigegeben** sind (Vor-Ort sofort; Online nach Zahlung oder manueller Freigabe in der Bestellliste)
 2. Tippen Sie **Bearbeitung starten** → Status wird *In Bearbeitung*
 3. Wenn das Essen fertig ist: **Fertig** tippen → Status wird *Fertig*
 4. Die Abholnummer erscheint auf dem öffentlichen Abholboard

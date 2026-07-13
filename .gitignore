@@ -13,3 +13,8 @@ playwright-report/
 .vite/
 *.tsbuildinfo
 docs/screenshots/_raw/
+
+# Installer / generated artifacts (local only)
+.installer-state/
+stack.yml
+installer/generated/stack.yml
