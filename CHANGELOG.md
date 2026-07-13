@@ -3,7 +3,7 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
-## 2.4.32 - 2026-07-13
+## 2.4.33 - 2026-07-13
 
 ### Hinzugefügt
 
@@ -11,16 +11,22 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 - **Speisen-Katalog:** Mandantenweiter Katalog unter **Speisen**; Zuordnung je Veranstaltung über **Veranstaltungen → Speisen**.
 - **Online-Bestellung:** Bei mehreren buchbaren Veranstaltungen Auswahl per Touch-Grid vor der Speisekarte.
 - **Bestellung vor Ort & Abholung:** Veranstaltungs-Dropdown mit Vorauswahl nach heutigem Veranstaltungsdatum.
+- **Bestellstatus-Abfrage:** Veranstaltungsauswahl bei mehreren aktiven Events (`eventId` bei `/public/orders/lookup`).
 - **Abholboard:** Veranstaltungsauswahl bei mehreren Events; Monitor zeigt nur Nummern der gewählten Veranstaltung.
+- **Küchenfreigabe:** Online-Bestellungen können in der Bestellliste zur Küche freigegeben werden; Vor-Ort sofort freigegeben.
+- **Sponsor-Links:** Buy Me a Coffee / PayPal prominent auf öffentlichen Seiten, Marketing-Website, Mitarbeiter- und Admin-Bereich.
 - **Benachrichtigungen:** E-Mail bei fehlgeschlagener Online-Zahlung (`paymentFailed`); SMTP-Verbindungstest robuster.
 - **Rechtliches Modul:** Aktivierung über registrierten Settings-Namespace `module.legal`.
 - **Öffentliche APIs:** `GET /public/events`, `GET /public/events/pickup`, `GET /staff/events/cashier`, `GET /staff/events/pickup`; `eventId` bei Menü, Bestellung, Lookup und Abholboard.
+- **Dokumentation:** Guides und Screenshots aktualisiert; CI Dependency-Review nur noch für PRs.
 
 ### Geändert
 
 - **Veranstaltungen:** Button „Aktivieren“ entfällt — Aktivierung nur noch über den Schalter im Bearbeitungsdialog.
 - **Speisen:** „Ausverkauft“ gilt pro Veranstaltung (Staff **Verfügbarkeit**), nicht mehr im Katalog.
-- **Mitarbeiterbereich:** Dashboard und Bestellliste laden Daten initial per API (nicht nur Realtime).
+- **Mitarbeiterbereich:** Dashboard und Bestellliste laden Daten initial per API; alle Bestellungen sichtbar mit Zahlungsstatus-Label.
+- **Küche:** Zeigt nur für die Küche freigegebene Bestellungen (`released_to_kitchen`).
+- **Öffentlicher Bestellstatus:** Gerichte-Zusammenfassung; Touch-freundlicher Status-Link im Header.
 
 ### Behoben
 
@@ -28,7 +34,13 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 - **Veranstaltung bearbeiten:** Interner Serverfehler beim Speichern (ungültiges Feld `activateOnCreate` an Prisma).
 - **Logo-Upload:** Vereinslogo wird nach Upload in öffentlichen Mandantendaten angezeigt.
 - **Benachrichtigungen:** Modul-Status „Deaktiviert“ / SMTP-Test 500 bei fehlender `smtp.from`-Konfiguration.
-- **Bestellseite:** „Keine Bestellungen möglich“ nach zweiter Veranstaltung, wenn nur die neue ohne Speisen aktiv war.
+- **Bestellseite:** „Keine Bestellungen möglich“ nach zweiter Veranstaltung ohne Speisen-Zuordnung.
+- **Willkommens-Mail:** Links und Tipps für die erste Veranstaltung nach Ersteinrichtung.
+
+### Datenbank
+
+- Migration `20260713230000_event_food_assignments` (mandantenweiter FoodItem-Katalog, `EventFoodItem`)
+- Migration `20260713220000_order_release_to_kitchen` (`Order.released_to_kitchen`)
 
 ---
 

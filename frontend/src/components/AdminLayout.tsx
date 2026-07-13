@@ -34,6 +34,7 @@ import { useThemeMode } from '@/contexts/ThemeContext';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAdminUi } from '@/contexts/AdminUiContext';
 import { resolveAdminIcon } from '@/admin/iconMap';
+import { SponsorLinks } from '@/components/SponsorLinks';
 
 const DRAWER_WIDTH = 260;
 const SETTINGS_PARENT_ID = 'settings';
@@ -80,16 +81,16 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
   const settingsActive = settingsNav.some((item) => location.pathname === item.path);
 
   const drawerContent = (
-    <Box sx={{ width: DRAWER_WIDTH, pt: 2 }}>
+    <Box sx={{ width: DRAWER_WIDTH, pt: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h6" sx={{ px: 2, mb: 2, fontWeight: 700 }}>
         Administration
       </Typography>
       {showNavLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, flexGrow: 1 }}>
           <CircularProgress size={24} />
         </Box>
       ) : (
-        <List>
+        <List sx={{ flexGrow: 1 }}>
           {mainNav.map((item) => (
             <ListItemButton
               key={item.path}
@@ -145,6 +146,9 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
           </ListItemButton>
         </List>
       )}
+      <Box sx={{ px: 2, pb: 2 }}>
+        <SponsorLinks variant="compact" />
+      </Box>
     </Box>
   );
 
@@ -156,7 +160,7 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
           sx={{
             width: DRAWER_WIDTH,
             flexShrink: 0,
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
+            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box', display: 'flex', flexDirection: 'column' },
           }}
         >
           {drawerContent}
@@ -192,6 +196,10 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
         <Container maxWidth={fullWidth ? false : 'lg'} sx={{ flexGrow: 1, py: 3, px: { xs: 2, sm: 3 } }}>
           {children}
         </Container>
+
+        <Box sx={{ px: { xs: 2, sm: 3 }, pb: 3 }}>
+          <SponsorLinks variant="banner" />
+        </Box>
       </Box>
 
       <Drawer open={isMobile && drawerOpen} onClose={() => setDrawerOpen(false)} variant="temporary">

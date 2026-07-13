@@ -323,7 +323,7 @@ Basis-URL: `/api`
 | GET | `/public/events/pickup` | Veranstaltungen für Abholboard/Abholung |
 | GET | `/public/menu?eventId=` | Speisekarte + Event-Info |
 | POST | `/public/orders` | Online-Bestellung (Body: `eventId`, …) |
-| POST | `/public/orders/lookup` | Status per Nummer + Nachname |
+| POST | `/public/orders/lookup` | Status per Nummer + Nachname (Body: `eventId`, …) |
 | GET | `/public/orders/:id` | Bestellung per ID (inkl. Storno-Infos) |
 | POST | `/public/orders/:id/cancel` | Online-Bestellung stornieren (Nachname) |
 | GET | `/public/pickup-board?eventId=` | Fertige Bestellungen einer Veranstaltung |

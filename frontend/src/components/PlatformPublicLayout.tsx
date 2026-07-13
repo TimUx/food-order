@@ -13,6 +13,7 @@ import { usePlatform } from '@/contexts/PlatformProvider';
 import { useRouting } from '@/contexts/RoutingProvider';
 import { api } from '@/services/api';
 import type { PlatformLegalLink } from '@/types/tenant';
+import { SponsorLinks } from '@/components/SponsorLinks';
 
 function isNavActive(path: string, pathname: string, hash: string): boolean {
   if (path.includes('#')) {
@@ -246,6 +247,9 @@ export function PlatformPublicLayout({ children }: PlatformPublicLayoutProps) {
       </Box>
       <Box component="footer" sx={{ py: 3, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
         <Container maxWidth="md">
+          <Box sx={{ mb: 3 }}>
+            <SponsorLinks variant="prominent" />
+          </Box>
           {platform.footerText && (
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
               {platform.footerText}

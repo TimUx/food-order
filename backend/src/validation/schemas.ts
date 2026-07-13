@@ -241,6 +241,7 @@ export const updateOrderItemsSchema = z.object({
 });
 
 export const lookupOrderSchema = z.object({
+  eventId: z.string().uuid('Veranstaltung erforderlich'),
   orderNumber: z.coerce.number().int().positive(),
   lastName: z.string().min(1, 'Nachname erforderlich'),
 });

@@ -111,11 +111,13 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
       >
         {children}
       </Container>
+      <Box sx={{ px: 2, py: 3, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
+        <Container maxWidth="md">
+          <SponsorLinks variant="prominent" />
+        </Container>
+      </Box>
       <Box component="footer" sx={{ px: 2, py: 2, borderTop: 1, borderColor: 'divider' }}>
         <Container maxWidth="md">
-          <Box sx={{ mb: legalLinks.length > 0 ? 2 : 0 }}>
-            <SponsorLinks compact />
-          </Box>
           {legalLinks.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
               {legalLinks.map((link) => (

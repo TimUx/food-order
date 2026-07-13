@@ -14,6 +14,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -24,6 +28,7 @@ import { StatusChip } from '@/components/StatusChip';
 import { api, formatPrice } from '@/services/api';
 import { subscribeOrderStatus } from '@/services/realtime/channels';
 import { Order } from '@/types';
+import { resolveDefaultEventId } from '@/utils/eventSelection';
 
 const pulse = keyframes`
   0% { transform: scale(1); }
@@ -48,8 +53,21 @@ export function OrderStatusPage() {
   const [cancelLastName, setCancelLastName] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState('');
+  const [lookupEvents, setLookupEvents] = useState<import('@/types').PublicEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [eventsLoading, setEventsLoading] = useState(true);
   const prevStatus = useRef<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    api.getPublicPickupEvents()
+      .then((events) => {
+        setLookupEvents(events);
+        setSelectedEventId(resolveDefaultEventId(events) ?? '');
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Veranstaltungen konnten nicht geladen werden'))
+      .finally(() => setEventsLoading(false));
+  }, []);
 
   useEffect(() => {
     if (!lookupToken || order || verifyMode) return;
@@ -90,10 +108,14 @@ export function OrderStatusPage() {
   }, [order?.status]);
 
   const handleLookup = async () => {
+    if (!selectedEventId) {
+      setError('Bitte wählen Sie eine Veranstaltung aus.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      const result = await api.lookupOrder(parseInt(orderNumber, 10), lastName);
+      const result = await api.lookupOrder(selectedEventId, parseInt(orderNumber, 10), lastName);
       setOrder(result);
       setLookupMode(false);
       setCancelLastName(lastName);
@@ -168,6 +190,16 @@ export function OrderStatusPage() {
   }
 
   if (lookupMode) {
+    if (eventsLoading) {
+      return (
+        <PublicLayout>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        </PublicLayout>
+      );
+    }
+
     return (
       <PublicLayout>
         <Typography variant="h4" fontWeight={800} gutterBottom>
@@ -177,35 +209,62 @@ export function OrderStatusPage() {
           Geben Sie Ihre Abholnummer und Ihren Nachnamen ein.
         </Typography>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Paper sx={{ p: 3, maxWidth: 400 }}>
-          <Stack spacing={2}>
-            <TextField
-              label="Abholnummer"
-              value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
-              placeholder="z.B. 042"
-              fullWidth
-            />
-            <TextField
-              label="Nachname"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              fullWidth
-            />
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<SearchIcon />}
-              onClick={handleLookup}
-              disabled={loading}
-            >
-              Status abfragen
-            </Button>
-            <Button component={Link} to="/public" variant="text">
-              Zur Bestellseite
-            </Button>
-          </Stack>
-        </Paper>
+        {lookupEvents.length === 0 ? (
+          <Alert severity="info" sx={{ mb: 2, maxWidth: 400 }}>
+            Derzeit sind keine Veranstaltungen für Statusabfragen verfügbar.
+          </Alert>
+        ) : (
+          <Paper sx={{ p: 3, maxWidth: 400 }}>
+            <Stack spacing={2}>
+              {lookupEvents.length > 1 && (
+                <FormControl fullWidth>
+                  <InputLabel id="status-event-label">Veranstaltung</InputLabel>
+                  <Select
+                    labelId="status-event-label"
+                    label="Veranstaltung"
+                    value={selectedEventId}
+                    onChange={(e) => setSelectedEventId(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <em>Veranstaltung wählen</em>
+                    </MenuItem>
+                    {lookupEvents.map((event) => (
+                      <MenuItem key={event.id} value={event.id}>
+                        {event.name} · {event.eventDateLabel}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              <TextField
+                label="Abholnummer"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                placeholder="z.B. 042"
+                fullWidth
+              />
+              <TextField
+                label="Nachname"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                fullWidth
+              />
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<SearchIcon />}
+                onClick={() => void handleLookup()}
+                disabled={loading || !selectedEventId}
+              >
+                Status abfragen
+              </Button>
+              <Button component={Link} to="/public" variant="text">
+                Zur Bestellseite
+              </Button>
+            </Stack>
+          </Paper>
+        )}
       </PublicLayout>
     );
   }

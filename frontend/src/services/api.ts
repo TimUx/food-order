@@ -132,8 +132,11 @@ export const api = {
     _hp?: string;
     turnstileToken?: string;
   }) => request<Order>('/public/orders', { method: 'POST', body: JSON.stringify(data) }),
-  lookupOrder: (orderNumber: number, lastName: string) =>
-    request<Order>('/public/orders/lookup', { method: 'POST', body: JSON.stringify({ orderNumber, lastName }) }),
+  lookupOrder: (eventId: string, orderNumber: number, lastName: string) =>
+    request<Order>('/public/orders/lookup', {
+      method: 'POST',
+      body: JSON.stringify({ eventId, orderNumber, lastName }),
+    }),
   getOrderByToken: (lookupToken: string, lastName: string) => {
     const q = new URLSearchParams({ lastName });
     return request<Order>(`/public/orders/status/${encodeURIComponent(lookupToken)}?${q}`);

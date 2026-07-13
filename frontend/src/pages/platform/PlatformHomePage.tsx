@@ -6,6 +6,7 @@ import { MarketingHero, MarketingSection, CtaBand } from '@/components/marketing
 import { OrderProcessFlow } from '@/components/marketing/OrderProcessFlow';
 import { usePlatform } from '@/contexts/PlatformProvider';
 import { PLATFORM_BENEFITS, PLATFORM_FEATURES, SCREENSHOTS, TARGET_GROUPS } from '@/content/platformMarketing';
+import { SponsorLinks } from '@/components/SponsorLinks';
 
 export function PlatformHomePage() {
   const { platform } = usePlatform();
@@ -127,6 +128,16 @@ export function PlatformHomePage() {
         >
           GitHub Repository
         </Button>
+      </MarketingSection>
+
+      <MarketingSection
+        title="Projekt unterstützen"
+        subtitle="FestSchmiede ist Open Source – freiwillige Unterstützung hilft bei Weiterentwicklung und Betrieb."
+        sx={{ bgcolor: 'background.default' }}
+      >
+        <Box sx={{ maxWidth: 720 }}>
+          <SponsorLinks variant="prominent" />
+        </Box>
       </MarketingSection>
 
       <CtaBand

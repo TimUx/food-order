@@ -162,7 +162,7 @@ Kunden können **Wochen vorher** online bestellen. Am Veranstaltungstag:
 1. Alle Vorbestellungen erscheinen in der Küchenansicht
 2. Die Abholnummer wurde bereits bei der Bestellung vergeben
 3. Kunden können ihren Status unter `/status` verfolgen
-4. Bei Abfrage mit **Abholnummer + Nachname** finden Kunden ihre Bestellung wieder
+4. Bei Abfrage mit **Abholnummer + Nachname** finden Kunden ihre Bestellung wieder (bei mehreren aktiven Veranstaltungen zuerst die Veranstaltung wählen)
 5. Innerhalb der Stornierungsfrist können Kunden auf der Statusseite selbst stornieren (Nachname zur Bestätigung)
 
 ### Onlinezahlung (optional)
@@ -193,7 +193,7 @@ Die Statusseite zeigt bei stornierbaren Bestellungen einen **Stornieren**-Button
 
 ### Kunde hat Abholnummer vergessen?
 
-- Kunde kann unter `/status` mit **Abholnummer + Nachname** nachschauen
+- Kunde kann unter `/status` mit **Abholnummer + Nachname** nachschauen (bei mehreren Veranstaltungen: Veranstaltung im Dropdown wählen)
 - Oder in der Bestellübersicht nach dem Namen suchen
 
 ### Kontaktdaten für Kunden
