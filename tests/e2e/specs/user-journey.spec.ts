@@ -56,15 +56,23 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await page.locator('[data-field="plannedUsage"]').getByRole('textbox').fill(
       'Zwei Feste pro Jahr mit jeweils 200–400 Gästen und 3–5 Veranstaltungen im Vereinsheim.'
     );
-    const legalChecks = page.locator('form input[type="checkbox"]');
-    await expect(legalChecks).toHaveCount(2);
-    await page.locator('label').filter({ hasText: /Datenschutzerklärung/i }).click();
-    await page.locator('label').filter({ hasText: /Nutzungsbedingungen/i }).click();
-    await expect(legalChecks.nth(0)).toBeChecked();
-    await expect(legalChecks.nth(1)).toBeChecked();
+    const form = page.locator('form');
+    await form.locator('.MuiFormControlLabel-root').filter({ hasText: /Datenschutzerklärung/i }).locator('.MuiCheckbox-root').click();
+    await form.locator('.MuiFormControlLabel-root').filter({ hasText: /Nutzungsbedingungen/i }).locator('.MuiCheckbox-root').click();
+    await expect(form.locator('input[type="checkbox"]').nth(0)).toBeChecked();
+    await expect(form.locator('input[type="checkbox"]').nth(1)).toBeChecked();
 
     await page.waitForTimeout(3500);
-    await page.getByRole('button', { name: /bewerbung absenden/i }).click();
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/tenant-applications') && r.request().method() === 'POST',
+        { timeout: 30_000 },
+      ),
+      page.getByRole('button', { name: /bewerbung absenden/i }).click(),
+    ]);
+    if (!response.ok()) {
+      throw new Error(`Bewerbung API ${response.status()}: ${await response.text()}`);
+    }
     await expect(page).toHaveURL(/mandant-beantragen\/bestaetigung/, { timeout: 20_000 });
   });
 

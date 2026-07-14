@@ -416,7 +416,7 @@ export function PlatformApplyPage() {
             )}
             <Grid size={12}>
               <FormControlLabel
-                control={<Checkbox checked={form.privacyAccepted} onChange={(e) => update('privacyAccepted', e.target.checked)} required />}
+                control={<Checkbox checked={form.privacyAccepted} onChange={(e) => update('privacyAccepted', e.target.checked)} />}
                 label={privacyLink ? (
                   <Typography variant="body2">
                     <Link to={`/rechtliches/${privacyLink.slug}`} target="_blank">Datenschutzerklärung</Link> gelesen
@@ -424,7 +424,7 @@ export function PlatformApplyPage() {
                 ) : 'Datenschutzerklärung gelesen'}
               />
               <FormControlLabel
-                control={<Checkbox checked={form.termsAccepted} onChange={(e) => update('termsAccepted', e.target.checked)} required />}
+                control={<Checkbox checked={form.termsAccepted} onChange={(e) => update('termsAccepted', e.target.checked)} />}
                 label={termsLink ? (
                   <Typography variant="body2">
                     <Link to={`/rechtliches/${termsLink.slug}`} target="_blank">Nutzungsbedingungen</Link> akzeptiert
