@@ -1,86 +1,97 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { TenantContextMissingError } from '../platform/tenant/errors';
+import type { TenantContext } from '../platform/tenant/TenantContext';
 
-const { tenantContext, tenantResolver, tenantService, tenantData } = vi.hoisted(() => {
-  const { TenantContext } = require('../platform/tenant/TenantContext') as typeof import('../platform/tenant/TenantContext');
-  const data = {
+const mocks = vi.hoisted(() => ({
+  tenantData: {
     id: 'tenant-1',
     name: 'Testverein',
     slug: 'test',
     subdomain: 'test',
     settings: {},
-  } as const;
+  } as const,
+  resolve: vi.fn(),
+  findById: vi.fn(),
+  resolveContextData: vi.fn(),
+  tenantContext: undefined as TenantContext | undefined,
+}));
+
+vi.mock('../platform/bootstrap', async () => {
+  const { TenantContext } = await import('../platform/tenant/TenantContext');
+  mocks.tenantContext = new TenantContext();
+  mocks.resolveContextData.mockImplementation(async (tenant: { id: string }) => ({
+    ...mocks.tenantData,
+    id: tenant.id,
+  }));
 
   return {
-    tenantData: data,
-    tenantContext: new TenantContext(),
-    tenantResolver: {
-      resolve: vi.fn(),
-    },
+    tenantContext: mocks.tenantContext,
+    tenantResolver: { resolve: mocks.resolve },
     tenantService: {
-      findById: vi.fn(),
-      resolveContextData: vi.fn(async (tenant: { id: string }) => ({
-        ...data,
-        id: tenant.id,
-      })),
+      findById: mocks.findById,
+      resolveContextData: mocks.resolveContextData,
     },
   };
 });
-
-vi.mock('../platform/bootstrap', () => ({
-  tenantContext,
-  tenantResolver,
-  tenantService,
-}));
 
 import { ensureTenantContextAfterMultipart } from './tenantContextUpload';
 
 describe('ensureTenantContextAfterMultipart', () => {
   const next = vi.fn() as NextFunction;
   const res = {} as Response;
+  const tenantContext = () => {
+    if (!mocks.tenantContext) {
+      throw new Error('tenantContext mock not initialized');
+    }
+    return mocks.tenantContext;
+  };
 
   beforeEach(() => {
     next.mockReset();
-    tenantContext.clear();
-    vi.mocked(tenantResolver.resolve).mockReset();
-    vi.mocked(tenantService.findById).mockReset();
+    tenantContext().clear();
+    mocks.resolve.mockReset();
+    mocks.findById.mockReset();
+    mocks.resolveContextData.mockImplementation(async (tenant: { id: string }) => ({
+      ...mocks.tenantData,
+      id: tenant.id,
+    }));
   });
 
   it('continues when tenant context is already present', async () => {
-    tenantContext.run(tenantData, async () => {
+    tenantContext().run(mocks.tenantData, async () => {
       await ensureTenantContextAfterMultipart({} as Request, res, next);
     });
     expect(next).toHaveBeenCalledWith();
   });
 
   it('rebinds tenant context from resolver after multipart parsing', async () => {
-    vi.mocked(tenantResolver.resolve).mockResolvedValue({
+    mocks.resolve.mockResolvedValue({
       type: 'tenant',
-      tenant: tenantData,
+      tenant: mocks.tenantData,
     } as never);
 
     await ensureTenantContextAfterMultipart({ headers: {} } as Request, res, next);
 
     expect(next).toHaveBeenCalledWith();
-    expect(tenantResolver.resolve).toHaveBeenCalled();
+    expect(mocks.resolve).toHaveBeenCalled();
   });
 
   it('falls back to JWT tenant id when resolver has no tenant context', async () => {
-    vi.mocked(tenantResolver.resolve).mockResolvedValue({ type: 'platform' } as never);
-    vi.mocked(tenantService.findById).mockResolvedValue({ id: 'tenant-jwt' } as never);
+    mocks.resolve.mockResolvedValue({ type: 'platform' } as never);
+    mocks.findById.mockResolvedValue({ id: 'tenant-jwt' } as never);
 
     await ensureTenantContextAfterMultipart({
       headers: {},
       user: { tenantId: 'tenant-jwt' },
     } as Request, res, next);
 
-    expect(tenantService.findById).toHaveBeenCalledWith('tenant-jwt');
+    expect(mocks.findById).toHaveBeenCalledWith('tenant-jwt');
     expect(next).toHaveBeenCalledWith();
   });
 
   it('returns TenantContextMissingError when context cannot be restored', async () => {
-    vi.mocked(tenantResolver.resolve).mockResolvedValue({ type: 'platform' } as never);
+    mocks.resolve.mockResolvedValue({ type: 'platform' } as never);
 
     await ensureTenantContextAfterMultipart({ headers: {} } as Request, res, next);
 
