@@ -48,10 +48,30 @@ test.describe('Bestellablauf', () => {
 
     await page.getByLabel(/vorname/i).fill('QA');
     await page.getByLabel(/nachname/i).fill('Tester');
+
     const submit = page.getByRole('button', { name: /bestellung absenden|bestellen und bezahlen/i });
-    await expect(submit).toBeEnabled({ timeout: 10_000 });
+    await expect(submit).toBeEnabled({ timeout: 15_000 });
+    await submit.scrollIntoViewIfNeeded();
+
+    // Bot-Schutz verlangt min. 3s seit Formularstart
+    await page.waitForTimeout(3500);
+
+    const orderResponse = page.waitForResponse(
+      (res) => {
+        const url = res.url();
+        return res.request().method() === 'POST'
+          && url.includes('/public/orders')
+          && !url.includes('/lookup')
+          && !url.includes('/checkout');
+      },
+      { timeout: 20_000 }
+    );
     await submit.click();
-    await expect(page).toHaveURL(/status/, { timeout: 20_000 });
+    const response = await orderResponse;
+    const responseBody = await response.text();
+    expect(response.status(), responseBody).toBe(201);
+
+    await expect(page).toHaveURL(/status/, { timeout: 15_000 });
   });
 });
 
