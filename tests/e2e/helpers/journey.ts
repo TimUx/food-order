@@ -49,14 +49,20 @@ export async function loginTenantStaff(page: Page, slug: string, username: strin
 export async function completeSetupWizard(page: Page, orgName: string): Promise<void> {
   await expect(page).toHaveURL(/\/admin\/einrichtung/, { timeout: 20_000 });
 
-  for (let step = 0; step < 6; step += 1) {
-    if (step === 1) {
-      await page.getByLabel('Name').fill(orgName);
+  for (let wizardStep = 0; wizardStep < 7; wizardStep += 1) {
+    if (wizardStep === 1) {
+      await page.getByRole('textbox', { name: 'Name' }).fill(orgName);
     }
-    if (step === 5) {
-      await page.getByLabel('Veranstaltung überspringen').check();
+    if (wizardStep === 5) {
+      await page
+        .locator('.MuiFormControlLabel-root')
+        .filter({ hasText: /Veranstaltung überspringen/i })
+        .locator('.MuiCheckbox-root')
+        .click();
     }
-    await page.getByRole('button', { name: /weiter|konfiguration speichern/i }).click();
+    await page
+      .getByRole('button', { name: wizardStep === 6 ? /konfiguration speichern/i : /^weiter$/i })
+      .click();
   }
 
   await expect(page).toHaveURL(/\/admin\/?$/, { timeout: 20_000 });
