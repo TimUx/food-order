@@ -22,8 +22,10 @@ const state = {
   adminEmail: '',
   adminPassword: '',
   onlineOrderNumber: '',
+  onlineOrderNum: 0,
   onlineCustomerLastName: '',
   cashierOrderNumber: '',
+  cashierOrderNum: 0,
 };
 
 state.organization = `QA Journey ${state.slug}`;
@@ -179,6 +181,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   test('6 · Online-Bestellungen (Public)', async () => {
     const first = await submitPublicOrder(page, state.slug, { firstName: 'Online', lastName: 'Gast1' });
     state.onlineOrderNumber = first.displayNumber;
+    state.onlineOrderNum = first.orderNumber;
     state.onlineCustomerLastName = first.customerLastName;
     await submitPublicOrder(page, state.slug, { firstName: 'Online', lastName: 'Gast2' });
     expect(state.onlineOrderNumber.length).toBeGreaterThan(0);
@@ -197,8 +200,9 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
       page.getByRole('button', { name: /bestellung speichern/i }).click(),
     ]);
     expect(cashierResponse.ok()).toBeTruthy();
-    const cashierOrder = (await cashierResponse.json()) as { displayNumber: string };
+    const cashierOrder = (await cashierResponse.json()) as { displayNumber: string; orderNumber: number };
     state.cashierOrderNumber = cashierOrder.displayNumber;
+    state.cashierOrderNum = cashierOrder.orderNumber;
     await page.getByRole('button', { name: /nächste bestellung/i }).click();
 
     await page.getByRole('button', { name: /menge erhöhen/i }).nth(1).click();
@@ -245,8 +249,8 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await expect(page.getByRole('heading', { name: /abholung bestätigen/i })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByLabel('Abholnummer')).toBeEnabled({ timeout: 15_000 });
 
-    await confirmPickup(page, state.onlineOrderNumber, state.onlineCustomerLastName);
-    await confirmPickup(page, state.cashierOrderNumber);
+    await confirmPickup(page, { orderNumber: state.onlineOrderNum, lastName: state.onlineCustomerLastName });
+    await confirmPickup(page, { orderNumber: state.cashierOrderNum });
   });
 
   test('12 · Mandant DSGVO-konform löschen (Plattform)', async () => {

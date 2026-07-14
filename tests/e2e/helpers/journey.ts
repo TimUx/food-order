@@ -80,11 +80,17 @@ export async function readDisplayedPickupNumber(page: Page): Promise<string> {
   return text;
 }
 
+export interface CreatedOrderRef {
+  displayNumber: string;
+  orderNumber: number;
+  customerLastName?: string;
+}
+
 export async function submitPublicOrder(
   page: Page,
   slug: string,
   customer: { firstName: string; lastName: string }
-): Promise<{ displayNumber: string; customerLastName: string }> {
+): Promise<CreatedOrderRef & { customerLastName: string }> {
   await page.goto(tenantRoute(slug, '/public'));
   await expect(page.getByRole('button', { name: /menge erhöhen/i }).first()).toBeVisible({ timeout: 20_000 });
   await page.getByRole('button', { name: /menge erhöhen/i }).first().click();
@@ -108,13 +114,19 @@ export async function submitPublicOrder(
   expect(response.status()).toBe(201);
   const created = (await response.json()) as {
     displayNumber: string;
+    orderNumber: number;
     customer?: { lastName?: string | null } | null;
   };
   expect(created.displayNumber.length).toBeGreaterThan(0);
+  expect(created.orderNumber).toBeGreaterThan(0);
   const customerLastName = (created.customer?.lastName ?? customer.lastName).trim();
   expect(customerLastName.length).toBeGreaterThan(0);
   await expect(page).toHaveURL(/status/, { timeout: 15_000 });
-  return { displayNumber: created.displayNumber, customerLastName };
+  return {
+    displayNumber: created.displayNumber,
+    orderNumber: created.orderNumber,
+    customerLastName,
+  };
 }
 
 export async function releaseOnlineOrderToKitchen(page: Page, displayNumber: string): Promise<void> {
@@ -134,26 +146,32 @@ export async function advanceOrderToReadyInKitchen(page: Page, displayNumber: st
   await card.getByRole('button', { name: /^fertig$/i }).click({ timeout: 15_000 });
 }
 
+async function enterPickupNumber(page: Page, orderNumber: number): Promise<void> {
+  await page.getByRole('button', { name: 'C', exact: true }).click();
+  for (const digit of String(orderNumber)) {
+    await page.getByRole('button', { name: digit, exact: true }).click();
+  }
+  await expect(page.getByLabel('Abholnummer')).toHaveValue(String(orderNumber));
+}
+
 export async function confirmPickup(
   page: Page,
-  displayNumber: string,
-  lastName?: string
+  order: { orderNumber: number; lastName?: string; eventName?: string }
 ): Promise<void> {
-  const pickupNumber = displayNumber.replace(/\D/g, '');
-  expect(pickupNumber.length).toBeGreaterThan(0);
+  const eventName = order.eventName ?? 'Sommerfest Haupttag';
 
   await expect(page.getByLabel('Abholnummer')).toBeEnabled({ timeout: 15_000 });
 
   const eventSelect = page.getByRole('combobox', { name: /veranstaltung/i });
-  if (/veranstaltung wählen/i.test((await eventSelect.textContent()) ?? '')) {
+  if (!new RegExp(eventName, 'i').test((await eventSelect.textContent()) ?? '')) {
     await eventSelect.click();
-    await page.getByRole('option').first().click();
+    await page.getByRole('option', { name: new RegExp(eventName, 'i') }).click();
   }
-  await expect(eventSelect).not.toContainText(/veranstaltung wählen/i);
+  await expect(eventSelect).toContainText(eventName);
 
-  await page.getByLabel('Abholnummer').fill(pickupNumber);
-  if (lastName) {
-    await page.getByLabel(/nachname \(optional/i).fill(lastName);
+  await enterPickupNumber(page, order.orderNumber);
+  if (order.lastName) {
+    await page.getByLabel(/nachname \(optional/i).fill(order.lastName);
   }
 
   const lookupResponse = page.waitForResponse(
@@ -164,7 +182,11 @@ export async function confirmPickup(
   const response = await lookupResponse;
   if (!response.ok()) {
     const alertText = (await page.locator('[role="alert"]').first().textContent())?.trim() ?? '';
-    throw new Error(`Abholung-Suche fehlgeschlagen (${response.status()}): ${alertText || await response.text()}`);
+    const payload = response.request().postDataJSON() as Record<string, unknown> | undefined;
+    throw new Error(
+      `Abholung-Suche fehlgeschlagen (${response.status()}): ${alertText || await response.text()}`
+      + (payload ? ` · Payload: ${JSON.stringify(payload)}` : ''),
+    );
   }
 
   await expect(page.getByRole('button', { name: /abholung bestätigen/i })).toBeVisible({ timeout: 15_000 });
