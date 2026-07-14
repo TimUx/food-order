@@ -4,6 +4,7 @@ import {
   advanceOrderToReadyInKitchen,
   completeSetupWizard,
   confirmPickup,
+  ensurePlatformAdmin,
   journeySlug,
   loginPlatformAdmin,
   loginTenantAdmin,
@@ -254,17 +255,16 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   });
 
   test('12 · Mandant DSGVO-konform löschen (Plattform)', async () => {
-    await loginPlatformAdmin(page);
-    await page.goto('/platform/mandanten');
-    await expect(page.getByRole('heading', { name: /mandanten/i })).toBeVisible({ timeout: 20_000 });
+    await ensurePlatformAdmin(page);
     await page.getByLabel('Suche').fill(state.slug);
     const tenantRow = page.getByRole('row').filter({
       has: page.getByRole('cell', { name: state.slug, exact: true }),
     });
     await expect(tenantRow).toHaveCount(1, { timeout: 20_000 });
     await tenantRow.getByRole('button', { name: /details/i }).click();
+    await expect(page).toHaveURL(/\/platform\/mandanten\/[0-9a-f-]+$/i, { timeout: 20_000 });
 
-    await expect(page.getByText(state.slug)).toBeVisible();
+    await expect(page.getByRole('heading', { name: state.organization })).toBeVisible();
     await expect(page.getByText('Statistik')).toBeVisible();
     await expect(
       page.locator('div').filter({ has: page.getByText('Bestellungen', { exact: true }) })

@@ -31,6 +31,20 @@ export async function loginPlatformAdmin(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/platform\/?$/, { timeout: 20_000 });
 }
 
+/** Plattform-Session nutzen oder anmelden — für Schritte nach Mitarbeiter-Login. */
+export async function ensurePlatformAdmin(page: Page): Promise<void> {
+  await page.goto('/platform/mandanten');
+  await page.waitForURL(/\/platform(\/mandanten|\/login)/, { timeout: 20_000 });
+  if (page.url().includes('/login')) {
+    await expect(page.getByLabel('Benutzername oder E-Mail')).toBeVisible({ timeout: 20_000 });
+    await page.getByLabel('Benutzername oder E-Mail').fill(PLATFORM_ADMIN.email);
+    await page.getByLabel('Passwort').fill(PLATFORM_ADMIN.password);
+    await page.getByRole('button', { name: /^anmelden$/i }).click();
+    await page.waitForURL(/\/platform\/mandanten/, { timeout: 20_000 });
+  }
+  await expect(page.getByRole('heading', { name: /mandanten/i })).toBeVisible({ timeout: 20_000 });
+}
+
 export async function loginTenantAdmin(page: Page, slug: string, email: string, password: string): Promise<void> {
   await page.goto(tenantRoute(slug, '/admin/login'));
   await page.getByLabel('Benutzername oder E-Mail').fill(email);
