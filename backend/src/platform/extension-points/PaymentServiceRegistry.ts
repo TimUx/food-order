@@ -42,8 +42,8 @@ class PaymentServiceRegistryImpl {
     return this.service.retryCheckout(sessionId);
   }
 
-  async cancelCheckout(sessionId: string): Promise<PaymentCheckoutResult> {
-    if (!this.service) throw new Error('Payment service not available');
+  async cancelCheckout(sessionId: string): Promise<PaymentCheckoutResult | null> {
+    if (!this.service) return null;
     return this.service.cancelCheckout(sessionId);
   }
 

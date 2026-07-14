@@ -1,8 +1,38 @@
 import { prisma } from '../../../src/config/database';
 import { v4 as uuidv4 } from 'uuid';
+import { Prisma } from '@prisma/client';
 import { requireTenantId } from '../../../src/platform/tenant/tenantScope';
 import type { PaymentStatus } from '../types';
 import { legacyStatusToPaymentStatus, resolvePaymentStatus } from '../types';
+
+function isMissingPaymentsSchema(err: unknown): boolean {
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    return err.code === 'P2021' || err.code === 'P2022';
+  }
+  const message = err instanceof Error ? err.message : String(err);
+  return /relation "payments" does not exist|relation "payment_sessions" does not exist|column "(released_to_kitchen|payment_status|tenant_id)" does not exist/i.test(
+    message
+  );
+}
+
+async function safePaymentsRead<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (isMissingPaymentsSchema(err)) return fallback;
+    throw err;
+  }
+}
+
+async function safePaymentsWrite(fn: () => Promise<void>): Promise<boolean> {
+  try {
+    await fn();
+    return true;
+  } catch (err) {
+    if (isMissingPaymentsSchema(err)) return false;
+    throw err;
+  }
+}
 
 export type PaymentSessionStatus = 'pending' | 'completed' | 'failed' | 'cancelled' | 'refunded';
 
@@ -84,31 +114,34 @@ export const paymentRepository = {
     paidAt: Date;
     expiresAt: Date;
   }>): Promise<void> {
-    const tenantId = requireTenantId();
-    if (data.status) {
-      await prisma.$executeRaw`UPDATE payments SET status = ${data.status}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
-    if (data.paymentStatus) {
-      await prisma.$executeRaw`UPDATE payments SET payment_status = ${data.paymentStatus}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
-    if (data.externalSessionId) {
-      await prisma.$executeRaw`UPDATE payments SET external_session_id = ${data.externalSessionId}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
-    if (data.checkoutReference) {
-      await prisma.$executeRaw`UPDATE payments SET checkout_reference = ${data.checkoutReference}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
-    if (data.paymentReference) {
-      await prisma.$executeRaw`UPDATE payments SET payment_reference = ${data.paymentReference}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
-    if (data.releasedToKitchen !== undefined) {
-      await prisma.$executeRaw`UPDATE payments SET released_to_kitchen = ${data.releasedToKitchen}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
-    if (data.paidAt) {
-      await prisma.$executeRaw`UPDATE payments SET paid_at = ${data.paidAt}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
-    if (data.expiresAt) {
-      await prisma.$executeRaw`UPDATE payments SET expires_at = ${data.expiresAt}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
-    }
+    const applied = await safePaymentsWrite(async () => {
+      const tenantId = requireTenantId();
+      if (data.status) {
+        await prisma.$executeRaw`UPDATE payments SET status = ${data.status}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+      if (data.paymentStatus) {
+        await prisma.$executeRaw`UPDATE payments SET payment_status = ${data.paymentStatus}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+      if (data.externalSessionId) {
+        await prisma.$executeRaw`UPDATE payments SET external_session_id = ${data.externalSessionId}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+      if (data.checkoutReference) {
+        await prisma.$executeRaw`UPDATE payments SET checkout_reference = ${data.checkoutReference}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+      if (data.paymentReference) {
+        await prisma.$executeRaw`UPDATE payments SET payment_reference = ${data.paymentReference}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+      if (data.releasedToKitchen !== undefined) {
+        await prisma.$executeRaw`UPDATE payments SET released_to_kitchen = ${data.releasedToKitchen}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+      if (data.paidAt) {
+        await prisma.$executeRaw`UPDATE payments SET paid_at = ${data.paidAt}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+      if (data.expiresAt) {
+        await prisma.$executeRaw`UPDATE payments SET expires_at = ${data.expiresAt}, updated_at = NOW() WHERE id = ${id}::uuid AND tenant_id = ${tenantId}`;
+      }
+    });
+    if (!applied) return;
   },
 
   async updateSession(id: string, data: Partial<{
@@ -125,41 +158,47 @@ export const paymentRepository = {
   },
 
   async findById(id: string): Promise<PaymentRow | null> {
-    const tenantId = requireTenantId();
-    const rows = await prisma.$queryRaw<PaymentRow[]>`
-      SELECT id, resource_type, resource_id, provider_id, external_session_id,
-             amount_cents, currency, status, payment_status, released_to_kitchen,
-             paid_at, expires_at, payment_reference, checkout_reference, metadata,
-             created_at, updated_at
-      FROM payments WHERE id = ${id}::uuid AND tenant_id = ${tenantId} LIMIT 1
-    `;
-    return rows[0] ?? null;
+    return safePaymentsRead(async () => {
+      const tenantId = requireTenantId();
+      const rows = await prisma.$queryRaw<PaymentRow[]>`
+        SELECT id, resource_type, resource_id, provider_id, external_session_id,
+               amount_cents, currency, status, payment_status, released_to_kitchen,
+               paid_at, expires_at, payment_reference, checkout_reference, metadata,
+               created_at, updated_at
+        FROM payments WHERE id = ${id}::uuid AND tenant_id = ${tenantId} LIMIT 1
+      `;
+      return rows[0] ?? null;
+    }, null);
   },
 
   async findByExternalSessionId(externalId: string): Promise<PaymentRow | null> {
-    const tenantId = requireTenantId();
-    const rows = await prisma.$queryRaw<PaymentRow[]>`
-      SELECT id, resource_type, resource_id, provider_id, external_session_id,
-             amount_cents, currency, status, payment_status, released_to_kitchen,
-             paid_at, expires_at, payment_reference, checkout_reference, metadata,
-             created_at, updated_at
-      FROM payments WHERE external_session_id = ${externalId} AND tenant_id = ${tenantId} LIMIT 1
-    `;
-    return rows[0] ?? null;
+    return safePaymentsRead(async () => {
+      const tenantId = requireTenantId();
+      const rows = await prisma.$queryRaw<PaymentRow[]>`
+        SELECT id, resource_type, resource_id, provider_id, external_session_id,
+               amount_cents, currency, status, payment_status, released_to_kitchen,
+               paid_at, expires_at, payment_reference, checkout_reference, metadata,
+               created_at, updated_at
+        FROM payments WHERE external_session_id = ${externalId} AND tenant_id = ${tenantId} LIMIT 1
+      `;
+      return rows[0] ?? null;
+    }, null);
   },
 
   async findByResource(resourceType: string, resourceId: string): Promise<PaymentRow | null> {
-    const tenantId = requireTenantId();
-    const rows = await prisma.$queryRaw<PaymentRow[]>`
-      SELECT id, resource_type, resource_id, provider_id, external_session_id,
-             amount_cents, currency, status, payment_status, released_to_kitchen,
-             paid_at, expires_at, payment_reference, checkout_reference, metadata,
-             created_at, updated_at
-      FROM payments WHERE resource_type = ${resourceType} AND resource_id = ${resourceId}
-        AND tenant_id = ${tenantId}
-      ORDER BY created_at DESC LIMIT 1
-    `;
-    return rows[0] ?? null;
+    return safePaymentsRead(async () => {
+      const tenantId = requireTenantId();
+      const rows = await prisma.$queryRaw<PaymentRow[]>`
+        SELECT id, resource_type, resource_id, provider_id, external_session_id,
+               amount_cents, currency, status, payment_status, released_to_kitchen,
+               paid_at, expires_at, payment_reference, checkout_reference, metadata,
+               created_at, updated_at
+        FROM payments WHERE resource_type = ${resourceType} AND resource_id = ${resourceId}
+          AND tenant_id = ${tenantId}
+        ORDER BY created_at DESC LIMIT 1
+      `;
+      return rows[0] ?? null;
+    }, null);
   },
 
   async findLatestByResources(
@@ -168,42 +207,46 @@ export const paymentRepository = {
   ): Promise<Map<string, Pick<PaymentRow, 'id' | 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>>> {
     if (ids.length === 0) return new Map();
 
-    const tenantId = requireTenantId();
-    const rows = await prisma.$queryRaw<
-      Pick<PaymentRow, 'id' | 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>[]
-    >`
-      SELECT DISTINCT ON (resource_id) id, resource_id, status, payment_status, released_to_kitchen
-      FROM payments
-      WHERE resource_type = ${resourceType}
-        AND resource_id = ANY(${ids})
-        AND tenant_id = ${tenantId}
-      ORDER BY resource_id, created_at DESC
-    `;
+    return safePaymentsRead(async () => {
+      const tenantId = requireTenantId();
+      const rows = await prisma.$queryRaw<
+        Pick<PaymentRow, 'id' | 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>[]
+      >`
+        SELECT DISTINCT ON (resource_id) id, resource_id, status, payment_status, released_to_kitchen
+        FROM payments
+        WHERE resource_type = ${resourceType}
+          AND resource_id IN (${Prisma.join(ids)})
+          AND tenant_id = ${tenantId}
+        ORDER BY resource_id, created_at DESC
+      `;
 
-    return new Map(rows.map((r) => [r.resource_id, r]));
+      return new Map(rows.map((r) => [r.resource_id, r]));
+    }, new Map());
   },
 
   async getReleasedResourceIds(resourceType: string, ids: string[]): Promise<string[]> {
     if (ids.length === 0) return [];
 
-    const tenantId = requireTenantId();
-    const rows = await prisma.$queryRaw<Pick<PaymentRow, 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>[]>`
-      SELECT DISTINCT ON (resource_id) resource_id, status, payment_status, released_to_kitchen
-      FROM payments
-      WHERE resource_type = ${resourceType}
-        AND resource_id = ANY(${ids})
-        AND tenant_id = ${tenantId}
-      ORDER BY resource_id, created_at DESC
-    `;
+    return safePaymentsRead(async () => {
+      const tenantId = requireTenantId();
+      const rows = await prisma.$queryRaw<Pick<PaymentRow, 'resource_id' | 'status' | 'payment_status' | 'released_to_kitchen'>[]>`
+        SELECT DISTINCT ON (resource_id) resource_id, status, payment_status, released_to_kitchen
+        FROM payments
+        WHERE resource_type = ${resourceType}
+          AND resource_id IN (${Prisma.join(ids)})
+          AND tenant_id = ${tenantId}
+        ORDER BY resource_id, created_at DESC
+      `;
 
-    const sessionByResource = new Map(rows.map((r) => [r.resource_id, r]));
-    return ids.filter((id) => {
-      const session = sessionByResource.get(id);
-      if (!session) return true;
-      const ps = session.payment_status ?? legacyStatusToPaymentStatus(session.status);
-      const pending = ps === 'CREATED' || ps === 'PAYMENT_PENDING' || ps === 'PAYMENT_PROCESSING';
-      return !pending || session.released_to_kitchen;
-    });
+      const sessionByResource = new Map(rows.map((r) => [r.resource_id, r]));
+      return ids.filter((id) => {
+        const session = sessionByResource.get(id);
+        if (!session) return true;
+        const ps = session.payment_status ?? legacyStatusToPaymentStatus(session.status);
+        const pending = ps === 'CREATED' || ps === 'PAYMENT_PENDING' || ps === 'PAYMENT_PROCESSING';
+        return !pending || session.released_to_kitchen;
+      });
+    }, ids);
   },
 
   async markTimedOutIfPending(id: string): Promise<boolean> {

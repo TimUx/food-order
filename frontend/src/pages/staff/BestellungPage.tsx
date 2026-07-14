@@ -8,14 +8,11 @@ import {
   Alert,
   CircularProgress,
   Stack,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import { StaffLayout } from '@/components/StaffLayout';
 import { StaffKioskActions } from '@/components/StaffKioskActions';
+import { StaffEventSelect } from '@/components/StaffEventSelect';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
 import { PosPaymentDialog } from '@/components/PosPaymentDialog';
@@ -25,7 +22,7 @@ import { FoodItem, Order, PublicEvent } from '@/types';
 import type { PaymentChoiceId, PaymentMethodsResponse } from '@/types/payment';
 import { buildPosPaymentSelection, isOnlineChoice } from '@/utils/paymentSelection';
 import { resolvePreferredEventId } from '@/utils/eventSelection';
-import { touchPrimaryButtonSx, touchFieldSx } from '@/theme/touch';
+import { touchPrimaryButtonSx } from '@/theme/touch';
 
 export function BestellungPage() {
   const { token } = useAuth();
@@ -257,25 +254,13 @@ export function BestellungPage() {
       </Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <FormControl fullWidth sx={{ mb: 3, ...touchFieldSx }}>
-        <InputLabel id="cashier-event-label">Veranstaltung</InputLabel>
-        <Select
-          labelId="cashier-event-label"
-          label="Veranstaltung"
-          value={selectedEventId}
-          onChange={(e) => setSelectedEventId(e.target.value)}
-          displayEmpty
-        >
-          <MenuItem value="">
-            <em>Veranstaltung wählen</em>
-          </MenuItem>
-          {cashierEvents.map((event) => (
-            <MenuItem key={event.id} value={event.id}>
-              {event.name} · {event.eventDateLabel}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <StaffEventSelect
+        labelId="cashier-event-label"
+        events={cashierEvents}
+        value={selectedEventId}
+        onChange={setSelectedEventId}
+        sx={{ mb: 3 }}
+      />
 
       {!selectedEventId && (
         <Alert severity="info" sx={{ mb: 2 }}>

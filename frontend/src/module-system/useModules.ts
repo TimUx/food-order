@@ -45,5 +45,7 @@ export function useModules() {
     reinitializeModule: (id: string) => runAction(id, api.reinitializeModule),
     healthCheck: (id: string) => runAction(id, api.runModuleHealthCheck),
     upgradeModule: (id: string) => runAction(id, api.upgradeModule),
+    enableModule: (id: string) => runAction(id, api.enableModule),
+    disableModule: (id: string) => runAction(id, api.disableModule),
   };
 }

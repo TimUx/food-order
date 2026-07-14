@@ -137,9 +137,13 @@ class NotificationManager {
   private async resolveConfig(context: FeatureContext): Promise<NotificationConfig> {
     const tenantConfig = await this.loadConfig(context);
     const smtp = await resolveSmtpConfig(tenantConfig);
+    const resolvedSmtp = {
+      ...smtp,
+      enabled: Boolean(smtp.host?.trim()) && smtp.enabled !== false ? true : smtp.enabled,
+    };
     return {
       ...tenantConfig,
-      smtp: { ...smtp, enabled: Boolean(smtp.host?.trim()) && smtp.enabled !== false ? true : smtp.enabled },
+      smtp: resolvedSmtp,
     };
   }
 

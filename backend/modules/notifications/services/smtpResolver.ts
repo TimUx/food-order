@@ -34,17 +34,24 @@ export async function resolveSmtpConfig(
   tenantConfig: NotificationConfig
 ): Promise<NotificationConfig['smtp']> {
   const platformSmtp = await loadPlatformSmtp();
-  const tenantBranding = tenantConfig.smtp ?? {};
+  const tenantBranding = tenantConfig?.smtp ?? {};
 
   if (platformSmtp) {
     return {
       ...platformSmtp,
-      from: String(tenantBranding.from ?? '').trim() || platformSmtp.from,
-      senderName: String(tenantBranding.senderName ?? '').trim() || platformSmtp.senderName,
-      replyTo: String(tenantBranding.replyTo ?? '').trim() || platformSmtp.replyTo,
+      from: String(tenantBranding.from ?? '').trim() || platformSmtp.from || '',
+      senderName: String(tenantBranding.senderName ?? '').trim() || platformSmtp.senderName || '',
+      replyTo: String(tenantBranding.replyTo ?? '').trim() || platformSmtp.replyTo || '',
       source: 'platform',
     };
   }
 
-  return { ...tenantBranding, enabled: false, source: 'platform' };
+  return {
+    enabled: false,
+    source: 'platform' as const,
+    ...tenantBranding,
+    from: String(tenantBranding.from ?? '').trim() || undefined,
+    senderName: String(tenantBranding.senderName ?? '').trim() || undefined,
+    replyTo: String(tenantBranding.replyTo ?? '').trim() || undefined,
+  };
 }

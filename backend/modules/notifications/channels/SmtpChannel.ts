@@ -15,7 +15,8 @@ function resolveSmtpPass(pass: unknown): string {
   }
 }
 
-function createTransporter(smtp: NotificationConfig['smtp']): Transporter | null {
+function createTransporter(smtp: NotificationConfig['smtp'] | null | undefined): Transporter | null {
+  if (!smtp) return null;
   const host = String(smtp.host ?? '').trim();
   if (!host) return null;
   const port = Number(smtp.port ?? 587);
@@ -34,7 +35,8 @@ function createTransporter(smtp: NotificationConfig['smtp']): Transporter | null
   });
 }
 
-function formatFrom(smtp: NotificationConfig['smtp']): string {
+function formatFrom(smtp: NotificationConfig['smtp'] | null | undefined): string {
+  if (!smtp) return 'noreply@verein.local';
   const address = String(smtp.from ?? '').trim() || 'noreply@verein.local';
   const name = String(smtp.senderName ?? '').trim();
   return name ? `"${name.replace(/"/g, '\\"')}" <${address}>` : address;

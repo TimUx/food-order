@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { Prisma } from '@prisma/client';
 import { logger } from '../utils/logger';
 
 export class AppError extends Error {
@@ -36,6 +37,16 @@ export function errorHandler(
       })),
     });
     return;
+  }
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2021' || err.code === 'P2022') {
+      res.status(503).json({
+        error: 'Datenbank-Schema veraltet. Bitte Migrationen ausführen (prisma migrate deploy).',
+        code: 'SCHEMA_OUTDATED',
+      });
+      return;
+    }
   }
 
   logger.error('Unbehandelter Fehler', err);

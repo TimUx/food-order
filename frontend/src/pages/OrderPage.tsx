@@ -26,7 +26,7 @@ import { FoodItem, Order, PublicEvent } from '@/types';
 import { OrderFieldConfig, DEFAULT_ORDER_FIELD_CONFIG } from '@/types/club';
 import type { PaymentChoiceId, PaymentMethodsResponse } from '@/types/payment';
 import { buildPaymentSelection, isOnlineChoice, getPaymentOptionLabel } from '@/utils/paymentSelection';
-import { touchFieldSx, touchPrimaryButtonSx, touchButtonSx, touchSquareActionSx } from '@/theme/touch';
+import { touchFieldSx, touchButtonSx, touchSquareActionSx } from '@/theme/touch';
 
 function fieldLabel(name: string, required: boolean): string {
   return required ? `${name} *` : `${name} (optional)`;
@@ -69,6 +69,7 @@ export function OrderPage() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
   const [changeMethodMode, setChangeMethodMode] = useState(false);
+  const [orderStep, setOrderStep] = useState<'dishes' | 'checkout'>('dishes');
 
   const turnstileRequired = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY);
 
@@ -93,6 +94,7 @@ export function OrderPage() {
 
   const handleSelectEvent = (eventId: string) => {
     setSelectedEventId(eventId);
+    setOrderStep('dishes');
     void loadMenu(eventId);
   };
 
@@ -158,10 +160,20 @@ export function OrderPage() {
   }, [paymentMethods, paymentMethodsLoading]);
 
   useEffect(() => {
-    if (totalCount > 0 && formValid) {
+    if (totalCount > 0 && formValid && orderStep === 'checkout') {
       void loadPaymentMethods();
     }
-  }, [totalCount, formValid, loadPaymentMethods]);
+  }, [totalCount, formValid, orderStep, loadPaymentMethods]);
+
+  const goToCheckout = () => {
+    if (totalCount === 0) {
+      setError('Bitte mindestens ein Gericht auswählen');
+      return;
+    }
+    setError('');
+    setOrderStep('checkout');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleSubmit = async () => {
     if (!formValid) {
@@ -321,13 +333,13 @@ export function OrderPage() {
   }
 
   return (
-    <PublicLayout fillHeight>
+    <PublicLayout fillHeight={orderStep === 'dishes'}>
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          flex: 1,
-          minHeight: 0,
+          flex: orderStep === 'dishes' ? 1 : undefined,
+          minHeight: orderStep === 'dishes' ? 0 : undefined,
         }}
       >
         <Box sx={{ flexShrink: 0 }}>
@@ -335,13 +347,31 @@ export function OrderPage() {
             <Button
               startIcon={<ArrowBackIcon />}
               onClick={() => {
+                if (orderStep === 'checkout') {
+                  setOrderStep('dishes');
+                  setError('');
+                  return;
+                }
                 setSelectedEventId(null);
                 setItems([]);
+                setOrderStep('dishes');
                 setError('');
               }}
               sx={{ mb: 2, ...touchButtonSx }}
             >
-              Veranstaltung wechseln
+              {orderStep === 'checkout' ? 'Zurück zu Gerichten' : 'Veranstaltung wechseln'}
+            </Button>
+          )}
+          {orderStep === 'checkout' && availableEvents.length <= 1 && (
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => {
+                setOrderStep('dishes');
+                setError('');
+              }}
+              sx={{ mb: 2, ...touchButtonSx }}
+            >
+              Zurück zu Gerichten
             </Button>
           )}
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
@@ -350,7 +380,9 @@ export function OrderPage() {
                 {eventName || 'Essen bestellen'}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}>
-                Wählen Sie zuerst Ihre Gerichte, dann geben Sie Ihre Daten ein.
+                {orderStep === 'dishes'
+                  ? 'Wählen Sie Ihre Gerichte – im nächsten Schritt geben Sie Ihre Daten ein.'
+                  : 'Geben Sie Ihre Daten ein und senden Sie die Bestellung ab.'}
               </Typography>
             </Box>
             <IconButton
@@ -391,170 +423,198 @@ export function OrderPage() {
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-          <Typography variant="h5" gutterBottom fontWeight={700} sx={{ mb: 1 }}>
-            Gerichte
-          </Typography>
-        </Box>
-
-        <Box
-          data-testid="order-dishes-scroll"
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            pr: { xs: 0.5, sm: 1 },
-            mr: { xs: -0.5, sm: -1 },
-          }}
-        >
-          <Grid container spacing={2} sx={{ pb: 2 }}>
-            {items.map((item) => (
-              <Grid key={item.id} size={{ xs: 12, sm: 6 }}>
-                <FoodItemCard
-                  item={item}
-                  quantity={quantities[item.id] || 0}
-                  onQuantityChange={(q) => setQuantities((prev) => ({ ...prev, [item.id]: q }))}
-                  touchMode
-                />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        <Box sx={{ flexShrink: 0 }}>
-          <Paper sx={{ p: 3, mb: 2, mt: 1 }} data-testid="order-customer-form">
-            <Typography variant="h5" gutterBottom fontWeight={700}>
-              Ihre Daten
+          {orderStep === 'dishes' && (
+            <Typography variant="h5" gutterBottom fontWeight={700} sx={{ mb: 1 }}>
+              Gerichte
             </Typography>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label={fieldLabel('Vorname', fieldConfig.firstNameRequired)} fullWidth required={fieldConfig.firstNameRequired} value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={touchFieldSx} />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label={fieldLabel('Nachname', fieldConfig.lastNameRequired)} fullWidth required={fieldConfig.lastNameRequired} value={lastName} onChange={(e) => setLastName(e.target.value)} sx={touchFieldSx} />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label={fieldLabel('E-Mail', fieldConfig.emailRequired)} type="email" fullWidth required={fieldConfig.emailRequired} value={email} onChange={(e) => setEmail(e.target.value)} sx={touchFieldSx} />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField label={fieldLabel('Telefon', fieldConfig.phoneRequired)} fullWidth required={fieldConfig.phoneRequired} value={phone} onChange={(e) => setPhone(e.target.value)} sx={touchFieldSx} />
-              </Grid>
-            </Grid>
-            <Alert severity="info" sx={{ mt: 2 }}>
-              Ihre Daten werden nur zur Abwicklung dieser Bestellung verwendet und nach der Veranstaltung gemäß unserer Datenschutzerklärung gelöscht.
-            </Alert>
+          )}
+        </Box>
+
+        {orderStep === 'dishes' ? (
+          <>
             <Box
-              component="label"
-              aria-hidden
+              data-testid="order-dishes-scroll"
               sx={{
-                position: 'absolute',
-                width: 1,
-                height: 1,
-                padding: 0,
-                margin: -1,
-                overflow: 'hidden',
-                clip: 'rect(0,0,0,0)',
-                whiteSpace: 'nowrap',
-                border: 0,
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                pr: { xs: 0.5, sm: 1 },
+                mr: { xs: -0.5, sm: -1 },
               }}
             >
-              Website
-              <input
-                type="text"
-                name="website"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-                tabIndex={-1}
-                autoComplete="off"
-              />
+              <Grid container spacing={2} sx={{ pb: 2 }}>
+                {items.map((item) => (
+                  <Grid key={item.id} size={{ xs: 12, sm: 6 }}>
+                    <FoodItemCard
+                      item={item}
+                      quantity={quantities[item.id] || 0}
+                      onQuantityChange={(q) => setQuantities((prev) => ({ ...prev, [item.id]: q }))}
+                      touchMode
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             </Box>
-          </Paper>
 
-          {changeMethodMode && pendingOrder && paymentSelection.showSelection && (
-            <Paper sx={{ p: 2, mb: 2, border: 2, borderColor: 'warning.main' }}>
-              <Typography variant="h6" fontWeight={700} gutterBottom>
-                Andere Zahlungsart wählen
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Ihre Bestellung {pendingOrder.displayNumber} bleibt gespeichert.
-              </Typography>
-              <PaymentMethodSelector
-                options={paymentSelection.options.filter((o) => o.type === 'online')}
-                value={paymentChoice}
-                onChange={setPaymentChoice}
-              />
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Button variant="contained" onClick={() => { void handleRetryWithNewMethod(); }} disabled={submitting || !isOnlineChoice(paymentChoice)} sx={touchPrimaryButtonSx}>
-                  Mit dieser Zahlungsart fortfahren
-                </Button>
-                <Button variant="outlined" onClick={() => setChangeMethodMode(false)} sx={touchButtonSx}>
-                  Abbrechen
+            <Paper
+              sx={{
+                flexShrink: 0,
+                p: 1.5,
+                mt: 1,
+                borderTop: 1,
+                borderColor: 'divider',
+              }}
+              elevation={4}
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+                <Box>
+                  <Typography variant="body1">
+                    <strong>{totalCount}</strong> {totalCount === 1 ? 'Gericht' : 'Gerichte'}
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800} color="primary">
+                    {formatPrice(totalPrice)}
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  onClick={goToCheckout}
+                  disabled={totalCount === 0}
+                  sx={{
+                    ...touchButtonSx,
+                    minHeight: 52,
+                    fontSize: '1.05rem',
+                    px: 2.5,
+                  }}
+                >
+                  Weiter
                 </Button>
               </Stack>
             </Paper>
-          )}
+          </>
+        ) : (
+          <Box component="section" data-testid="order-checkout-step">
+            <Paper sx={{ p: 2, mb: 2, bgcolor: 'action.hover' }}>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Ihre Auswahl
+              </Typography>
+              <Typography variant="body1" fontWeight={700}>
+                {totalCount} {totalCount === 1 ? 'Gericht' : 'Gerichte'} · {formatPrice(totalPrice)}
+              </Typography>
+            </Paper>
 
-          {!changeMethodMode && paymentSelection.showSelection && totalCount > 0 && (
-            paymentMethodsLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                <CircularProgress size={28} aria-label="Zahlungsarten werden geladen" />
+            <Paper sx={{ p: 3, mb: 2 }} data-testid="order-customer-form">
+              <Typography variant="h5" gutterBottom fontWeight={700}>
+                Ihre Daten
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField label={fieldLabel('Vorname', fieldConfig.firstNameRequired)} fullWidth required={fieldConfig.firstNameRequired} value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={touchFieldSx} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField label={fieldLabel('Nachname', fieldConfig.lastNameRequired)} fullWidth required={fieldConfig.lastNameRequired} value={lastName} onChange={(e) => setLastName(e.target.value)} sx={touchFieldSx} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField label={fieldLabel('E-Mail', fieldConfig.emailRequired)} type="email" fullWidth required={fieldConfig.emailRequired} value={email} onChange={(e) => setEmail(e.target.value)} sx={touchFieldSx} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField label={fieldLabel('Telefon', fieldConfig.phoneRequired)} fullWidth required={fieldConfig.phoneRequired} value={phone} onChange={(e) => setPhone(e.target.value)} sx={touchFieldSx} />
+                </Grid>
+              </Grid>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                Ihre Daten werden nur zur Abwicklung dieser Bestellung verwendet und nach der Veranstaltung gemäß unserer Datenschutzerklärung gelöscht.
+              </Alert>
+              <Box
+                component="label"
+                aria-hidden
+                sx={{
+                  position: 'absolute',
+                  width: 1,
+                  height: 1,
+                  padding: 0,
+                  margin: -1,
+                  overflow: 'hidden',
+                  clip: 'rect(0,0,0,0)',
+                  whiteSpace: 'nowrap',
+                  border: 0,
+                }}
+              >
+                Website
+                <input
+                  type="text"
+                  name="website"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
               </Box>
-            ) : (
-              <PaymentMethodSelector
-                options={paymentSelection.options}
-                value={paymentChoice}
-                onChange={setPaymentChoice}
-              />
-            )
-          )}
-        </Box>
+            </Paper>
 
-        <Paper
-          sx={{
-            flexShrink: 0,
-            p: 2,
-            mt: 1,
-            borderRadius: { xs: 0, sm: 2 },
-            borderTop: 2,
-            borderColor: 'primary.main',
-            mx: { xs: -2, sm: 0 },
-            mb: { xs: -3, sm: 0 },
-          }}
-          elevation={8}
-        >
-          {turnstileRequired && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-              <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(null)} />
+            {changeMethodMode && pendingOrder && paymentSelection.showSelection && (
+              <Paper sx={{ p: 2, mb: 2, border: 2, borderColor: 'warning.main' }}>
+                <Typography variant="h6" fontWeight={700} gutterBottom>
+                  Andere Zahlungsart wählen
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Ihre Bestellung {pendingOrder.displayNumber} bleibt gespeichert.
+                </Typography>
+                <PaymentMethodSelector
+                  options={paymentSelection.options.filter((o) => o.type === 'online')}
+                  value={paymentChoice}
+                  onChange={setPaymentChoice}
+                />
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <Button variant="contained" onClick={() => { void handleRetryWithNewMethod(); }} disabled={submitting || !isOnlineChoice(paymentChoice)} sx={touchButtonSx}>
+                    Mit dieser Zahlungsart fortfahren
+                  </Button>
+                  <Button variant="outlined" onClick={() => setChangeMethodMode(false)} sx={touchButtonSx}>
+                    Abbrechen
+                  </Button>
+                </Stack>
+              </Paper>
+            )}
+
+            {!changeMethodMode && paymentSelection.showSelection && totalCount > 0 && (
+              paymentMethodsLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={28} aria-label="Zahlungsarten werden geladen" />
+                </Box>
+              ) : (
+                <PaymentMethodSelector
+                  options={paymentSelection.options}
+                  value={paymentChoice}
+                  onChange={setPaymentChoice}
+                />
+              )
+            )}
+
+            {turnstileRequired && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                <TurnstileWidget onVerify={setTurnstileToken} onExpire={() => setTurnstileToken(null)} />
+              </Box>
+            )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1, pb: 2 }}>
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={submitting || totalCount === 0 || !formValid || (turnstileRequired && !turnstileToken) || paymentMethodsLoading}
+                startIcon={<ShoppingCartIcon />}
+                sx={{
+                  ...touchButtonSx,
+                  minHeight: 52,
+                  fontSize: '1.05rem',
+                  px: 3,
+                  width: { xs: '100%', sm: 'auto' },
+                  maxWidth: 360,
+                }}
+              >
+                {submitLabel}
+              </Button>
             </Box>
-          )}
-          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
-            <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
-              <Typography variant="h6">
-                Gesamt: <strong>{totalCount}</strong> {totalCount === 1 ? 'Gericht' : 'Gerichte'}
-              </Typography>
-              <Typography variant="h5" fontWeight={800} color="primary">
-                {formatPrice(totalPrice)}
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={submitting || totalCount === 0 || !formValid || (turnstileRequired && !turnstileToken) || paymentMethodsLoading}
-              sx={{
-                ...touchPrimaryButtonSx,
-                width: { xs: '100%', sm: 'auto' },
-                minWidth: { sm: 280 },
-                minHeight: 72,
-                flexDirection: 'column',
-                gap: 0.5,
-                py: 1.5,
-              }}
-            >
-              <ShoppingCartIcon sx={{ fontSize: 32 }} />
-              {submitLabel}
-            </Button>
-          </Stack>
-        </Paper>
+          </Box>
+        )}
       </Box>
 
       {pendingOrder?.payment && (

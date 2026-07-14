@@ -87,6 +87,15 @@ export const eventService = {
     return event;
   },
 
+  /** Für Mitarbeiter-Abholung: aktiv reicht, auch wenn Online-Bestellung geschlossen ist. */
+  async getStaffPickupEvent(id: string) {
+    const event = await this.getById(id);
+    if (!event.isActive) {
+      throw new AppError(403, 'Diese Veranstaltung ist nicht aktiv');
+    }
+    return event;
+  },
+
   async getOrderableById(id: string, channel: 'online' | 'cashier') {
     const event = await this.getById(id);
     if (!event.isActive) {

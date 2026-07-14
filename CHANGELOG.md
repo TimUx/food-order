@@ -3,6 +3,27 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.34 - 2026-07-14
+
+### Geändert
+
+- **Online-Bestellung:** Zweistufiger Ablauf (Gerichte → Kundendaten); kompaktere Touch-Oberfläche.
+- **Bestellung vor Ort & Abholung:** Veranstaltungs-Dropdown mit korrekt positioniertem Label (`StaffEventSelect`).
+- **Zahlung:** Standard „Bar vor Ort“, wenn Payment-Modul nicht freigeschaltet oder nicht aktiviert.
+- **Sponsor-Links:** Nur noch im Mandanten-Admin, nicht mehr im öffentlichen und Mitarbeiterbereich.
+
+### Behoben
+
+- **Bestellliste:** Interner Serverfehler beim Laden (fehlertolerante Payment-Abfragen; Realtime-Auth für Event-Sync).
+- **Dashboard vs. Bestellungen:** Statistiken funktionieren unabhängig vom Payment-Modul.
+- **Öffentliche Bestellung / Kasse:** Bestellungen und Küchenfreigabe auch ohne Payment-Tabelle.
+- **Admin Funktionen:** Legal-Modul-Aktivierung und Benachrichtigungs-SMTP ohne Absturz bei fehlender Konfiguration.
+- **Modul-Verwaltung:** Upgrade/Aktivierung robuster; fehlgeschlagene Aktivierungen werden zurückgesetzt.
+- **Abholung:** Lookup für Vor-Ort-Bestellungen ohne strikte Pickup-Event-Prüfung.
+- **Datenbank:** Klarere Meldung bei veraltetem Schema (fehlende Migrationen).
+
+---
+
 ## 2.4.33 - 2026-07-13
 
 ### Hinzugefügt

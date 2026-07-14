@@ -224,6 +224,7 @@ router.patch('/staff/orders/:id/items', requireAnyStaffPermission('orders.kitche
 router.post('/staff/orders/:id/advance', requireAnyStaffPermission('orders.kitchen', 'orders.pickup', 'orders.manage'), validateParams(idParamSchema), orderController.advanceStatus);
 
 // Realtime sync (delta/ETag) — für Polling-Fallback
+router.use('/realtime/events', authenticate, loadUser);
 router.get('/realtime/events/:eventId/orders', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), realtimeController.syncEventOrders);
 router.get('/realtime/events/:eventId/stats', requireAnyStaffPermission('orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'), realtimeController.syncEventStats);
 router.get('/realtime/pickup-board', realtimeController.syncPickupBoard);
@@ -307,34 +308,42 @@ router.get('/public/legal/:slug', async (req, res) => {
   res.json(page);
 });
 
-router.get('/public/payment/status', async (_req, res) => {
-  res.json({ available: await getPaymentServiceRegistry().isAvailable() });
+router.get('/public/payment/status', async (_req, res, next) => {
+  try {
+    res.json({ available: await getPaymentServiceRegistry().isAvailable() });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.get('/public/payment/methods', async (_req, res) => {
-  const { settingsServiceInstance } = await import('../platform/bootstrap');
-  let allowCashOnSite = true;
   try {
-    const paymentConfig = await settingsServiceInstance.getDecryptedValues('module.payment') as { allowCashOnSite?: boolean };
-    allowCashOnSite = paymentConfig?.allowCashOnSite !== false;
-  } catch {
-    /* Modul nicht installiert */
-  }
+    const { settingsServiceInstance } = await import('../platform/bootstrap');
+    let allowCashOnSite = true;
+    try {
+      const paymentConfig = await settingsServiceInstance.getDecryptedValues('module.payment') as { allowCashOnSite?: boolean };
+      allowCashOnSite = paymentConfig?.allowCashOnSite !== false;
+    } catch {
+      /* Modul nicht installiert oder nicht konfiguriert */
+    }
 
-  const available = await getPaymentServiceRegistry().isAvailable();
-  if (!available) {
-    res.json({ allowCashOnSite, methods: [] });
-    return;
+    const available = await getPaymentServiceRegistry().isAvailable();
+    if (!available) {
+      res.json({ allowCashOnSite: true, methods: [] });
+      return;
+    }
+    const methods = await getPaymentServiceRegistry().getAvailablePaymentMethods();
+    res.json({
+      allowCashOnSite,
+      methods: methods.map(({ providerId, supportedPaymentMethods, ...publicMethod }) => ({
+        ...publicMethod,
+        methodId: providerId,
+        supportedMethods: supportedPaymentMethods,
+      })),
+    });
+  } catch (err) {
+    res.json({ allowCashOnSite: true, methods: [] });
   }
-  const methods = await getPaymentServiceRegistry().getAvailablePaymentMethods();
-  res.json({
-    allowCashOnSite,
-    methods: methods.map(({ providerId, supportedPaymentMethods, ...publicMethod }) => ({
-      ...publicMethod,
-      methodId: providerId,
-      supportedMethods: supportedPaymentMethods,
-    })),
-  });
 });
 
 router.get('/public/payment/checkout/:sessionId/status', paymentPublicRateLimiter, async (req, res, next) => {
