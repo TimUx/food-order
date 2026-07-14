@@ -41,6 +41,11 @@ test.describe('Bestellablauf', () => {
       await addButton.click();
     }
 
+    const weiter = page.getByRole('button', { name: /weiter/i });
+    if (await weiter.isVisible()) {
+      await weiter.click();
+    }
+
     await page.getByLabel(/vorname/i).fill('QA');
     await page.getByLabel(/nachname/i).fill('Tester');
     const submit = page.getByRole('button', { name: /bestellung absenden|bestellen/i });
