@@ -32,6 +32,22 @@ function platformResult(
   return { type: 'platform', scope, surface, matchedBy };
 }
 
+/** Zweites Pfadsegment (oder `api`) kennzeichnet eine Mandanten-URL unter /:slug/… */
+const TENANT_PATH_SEGMENTS = new Set([
+  'public',
+  'kontakt',
+  'recht',
+  'status',
+  'abholboard',
+  'mitarbeiter',
+  'admin',
+  'platform',
+  'impressum',
+  'datenschutz',
+  'agb',
+  'widerruf',
+]);
+
 export class TenantResolver {
   private readonly cache = new Map<string, CacheEntry>();
   private readonly negativeCache = new Map<string, number>();
@@ -132,6 +148,15 @@ export class TenantResolver {
     );
   }
 
+  private isTenantPathPrefix(path: string): boolean {
+    const segments = path.split('/').filter(Boolean);
+    if (segments.length < 2) return false;
+    const second = segments[1]?.toLowerCase();
+    if (!second) return false;
+    if (second === 'api') return true;
+    return TENANT_PATH_SEGMENTS.has(second);
+  }
+
   private async resolvePathPrefix(path: string): Promise<ResolveResult | null> {
     const segments = path.split('/').filter(Boolean);
     if (segments.length === 0) return null;
@@ -146,12 +171,18 @@ export class TenantResolver {
 
     const negativeKey = `neg:slug:${slug}`;
     if (this.isNegativeCached(negativeKey)) {
+      if (this.isTenantPathPrefix(path)) {
+        throw new TenantNotFoundError();
+      }
       return null;
     }
 
     const tenant = await this.tenantService.findBySlug(slug);
     if (!tenant) {
       this.setNegativeCache(negativeKey);
+      if (this.isTenantPathPrefix(path)) {
+        throw new TenantNotFoundError();
+      }
       return null;
     }
 

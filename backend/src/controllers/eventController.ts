@@ -86,4 +86,13 @@ export const eventController = {
       next(err);
     }
   },
+
+  async delete(req: { params: { id: string } }, res: Response, next: NextFunction) {
+    try {
+      await eventService.delete(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
 };

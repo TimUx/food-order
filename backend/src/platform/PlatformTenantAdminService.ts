@@ -5,8 +5,10 @@ import type { PlatformContext } from './tenant/PlatformContext';
 import type { AuditLogEntry } from './types';
 import type { CreateTenantInput, TenantRecord, UpdateTenantInput } from './tenant/types';
 import { tenantOnboardingService } from './TenantOnboardingService';
+import { tenantPurgeService } from './tenant/TenantPurgeService';
 import { AppError } from '../middleware/errorHandler';
 import type { ModuleRegistry } from './ModuleRegistry';
+import type { TenantResolver } from './tenant/TenantResolver';
 import { isPreviewModule } from './manifest';
 
 export interface TenantModuleEntitlement {
@@ -44,7 +46,8 @@ export class PlatformTenantAdminService {
     private readonly tenantRepository: TenantRepository,
     private readonly platformContext: PlatformContext,
     private readonly audit: { log: (entry: AuditLogEntry) => Promise<void> },
-    private readonly moduleRegistry: ModuleRegistry
+    private readonly moduleRegistry: ModuleRegistry,
+    private readonly tenantResolver?: Pick<TenantResolver, 'invalidateCache'>
   ) {}
 
   async list(filter: TenantListFilter = {}): Promise<{ items: TenantListItem[]; total: number }> {
@@ -160,12 +163,17 @@ export class PlatformTenantAdminService {
   }
 
   async delete(id: string, actorId: string): Promise<void> {
-    await prisma.tenantApplication.updateMany({
-      where: { tenantId: id },
-      data: { tenantId: null },
+    const tenant = await this.tenantService.findById(id);
+    if (!tenant) throw new AppError(404, 'Mandant nicht gefunden');
+
+    await tenantPurgeService.purge(id, tenant.slug);
+    this.tenantResolver?.invalidateCache();
+
+    await this.audit.log({
+      action: 'platform.tenant.delete',
+      actorId,
+      details: { tenantId: id, slug: tenant.slug, name: tenant.name },
     });
-    await prisma.tenant.delete({ where: { id } });
-    await this.audit.log({ action: 'platform.tenant.delete', actorId, tenantId: id });
   }
 
   async resendAccessInfo(id: string, actorId: string): Promise<{ email: string; adminCreated: boolean }> {

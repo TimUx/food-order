@@ -55,11 +55,19 @@ cd ~/festschmiede   # oder Ihr Installationsverzeichnis
 ./install.sh --update
 ```
 
+Bestimmte Release-Version (überschreibt `IMAGE_TAG` in `.env`):
+
+```bash
+IMAGE_TAG=v2.4.36 ./install.sh --update
+```
+
+Alternativ `IMAGE_TAG=v2.4.36` dauerhaft in `.env` setzen.
+
 Der Assistent führt automatisch aus:
 
 1. **Konfigurations-Backup** (`.installer-state/backups/`)
 2. **Datenbank-Backup** (`scripts/backup/postgres-backup.sh`)
-3. **Neue Images** (`docker compose pull`)
+3. **Neue Images** (`docker compose pull` — Tags aus GitHub Release / `release-validation.yml`)
 4. **Container neu starten** (Schema-Sync beim Backend-Start)
 5. **Health-Check** (API muss `status: ok` melden)
 6. Bei Fehler: **Rollback** (Config + optional Datenbank)

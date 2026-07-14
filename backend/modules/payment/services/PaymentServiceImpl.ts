@@ -15,9 +15,13 @@ import { PAYMENT_FEATURES } from '../PaymentProvider';
 export function createPaymentService(context: FeatureContext): PaymentService {
   return {
     async isAvailable(): Promise<boolean> {
-      const config = await context.getConfig<{ onlinePaymentForEvents?: boolean }>('payment');
-      if (config.onlinePaymentForEvents === false) return false;
-      return paymentManager.hasActiveProvider(context);
+      try {
+        const config = await context.getConfig<{ onlinePaymentForEvents?: boolean }>('payment');
+        if (config.onlinePaymentForEvents === false) return false;
+        return paymentManager.hasActiveProvider(context);
+      } catch {
+        return false;
+      }
     },
 
     async getAvailablePaymentMethods(): Promise<PaymentMethodInfo[]> {

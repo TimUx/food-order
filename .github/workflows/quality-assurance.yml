@@ -20,10 +20,13 @@ env:
   QA_TENANT_SLUG: default
   QA_FRONTEND_BASE: http://localhost:5173
   QA_TENANT_FRONTEND_BASE: http://localhost:5173/default/
+  QA_PLATFORM_ADMIN_EMAIL: platform@festschmiede.local
+  QA_PLATFORM_ADMIN_PASSWORD: qa-docker-ci-platform-admin-password
+  QA_MAILPIT_BASE: http://localhost:8025
 
 jobs:
   quality:
-    name: Phase 1–3 – Setup & Qualität
+    name: Statische Qualität & Installer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,12 +67,7 @@ jobs:
       - name: Unit Tests & Coverage
         run: npm run qa:unit
 
-      - name: Restore script smoke test
-        run: |
-          test -x scripts/backup/postgres-restore.sh
-          grep -q 'CONFIRM=1' scripts/backup/postgres-restore.sh
-
-      - name: Installer unit tests
+      - name: Installer tests
         run: npm run qa:installer
 
       - name: Migration tests (fresh DB + upgrade)
@@ -82,8 +80,8 @@ jobs:
           name: coverage
           path: artifacts/coverage/
 
-  docker-integration:
-    name: Phase 4–8 – Docker, Migration, Tests
+  integration:
+    name: Docker-Stack, API & Smoke-E2E
     runs-on: ubuntu-latest
     needs: quality
     steps:
@@ -126,11 +124,8 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
-      - name: E2E tests
+      - name: Smoke E2E (bestehender Mandant)
         run: npm run qa:e2e
-
-      - name: Performance baseline
-        run: npm run qa:performance
 
       - name: Security audit
         run: npm run qa:security
@@ -151,6 +146,98 @@ jobs:
           path: |
             artifacts/
             tests/e2e/playwright-report/
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v
+
+  user-journey:
+    name: Realistische Nutzerreise (E2E)
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm ci --prefix backend
+
+      - name: Start CI stack
+        run: |
+          docker compose -f docker-compose.ci.yml up -d --build
+          npm run qa:wait
+
+      - name: Prisma migrate & platform seed
+        run: |
+          npm run prisma:generate --prefix backend
+          (cd backend && npm run seed)
+
+      - name: Mandantenbewerbungen für Nutzerreise aktivieren
+        run: npm run qa:prepare-journey
+
+      - name: Backend neu starten (Plattform-Settings-Cache)
+        run: |
+          docker compose -f docker-compose.ci.yml restart backend
+          npm run qa:wait
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Nutzerreise – Bewerbung bis Bestellungen
+        run: PLAYWRIGHT_WORKERS=1 npm run qa:e2e:journey
+
+      - name: Upload journey artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: user-journey-artifacts
+          path: |
+            artifacts/playwright/
+            artifacts/container-logs.txt
+
+      - name: Collect container logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.ci.yml logs > artifacts/container-logs.txt
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v
+
+  performance:
+    name: Performance-Baseline
+    runs-on: ubuntu-latest
+    needs: integration
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start CI stack
+        run: |
+          docker compose -f docker-compose.ci.yml up -d --build
+          npm run qa:wait
+          npm ci --prefix backend
+          (cd backend && npx prisma generate && npm run seed)
+          npm run qa:seed
+
+      - name: Performance baseline
+        run: npm run qa:performance
 
       - name: Tear down
         if: always()

@@ -46,6 +46,7 @@ Weitere Umgebungsvariablen:
   FESTSCHMIEDE_REF           Git-Branch/Tag (überschreibt VERSION)
   FESTSCHMIEDE_GITHUB_REPO   GitHub Repository
   FESTSCHMIEDE_BOOTSTRAP_ONLY=1  Nur herunterladen, kein Wizard
+  IMAGE_TAG                  Image-Tag für Update (überschreibt .env, z. B. v2.4.36)
 
 Online-Installation:
   curl -fsSL https://raw.githubusercontent.com/${FESTSCHMIEDE_GITHUB_REPO}/v${FESTSCHMIEDE_VERSION}/install.sh | bash

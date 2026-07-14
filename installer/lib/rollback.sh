@@ -24,6 +24,7 @@ create_pre_install_backup() {
 }
 
 perform_rollback() {
+  local skip_stack_down="${1:-0}"
   local backup_path
   backup_path=$(cat "${STATE_DIR}/last_backup" 2>/dev/null || true)
 
@@ -39,7 +40,11 @@ perform_rollback() {
 
   log_info "Rollback von: $backup_path"
 
-  deployment_down
+  if [[ "$skip_stack_down" != "1" ]]; then
+    deployment_down
+  else
+    log_info "Rollback ohne Stack-Entfernung (Konfiguration wird neu deployed)"
+  fi
 
   [[ -f "${backup_path}/.env" ]] && cp "${backup_path}/.env" "${INSTALL_DIR}/.env"
   [[ -f "${backup_path}/compose.override.yml" ]] && {

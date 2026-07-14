@@ -123,33 +123,49 @@ wait_for_migration() {
 }
 
 perform_update_rollback() {
-  local db_backup
+  local reason="${1:-unknown}"
+  local db_backup restore_db=0 skip_stack_down=0
   db_backup=$(cat "${STATE_DIR}/last_db_backup" 2>/dev/null || true)
 
-  log_warn "Starte Update-Rollback..."
-  perform_rollback || return "$EXIT_ROLLBACK"
+  case "$reason" in
+    docker)
+      skip_stack_down=1
+      restore_db=0
+      log_warn "Starte Konfigurations-Rollback (kein DB-Restore)..."
+      ;;
+    migration|health)
+      restore_db=1
+      log_warn "Starte Update-Rollback (Konfiguration + optional Datenbank)..."
+      ;;
+    *)
+      log_warn "Starte Update-Rollback..."
+      ;;
+  esac
 
-  if [[ -n "$db_backup" && -f "$db_backup" ]]; then
+  perform_rollback "$skip_stack_down" || return "$EXIT_ROLLBACK"
+
+  if [[ $restore_db -eq 1 && -n "$db_backup" && -f "$db_backup" ]]; then
+    local do_restore=0
     if [[ "${FESTSCHMIEDE_NONINTERACTIVE:-}" == "1" ]]; then
       log_info "Stelle Datenbank wieder her: $db_backup"
-      CONFIRM=1 "${INSTALL_DIR}/scripts/backup/postgres-restore.sh" "$db_backup" >>"$LOG_FILE" 2>&1 || {
-        installer_fail rollback_failed "DB-Restore fehlgeschlagen"
-        return "$EXIT_ROLLBACK"
-      }
+      do_restore=1
     elif tui_yesno "Datenbank wiederherstellen?" "Das Update ist fehlgeschlagen.\n\nSoll die Datenbank aus dem Backup wiederhergestellt werden?\n\n$db_backup"; then
+      do_restore=1
+    fi
+    if [[ $do_restore -eq 1 ]]; then
       CONFIRM=1 "${INSTALL_DIR}/scripts/backup/postgres-restore.sh" "$db_backup" >>"$LOG_FILE" 2>&1 || {
         installer_fail rollback_failed "DB-Restore fehlgeschlagen"
         return "$EXIT_ROLLBACK"
       }
+      if deployment_uses_swarm; then
+        stack_deploy || true
+      else
+        build_compose_files
+        compose_up || true
+      fi
     fi
   fi
 
-  if deployment_uses_swarm; then
-    stack_deploy || true
-  else
-    build_compose_files
-    compose_up || true
-  fi
   tui_msgbox "Rollback abgeschlossen" "Die Installation wurde auf den vorherigen Stand zurückgesetzt.\n\nProtokoll: $LOG_FILE" 2>/dev/null || true
   return 0
 }
@@ -184,16 +200,16 @@ run_guided_update() {
 
   _ops_progress "Schritt 4/5: Services starten (Migration)..."
   if deployment_uses_swarm; then
-    stack_deploy || { installer_fail docker_up; perform_update_rollback; return "$EXIT_DOCKER"; }
+    stack_deploy || { installer_fail docker_up; perform_update_rollback docker; return "$EXIT_DOCKER"; }
   else
-    compose_up || { installer_fail docker_up; perform_update_rollback; return "$EXIT_DOCKER"; }
+    compose_up || { installer_fail docker_up; perform_update_rollback docker; return "$EXIT_DOCKER"; }
   fi
 
-  wait_for_migration || { perform_update_rollback; return "$EXIT_MIGRATION"; }
+  wait_for_migration || { perform_update_rollback migration; return "$EXIT_MIGRATION"; }
 
   _ops_progress "Schritt 5/5: Health-Check..."
   if ! verify_health_strict 180; then
-    perform_update_rollback
+    perform_update_rollback health
     return "$EXIT_HEALTH"
   fi
 

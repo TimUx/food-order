@@ -31,28 +31,40 @@ export async function migrateModulesTenantSchema(defaultTenantId: string): Promi
     SELECT key FROM platform_settings WHERE key = ${MIGRATION_MARKER} LIMIT 1
   `.catch(() => [] as { key: string }[]);
 
-  if (marker.length > 0) {
+  const paymentAuditNeedsTenantId =
+    (await tableExists('payment_audit')) && !(await columnExists('payment_audit', 'tenant_id'));
+  const paymentEventsNeedTenantId =
+    (await tableExists('payment_events')) && !(await columnExists('payment_events', 'tenant_id'));
+
+  if (marker.length > 0 && !paymentAuditNeedsTenantId && !paymentEventsNeedTenantId) {
     logger.info('Modul-Tenant-Schema bereits angewendet');
     return;
   }
 
   logger.info('Starte Modul-Tenant-Schema-Migration', { tenant_id: defaultTenantId });
 
-  if (await tableExists('payment_events') && !(await columnExists('payment_events', 'tenant_id'))) {
-    const statements = [
-      `ALTER TABLE payment_events ADD COLUMN IF NOT EXISTS tenant_id TEXT`,
-      `UPDATE payment_events pe SET tenant_id = p.tenant_id FROM payments p WHERE pe.payment_id = p.id AND pe.tenant_id IS NULL`,
-      `UPDATE payment_events SET tenant_id = '${defaultTenantId}' WHERE tenant_id IS NULL`,
-      `ALTER TABLE payment_events ALTER COLUMN tenant_id SET NOT NULL`,
-      `CREATE INDEX IF NOT EXISTS payment_events_tenant_id_idx ON payment_events(tenant_id)`,
-      `DROP INDEX IF EXISTS idx_payment_events_external`,
-      `CREATE UNIQUE INDEX IF NOT EXISTS payment_events_tenant_external_key ON payment_events(tenant_id, external_event_id) WHERE external_event_id IS NOT NULL`,
-      `ALTER TABLE payment_audit ADD COLUMN IF NOT EXISTS tenant_id TEXT`,
-      `UPDATE payment_audit pa SET tenant_id = p.tenant_id FROM payments p WHERE pa.payment_id = p.id AND pa.tenant_id IS NULL`,
-      `UPDATE payment_audit SET tenant_id = '${defaultTenantId}' WHERE tenant_id IS NULL`,
-      `ALTER TABLE payment_audit ALTER COLUMN tenant_id SET NOT NULL`,
-      `CREATE INDEX IF NOT EXISTS payment_audit_tenant_id_idx ON payment_audit(tenant_id)`,
-    ];
+  if (paymentAuditNeedsTenantId || paymentEventsNeedTenantId) {
+    const statements: string[] = [];
+    if (paymentEventsNeedTenantId) {
+      statements.push(
+        `ALTER TABLE payment_events ADD COLUMN IF NOT EXISTS tenant_id TEXT`,
+        `UPDATE payment_events pe SET tenant_id = p.tenant_id FROM payments p WHERE pe.payment_id = p.id AND pe.tenant_id IS NULL`,
+        `UPDATE payment_events SET tenant_id = '${defaultTenantId}' WHERE tenant_id IS NULL`,
+        `ALTER TABLE payment_events ALTER COLUMN tenant_id SET NOT NULL`,
+        `CREATE INDEX IF NOT EXISTS payment_events_tenant_id_idx ON payment_events(tenant_id)`,
+        `DROP INDEX IF EXISTS idx_payment_events_external`,
+        `CREATE UNIQUE INDEX IF NOT EXISTS payment_events_tenant_external_key ON payment_events(tenant_id, external_event_id) WHERE external_event_id IS NOT NULL`,
+      );
+    }
+    if (paymentAuditNeedsTenantId) {
+      statements.push(
+        `ALTER TABLE payment_audit ADD COLUMN IF NOT EXISTS tenant_id TEXT`,
+        `UPDATE payment_audit pa SET tenant_id = p.tenant_id FROM payments p WHERE pa.payment_id = p.id AND pa.tenant_id IS NULL`,
+        `UPDATE payment_audit SET tenant_id = '${defaultTenantId}' WHERE tenant_id IS NULL`,
+        `ALTER TABLE payment_audit ALTER COLUMN tenant_id SET NOT NULL`,
+        `CREATE INDEX IF NOT EXISTS payment_audit_tenant_id_idx ON payment_audit(tenant_id)`,
+      );
+    }
     for (const sql of statements) {
       await prisma.$executeRawUnsafe(sql);
     }

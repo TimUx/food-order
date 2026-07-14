@@ -6,14 +6,25 @@ const mockFindByOrderNumber = vi.fn();
 const mockGetActive = vi.fn();
 const mockFindLatestByResources = vi.fn();
 const mockFindByResource = vi.fn();
+const mockCreateOrder = vi.fn();
+const mockGetNextOrderNumber = vi.fn();
+const mockCreateCustomer = vi.fn();
+const mockFindByEventFood = vi.fn();
+const mockIsPaymentAvailable = vi.fn();
 
 vi.mock('../repositories', () => ({
   orderRepository: {
     findByEvent: (...args: unknown[]) => mockFindByEvent(...args),
     findByOrderNumber: (...args: unknown[]) => mockFindByOrderNumber(...args),
+    create: (...args: unknown[]) => mockCreateOrder(...args),
+    getNextOrderNumber: (...args: unknown[]) => mockGetNextOrderNumber(...args),
   },
-  customerRepository: {},
-  foodItemRepository: {},
+  customerRepository: {
+    create: (...args: unknown[]) => mockCreateCustomer(...args),
+  },
+  foodItemRepository: {
+    findByEvent: (...args: unknown[]) => mockFindByEventFood(...args),
+  },
 }));
 
 vi.mock('../../modules/payment/repositories/paymentRepository', () => ({
@@ -43,7 +54,8 @@ vi.mock('./eventService', () => ({
 
 vi.mock('../core/extensionPoints', () => ({
   getPaymentServiceRegistry: () => ({
-    isAvailable: vi.fn().mockResolvedValue(false),
+    isAvailable: (...args: unknown[]) => mockIsPaymentAvailable(...args),
+    createCheckout: vi.fn(),
   }),
   getPayableResourceRegistry: vi.fn(),
 }));
@@ -153,6 +165,17 @@ describe('orderService.getByEvent', () => {
 
     expect(result.map((o) => o.id)).toEqual(['released-1']);
   });
+
+  it('liefert Bestellungen auch wenn Payment-Sessions nicht geladen werden können', async () => {
+    const order = buildOrder({ id: 'online-1', source: 'ONLINE', releasedToKitchen: false });
+    mockFindByEvent.mockResolvedValue([order]);
+    mockFindLatestByResources.mockRejectedValue(new Error('relation "payments" does not exist'));
+
+    const result = await orderService.getByEvent('event-1');
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.paymentLabel).toBe('Bar vor Ort');
+  });
 });
 
 describe('orderService.getStats', () => {
@@ -181,6 +204,69 @@ describe('orderService.getStats', () => {
     expect(stats.totalOrders).toBe(2);
     expect(stats.openOrders).toBe(2);
     expect(stats.revenue).toBe(20);
+  });
+});
+
+describe('orderService.createOnlineOrder', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetActive.mockResolvedValue({
+      id: 'event-1',
+      date: eventDate,
+      startTime: '18:00',
+      isActive: true,
+      ordersClosed: false,
+      onlineOrdersActive: true,
+      cashierActive: true,
+    });
+    mockFindByEventFood.mockResolvedValue([
+      {
+        id: 'food-1',
+        eventId: 'event-1',
+        name: 'Bratwurst',
+        description: null,
+        price: 4.5,
+        imageUrl: null,
+        sortOrder: 0,
+        active: true,
+        soldOut: false,
+        maxQuantity: null,
+      },
+    ]);
+    mockGetNextOrderNumber.mockResolvedValue(7);
+    mockCreateCustomer.mockResolvedValue({ id: 'customer-1' });
+    mockCreateOrder.mockImplementation(async (data: Record<string, unknown>) => {
+      const base = buildOrder({
+        id: 'online-new',
+        source: 'ONLINE',
+        orderNumber: data.orderNumber as number,
+        releasedToKitchen: false,
+        customer: { firstName: 'Max', lastName: 'Mustermann', email: null, phone: null },
+      });
+      return {
+        ...base,
+        eventId: data.eventId,
+        orderDate: data.orderDate,
+        totalPrice: data.totalPrice,
+      };
+    });
+    mockFindByResource.mockResolvedValue(null);
+    mockIsPaymentAvailable.mockResolvedValue(false);
+  });
+
+  it('legt Bar-Bestellungen an, wenn Payment-Verfügbarkeit fehlschlägt', async () => {
+    mockIsPaymentAvailable.mockRejectedValue(new Error('decryption failed'));
+
+    const result = await orderService.createOnlineOrder({
+      eventId: 'event-1',
+      firstName: 'Max',
+      lastName: 'Mustermann',
+      items: [{ foodItemId: 'food-1', quantity: 1 }],
+    });
+
+    expect(result.id).toBe('online-new');
+    expect(result.paymentLabel).toBe('Bar vor Ort');
+    expect(mockCreateOrder).toHaveBeenCalled();
   });
 });
 

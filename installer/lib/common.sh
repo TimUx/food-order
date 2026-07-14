@@ -175,14 +175,26 @@ else
   }
 fi
 
+apply_shell_env_overrides() {
+  local key val
+  for key in IMAGE_TAG GHCR_IMAGE_PREFIX STACK_NAME DEPLOYMENT_MODE; do
+    val="${!key:-}"
+    if [[ -n "$val" ]]; then
+      CFG["$key"]="$val"
+      log_info "Shell-Override: ${key}=${val}"
+    fi
+  done
+}
+
 load_existing_env() {
   local env_file="${INSTALL_DIR}/.env"
-  [[ -f "$env_file" ]] || return 0
+  [[ -f "$env_file" ]] || { apply_shell_env_overrides; return 0; }
   log_info "Lade vorhandene .env: $env_file"
   while IFS='=' read -r key value; do
     [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
     CFG["$key"]="$(dotenv_unquote_value "$value")"
   done < <(grep -E '^[A-Z_]+=' "$env_file" 2>/dev/null || true)
+  apply_shell_env_overrides
 }
 
 save_state() {

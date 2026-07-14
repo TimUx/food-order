@@ -17,13 +17,21 @@ class PaymentServiceRegistryImpl {
 
   async isAvailable(): Promise<boolean> {
     if (!this.service) return false;
-    return this.service.isAvailable();
+    try {
+      return await this.service.isAvailable();
+    } catch {
+      return false;
+    }
   }
 
   async getAvailablePaymentMethods(): Promise<PaymentMethodInfo[]> {
     if (!this.service) return [];
-    if (!(await this.service.isAvailable())) return [];
-    return this.service.getAvailablePaymentMethods();
+    if (!(await this.isAvailable())) return [];
+    try {
+      return await this.service.getAvailablePaymentMethods();
+    } catch {
+      return [];
+    }
   }
 
   async createCheckout(resource: PayableResource, providerId?: string): Promise<PaymentCheckoutResult | null> {
@@ -49,14 +57,22 @@ class PaymentServiceRegistryImpl {
 
   async isResourceReleased(type: string, id: string): Promise<boolean> {
     if (!this.service) return true;
-    if (!(await this.service.isAvailable())) return true;
-    return this.service.isResourceReleased(type, id);
+    if (!(await this.isAvailable())) return true;
+    try {
+      return await this.service.isResourceReleased(type, id);
+    } catch {
+      return true;
+    }
   }
 
   async filterReleasedIds(type: string, ids: string[]): Promise<string[]> {
     if (!this.service) return ids;
-    if (!(await this.service.isAvailable())) return ids;
-    return this.service.filterReleasedIds(type, ids);
+    if (!(await this.isAvailable())) return ids;
+    try {
+      return await this.service.filterReleasedIds(type, ids);
+    } catch {
+      return ids;
+    }
   }
 }
 

@@ -14,7 +14,7 @@ Anleitung für Administratoren der FestSchmiede-Plattform mit Vollzugriff auf al
 |---------|-----|--------------|
 | Login | `/platform/login` | Separater Einstieg für Plattformadministratoren |
 | Dashboard | `/platform` | Kennzahlen, Systemstatus |
-| Mandanten | `/platform/mandanten` | Anlegen, Bearbeiten, Sperren, Impersonation |
+| Mandanten | `/platform/mandanten` | Anlegen, Bearbeiten, Sperren, **DSGVO-Löschung**, Impersonation |
 | Mandantenanträge | `/platform/bewerbungen` | Bewerbungen prüfen, genehmigen, Mandant anlegen |
 | Domain & Routing | `/platform/domains` | Anzeige der kanonischen Domain- und Routing-Konfiguration (ENV) |
 | Rechtliches | `/platform/rechtliches` | Impressum, Datenschutz, Nutzungsbedingungen (Plattformebene) |

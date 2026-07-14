@@ -177,6 +177,7 @@ router.get('/staff/events/active', requireAnyStaffPermission('orders.view', 'ord
 router.post('/staff/events', requirePermissionKey('events.manage'), validateBody(createEventSchema), eventController.create);
 router.put('/staff/events/:id', requirePermissionKey('events.manage'), validateParams(idParamSchema), validateBody(updateEventSchema), eventController.update);
 router.post('/staff/events/:id/activate', requirePermissionKey('events.manage'), validateParams(idParamSchema), eventController.setActive);
+router.delete('/staff/events/:id', requirePermissionKey('events.manage'), validateParams(idParamSchema), eventController.delete);
 
 router.get('/staff/food-items', requireAnyStaffPermission('food.view', 'food.edit'), foodItemController.getCatalog);
 router.post('/staff/food-items', requirePermissionKey('food.edit'), validateBody(createFoodItemSchema), foodItemController.createCatalog);

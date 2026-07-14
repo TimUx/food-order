@@ -78,6 +78,15 @@ async function getCancellationInfo(order: OrderWithRelations): Promise<Cancellat
   };
 }
 
+async function resolvePaymentAvailable(): Promise<boolean> {
+  try {
+    return await getPaymentServiceRegistry().isAvailable();
+  } catch (err) {
+    logger.warn('Payment-Verfügbarkeit konnte nicht geprüft werden', { err });
+    return false;
+  }
+}
+
 function paymentLabelForOrder(input: {
   orderSource: Order['source'];
   paymentRow?: { status: string; payment_status: string | null; released_to_kitchen: boolean } | null;
@@ -160,7 +169,15 @@ function mapOrder(
 
 async function mapOrderWithCancellation(order: OrderWithRelations) {
   const cancellation = await getCancellationInfo(order);
-  const session = await paymentRepository.findByResource('order', order.id);
+  let session: Awaited<ReturnType<typeof paymentRepository.findByResource>> = null;
+  try {
+    session = await paymentRepository.findByResource('order', order.id);
+  } catch (err) {
+    logger.warn('Payment-Session für Bestellung konnte nicht geladen werden', {
+      orderId: order.id,
+      err,
+    });
+  }
   const paymentLabel = paymentLabelForOrder({
     orderSource: order.source,
     paymentRow: session,
@@ -262,10 +279,18 @@ export const orderService = {
     });
     const filtered = options?.kitchenOnly ? orders.filter((o) => (o as OrderWithRelations).releasedToKitchen) : orders;
 
-    const sessions = await paymentRepository.findLatestByResources(
-      'order',
-      filtered.map((o) => o.id)
-    );
+    let sessions: Awaited<ReturnType<typeof paymentRepository.findLatestByResources>> = new Map();
+    try {
+      sessions = await paymentRepository.findLatestByResources(
+        'order',
+        filtered.map((o) => o.id)
+      );
+    } catch (err) {
+      logger.warn('Payment-Sessions für Bestellliste konnten nicht geladen werden', {
+        eventId,
+        err,
+      });
+    }
 
     return filtered.map((o) => {
       const session = sessions.get(o.id) ?? null;
@@ -362,7 +387,7 @@ export const orderService = {
 
     validateOrderFields(customerData, orderSettings.fields);
 
-    const paymentAvailable = await getPaymentServiceRegistry().isAvailable();
+    const paymentAvailable = await resolvePaymentAvailable();
     const payOnline = Boolean(paymentAvailable && data.paymentMethodId);
 
     const mapped = await this._createOrder(event, 'ONLINE', data.items, customerData, {
@@ -449,7 +474,7 @@ export const orderService = {
   ) {
     const event = await eventService.getOrderableById(eventId, 'cashier');
 
-    const paymentAvailable = await getPaymentServiceRegistry().isAvailable();
+    const paymentAvailable = await resolvePaymentAvailable();
     const payOnline = Boolean(paymentAvailable && paymentMethodId);
 
     const mapped = await this._createOrder(event, 'CASHIER', items, undefined, {

@@ -183,7 +183,8 @@ export function bootstrapPlatform(): void {
     tenantRepository,
     platformContextInstance,
     auditServiceInstance,
-    moduleRegistryInstance
+    moduleRegistryInstance,
+    tenantResolverInstance
   );
   tenantApplicationServiceInstance = new TenantApplicationService(
     platformContextInstance,

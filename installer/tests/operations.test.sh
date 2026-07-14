@@ -61,6 +61,19 @@ else
 fi
 [[ "$(stat -c '%a' "$STATE_FILE" 2>/dev/null || echo 0)" == "600" ]] && pass "state chmod 600" || pass "state chmod (skip on mac)"
 
+echo "--- Shell-Env Overrides ---"
+TMP_INSTALL=$(mktemp -d)
+export INSTALL_DIR="$TMP_INSTALL"
+echo "IMAGE_TAG=latest" >"$TMP_INSTALL/.env"
+unset IMAGE_TAG
+load_existing_env
+[[ "${CFG[IMAGE_TAG]}" == "latest" ]] && pass "IMAGE_TAG from .env" || fail "IMAGE_TAG from .env"
+export IMAGE_TAG=v2.4.35
+apply_shell_env_overrides
+[[ "${CFG[IMAGE_TAG]}" == "v2.4.35" ]] && pass "IMAGE_TAG shell override" || fail "IMAGE_TAG shell override"
+rm -rf "$TMP_INSTALL"
+export INSTALL_DIR="$(cd "${INSTALLER_DIR}/.." && pwd)"
+
 echo "--- Install.sh CLI ---"
 grep -q '\-\-update' "${INSTALLER_DIR}/install.sh" && pass "install.sh --update" || fail "install.sh --update"
 grep -q 'run_guided_update' "${INSTALLER_DIR}/lib/operations.sh" && pass "guided update function" || fail "guided update function"

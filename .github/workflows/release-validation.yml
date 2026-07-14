@@ -19,18 +19,24 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
+  DATABASE_URL: postgresql://festschmiede:qa-ci-postgres-password-secure@localhost:5432/festschmiede
+  JWT_SECRET: qa-docker-ci-jwt-secret-not-in-blocklist-32chars
+  APP_ENCRYPTION_KEY: qa-docker-ci-encryption-key-not-blocked32
+  CORS_ORIGIN: http://localhost:5173
+  QA_FRONTEND_BASE: http://localhost:5173
+  QA_PLATFORM_ADMIN_EMAIL: platform@festschmiede.local
+  QA_PLATFORM_ADMIN_PASSWORD: qa-docker-ci-platform-admin-password
+  QA_MAILPIT_BASE: http://localhost:8025
 
 jobs:
   validate:
+    name: Release-Gate (Build + Nutzerreise)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.release.tag_name || inputs.tag || github.ref }}
-
-      - name: Trigger full QA pipeline
-        run: echo "Release validation delegates to quality-assurance workflow gates"
 
       - uses: actions/setup-node@v4
         with:
@@ -50,34 +56,26 @@ jobs:
       - name: Generate Prisma client
         run: npm run prisma:generate --prefix backend
 
-      - name: Quality gate
+      - name: Quality gate (schnell)
         run: |
           npm run qa:typecheck
           npm run qa:unit
 
-      - name: Docker stack validation
-        env:
-          DATABASE_URL: postgresql://festschmiede:qa-ci-postgres-password-secure@localhost:5432/festschmiede
-          JWT_SECRET: qa-docker-ci-jwt-secret-not-in-blocklist-32chars
-          APP_ENCRYPTION_KEY: qa-docker-ci-encryption-key-not-blocked32
+      - name: Docker stack + Nutzerreise
         run: |
           docker compose -f docker-compose.ci.yml up -d --build
           npm run qa:wait
-          (cd backend && npx prisma generate && npm run seed)
-          npm run qa:seed
-          npm run qa:module-scenarios
+          (cd backend && npm run seed)
+          npm run qa:prepare-journey
           docker compose -f docker-compose.ci.yml restart backend
           npm run qa:wait
-          npm run qa:api
           npx playwright install chromium --with-deps
-          npm run qa:e2e
+          npm run qa:e2e:journey
           npm run qa:security
 
       - name: Release gate report
         if: always()
-        run: |
-          npm run qa:report || true
-          test -f artifacts/qa-summary.json
+        run: npm run qa:report || true
 
       - name: Upload release validation artifacts
         uses: actions/upload-artifact@v4

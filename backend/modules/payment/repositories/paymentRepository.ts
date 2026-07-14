@@ -5,12 +5,28 @@ import { requireTenantId } from '../../../src/platform/tenant/tenantScope';
 import type { PaymentStatus } from '../types';
 import { legacyStatusToPaymentStatus, resolvePaymentStatus } from '../types';
 
-function isMissingPaymentsSchema(err: unknown): boolean {
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    return err.code === 'P2021' || err.code === 'P2022';
-  }
-  const message = err instanceof Error ? err.message : String(err);
-  return /relation "payments" does not exist|relation "payment_sessions" does not exist|column "(released_to_kitchen|payment_status|tenant_id)" does not exist/i.test(
+function prismaErrorText(err: unknown): string {
+  if (typeof err !== 'object' || err === null) return String(err);
+  const chunks: string[] = [];
+  if (err instanceof Error && err.message) chunks.push(err.message);
+  const meta = (err as { meta?: { message?: string; code?: string } }).meta;
+  if (meta?.message) chunks.push(meta.message);
+  if (meta?.code) chunks.push(meta.code);
+  return chunks.join('\n');
+}
+
+function prismaErrorCode(err: unknown): string | undefined {
+  if (typeof err !== 'object' || err === null || !('code' in err)) return undefined;
+  const code = (err as { code?: unknown }).code;
+  return typeof code === 'string' ? code : undefined;
+}
+
+export function isMissingPaymentsSchema(err: unknown): boolean {
+  const code = prismaErrorCode(err);
+  if (code === 'P2021' || code === 'P2022') return true;
+
+  const message = prismaErrorText(err);
+  return /relation "(payments|payment_sessions|payment_audit|payment_events|payment_provider_config)" does not exist|column "(released_to_kitchen|payment_status|tenant_id)" does not exist|column .* does not exist on relation "(payments|payment_audit|payment_events|payment_provider_config)"|payments does not exist/i.test(
     message
   );
 }

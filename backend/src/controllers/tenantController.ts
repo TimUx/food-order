@@ -111,7 +111,7 @@ export function createTenantController(
         const frontendPath =
           typeof req.query.frontendPath === 'string' && req.query.frontendPath.startsWith('/')
             ? req.query.frontendPath
-            : req.path;
+            : '/';
 
         let result: ResolveResult;
         try {

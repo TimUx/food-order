@@ -211,6 +211,8 @@ export const api = {
     request<Event>('/staff/events', { method: 'POST', body: JSON.stringify(data) }, token),
   updateEvent: (token: string, id: string, data: Partial<Event>) =>
     request<Event>(`/staff/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
+  deleteEvent: (token: string, id: string) =>
+    request<void>(`/staff/events/${id}`, { method: 'DELETE' }, token),
   activateEvent: (token: string, id: string) =>
     request<Event>(`/staff/events/${id}/activate`, { method: 'POST' }, token),
 

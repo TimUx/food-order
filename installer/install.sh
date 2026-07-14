@@ -66,6 +66,7 @@ Optionen:
 Umgebungsvariablen:
   INSTALL_DIR                      Installationsverzeichnis
   FESTSCHMIEDE_NONINTERACTIVE=1    Keine TUI-Dialoge (für Skripte/CI)
+  IMAGE_TAG                        Image-Tag für Update (überschreibt .env, z. B. v2.4.36)
 
 Protokoll: installer/logs/
 EOF

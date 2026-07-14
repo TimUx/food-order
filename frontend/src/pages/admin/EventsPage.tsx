@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { AdminLayout } from '@/components/AdminLayout';
@@ -158,6 +159,21 @@ export function EventsPage() {
     }
   };
 
+  const handleDelete = async (event: Event) => {
+    if (!token) return;
+    const confirmed = confirm(
+      `Veranstaltung „${event.name}“ wirklich löschen?\n\nSpeisen-Zuordnungen werden entfernt. Nicht möglich, wenn bereits Bestellungen existieren.`
+    );
+    if (!confirmed) return;
+    setError('');
+    try {
+      await api.deleteEvent(token, event.id);
+      loadEvents();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Löschen fehlgeschlagen');
+    }
+  };
+
   if (loading) {
     return (
       <AdminLayout title="Veranstaltungen">
@@ -207,6 +223,9 @@ export function EventsPage() {
               <CardActions>
                 <Button size="small" startIcon={<EditIcon />} onClick={() => openEdit(event)}>Bearbeiten</Button>
                 <Button size="small" startIcon={<RestaurantMenuIcon />} onClick={() => void openFoodAssignments(event)}>Speisen</Button>
+                <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => void handleDelete(event)}>
+                  Löschen
+                </Button>
               </CardActions>
             </Card>
           </Grid>

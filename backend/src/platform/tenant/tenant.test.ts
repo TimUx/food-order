@@ -215,6 +215,32 @@ describe('TenantResolver', () => {
     expect(result.matchedBy).toBe('default_fallback');
   });
 
+  it('throws when path prefix slug does not exist on localhost', async () => {
+    vi.mocked(tenantService.findBySlug).mockResolvedValue(null);
+    const req = {
+      headers: { host: 'localhost' },
+      hostname: 'localhost',
+      path: '/unknown-tenant/public',
+      originalUrl: '/unknown-tenant/public',
+    } as Request;
+
+    await expect(resolver.resolve(req)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it('falls back to www for single-segment paths that are not tenant slugs', async () => {
+    vi.mocked(tenantService.findBySlug).mockResolvedValue(null);
+    const req = {
+      headers: { host: 'localhost' },
+      hostname: 'localhost',
+      path: '/mandant-beantragen',
+      originalUrl: '/mandant-beantragen',
+    } as Request;
+
+    const result = await resolver.resolve(req);
+    expect(result.type).toBe('platform');
+    expect(result.scope).toBe('www');
+  });
+
   it('rejects legacy tenant subdomain hosts', async () => {
     const req = {
       headers: { host: 'asv-libelle.example.test' },

@@ -51,6 +51,17 @@ describe('API platform public', () => {
     expect(res.body.matchedBy).toBe('path_prefix');
   });
 
+  it('GET /api/public/routing-config returns unknown scope for missing tenant slug', async () => {
+    const res = await request(app)
+      .get('/api/public/routing-config')
+      .query({ frontendPath: '/definitely-missing-tenant-slug/public' })
+      .set('Host', 'localhost');
+    expect(res.status).toBe(200);
+    expect(res.body.scope).toBe('unknown');
+    expect(res.body.tenantSlug).toBeNull();
+    expect(res.body.basename).toBe('');
+  });
+
   it('GET /api/public/routing-config includes canonical domain URLs', async () => {
     const res = await request(app).get('/api/public/routing-config').set('Host', 'localhost');
     expect(res.status).toBe(200);

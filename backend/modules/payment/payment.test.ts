@@ -5,6 +5,7 @@ import { defaultPaymentConfig } from './config';
 import { toPaymentMethodInfo } from './providerMetadata';
 import { legacyStatusToPaymentStatus, resolvePaymentStatus } from './types';
 import { PAYMENT_FEATURES } from './PaymentProvider';
+import { isMissingPaymentsSchema } from './repositories/paymentRepository';
 
 describe('PaymentProvider configuration', () => {
   it('Stripe is configured only with keys and enabled flag', () => {
@@ -104,5 +105,40 @@ describe('Payment method types', () => {
     });
     expect(methods.some((m) => m.providerId === 'stripe:card')).toBe(true);
     expect(methods.some((m) => m.providerId === 'stripe:apple_pay')).toBe(false);
+  });
+});
+
+describe('isMissingPaymentsSchema', () => {
+  it('erkennt fehlende payments-Tabelle aus Prisma-Raw-Query-Fehlern', () => {
+    const err = {
+      name: 'PrismaClientKnownRequestError',
+      code: 'P2010',
+      message: 'Invalid `prisma.$queryRaw()` invocation:',
+      meta: { code: '42P01', message: 'relation "payments" does not exist' },
+    };
+
+    expect(isMissingPaymentsSchema(err)).toBe(true);
+  });
+
+  it('ignoriert fehlende tenant_id-Spalte in payment_audit', () => {
+    const err = {
+      name: 'PrismaClientKnownRequestError',
+      code: 'P2010',
+      message: 'Invalid `prisma.$executeRaw()` invocation:',
+      meta: { code: '42703', message: 'column "tenant_id" does not exist' },
+    };
+
+    expect(isMissingPaymentsSchema(err)).toBe(true);
+  });
+
+  it('ignoriert fremde Datenbankfehler', () => {
+    const err = {
+      name: 'PrismaClientKnownRequestError',
+      code: 'P2010',
+      message: 'Invalid `prisma.$queryRaw()` invocation:',
+      meta: { code: '42P01', message: 'relation "Order" does not exist' },
+    };
+
+    expect(isMissingPaymentsSchema(err)).toBe(false);
   });
 });

@@ -78,7 +78,7 @@ Vereine benötigen eine einfache, touch-optimierte Lösung für Veranstaltungsta
 ## Auswirkungen
 
 - Alle offiziellen Module müssen im Docker-Build enthalten sein
-- Releases lösen Image-Build aus (GitHub Actions `docker-publish.yml`)
+- Releases lösen Image-Build aus (GitHub Actions `release-validation.yml`, Job nach erfolgreichem Release-Gate)
 - Dokumentation in `docs/` ist Teil des Produkts
 - Versionierung über Git-Tags und `IMAGE_TAG` in `.env`
 

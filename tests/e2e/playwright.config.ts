@@ -5,10 +5,15 @@ const artifactsDir = path.resolve(__dirname, '../../artifacts/playwright');
 
 export default defineConfig({
   testDir: './specs',
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  workers: 1,
+  // Nutzerreise ist serial; Smoke-Tests (qa:e2e) profitieren von mehreren Workern.
+  workers: process.env.PLAYWRIGHT_WORKERS
+    ? Number(process.env.PLAYWRIGHT_WORKERS)
+    : process.env.CI
+      ? 2
+      : undefined,
   reporter: [
     ['list'],
     ['html', { outputFolder: path.join(artifactsDir, 'html'), open: 'never' }],

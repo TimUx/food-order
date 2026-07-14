@@ -135,6 +135,16 @@ export const eventRepository = {
 
   setIsActive: async (id: string, isActive: boolean) =>
     eventRepository.update(id, { isActive }),
+
+  countOrders: (eventId: string) =>
+    prisma.order.count({
+      where: tenantWhere({ eventId }),
+    }),
+
+  delete: async (id: string) => {
+    const result = await prisma.event.deleteMany({ where: tenantWhere({ id }) });
+    if (result.count === 0) throw new Error('Veranstaltung nicht gefunden');
+  },
 };
 
 export const foodItemRepository = {
@@ -281,6 +291,14 @@ export const foodItemRepository = {
     });
     return [...new Set(rows.map((row) => row.eventId))];
   },
+
+  countOrderReferences: (foodItemId: string) =>
+    prisma.orderItem.count({
+      where: {
+        foodItemId,
+        order: tenantWhere({}),
+      },
+    }),
 
   delete: async (id: string) => {
     await prisma.eventFoodItem.deleteMany({ where: tenantWhere({ foodItemId: id }) });

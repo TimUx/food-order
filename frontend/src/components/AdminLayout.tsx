@@ -34,7 +34,6 @@ import { useThemeMode } from '@/contexts/ThemeContext';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAdminUi } from '@/contexts/AdminUiContext';
 import { resolveAdminIcon } from '@/admin/iconMap';
-import { SponsorLinks } from '@/components/SponsorLinks';
 
 const DRAWER_WIDTH = 260;
 const SETTINGS_PARENT_ID = 'settings';
@@ -146,9 +145,6 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
           </ListItemButton>
         </List>
       )}
-      <Box sx={{ px: 2, pb: 2, mt: 'auto' }}>
-        <SponsorLinks variant="compact" />
-      </Box>
     </Box>
   );
 
@@ -196,10 +192,6 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
         <Container maxWidth={fullWidth ? false : 'lg'} sx={{ flexGrow: 1, py: 3, px: { xs: 2, sm: 3 } }}>
           {children}
         </Container>
-
-        <Box sx={{ px: { xs: 2, sm: 3 }, pb: 3 }}>
-          <SponsorLinks variant="banner" />
-        </Box>
       </Box>
 
       <Drawer open={isMobile && drawerOpen} onClose={() => setDrawerOpen(false)} variant="temporary">

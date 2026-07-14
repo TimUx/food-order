@@ -346,7 +346,11 @@ export function PlatformTenantDetailPage() {
           color="error"
           variant="outlined"
           onClick={async () => {
-            if (confirm('Mandant unwiderruflich löschen?')) {
+            if (
+              confirm(
+                'Mandant unwiderruflich löschen? Alle mandantenspezifischen Daten (Veranstaltungen, Bestellungen, Benutzer, Einstellungen, Gerichte, Uploads) werden dauerhaft aus der Datenbank entfernt (DSGVO).'
+              )
+            ) {
               await platformApi.deleteTenant(token!, id!);
               navigate('/platform/mandanten');
             }

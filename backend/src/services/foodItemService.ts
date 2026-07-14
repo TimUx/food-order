@@ -155,6 +155,14 @@ export const foodItemService = {
 
   async delete(id: string) {
     await this.getById(id);
+    const orderReferences = await foodItemRepository.countOrderReferences(id);
+    if (orderReferences > 0) {
+      throw new AppError(
+        409,
+        'Das Gericht kann nicht gelöscht werden, weil es bereits in Bestellungen vorkommt. Deaktivieren Sie es stattdessen.',
+        'FOOD_ITEM_IN_USE'
+      );
+    }
     const eventIds = await foodItemRepository.findEventIdsForFoodItem(id);
     await foodItemRepository.delete(id);
     for (const eventId of eventIds) {

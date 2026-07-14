@@ -97,14 +97,41 @@ stack_pull() {
   done
 }
 
+swarm_stack_services_running() {
+  local stack svc
+  stack="$(stack_name)"
+  for svc in backend frontend; do
+    if ! docker service ps -q -f desired-state=running "$(swarm_service_name "$svc")" 2>/dev/null | grep -q .; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 stack_deploy() {
   local stack_file
   stack_file="$(swarm_stack_publish_path)"
   [[ -f "$stack_file" ]] || { log_error "stack.yml fehlt: $stack_file"; return 1; }
-  local stack
+  local stack attempt deploy_ok=0
   stack="$(stack_name)"
   log_info "Deploye Swarm-Stack: ${stack}"
-  docker stack deploy --with-registry-auth -c "$stack_file" "$stack" >>"$LOG_FILE" 2>&1
+
+  for attempt in 1 2 3; do
+    if docker stack deploy --detach=true --with-registry-auth -c "$stack_file" "$stack" >>"$LOG_FILE" 2>&1; then
+      deploy_ok=1
+      break
+    fi
+    if swarm_stack_services_running; then
+      log_warn "stack deploy RPC-Fehler (Versuch ${attempt}/3), Services laufen jedoch — fahre fort"
+      deploy_ok=1
+      break
+    fi
+    log_warn "stack deploy fehlgeschlagen (Versuch ${attempt}/3) — erneuter Versuch in 10s"
+    sleep 10
+  done
+
+  [[ $deploy_ok -eq 1 ]] || return 1
+  return 0
 }
 
 swarm_service_name() {
