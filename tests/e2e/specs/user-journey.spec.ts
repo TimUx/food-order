@@ -265,10 +265,12 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await expect(page).toHaveURL(/\/platform\/mandanten\/[0-9a-f-]+$/i, { timeout: 20_000 });
 
     await expect(page.getByRole('heading', { name: state.organization })).toBeVisible();
-    await expect(page.getByText('Statistik')).toBeVisible();
-    await expect(
-      page.locator('div').filter({ has: page.getByText('Bestellungen', { exact: true }) })
-    ).toContainText(/[4-9]/);
+    const statistik = page.locator('.MuiPaper-root').filter({
+      has: page.getByRole('heading', { name: 'Statistik' }),
+    });
+    await expect(statistik).toBeVisible();
+    await expect(statistik.getByText('Bestellungen', { exact: true })).toBeVisible();
+    await expect(statistik).toContainText(/[4-9]/);
 
     page.once('dialog', (dialog) => dialog.accept());
     await page.getByRole('button', { name: /^löschen$/i }).click();
