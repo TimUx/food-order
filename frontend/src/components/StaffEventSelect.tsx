@@ -13,7 +13,7 @@ type StaffEventSelectProps = {
 
 export function StaffEventSelect({ events, value, onChange, labelId, sx }: StaffEventSelectProps) {
   return (
-    <FormControl fullWidth sx={{ ...touchSelectSx, ...sx }}>
+    <FormControl fullWidth sx={sx ? [touchSelectSx, sx] : touchSelectSx}>
       <InputLabel id={labelId} shrink>
         Veranstaltung
       </InputLabel>
