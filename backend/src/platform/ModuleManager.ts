@@ -15,7 +15,11 @@ import type { ModuleLoader } from './ModuleLoader';
 import type { ModuleRegistry } from './ModuleRegistry';
 import { compareVersions, CORE_HOOKS } from './types';
 import type { SettingsService } from './settings/SettingsService';
-import { registerModuleSettingsFromManifest, registerModuleSettingsFromContract } from '../core/settings/registerCoreSettings';
+import {
+  registerModuleSettingsFromManifest,
+  registerModuleSettingsFromContract,
+} from '../core/settings/registerCoreSettings';
+import { moduleSettingsNamespace } from './settings/SettingsNamespaces';
 import { ModuleMigrationService } from './ModuleMigrationService';
 import { requirePermission } from '../middleware/permission';
 
@@ -68,6 +72,29 @@ export class ModuleManager {
     return err instanceof Error ? err.message : String(err);
   }
 
+  /** Idempotent – stellt sicher, dass Modul-Settings vor Config-Zugriff registriert sind. */
+  private ensureModuleSettingsRegistered(moduleId: string): void {
+    const manifest = this.deps.moduleRegistry.getManifest(moduleId);
+    const mod = this.deps.moduleRegistry.getModule(moduleId);
+    if (!manifest || !mod) return;
+
+    const namespace = manifest.settings?.namespace ?? moduleSettingsNamespace(moduleId);
+    if (this.deps.settingsService.hasSchema(namespace)) return;
+
+    registerModuleSettingsFromManifest(this.deps.settingsService, manifest);
+    if (!manifest.settings?.fields?.length) {
+      const contract = mod.getConfigContract?.();
+      if (contract) {
+        registerModuleSettingsFromContract(
+          this.deps.settingsService,
+          moduleId,
+          manifest,
+          contract
+        );
+      }
+    }
+  }
+
   async discoverAndRegister(): Promise<void> {
     const manifests = this.deps.moduleDiscovery.discover();
 
@@ -81,18 +108,7 @@ export class ModuleManager {
 
       const mod = await this.deps.moduleLoader.load(manifest);
       this.deps.moduleRegistry.register(mod, manifest);
-      registerModuleSettingsFromManifest(this.deps.settingsService, manifest);
-      if (!manifest.settings?.fields?.length) {
-        const contract = mod.getConfigContract?.();
-        if (contract) {
-          registerModuleSettingsFromContract(
-            this.deps.settingsService,
-            manifest.id,
-            manifest,
-            contract
-          );
-        }
-      }
+      this.ensureModuleSettingsRegistered(manifest.id);
       await this.ensureDbRow(manifest.id, manifest.version);
       logger.info(`Modul registriert: ${manifest.id} v${manifest.version}`);
     }
@@ -164,6 +180,7 @@ export class ModuleManager {
     await this.setLifecycleStatus(moduleId, 'UPGRADING');
 
     try {
+      this.ensureModuleSettingsRegistered(moduleId);
       if (wasEnabled) {
         await mod.disable(featureContext);
         await mod.shutdown(featureContext);
@@ -304,6 +321,7 @@ export class ModuleManager {
     if (row?.installed) throw new AppError(400, 'Modul ist bereits installiert');
 
     try {
+      this.ensureModuleSettingsRegistered(moduleId);
       await mod.install(this.deps.featureContext);
       await this.deps.migrationService.runForModule(moduleId);
 
@@ -396,10 +414,16 @@ export class ModuleManager {
     }
 
     if (row && compareVersions(manifest.version, row.moduleVersion) > 0) {
-      throw new AppError(400, 'Upgrade erforderlich – bitte zuerst aktualisieren');
+      const wasEnabled = Boolean(row.enabled);
+      await this.upgradeModule(moduleId);
+      if (wasEnabled) return;
+      row = persist
+        ? await moduleRegistry.getDbRow(moduleId)
+        : await tenantModuleRepository.findFirstInstalled(moduleId);
     }
 
     try {
+      this.ensureModuleSettingsRegistered(moduleId);
       await mod.initialize(featureContext);
       await mod.enable(featureContext);
       hookSystem.registerAll(mod.registerHooks(featureContext));
@@ -412,14 +436,14 @@ export class ModuleManager {
 
       const health = await healthService.checkModule(moduleId, mod, featureContext);
 
+      await tenantModuleRepository.update(moduleId, {
+        ...(persist ? { enabled: true, everActivated: true } : {}),
+        lastHealthStatus: health.status,
+        lastHealthCheck: new Date(),
+      });
+      await this.clearLifecycleError(moduleId);
+
       if (persist) {
-        await tenantModuleRepository.update(moduleId, {
-          enabled: true,
-          everActivated: true,
-          lastHealthStatus: health.status,
-          lastHealthCheck: new Date(),
-        });
-        await this.clearLifecycleError(moduleId);
         await auditService.log({ action: 'module.enabled', moduleId, details: { health: health.status } });
         await hookSystem.emit(CORE_HOOKS.MODULE_ACTIVATED, { moduleId });
       }

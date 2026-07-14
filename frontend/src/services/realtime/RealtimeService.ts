@@ -120,9 +120,17 @@ class RealtimeServiceImpl {
     if (sub.pollTimer) clearTimeout(sub.pollTimer);
     sub.leave?.();
     this.subscriptions.delete(channel);
-
     if (this.subscriptions.size === 0) {
       this.stopAllPolling();
+    }
+  }
+
+  /** Beendet Mitarbeiter-Polling (z. B. beim Verlassen des Mitarbeiterbereichs). */
+  unsubscribeByPrefix(prefix: string): void {
+    for (const channel of [...this.subscriptions.keys()]) {
+      if (channel.startsWith(prefix)) {
+        this.unsubscribe(channel);
+      }
     }
   }
 

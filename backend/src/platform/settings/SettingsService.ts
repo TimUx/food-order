@@ -43,6 +43,10 @@ export class SettingsService {
     return this.schemaRegistry.list();
   }
 
+  hasSchema(namespace: string): boolean {
+    return this.schemaRegistry.has(namespace);
+  }
+
   getSchema(namespace: string): SettingsSchemaDefinition {
     const schema = this.schemaRegistry.get(namespace);
     if (!schema) throw new AppError(404, `Einstellungs-Namespace nicht gefunden: ${namespace}`);

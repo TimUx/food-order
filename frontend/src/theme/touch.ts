@@ -13,6 +13,19 @@ export const touchFieldSx: SxProps<Theme> = {
   },
 };
 
+/** Select mit großem Touch-Ziel: Label bleibt oben, kein Überlappen mit Platzhalter/Wert. */
+export const touchSelectSx: SxProps<Theme> = {
+  ...touchFieldSx,
+  '& .MuiOutlinedInput-root': {
+    alignItems: 'center',
+  },
+  '& .MuiSelect-select': {
+    display: 'flex',
+    alignItems: 'center',
+    py: 1.5,
+  },
+};
+
 export const touchButtonSx: SxProps<Theme> = {
   minHeight: TOUCH_MIN,
   fontSize: '1.15rem',

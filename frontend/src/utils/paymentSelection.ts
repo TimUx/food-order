@@ -3,14 +3,14 @@ import type { PaymentChoiceId, PaymentOption, PaymentSelectionState, PublicPayme
 const CASH_OPTION: PaymentOption = {
   type: 'cash',
   id: 'cash',
-  label: 'Vor Ort bezahlen',
+  label: 'Bar vor Ort',
   description: 'Bezahlen Sie bei der Abholung an der Kasse',
 };
 
 const POS_CASH_OPTION: PaymentOption = {
   type: 'cash',
   id: 'cash',
-  label: 'Vor Ort bezahlen',
+  label: 'Bar vor Ort',
   description: 'Kunde bezahlt an der Kasse',
   recommended: true,
 };

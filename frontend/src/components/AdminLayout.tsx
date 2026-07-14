@@ -86,7 +86,7 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
         Administration
       </Typography>
       {showNavLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, flexGrow: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
           <CircularProgress size={24} />
         </Box>
       ) : (
@@ -146,7 +146,7 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
           </ListItemButton>
         </List>
       )}
-      <Box sx={{ px: 2, pb: 2 }}>
+      <Box sx={{ px: 2, pb: 2, mt: 'auto' }}>
         <SponsorLinks variant="compact" />
       </Box>
     </Box>

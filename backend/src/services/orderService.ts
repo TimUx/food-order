@@ -24,6 +24,7 @@ import {
 import { emitOrderCreated, emitOrderUpdate } from '../socket';
 import { hookSystem } from '../platform/bootstrap';
 import { CORE_HOOKS } from '../platform/types';
+import { logger } from '../utils/logger';
 import { getPaymentServiceRegistry, getPayableResourceRegistry } from '../core/extensionPoints';
 import { paymentRepository } from '../../modules/payment/repositories/paymentRepository';
 import { resolvePaymentStatus } from '../../modules/payment/types';
@@ -311,7 +312,7 @@ export const orderService = {
   },
 
   async lookupByNumberAndName(eventId: string, orderNumber: number, lastName?: string) {
-    const event = await eventService.getPickupEvent(eventId);
+    const event = await eventService.getStaffPickupEvent(eventId);
     const orderDate = getEventOrderDate(event.date);
     const order = await orderRepository.findByOrderNumber(
       event.id,
@@ -372,25 +373,32 @@ export const orderService = {
 
     if (payOnline && data.paymentMethodId) {
       const { config } = await import('../config');
-      const resource = await getPayableResourceRegistry().toPayableResource(
-        'order',
-        mapped.id,
-        config.corsOrigin
-      );
-      if (resource) {
-        const checkout = await getPaymentServiceRegistry().createCheckout(resource, data.paymentMethodId);
-        if (checkout) {
-          return {
-            ...mapped,
-            payment: {
-              required: true,
-              checkoutUrl: checkout.checkoutUrl,
-              sessionId: checkout.sessionId,
-              paymentStatus: checkout.paymentStatus,
-              expiresAt: checkout.expiresAt,
-            },
-          };
+      try {
+        const resource = await getPayableResourceRegistry().toPayableResource(
+          'order',
+          mapped.id,
+          config.corsOrigin
+        );
+        if (resource) {
+          const checkout = await getPaymentServiceRegistry().createCheckout(resource, data.paymentMethodId);
+          if (checkout) {
+            return {
+              ...mapped,
+              payment: {
+                required: true,
+                checkoutUrl: checkout.checkoutUrl,
+                sessionId: checkout.sessionId,
+                paymentStatus: checkout.paymentStatus,
+                expiresAt: checkout.expiresAt,
+              },
+            };
+          }
         }
+      } catch (err) {
+        logger.warn('Online-Zahlung konnte nach Bestellung nicht gestartet werden', {
+          orderId: mapped.id,
+          err,
+        });
       }
       // Falls Checkout nicht erstellt werden konnte, bleibt die Bestellung gespeichert und ist im Mitarbeiterbereich sichtbar.
     }
@@ -451,25 +459,32 @@ export const orderService = {
 
     if (payOnline && paymentMethodId) {
       const { config } = await import('../config');
-      const resource = await getPayableResourceRegistry().toPayableResource(
-        'order',
-        mapped.id,
-        config.corsOrigin
-      );
-      if (resource) {
-        const checkout = await getPaymentServiceRegistry().createCheckout(resource, paymentMethodId);
-        if (checkout) {
-          return {
-            ...mapped,
-            payment: {
-              required: true,
-              checkoutUrl: checkout.checkoutUrl,
-              sessionId: checkout.sessionId,
-              paymentStatus: checkout.paymentStatus,
-              expiresAt: checkout.expiresAt,
-            },
-          };
+      try {
+        const resource = await getPayableResourceRegistry().toPayableResource(
+          'order',
+          mapped.id,
+          config.corsOrigin
+        );
+        if (resource) {
+          const checkout = await getPaymentServiceRegistry().createCheckout(resource, paymentMethodId);
+          if (checkout) {
+            return {
+              ...mapped,
+              payment: {
+                required: true,
+                checkoutUrl: checkout.checkoutUrl,
+                sessionId: checkout.sessionId,
+                paymentStatus: checkout.paymentStatus,
+                expiresAt: checkout.expiresAt,
+              },
+            };
+          }
         }
+      } catch (err) {
+        logger.warn('Online-Zahlung an der Kasse konnte nicht gestartet werden', {
+          orderId: mapped.id,
+          err,
+        });
       }
       await orderService._releaseOrderToKitchen(event, mapped);
     }
@@ -487,7 +502,15 @@ export const orderService = {
     // Falls es eine Payment-Session gibt, ebenfalls auf "freigegeben" setzen (damit pending Sessions nicht mehr blockieren).
     const session = await paymentRepository.findByResource('order', orderId);
     if (session && !session.released_to_kitchen) {
-      await paymentRepository.updatePayment(session.id, { releasedToKitchen: true });
+      try {
+        await paymentRepository.updatePayment(session.id, { releasedToKitchen: true });
+      } catch (err) {
+        logger.warn('Payment-Session konnte bei Küchenfreigabe nicht aktualisiert werden', {
+          orderId,
+          sessionId: session.id,
+          err,
+        });
+      }
     }
 
     const full = await orderRepository.findById(orderId);

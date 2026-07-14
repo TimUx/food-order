@@ -18,7 +18,6 @@ import { Link } from 'react-router-dom';
 import { api, getImageUrl } from '@/services/api';
 import { useEffect, useState } from 'react';
 import type { PublicLegalLink } from '@/types/legal';
-import { SponsorLinks } from '@/components/SponsorLinks';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -111,11 +110,6 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
       >
         {children}
       </Container>
-      <Box sx={{ px: 2, py: 3, bgcolor: 'background.default', borderTop: 1, borderColor: 'divider' }}>
-        <Container maxWidth="md">
-          <SponsorLinks variant="prominent" />
-        </Container>
-      </Box>
       <Box component="footer" sx={{ px: 2, py: 2, borderTop: 1, borderColor: 'divider' }}>
         <Container maxWidth="md">
           {legalLinks.length > 0 && (

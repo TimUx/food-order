@@ -9,16 +9,13 @@ import {
   Stack,
   Divider,
   Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import { StaffLayout } from '@/components/StaffLayout';
 import { StaffKioskActions } from '@/components/StaffKioskActions';
+import { StaffEventSelect } from '@/components/StaffEventSelect';
 import { Numpad } from '@/components/Numpad';
 import { StatusChip } from '@/components/StatusChip';
 import { useAuth } from '@/contexts/AuthContext';
@@ -115,29 +112,17 @@ export function AbholungPage() {
           Derzeit sind keine Veranstaltungen für Abholungen verfügbar.
         </Alert>
       ) : (
-        <FormControl fullWidth sx={{ mb: 3, maxWidth: 560, ...touchFieldSx }}>
-          <InputLabel id="pickup-event-label">Veranstaltung</InputLabel>
-          <Select
-            labelId="pickup-event-label"
-            label="Veranstaltung"
-            value={selectedEventId}
-            onChange={(e) => {
-              setSelectedEventId(e.target.value);
-              setOrder(null);
-              setError('');
-            }}
-            displayEmpty
-          >
-            <MenuItem value="">
-              <em>Veranstaltung wählen</em>
-            </MenuItem>
-            {pickupEvents.map((event) => (
-              <MenuItem key={event.id} value={event.id}>
-                {event.name} · {event.eventDateLabel}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <StaffEventSelect
+          labelId="pickup-event-label"
+          events={pickupEvents}
+          value={selectedEventId}
+          onChange={(eventId) => {
+            setSelectedEventId(eventId);
+            setOrder(null);
+            setError('');
+          }}
+          sx={{ mb: 3, maxWidth: 560 }}
+        />
       )}
 
       {!selectedEventId && pickupEvents.length > 0 && (

@@ -35,7 +35,7 @@ export function FeatureModulesPage() {
   const navigate = useNavigate();
   const {
     modules, loading, error,
-    installModule, activateModule, deactivateModule,
+    enableModule, deactivateModule, upgradeModule,
   } = useModules();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -46,15 +46,19 @@ export function FeatureModulesPage() {
     setBusyId(mod.id);
     try {
       if (enable) {
-        if (mod.status === 'AVAILABLE') {
-          await installModule(mod.id);
-          await activateModule(mod.id);
-        } else if (['INSTALLED', 'DISABLED', 'FAILED'].includes(mod.status)) {
-          await activateModule(mod.id);
-        }
+        await enableModule(mod.id);
       } else if (mod.status === 'ENABLED') {
         await deactivateModule(mod.id);
       }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const runUpgrade = async (mod: ModuleInfo) => {
+    setBusyId(mod.id);
+    try {
+      await upgradeModule(mod.id);
     } finally {
       setBusyId(null);
     }
@@ -170,9 +174,19 @@ export function FeatureModulesPage() {
                                 </Typography>
                               )}
                               {mod.upgradeAvailable && (
-                                <Typography variant="body2" color="warning.main">
-                                  Aktualisierung verfügbar
-                                </Typography>
+                                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                  <Typography variant="body2" color="warning.main">
+                                    Aktualisierung verfügbar
+                                  </Typography>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    disabled={busy}
+                                    onClick={() => void runUpgrade(mod)}
+                                  >
+                                    Aktualisieren
+                                  </Button>
+                                </Box>
                               )}
                               {mod.lastError && (
                                 <Alert severity="warning" sx={{ mt: 1 }}>{mod.lastError}</Alert>
