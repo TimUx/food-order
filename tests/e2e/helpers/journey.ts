@@ -35,7 +35,7 @@ export async function loginTenantAdmin(page: Page, slug: string, email: string, 
   await page.getByLabel('Benutzername oder E-Mail').fill(email);
   await page.getByLabel('Passwort').fill(password);
   await page.getByRole('button', { name: /anmelden/i }).click();
-  await expect(page).toHaveURL(new RegExp(`/${slug}/admin`), { timeout: 20_000 });
+  await expect(page).toHaveURL(new RegExp(`/${slug}/admin(?:/)?(?:\\?.*)?$`), { timeout: 20_000 });
 }
 
 export async function loginTenantStaff(page: Page, slug: string, username: string, password: string): Promise<void> {
