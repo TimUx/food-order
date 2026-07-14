@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import type { Prisma } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { config } from '../../config';
 import { isMissingPaymentsSchema } from '../../../modules/payment/repositories/paymentRepository';
