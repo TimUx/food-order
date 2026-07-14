@@ -23,6 +23,10 @@ export function tenantRoute(slug: string, route: string): string {
 }
 
 export async function loginPlatformAdmin(page: Page): Promise<void> {
+  await page.goto('/platform');
+  if (/\/platform\/?$/.test(new URL(page.url()).pathname)) {
+    return;
+  }
   await page.goto('/platform/login');
   await page.getByLabel('Benutzername oder E-Mail').fill(PLATFORM_ADMIN.email);
   await page.getByLabel('Passwort').fill(PLATFORM_ADMIN.password);

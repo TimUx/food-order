@@ -257,8 +257,11 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await loginPlatformAdmin(page);
     await page.goto('/platform/mandanten');
     await page.getByLabel('Suche').fill(state.slug);
-    await expect(page.getByText(state.organization)).toBeVisible({ timeout: 20_000 });
-    await page.getByRole('button', { name: /details/i }).click();
+    const tenantRow = page.getByRole('row').filter({
+      has: page.getByRole('cell', { name: state.slug, exact: true }),
+    });
+    await expect(tenantRow).toHaveCount(1, { timeout: 20_000 });
+    await tenantRow.getByRole('button', { name: /details/i }).click();
 
     await expect(page.getByText(state.slug)).toBeVisible();
     await expect(page.getByText('Statistik')).toBeVisible();
