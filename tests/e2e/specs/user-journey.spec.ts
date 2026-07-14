@@ -44,16 +44,16 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await page.getByRole('textbox', { name: 'PLZ' }).fill('12345');
     await page.getByRole('textbox', { name: 'Ort' }).fill('Musterstadt');
     await page.getByRole('textbox', { name: /gewünschte internetadresse/i }).fill(state.slug);
-    await page.getByRole('textbox', { name: /warum wird festschmiede benötigt/i }).fill(
+    await page.locator('[data-field="reason"]').getByRole('textbox').fill(
       'Wir organisieren jährlich ein Vereinsfest und benötigen eine digitale Bestelllösung für Speisen und Getränke.'
     );
-    await page.getByRole('textbox', { name: /welche funktionen sollen genutzt werden/i }).fill(
+    await page.locator('[data-field="desiredFeatures"]').getByRole('textbox').fill(
       'Online-Bestellung, Küchenmonitor, Abholung und Kassenbestellung vor Ort.'
     );
-    await page.getByRole('textbox', { name: /kostenlosen mandant bereitgestellt/i }).fill(
+    await page.locator('[data-field="freeTierJustification"]').getByRole('textbox').fill(
       'Als gemeinnütziger Verein mit ehrenamtlichem Team benötigen wir eine kostenfreie Lösung für unser Sommerfest.'
     );
-    await page.getByRole('textbox', { name: /geplante nutzung/i }).fill(
+    await page.locator('[data-field="plannedUsage"]').getByRole('textbox').fill(
       'Zwei Feste pro Jahr mit jeweils 200–400 Gästen und 3–5 Veranstaltungen im Vereinsheim.'
     );
     await page.getByRole('checkbox', { name: /datenschutzerklärung/i }).check();
