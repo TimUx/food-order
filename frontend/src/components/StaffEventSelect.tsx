@@ -12,8 +12,13 @@ type StaffEventSelectProps = {
 };
 
 export function StaffEventSelect({ events, value, onChange, labelId, sx }: StaffEventSelectProps) {
+  const formSx: SxProps<Theme> = [
+    touchSelectSx,
+    ...(sx === undefined ? [] : Array.isArray(sx) ? sx : [sx]),
+  ];
+
   return (
-    <FormControl fullWidth sx={sx ? [touchSelectSx, sx] : touchSelectSx}>
+    <FormControl fullWidth sx={formSx}>
       <InputLabel id={labelId} shrink>
         Veranstaltung
       </InputLabel>
