@@ -163,13 +163,15 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   test('5 · Mitarbeiter anlegen (Team)', async () => {
     await page.goto(tenantRoute(state.slug, '/admin/benutzer'));
     await page.getByRole('button', { name: /neuer benutzer/i }).click();
-    await page.getByRole('textbox', { name: 'Vorname' }).fill('Kasse');
-    await page.getByRole('textbox', { name: 'Nachname' }).fill('QA');
-    await page.getByRole('textbox', { name: 'Benutzername' }).fill('kasse1');
-    await page.getByRole('textbox', { name: /passwort/i }).fill(STAFF_PASSWORD);
-    await page.locator('label').filter({ hasText: /^Kasse$/ }).click();
-    await page.locator('label').filter({ hasText: /^Küche$/ }).click();
-    await page.getByRole('button', { name: /^speichern$/i }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: /neuer benutzer/i })).toBeVisible({ timeout: 10_000 });
+    await dialog.getByRole('textbox', { name: 'Vorname' }).fill('Kasse');
+    await dialog.getByRole('textbox', { name: 'Nachname' }).fill('QA');
+    await dialog.getByRole('textbox', { name: 'Benutzername' }).fill('kasse1');
+    await dialog.getByRole('textbox', { name: /passwort/i }).fill(STAFF_PASSWORD);
+    await dialog.getByRole('checkbox', { name: /Kasse/i }).check();
+    await expect(dialog.getByRole('checkbox', { name: /Küche/i })).toBeChecked();
+    await dialog.getByRole('button', { name: /^speichern$/i }).click();
     await expect(page.getByText('kasse1')).toBeVisible({ timeout: 15_000 });
   });
 
