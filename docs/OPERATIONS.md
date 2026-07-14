@@ -134,6 +134,34 @@ Backups landen standardmäßig in `./backups/` als `festschmiede-YYYYMMDD-HHMMSS
 
 **Empfehlung:** Vor jedem Update und nach jedem großen Event ein Backup; Kopie auf zweitem Medium.
 
+### Update fehlgeschlagen (Swarm / IMAGE_TAG)
+
+**Symptome:** `stack deploy` Timeout, `swarm does not have a leader`, falsches Image-Tag (z. B. v2.4.35 statt v2.4.36).
+
+1. **Swarm reparieren** (Single-Node-Server):
+   ```bash
+   docker swarm init --force-new-cluster
+   docker node ls
+   ```
+2. **Installer aktualisieren** (lädt Skripte von GitHub, auch bei Git-Clone):
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/TimUx/FestSchmiede/v2.4.36/install.sh -o /tmp/festschmiede-install.sh
+   FESTSCHMIEDE_INSTALL_DIR=/srv/apps/festschmiede FESTSCHMIEDE_REF=v2.4.36 bash /tmp/festschmiede-install.sh --bootstrap-only
+   ```
+3. **Dienste wiederherstellen** (Rollback-.env mit v2.4.35):
+   ```bash
+   cd /srv/apps/festschmiede
+   ./install.sh --repair
+   ```
+4. **Update erneut** (nach grünem Health-Check):
+   ```bash
+   IMAGE_TAG=v2.4.36 ./install.sh --update
+   ```
+
+Im Log muss vor dem Image-Pull stehen: `Shell-Override: IMAGE_TAG=v2.4.36` und `Verwende Image-Tag: v2.4.36`.
+
+**Hinweis:** Automatischer Datenbank-Rollback erfolgt nur mit `FESTSCHMIEDE_AUTO_DB_ROLLBACK=1` — bei reinem Deploy-Fehler bleibt die DB unverändert.
+
 ---
 
 ## Wiederherstellung aus Backup

@@ -146,11 +146,13 @@ perform_update_rollback() {
 
   if [[ $restore_db -eq 1 && -n "$db_backup" && -f "$db_backup" ]]; then
     local do_restore=0
-    if [[ "${FESTSCHMIEDE_NONINTERACTIVE:-}" == "1" ]]; then
+    if [[ "${FESTSCHMIEDE_AUTO_DB_ROLLBACK:-}" == "1" ]]; then
       log_info "Stelle Datenbank wieder her: $db_backup"
       do_restore=1
-    elif tui_yesno "Datenbank wiederherstellen?" "Das Update ist fehlgeschlagen.\n\nSoll die Datenbank aus dem Backup wiederhergestellt werden?\n\n$db_backup"; then
+    elif [[ "${FESTSCHMIEDE_NONINTERACTIVE:-}" != "1" ]] && tui_yesno "Datenbank wiederherstellen?" "Das Update ist fehlgeschlagen.\n\nSoll die Datenbank aus dem Backup wiederhergestellt werden?\n\n$db_backup"; then
       do_restore=1
+    else
+      log_warn "Kein automatischer DB-Rollback (FESTSCHMIEDE_AUTO_DB_ROLLBACK=1 zum Erzwingen)"
     fi
     if [[ $do_restore -eq 1 ]]; then
       CONFIRM=1 "${INSTALL_DIR}/scripts/backup/postgres-restore.sh" "$db_backup" >>"$LOG_FILE" 2>&1 || {
@@ -191,8 +193,10 @@ run_guided_update() {
   run_database_backup || return $?
 
   _ops_progress "Schritt 3/5: Neue Images laden..."
+  apply_shell_env_overrides
+  log_info "Verwende Image-Tag: ${CFG[IMAGE_TAG]} (Prefix: ${CFG[GHCR_IMAGE_PREFIX]})"
+  generate_deployment_config
   if deployment_uses_swarm; then
-    generate_deployment_config
     stack_pull || { installer_fail docker_pull; return "$EXIT_DOCKER"; }
   else
     compose_pull || { installer_fail docker_pull; return "$EXIT_DOCKER"; }

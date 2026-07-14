@@ -67,6 +67,7 @@ Umgebungsvariablen:
   INSTALL_DIR                      Installationsverzeichnis
   FESTSCHMIEDE_NONINTERACTIVE=1    Keine TUI-Dialoge (für Skripte/CI)
   IMAGE_TAG                        Image-Tag für Update (überschreibt .env, z. B. v2.4.36)
+  FESTSCHMIEDE_AUTO_DB_ROLLBACK=1  DB bei fehlgeschlagenem Update automatisch wiederherstellen (Standard: aus)
 
 Protokoll: installer/logs/
 EOF

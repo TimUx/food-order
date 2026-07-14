@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.4.31}"
+FESTSCHMIEDE_VERSION="${FESTSCHMIEDE_VERSION:-2.4.36}"
 FESTSCHMIEDE_GITHUB_REPO="${FESTSCHMIEDE_GITHUB_REPO:-TimUx/FestSchmiede}"
 FESTSCHMIEDE_REF="${FESTSCHMIEDE_REF:-}"
 FESTSCHMIEDE_INSTALL_DIR="${FESTSCHMIEDE_INSTALL_DIR:-}"
@@ -47,6 +47,7 @@ Weitere Umgebungsvariablen:
   FESTSCHMIEDE_GITHUB_REPO   GitHub Repository
   FESTSCHMIEDE_BOOTSTRAP_ONLY=1  Nur herunterladen, kein Wizard
   IMAGE_TAG                  Image-Tag für Update (überschreibt .env, z. B. v2.4.36)
+  FESTSCHMIEDE_AUTO_DB_ROLLBACK=1  DB bei fehlgeschlagenem Update automatisch wiederherstellen (Standard: aus)
 
 Online-Installation:
   curl -fsSL https://raw.githubusercontent.com/${FESTSCHMIEDE_GITHUB_REPO}/v${FESTSCHMIEDE_VERSION}/install.sh | bash
@@ -282,6 +283,23 @@ _should_refresh_installation() {
   [[ "$installed" != "${FESTSCHMIEDE_VERSION}" ]]
 }
 
+_refresh_installer_for_update() {
+  local install_dir="$1"
+  local ref="${FESTSCHMIEDE_REF:-}"
+
+  if [[ -z "$ref" && -n "${IMAGE_TAG:-}" ]]; then
+    ref="${IMAGE_TAG}"
+  fi
+  if [[ -z "$ref" ]]; then
+    ref="v${FESTSCHMIEDE_VERSION}"
+  fi
+
+  export FESTSCHMIEDE_REF="$ref"
+  _log "Aktualisiere Installer-Dateien von GitHub (${ref})..."
+  _bootstrap_download "$install_dir"
+  _bootstrap_verify "$install_dir"
+}
+
 _refresh_installer_if_needed() {
   local install_dir="$1"
 
@@ -376,7 +394,11 @@ main() {
       exit 0
     fi
     if [[ -n "${FESTSCHMIEDE_GUIDED_OP:-}" ]]; then
-      _refresh_installer_if_needed "$target"
+      if [[ "${FESTSCHMIEDE_GUIDED_OP}" == "update" || "${FESTSCHMIEDE_GUIDED_OP}" == "repair" ]]; then
+        _refresh_installer_for_update "$target"
+      else
+        _refresh_installer_if_needed "$target"
+      fi
     fi
     _run_installer "$target" "${guided_args[@]}"
     return
@@ -397,7 +419,9 @@ main() {
     else
       _log "Bestehende Installation gefunden"
     fi
-    if _should_refresh_installation "$target"; then
+    if [[ "${FESTSCHMIEDE_GUIDED_OP:-}" == "update" || "${FESTSCHMIEDE_GUIDED_OP:-}" == "repair" ]]; then
+      _refresh_installer_for_update "$target"
+    elif _should_refresh_installation "$target"; then
       _refresh_installer_if_needed "$target"
     fi
   else
