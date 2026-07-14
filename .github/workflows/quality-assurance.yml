@@ -205,7 +205,7 @@ jobs:
 
       - name: Collect container logs on failure
         if: failure()
-        run: docker compose -f docker-compose.ci.yml logs > artifacts/container-logs.txt
+        run: mkdir -p artifacts && docker compose -f docker-compose.ci.yml logs > artifacts/container-logs.txt
 
       - name: Tear down
         if: always()
