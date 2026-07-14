@@ -211,3 +211,19 @@ export async function confirmPickup(
   await page.getByRole('button', { name: /abholung bestätigen/i }).click();
   await expect(page.getByText(/abholung bestätigt/i)).toBeVisible({ timeout: 15_000 });
 }
+
+export async function deletePlatformTenantFromDetail(page: Page): Promise<void> {
+  const deleteButton = page.getByRole('button', { name: /^löschen$/i });
+  await deleteButton.scrollIntoViewIfNeeded();
+  const dialogWait = page.waitForEvent('dialog', { timeout: 10_000 }).then((dialog) => dialog.accept());
+  const deleteWait = page.waitForResponse(
+    (res) => res.request().method() === 'DELETE' && /\/tenants\/[0-9a-f-]+(?:\?|$)/i.test(res.url()),
+    { timeout: 30_000 },
+  );
+  await deleteButton.click();
+  const [, response] = await Promise.all([dialogWait, deleteWait]);
+  if (!response.ok()) {
+    throw new Error(`Mandant löschen fehlgeschlagen (${response.status()}): ${await response.text()}`);
+  }
+  await expect(page).toHaveURL(/\/platform\/mandanten\/?$/, { timeout: 20_000 });
+}

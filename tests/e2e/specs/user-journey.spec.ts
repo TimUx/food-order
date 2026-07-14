@@ -4,6 +4,7 @@ import {
   advanceOrderToReadyInKitchen,
   completeSetupWizard,
   confirmPickup,
+  deletePlatformTenantFromDetail,
   ensurePlatformAdmin,
   journeySlug,
   loginPlatformAdmin,
@@ -272,9 +273,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await expect(statistik.getByText('Bestellungen', { exact: true })).toBeVisible();
     await expect(statistik).toContainText(/[4-9]/);
 
-    page.once('dialog', (dialog) => dialog.accept());
-    await page.getByRole('button', { name: /^löschen$/i }).click();
-    await expect(page).toHaveURL(/\/platform\/mandanten\/?$/, { timeout: 20_000 });
+    await deletePlatformTenantFromDetail(page);
 
     await page.getByLabel('Suche').fill(state.slug);
     await expect(page.getByText(state.organization)).toHaveCount(0);
