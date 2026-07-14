@@ -3,6 +3,16 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.35 - 2026-07-14
+
+### Behoben
+
+- **CI/Release:** ESLint-, TypeScript- und E2E-Fehler aus v2.4.34 behoben (Quality Assurance und Release Validation laufen wieder grün).
+- **Build:** `smtpResolver`, `ModuleManager` und `StaffEventSelect` TypeScript-kompatibel.
+- **E2E:** Smoke-Test für zweistufige Online-Bestellung aktualisiert.
+
+---
+
 ## 2.4.34 - 2026-07-14
 
 ### Geändert
