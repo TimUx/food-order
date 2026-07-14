@@ -66,14 +66,11 @@ router.post('/:id/deactivate', async (req: Request, res: Response, next: NextFun
   }
 });
 
-router.post('/:id/upgrade', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    await moduleManager.upgradeModule(req.params.id as string);
-    const info = (await moduleRegistry.getAllModuleInfo()).find((m) => m.id === req.params.id);
-    res.json(info);
-  } catch (err) {
-    next(err);
-  }
+router.post('/:id/upgrade', (_req: Request, _res: Response, next: NextFunction) => {
+  next(new AppError(
+    403,
+    'Modul-Updates werden mit Plattform-Releases ausgerollt und können hier nicht manuell gestartet werden.'
+  ));
 });
 
 router.post('/:id/reinitialize', async (req: Request, res: Response, next: NextFunction) => {

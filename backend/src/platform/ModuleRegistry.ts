@@ -131,9 +131,8 @@ export class ModuleRegistry {
         const contract = mod.getConfigContract?.();
         const imageVersion = manifest.version;
         const installedVersion = row?.moduleVersion ?? '0.0.0';
-        const upgradeAvailable = row
-          ? compareVersions(imageVersion, installedVersion) > 0
-          : false;
+        const upgradeAvailable = Boolean(row?.installed)
+          && compareVersions(imageVersion, installedVersion) > 0;
 
         return {
           id: manifest.id,

@@ -61,7 +61,7 @@ function baseOrderVars(
   emailCustomText?: string
 ) {
   const branding = resolveEmailBranding(config);
-  const statusUrl = `${branding.baseUrl}/status/${order.id}`;
+  const statusUrl = `${branding.baseUrl}/status/${order.lookupToken}`;
   const itemsHtml = order.items
     .map((i) => `${i.quantity}× ${escapeHtml(i.name)} – ${formatPrice(i.lineTotal)}`)
     .join('<br>');

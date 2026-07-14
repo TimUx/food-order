@@ -218,7 +218,7 @@ export const userService = {
     updateData.passwordEnabled = nextPasswordEnabled;
     updateData.magicLinkEnabled = nextMagicLinkEnabled;
     updateData.passwordHash = nextPasswordHash;
-    if (data.role) {
+    if (data.role && data.role !== user.role.name) {
       const role = await ensureSystemRole(data.role);
       updateData.role = { connect: { id: role.id } };
     }
@@ -237,13 +237,16 @@ export const userService = {
       throw new AppError(400, 'Berechtigungsvorlagen gelten nur für Mitarbeiter');
     }
 
-    const permissions = permissionService.filterKnownPermissions(data.permissions);
     const roleTemplates = data.roleTemplates?.length
       ? data.roleTemplates
       : data.roleTemplate
         ? [data.roleTemplate as TenantRoleTemplateId]
         : parseStoredRoleTemplates(user);
     const roleTemplate = roleTemplates[0] ?? data.roleTemplate ?? null;
+
+    const permissions = roleTemplates.length
+      ? permissionService.resolveTemplatesPermissions(roleTemplates)
+      : permissionService.filterKnownPermissions(data.permissions);
 
     const updated = await userRepository.update(id, {
       permissions,

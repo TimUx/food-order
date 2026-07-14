@@ -123,12 +123,33 @@ export function printOrdersExport(data: EventOrdersExport, clubName: string): vo
 </body>
 </html>`;
 
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-  if (!printWindow) {
-    throw new Error('Druckfenster konnte nicht geöffnet werden');
+  printHtmlDocument(html);
+}
+
+function printHtmlDocument(html: string): void {
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:none';
+  document.body.appendChild(frame);
+
+  const doc = frame.contentDocument;
+  const win = frame.contentWindow;
+  if (!doc || !win) {
+    frame.remove();
+    throw new Error('Druckvorschau konnte nicht erstellt werden');
   }
-  printWindow.document.write(html);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const cleanup = () => {
+    if (frame.parentNode) frame.remove();
+  };
+
+  win.addEventListener('afterprint', cleanup, { once: true });
+  setTimeout(cleanup, 60_000);
+
+  win.focus();
+  win.print();
 }

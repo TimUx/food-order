@@ -24,6 +24,7 @@ import {
 
 export type OrderHookPayload = {
   id: string;
+  lookupToken?: string;
   displayNumber: string;
   totalPrice: number;
   eventDateLabel?: string;
@@ -71,8 +72,12 @@ async function loadClubContact(context: FeatureContext): Promise<ClubContactData
 }
 
 function toOrderEmailData(payload: OrderHookPayload): OrderEmailData {
+  if (!payload.lookupToken) {
+    throw new Error(`ORDER_CREATED payload missing lookupToken for order ${payload.id}`);
+  }
   return {
     id: payload.id,
+    lookupToken: payload.lookupToken,
     displayNumber: payload.displayNumber,
     totalPrice: payload.totalPrice,
     eventDateLabel: payload.eventDateLabel,
@@ -116,6 +121,7 @@ async function loadOrderNotificationData(
     recipientEmail,
     order: {
       id: order.id,
+      lookupToken: order.lookupToken,
       displayNumber,
       totalPrice: Number(order.totalPrice),
       eventDateLabel: formatEventDate(order.orderDate),

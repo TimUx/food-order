@@ -87,6 +87,19 @@ async function resolvePaymentAvailable(): Promise<boolean> {
   }
 }
 
+const PUBLIC_LOOKUP_TOKEN_REGEX = /^[a-f0-9]{64}$/;
+const ORDER_ID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+async function findOrderByPublicRef(ref: string) {
+  if (PUBLIC_LOOKUP_TOKEN_REGEX.test(ref)) {
+    return orderRepository.findByLookupToken(ref);
+  }
+  if (ORDER_ID_REGEX.test(ref)) {
+    return orderRepository.findById(ref);
+  }
+  return null;
+}
+
 function paymentLabelForOrder(input: {
   orderSource: Order['source'];
   paymentRow?: { status: string; payment_status: string | null; released_to_kitchen: boolean } | null;
@@ -304,7 +317,7 @@ export const orderService = {
   },
 
   async getByLookupToken(token: string, lastName?: string) {
-    const order = await orderRepository.findByLookupToken(token);
+    const order = await findOrderByPublicRef(token);
     if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
 
     if (!lastName?.trim()) {
@@ -561,7 +574,7 @@ export const orderService = {
   },
 
   async cancelOnlineOrder(lookupToken: string, lastName: string) {
-    const order = await orderRepository.findByLookupToken(lookupToken);
+    const order = await findOrderByPublicRef(lookupToken);
     if (!order) throw new AppError(404, 'Bestellung nicht gefunden');
 
     if (order.source !== 'ONLINE') {

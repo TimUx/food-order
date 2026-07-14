@@ -224,7 +224,7 @@ export function OrderPage() {
         return;
       }
 
-      navigate(`/status/${order.lookupToken ?? order.id}`, { state: { order } });
+      navigate(`/status/${order.lookupToken}`, { state: { order } });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bestellung fehlgeschlagen');
     } finally {
@@ -234,7 +234,7 @@ export function OrderPage() {
 
   const handlePaymentSuccess = (order: Order) => {
     setPaymentDialogOpen(false);
-    navigate(`/status/${order.lookupToken ?? order.id}`, { state: { order } });
+    navigate(`/status/${order.lookupToken}`, { state: { order } });
   };
 
   const handleChangePaymentMethod = () => {

@@ -17,6 +17,7 @@ describe('notification templates', () => {
     const msg = await buildOrderConfirmationMessage(
       {
         id: 'order-1',
+        lookupToken: 'a'.repeat(64),
         displayNumber: '042',
         totalPrice: 15,
         eventDateLabel: 'Samstag, 15. August 2026',
@@ -32,6 +33,7 @@ describe('notification templates', () => {
     expect(msg.html).toContain('verbindlicher Kaufvertrag');
     expect(msg.html).toContain('an der Kasse vor');
     expect(msg.html).toContain('Bestellstatus anzeigen / stornieren');
+    expect(msg.html).toContain(`/status/${'a'.repeat(64)}`);
     expect(msg.body).toContain('Veranstalter: Feuerwehr Musterstadt');
   });
 
@@ -39,6 +41,7 @@ describe('notification templates', () => {
     const msg = await buildOrderCancellationMessage(
       {
         id: 'order-2',
+        lookupToken: 'b'.repeat(64),
         displayNumber: '042',
         totalPrice: 15,
         items: [{ name: 'Bratwurst', quantity: 1, lineTotal: 4.5 }],
@@ -70,6 +73,7 @@ describe('notification templates', () => {
       testConfig,
       {
         id: 'order-3',
+        lookupToken: 'c'.repeat(64),
         displayNumber: '042',
         totalPrice: 18.5,
         eventDateLabel: 'Samstag, 15. August 2026',

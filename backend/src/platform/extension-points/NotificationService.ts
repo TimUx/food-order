@@ -1,5 +1,6 @@
 export interface OrderEmailData {
   id: string;
+  lookupToken: string;
   displayNumber: string;
   totalPrice: number;
   eventDateLabel?: string;

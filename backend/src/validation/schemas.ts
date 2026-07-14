@@ -276,7 +276,10 @@ export const idParamSchema = z.object({
 });
 
 export const tokenParamSchema = z.object({
-  token: z.string().regex(/^[a-f0-9]{64}$/, 'Ungültiger Bestell-Token'),
+  token: z.string().refine(
+    (value) => /^[a-f0-9]{64}$/.test(value) || z.string().uuid().safeParse(value).success,
+    'Ungültiger Bestell-Token'
+  ),
 });
 
 export const submitTenantApplicationSchema = z.object({

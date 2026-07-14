@@ -28,14 +28,14 @@ function statusChipColor(mod: ModuleInfo): 'success' | 'warning' | 'default' {
 }
 
 function hasTechnicalDetails(mod: ModuleInfo): boolean {
-  return Boolean(mod.lastError || mod.version || mod.upgradeAvailable);
+  return Boolean(mod.lastError || (mod.installed && mod.installedVersion));
 }
 
 export function FeatureModulesPage() {
   const navigate = useNavigate();
   const {
     modules, loading, error,
-    enableModule, deactivateModule, upgradeModule,
+    enableModule, deactivateModule,
   } = useModules();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -50,15 +50,6 @@ export function FeatureModulesPage() {
       } else if (mod.status === 'ENABLED') {
         await deactivateModule(mod.id);
       }
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const runUpgrade = async (mod: ModuleInfo) => {
-    setBusyId(mod.id);
-    try {
-      await upgradeModule(mod.id);
     } finally {
       setBusyId(null);
     }
@@ -168,25 +159,15 @@ export function FeatureModulesPage() {
                               <Typography variant="subtitle2" fontWeight={600} gutterBottom>
                                 Erweitert
                               </Typography>
-                              {mod.version && (
+                              {mod.installedVersion && (
                                 <Typography variant="body2" color="text.secondary">
-                                  Version: {mod.version}
+                                  Installierte Version: {mod.installedVersion}
                                 </Typography>
                               )}
-                              {mod.upgradeAvailable && (
-                                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                                  <Typography variant="body2" color="warning.main">
-                                    Aktualisierung verfügbar
-                                  </Typography>
-                                  <Button
-                                    size="small"
-                                    variant="outlined"
-                                    disabled={busy}
-                                    onClick={() => void runUpgrade(mod)}
-                                  >
-                                    Aktualisieren
-                                  </Button>
-                                </Box>
+                              {mod.version && mod.installedVersion && mod.version !== mod.installedVersion && (
+                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                  Modul-Updates werden mit Plattform-Releases ausgerollt.
+                                </Typography>
                               )}
                               {mod.lastError && (
                                 <Alert severity="warning" sx={{ mt: 1 }}>{mod.lastError}</Alert>

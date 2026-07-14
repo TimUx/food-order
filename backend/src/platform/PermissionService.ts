@@ -9,6 +9,7 @@ import {
   TENANT_ROLE_TEMPLATES,
   type TenantRoleTemplateId,
   TENANT_ROLE_TEMPLATE_MAP,
+  isTenantRoleTemplateId,
 } from '../core/permissions';
 import { parsePermissionKeys } from './permissions';
 
@@ -96,7 +97,15 @@ export class PermissionService {
     roleTemplate?: string | null,
     roleTemplates?: TenantRoleTemplateId[]
   ): Promise<string[]> {
-    const desired = this.filterKnownPermissions(permissions);
+    const templateIds = roleTemplates?.length
+      ? roleTemplates
+      : roleTemplate && isTenantRoleTemplateId(roleTemplate)
+        ? [roleTemplate]
+        : [];
+
+    const desired = templateIds.length
+      ? this.resolveTemplatesPermissions(templateIds)
+      : this.filterKnownPermissions(permissions);
 
     try {
       await userRepository.update(userId, {

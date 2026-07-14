@@ -23,8 +23,8 @@ export const orderPayableAdapter: PayableResourceAdapter = {
       currency: 'EUR',
       description: `Bestellung ${formatOrderNumber(order.orderNumber)}`,
       customerEmail: order.customer?.email ?? undefined,
-      returnUrl: `${baseUrl}/status/${order.id}?payment=success`,
-      cancelUrl: `${baseUrl}/status/${order.id}?payment=cancelled`,
+      returnUrl: `${baseUrl}/status/${order.lookupToken}?payment=success`,
+      cancelUrl: `${baseUrl}/status/${order.lookupToken}?payment=cancelled`,
       metadata: {
         orderNumber: String(order.orderNumber),
         eventId: order.eventId,
@@ -42,6 +42,7 @@ export const orderPayableAdapter: PayableResourceAdapter = {
 
     const mapped = {
       id: order.id,
+      lookupToken: order.lookupToken,
       eventId: order.eventId,
       orderNumber: order.orderNumber,
       displayNumber: formatOrderNumber(order.orderNumber),

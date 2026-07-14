@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
 import { Prisma, RoleName, StatusCode } from '@prisma/client';
 import crypto from 'crypto';
+import { AppError } from '../middleware/errorHandler';
 import { requireTenantId, tenantWhere } from '../platform/tenant/tenantScope';
 import { parseLoginIdentifier } from '../services/loginIdentifier';
 
@@ -48,16 +49,15 @@ export const userRepository = {
     }),
 
   update: async (id: string, data: Prisma.UserUpdateInput) => {
-    const result = await prisma.user.updateMany({
-      where: tenantWhere({ id }),
-      data,
-    });
-    if (result.count === 0) {
-      throw new Error('Benutzer nicht gefunden');
+    const existing = await userRepository.findById(id);
+    if (!existing) {
+      throw new AppError(404, 'Benutzer nicht gefunden');
     }
-    const user = await userRepository.findById(id);
-    if (!user) throw new Error('Benutzer nicht gefunden');
-    return user;
+    return prisma.user.update({
+      where: { id: existing.id },
+      data,
+      include: { role: true },
+    });
   },
 
   countActiveAdmins: () =>

@@ -53,14 +53,23 @@ const navItems: Array<{
   path: string;
   label: string;
   icon: React.ReactNode;
-  roles?: Array<'ADMIN' | 'STAFF'>;
   permissions?: string[];
 }> = [
-  { path: '/mitarbeiter', label: 'Dashboard', icon: <DashboardIcon />, roles: ['ADMIN', 'STAFF'] },
-  { path: '/mitarbeiter/bestellungen', label: 'Bestellungen', icon: <ReceiptLongIcon />, roles: ['ADMIN', 'STAFF'] },
-  { path: '/mitarbeiter/kueche', label: 'Küche', icon: <KitchenIcon />, roles: ['ADMIN', 'STAFF'] },
-  { path: '/mitarbeiter/abholung', label: 'Abholung', icon: <DoneAllIcon />, roles: ['ADMIN', 'STAFF'] },
-  { path: '/mitarbeiter/bestellung', label: 'Bestellung', icon: <AddShoppingCartIcon />, roles: ['ADMIN', 'STAFF'] },
+  {
+    path: '/mitarbeiter',
+    label: 'Dashboard',
+    icon: <DashboardIcon />,
+    permissions: ['orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'],
+  },
+  {
+    path: '/mitarbeiter/bestellungen',
+    label: 'Bestellungen',
+    icon: <ReceiptLongIcon />,
+    permissions: ['orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'],
+  },
+  { path: '/mitarbeiter/kueche', label: 'Küche', icon: <KitchenIcon />, permissions: ['orders.kitchen'] },
+  { path: '/mitarbeiter/abholung', label: 'Abholung', icon: <DoneAllIcon />, permissions: ['orders.pickup'] },
+  { path: '/mitarbeiter/bestellung', label: 'Bestellung', icon: <AddShoppingCartIcon />, permissions: ['orders.manage'] },
   {
     path: '/mitarbeiter/speisen',
     label: 'Verfügbarkeit',
@@ -138,11 +147,8 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
   }, []);
 
   const filteredNav = navItems.filter((item) => {
-    if (item.permissions?.length) {
-      return canAccessAnyPermission(user, item.permissions);
-    }
-    const roles = item.roles ?? [];
-    return (roles.includes('ADMIN') && isAdmin) || roles.includes('STAFF');
+    if (!item.permissions?.length) return true;
+    return canAccessAnyPermission(user, item.permissions);
   });
 
   const drawerContent = (

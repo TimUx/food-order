@@ -3,6 +3,18 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.38 - 2026-07-14
+
+### Behoben
+
+- **Team / Passwort:** Benutzer-Passwort im Mandanten-Admin ließ sich nicht ändern (500 durch `updateMany` mit Rollen-Relation).
+- **Mitarbeiter-Berechtigungen:** Effektive Rechte werden aus Rollenvorlagen abgeleitet — Mitarbeiter mit Abholung/Kasse/Finanzen sehen wieder Dashboard und Bestellungen; Navigation nur bei passenden Berechtigungen.
+- **Bestellstatus-Link in E-Mails:** Status-URLs nutzen `lookupToken` statt interner UUID; ältere Links mit UUID funktionieren weiterhin.
+- **Drucken (Bestellungen):** Druckvorschau über verstecktes iframe statt Popup — kein leeres Fenster mehr bei blockierten Popups.
+- **Admin Funktionen:** Irreführender „Aktualisierung verfügbar“-Hinweis bei nicht installierten Modulen entfernt; manuelles Modul-Upgrade deaktiviert (Updates nur mit Plattform-Releases).
+
+---
+
 ## 2.4.37 - 2026-07-14
 
 ### Hinzugefügt
