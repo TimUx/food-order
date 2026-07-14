@@ -188,8 +188,16 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await page.goto(tenantRoute(state.slug, '/mitarbeiter/bestellung'));
     await expect(page.getByText(/bestellung vor ort/i)).toBeVisible({ timeout: 20_000 });
     await page.getByRole('button', { name: /menge erhöhen/i }).first().click();
-    await page.getByRole('button', { name: /bestellung speichern/i }).click();
-    state.cashierOrderNumber = await readDisplayedPickupNumber(page);
+    const [cashierResponse] = await Promise.all([
+      page.waitForResponse(
+        (res) => res.url().includes('/staff/orders/cashier') && res.request().method() === 'POST',
+        { timeout: 20_000 },
+      ),
+      page.getByRole('button', { name: /bestellung speichern/i }).click(),
+    ]);
+    expect(cashierResponse.ok()).toBeTruthy();
+    const cashierOrder = (await cashierResponse.json()) as { displayNumber: string };
+    state.cashierOrderNumber = cashierOrder.displayNumber;
     await page.getByRole('button', { name: /nächste bestellung/i }).click();
 
     await page.getByRole('button', { name: /menge erhöhen/i }).nth(1).click();

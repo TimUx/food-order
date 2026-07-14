@@ -105,9 +105,10 @@ export async function submitPublicOrder(
   await submit.click();
   const response = await orderResponse;
   expect(response.status()).toBe(201);
+  const created = (await response.json()) as { displayNumber: string };
+  expect(created.displayNumber.length).toBeGreaterThan(0);
   await expect(page).toHaveURL(/status/, { timeout: 15_000 });
-  const displayNumber = await readDisplayedPickupNumber(page);
-  return { displayNumber };
+  return { displayNumber: created.displayNumber };
 }
 
 export async function releaseOnlineOrderToKitchen(page: Page, displayNumber: string): Promise<void> {
