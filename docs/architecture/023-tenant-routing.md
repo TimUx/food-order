@@ -91,11 +91,19 @@ Standardmäßig aktiv (`PlatformSettings.pathPrefixRoutingEnabled = true`).
 
 | Aspekt | Wert |
 |--------|------|
-| Cache-Key | `subdomain:{name}` oder `slug:{slug}` |
-| TTL | 60 Sekunden (konfigurierbar) |
-| Invalidierung | Bei Mandanten-Änderung (Status, Slug, Subdomain) |
-| Backend | In-Memory (Phase 1); Redis (Phase 2) |
-| Negative Cache | Unbekannte Subdomains 30s cachen (Schutz vor DB-Spam) |
+| Cache-Key | `host:firstPathSegment` (z. B. `localhost:feuerwehr`) |
+| TTL | 60 Sekunden (positiv), 30 Sekunden (negativ) |
+| Invalidierung | Bei Mandanten-Löschung (`PlatformTenantAdminService.delete` → `invalidateCache()`); bei Status-/Slug-Änderungen |
+| Negative Cache | Unbekannte Slugs werden kurz gecacht; bei Mandanten-Pfaden (`/:slug/public`, `/:slug/api/…`) → `scope: unknown` |
+
+### Unbekannte Mandanten-Pfade
+
+Wenn der erste Pfadsegment wie ein Mandanten-Slug aussieht, der zweite ein Mandanten-Routen-Segment ist (`public`, `admin`, `mitarbeiter`, `api`, …) und kein Mandant existiert:
+
+- `GET /api/public/routing-config?frontendPath=/{slug}/public` → `scope: "unknown"`
+- Frontend zeigt `TenantNotFoundPage` („Veranstalter nicht gefunden“)
+
+WWW-Routen mit einem Segment (`/mandant-beantragen`, `/funktionen`) fallen weiter auf `scope: www` zurück.
 
 ### Host-Header-Validierung
 

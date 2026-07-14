@@ -51,6 +51,7 @@ Eine **vollständig getrennte Plattform-Administration** wird unter der Basis-Do
 | Aktivieren | Mandant wird über Resolver erreichbar |
 | Suspendieren | Mandant zeigt Wartungsseite, keine Bestellungen |
 | Archivieren | Daten bleiben, Mandant nicht mehr erreichbar |
+| **Löschen (DSGVO)** | Vollständige Entfernung aller Mandantendaten inkl. Zahlungen, Uploads und Audit-Logs (`TenantPurgeService`); unwiderruflich |
 | Impersonation (optional, Phase 3) | Plattform-Admin betritt Mandant-Admin mit Audit |
 
 ### Authentifizierung

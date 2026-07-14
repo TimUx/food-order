@@ -67,7 +67,8 @@ Szenarien werden dynamisch aus `QaRegistry.scenarioModuleIds()` erzeugt. Module 
 - **Unit:** Plattform, Module, Utils (Vitest)
 - **Integration:** Modul-Szenarien, DB-abhängige Flows
 - **API:** Auth, Events, Menu, Admin/Modules, Settings, Health
-- **E2E:** Admin, Bestellung, Küche, Abholung, Logout
+- **E2E (Smoke):** Admin, Bestellung, Küche, Abholung, Logout (`npm run qa:e2e`)
+- **E2E (Nutzerreise):** Serialer 12-Schritte-Flow von Mandantenbewerbung bis DSGVO-Löschung (`npm run qa:e2e:journey`, `PLAYWRIGHT_WORKERS=1`)
 - **Payment (optional):** Nur Stripe Sandbox wenn konfiguriert
 - **Mail:** Mailpit in `docker-compose.ci.yml` – keine echten Mails
 - **Printer:** Virtuelle Adapter (PDF/Browser) – keine Hardware
@@ -88,9 +89,9 @@ Szenarien werden dynamisch aus `QaRegistry.scenarioModuleIds()` erzeugt. Module 
 
 | Workflow | Trigger | Zweck |
 |----------|---------|-------|
-| `quality-assurance.yml` | push, PR, dispatch | Hauptpipeline Phasen 1–8 |
-| `nightly.yml` | cron 02:00 UTC | 1000 Bestellungen, Demo-E2E, Performance |
-| `release-validation.yml` | Release, dispatch | Release-Gate |
+| `quality-assurance.yml` | push, PR, dispatch | Statische Qualität, Smoke-E2E, separater Job **Realistische Nutzerreise** |
+| `nightly.yml` | cron 02:00 UTC | Lasttest (1000 Bestellungen), Nutzerreise, Performance |
+| `release-validation.yml` | Release, dispatch | Release-Gate (Nutzerreise + Security), danach **GHCR Image-Build** |
 | `dependency-review.yml` | PR | Dependency Review + npm audit |
 
 ## Docker
@@ -154,7 +155,8 @@ Alle Artefakte werden als GitHub Actions Artifacts hochgeladen.
 Ein Release ist nur zulässig wenn `release-validation.yml` erfolgreich:
 
 - Build, Docker, Migrationen, Health
-- Unit, Integration, API, E2E, Security
+- Unit, Nutzerreise-E2E, Security
+- Anschließend Push der Images `ghcr.io/<owner>/FestSchmiede/{backend,frontend}` mit Release-Tag
 
 ## Demo-Testmodus
 
@@ -181,6 +183,7 @@ scripts/qa/
   run-module-scenarios.ts, run-module-tests.ts, generate-report.ts, ...
 .github/workflows/
   quality-assurance.yml, nightly.yml, release-validation.yml, dependency-review.yml
+  # Image-Build: Job in release-validation.yml (nicht separater Workflow)
 ```
 
 ## Offene Punkte

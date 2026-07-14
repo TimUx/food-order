@@ -459,15 +459,19 @@ Setup-Status in `TenantSettings.extraJson.initialSetup`. API unter `/api/setup/*
 
 ## Tests
 
-> **v2.0:** Multi-Tenant-Tests werden erst ab Phase 1 implementiert. Geplante Testebenen: Resolver-Unit-Tests, API-Isolation (Cross-Tenant), Security (Host-Spoofing, CORS), Migrations-Tests. Bestehende Tests (`tests/api/*`, `tests/integration/*`, `tests/e2e/*`) werden in Phase 1 um Standard-Mandant-Fixtures ergänzt. Details: [ADR-020](architecture/020-multi-tenant-platform.md#teststrategie-zukunft).
-
 ```bash
+# Gesamte QA-Pipeline lokal (nach Docker-Start)
+npm run qa:wait && npm run qa:api && npm run qa:e2e          # Smoke-E2E
+PLAYWRIGHT_WORKERS=1 npm run qa:e2e:journey                 # Nutzerreise (serial)
+
 # Backend (Node 20+ aktivieren, z. B. nvm use 20)
 cd backend && npm run prisma:generate && npm test
 
 # Frontend
 cd frontend && npm test
 ```
+
+Details zu CI-Jobs und Artefakten: [ADR-011](architecture/011-quality-assurance.md).
 
 Installer (Shell, ohne Node):
 
@@ -532,21 +536,19 @@ Produktions-Checklisten, Backup und Restore: [OPERATIONS.md](OPERATIONS.md).
 
 ### Docker Images (GitHub Container Registry)
 
-Der Workflow `.github/workflows/docker-publish.yml` baut und veröffentlicht Images unter:
+Images werden nach erfolgreichem **Release Validation**-Gate automatisch veröffentlicht (`.github/workflows/release-validation.yml`, Job `Docker Images`):
 
 - `ghcr.io/<owner>/FestSchmiede/backend`
 - `ghcr.io/<owner>/FestSchmiede/frontend`
 
 **Auslöser:**
 
-| Auslöser | Tags |
-|----------|------|
-| Manuell (`workflow_dispatch`) | `latest`, `sha-<commit>` |
-| Release veröffentlicht | Semver-Tags (`1.0.0`, `1.0`, `1`), `sha-<commit>` |
+| Auslöser | Ablauf | Tags |
+|----------|--------|------|
+| GitHub Release veröffentlicht | Nutzerreise + Security → Image-Build | Semver (`v2.4.36`, `2.4`, `2`), `sha-<commit>` |
+| Manuell (`workflow_dispatch` auf Release Validation) | Optional mit Tag-Parameter | `latest`, `sha-<commit>` |
 
-**Manuell starten:** GitHub → Actions → „Docker Images“ → Run workflow
-
-**Release:** GitHub → Releases → Create new release → Workflow startet automatisch
+**Release erstellen:** GitHub → Releases → Create new release → `release-validation.yml` startet automatisch.
 
 Optionale Repository-Variablen für den Frontend-Build:
 

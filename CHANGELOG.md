@@ -10,12 +10,15 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 - **E2E-Nutzerreise:** Playwright-Test von Mandantenbewerbung über Einrichtung, Veranstaltungen, Gerichte, Online-/Kassenbestellungen, Küche, Abholung und Admin-Dashboard bis zur DSGVO-Mandanten-Löschung.
 - **DSGVO-Mandanten-Löschung:** `TenantPurgeService` entfernt Zahlungsdaten, Audit-Logs, Bewerbungen, DB-Cascade und Upload-Dateien vollständig.
 - **Veranstaltungen löschen:** `DELETE /staff/events/:id` mit UI-Button (409 bei vorhandenen Bestellungen).
-- **CI:** Eigener Workflow-Job für die realistische Nutzerreise; Nightly und Release-Validation fokussiert auf Lasttest + Journey.
+- **CI:** Eigener Workflow-Job für die realistische Nutzerreise; Nightly und Release-Validation fokussiert auf Lasttest + Journey; Docker-Images werden nur noch über Release Validation veröffentlicht.
 
 ### Behoben
 
 - **Bestellungen/Payment:** Fehlertolerante Payment-Abfragen und `isAvailable()` ohne 500 bei fehlender `payments`-Tabelle.
 - **Speisen löschen:** 409 statt 500 wenn Bestellungen referenzieren.
+- **DSGVO-Mandanten-Löschung:** Robuster Purge (Payment-Schema-Teilmigration, explizite FK-Löschungen, Upload-Verzeichnis).
+- **Tenant-Routing:** Nach Mandanten-Löschung `scope: unknown` und „Veranstalter nicht gefunden“; Resolver-Cache wird invalidiert; WWW-Routen (`/mandant-beantragen` usw.) werden nicht als Slugs gewertet.
+- **E2E-Nutzerreise:** Abholung leert Nachname-Feld zwischen Online- und Kassen-Abholung; Plattform-Löschung mit Dialog- und API-Wartezeit.
 - **Installer:** `IMAGE_TAG` aus Shell überschreibt `.env`; sichererer Swarm-Deploy und Rollback ohne aggressives `stack rm`.
 - **Admin-UI:** Sponsor-Links aus Admin-Navigation entfernt.
 
@@ -23,6 +26,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 - **Plattform:** Klarer DSGVO-Hinweis beim Mandanten-Löschen.
 - **QA:** Smoke-E2E und Nutzerreise getrennt (`qa:e2e` / `qa:e2e:journey`).
+- **CI:** Separater Workflow `docker-publish.yml` entfernt — Image-Build nur noch in `release-validation.yml`.
 
 ---
 
