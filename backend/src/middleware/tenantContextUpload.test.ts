@@ -1,32 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { ensureTenantContextAfterMultipart } from './tenantContextUpload';
-import { TenantContext } from '../platform/tenant/TenantContext';
 import { TenantContextMissingError } from '../platform/tenant/errors';
 
-const tenantData = {
-  id: 'tenant-1',
-  name: 'Testverein',
-  slug: 'test',
-  subdomain: 'test',
-  settings: {},
-} as const;
+const { tenantContext, tenantResolver, tenantService, tenantData } = vi.hoisted(() => {
+  const { TenantContext } = require('../platform/tenant/TenantContext') as typeof import('../platform/tenant/TenantContext');
+  const data = {
+    id: 'tenant-1',
+    name: 'Testverein',
+    slug: 'test',
+    subdomain: 'test',
+    settings: {},
+  } as const;
+
+  return {
+    tenantData: data,
+    tenantContext: new TenantContext(),
+    tenantResolver: {
+      resolve: vi.fn(),
+    },
+    tenantService: {
+      findById: vi.fn(),
+      resolveContextData: vi.fn(async (tenant: { id: string }) => ({
+        ...data,
+        id: tenant.id,
+      })),
+    },
+  };
+});
 
 vi.mock('../platform/bootstrap', () => ({
-  tenantContext: new TenantContext(),
-  tenantResolver: {
-    resolve: vi.fn(),
-  },
-  tenantService: {
-    findById: vi.fn(),
-    resolveContextData: vi.fn(async (tenant: { id: string }) => ({
-      ...tenantData,
-      id: tenant.id,
-    })),
-  },
+  tenantContext,
+  tenantResolver,
+  tenantService,
 }));
 
-import { tenantContext, tenantResolver, tenantService } from '../platform/bootstrap';
+import { ensureTenantContextAfterMultipart } from './tenantContextUpload';
 
 describe('ensureTenantContextAfterMultipart', () => {
   const next = vi.fn() as NextFunction;
