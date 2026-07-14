@@ -155,7 +155,7 @@ jobs:
     name: Realistische Nutzerreise (E2E)
     runs-on: ubuntu-latest
     needs: quality
-    timeout-minutes: 60
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -192,7 +192,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Nutzerreise – Bewerbung bis Bestellungen
-        run: npm run qa:e2e:journey
+        run: PLAYWRIGHT_WORKERS=1 npm run qa:e2e:journey
 
       - name: Upload journey artifacts
         uses: actions/upload-artifact@v4

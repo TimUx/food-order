@@ -29,8 +29,9 @@ const state = {
 state.organization = `QA Journey ${state.slug}`;
 state.adminEmail = `admin-${state.slug}@example.test`;
 
+// Ein Mandant, gemeinsame Browser-Session und geteiltes `state` — Schritte müssen serial laufen.
 test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
-  test.describe.configure({ mode: 'serial', timeout: 900_000 });
+  test.describe.configure({ mode: 'serial', timeout: 60_000 });
 
   let page: Page;
 
@@ -99,7 +100,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   });
 
   test('3 · Mandanten-Administrator einrichten (Einrichtungsassistent)', async () => {
-    state.adminPassword = await waitForTemporaryPassword(state.adminEmail);
+    state.adminPassword = await waitForTemporaryPassword(state.adminEmail, { timeoutMs: 30_000 });
     await loginTenantAdmin(page, state.slug, state.adminEmail, state.adminPassword);
     await completeSetupWizard(page, state.organization);
     await expect(page.getByText(/einstellungen|übersicht/i).first()).toBeVisible({ timeout: 20_000 });
@@ -140,7 +141,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
       await dialog.getByRole('textbox', { name: 'Name' }).fill(event.name);
       await dialog.getByLabel('Datum').fill(today);
       if (!event.active) {
-        await dialog.getByRole('checkbox', { name: /veranstaltung aktiv/i }).uncheck();
+        await dialog.getByRole('switch', { name: /veranstaltung aktiv/i }).click();
       }
       await dialog.getByRole('button', { name: /^speichern$/i }).click();
       await expect(page.getByText(event.name)).toBeVisible({ timeout: 15_000 });
@@ -148,11 +149,15 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
 
     const activeCard = page.locator('.MuiCard-root').filter({ hasText: 'Sommerfest Haupttag' });
     await activeCard.getByRole('button', { name: /^speisen$/i }).click();
+    const foodDialog = page.getByRole('dialog').filter({ hasText: /Speisen für Sommerfest Haupttag/i });
+    await expect(foodDialog).toBeVisible({ timeout: 10_000 });
+    await expect(foodDialog.getByText(/\d+ von \d+ ausgewählt/)).toBeVisible({ timeout: 15_000 });
     for (const dish of dishes) {
-      await page.getByRole('button', { name: new RegExp(dish.name, 'i') }).click();
+      await foodDialog.getByRole('button', { name: new RegExp(dish.name, 'i') }).click();
     }
-    await page.getByRole('button', { name: /^speichern$/i }).click();
-    await expect(page.getByText('Sommerfest Haupttag')).toBeVisible({ timeout: 15_000 });
+    await foodDialog.getByRole('button', { name: /^speichern$/i }).click();
+    await expect(foodDialog).toBeHidden({ timeout: 10_000 });
+    await expect(page.getByText('Sommerfest Haupttag')).toBeVisible({ timeout: 10_000 });
   });
 
   test('5 · Mitarbeiter anlegen (Team)', async () => {
