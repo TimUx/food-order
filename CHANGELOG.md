@@ -3,6 +3,20 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.37 - 2026-07-14
+
+### Hinzugefügt
+
+- **Öffentliche Bestellseite:** Hinweisseite statt leerem Formular, wenn keine buchbare Veranstaltung existiert oder die Speisekarte leer ist (`PublicNoEventsNotice`).
+
+### Behoben
+
+- **Bild-Upload (Speisen/Logo):** Mandanten-Kontext geht bei Multipart-Uploads (Multer) nicht mehr verloren — Uploads schlagen nicht mehr mit „Kein Veranstalter-Kontext“ fehl.
+- **Admin Speisen:** Klarere Katalog-Verwaltung unabhängig von Veranstaltungen; verbesserter Ladezustand und Leeranzeige.
+- **Mitarbeiter Verfügbarkeit:** Veranstaltungsauswahl statt Abhängigkeit von einer einzelnen aktiven Veranstaltung (`/mitarbeiter/speisen`).
+
+---
+
 ## 2.4.36 - 2026-07-14
 
 ### Hinzugefügt

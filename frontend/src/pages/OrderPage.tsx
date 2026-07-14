@@ -15,6 +15,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import { useNavigate, Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/PublicLayout';
+import { PublicNoEventsNotice } from '@/components/PublicNoEventsNotice';
 import { FoodItemCard } from '@/components/FoodItemCard';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
@@ -283,7 +284,7 @@ export function OrderPage() {
   if (availableEvents.length === 0) {
     return (
       <PublicLayout>
-        <Alert severity="info">Derzeit sind keine Bestellungen möglich.</Alert>
+        <PublicNoEventsNotice />
       </PublicLayout>
     );
   }
@@ -324,10 +325,29 @@ export function OrderPage() {
     );
   }
 
-  if (items.length === 0 && !error) {
+  if (items.length === 0) {
+    const selectedEvent = availableEvents.find((event) => event.id === selectedEventId);
+    const noticeReason = error ? 'unavailable' : 'no-menu';
+    const noticeEventName = eventName || selectedEvent?.name;
+
     return (
       <PublicLayout>
-        <Alert severity="info">Derzeit sind keine Bestellungen möglich.</Alert>
+        <PublicNoEventsNotice
+          reason={noticeReason}
+          eventName={noticeEventName}
+          onBack={
+            availableEvents.length > 1
+              ? () => {
+                  setSelectedEventId(null);
+                  setItems([]);
+                  setOrderStep('dishes');
+                  setError('');
+                  setEventName('');
+                  setEventDateLabel('');
+                }
+              : undefined
+          }
+        />
       </PublicLayout>
     );
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Typography,
   Box,
@@ -24,6 +24,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import { Link } from 'react-router-dom';
 import { AdminLayout } from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, formatPrice } from '@/services/api';
@@ -56,16 +57,22 @@ export function FoodItemsPage() {
   const [editing, setEditing] = useState<FoodItem | null>(null);
   const [form, setForm] = useState<FoodForm>(emptyForm);
 
-  const loadItems = () => {
+  const loadItems = useCallback(async () => {
     if (!token) return;
-    api.getFoodCatalog(token).then(setItems).catch((err) => setError(err.message));
-  };
+    try {
+      const data = await api.getFoodCatalog(token);
+      setItems(data);
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Speisen konnten nicht geladen werden');
+    }
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
-    loadItems();
-    setLoading(false);
-  }, [token]);
+    setLoading(true);
+    void loadItems().finally(() => setLoading(false));
+  }, [token, loadItems]);
 
   const openCreate = () => {
     setEditing(null);
@@ -103,7 +110,8 @@ export function FoodItemsPage() {
         await api.createFoodCatalogItem(token, data);
       }
       setDialogOpen(false);
-      loadItems();
+      setError('');
+      await loadItems();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
     }
@@ -143,9 +151,14 @@ export function FoodItemsPage() {
     <AdminLayout title="Speisenverwaltung" fullWidth>
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Hier verwalten Sie den mandantenweiten Speisenkatalog. Welche Gerichte bei einer Veranstaltung angeboten werden, legen Sie unter Veranstaltungen fest.
-      </Typography>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Hier verwalten Sie den mandantenweiten Speisenkatalog – unabhängig davon, ob bereits Veranstaltungen angelegt sind.
+        Welche Gerichte bei einer Veranstaltung angeboten werden, wählen Sie unter{' '}
+        <Button component={Link} to="/admin/veranstaltungen" size="small" sx={{ verticalAlign: 'baseline', p: 0, minWidth: 0 }}>
+          Veranstaltungen → Speisen
+        </Button>
+        .
+      </Alert>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h5" fontWeight={700}>Gerichte verwalten</Typography>
@@ -166,35 +179,48 @@ export function FoodItemsPage() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.sortOrder}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{formatPrice(Number(item.price))}</TableCell>
-              <TableCell>{item.active ? 'Ja' : 'Nein'}</TableCell>
-              <TableCell>{item.maxQuantity ?? '–'}</TableCell>
-              <TableCell align="right">
-                <IconButton component="label" size="small">
-                  <PhotoCameraIcon />
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(item.id, file);
-                    }}
-                  />
-                </IconButton>
-                <IconButton size="small" onClick={() => openEdit(item)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
-                  <DeleteIcon />
-                </IconButton>
+          {items.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                <Typography variant="body1" color="text.secondary" gutterBottom>
+                  Noch keine Gerichte im Katalog.
+                </Typography>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} sx={{ mt: 1 }}>
+                  Erstes Gericht anlegen
+                </Button>
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            items.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.sortOrder}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{formatPrice(Number(item.price))}</TableCell>
+                <TableCell>{item.active ? 'Ja' : 'Nein'}</TableCell>
+                <TableCell>{item.maxQuantity ?? '–'}</TableCell>
+                <TableCell align="right">
+                  <IconButton component="label" size="small">
+                    <PhotoCameraIcon />
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(item.id, file);
+                      }}
+                    />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => openEdit(item)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(item.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
 

@@ -50,6 +50,7 @@ import {
 
 import { uploadService } from '../services/uploadService';
 import { assertUploadContentLength } from '../middleware/uploadGuards';
+import { ensureTenantContextAfterMultipart } from '../middleware/tenantContextUpload';
 import { loginRateLimiter, magicLinkRateLimiter, publicOrderRateLimiter, lookupRateLimiter, authRefreshRateLimiter, uploadRateLimiter, paymentPublicRateLimiter, tenantApplicationRateLimiter } from '../middleware/rateLimit';
 import { setupController } from '../controllers/setupController';
 import { config } from '../config';
@@ -190,7 +191,7 @@ router.put('/staff/food-items/:id', requirePermissionKey('food.edit'), validateP
 router.patch('/staff/food-items/:id/sold-out', requireAnyStaffPermission('food.edit', 'orders.kitchen', 'orders.manage'), validateParams(idParamSchema), validateBody(setFoodSoldOutSchema), foodItemController.setSoldOut);
 router.delete('/staff/food-items/:id', requirePermissionKey('food.edit'), validateParams(idParamSchema), foodItemController.delete);
 
-router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), uploadRateLimiter, validateParams(idParamSchema), assertUploadContentLength(), upload.single('image'), async (req, res, next) => {
+router.post('/staff/food-items/:id/image', requirePermissionKey('food.edit'), uploadRateLimiter, validateParams(idParamSchema), assertUploadContentLength(), upload.single('image'), ensureTenantContextAfterMultipart, async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -235,7 +236,7 @@ router.get('/realtime/club', realtimeController.syncClub);
 
 router.get('/staff/club', requirePermissionKey('settings.club'), clubController.get);
 router.put('/staff/club', requirePermissionKey('settings.club'), validateBody(updateClubSchema), clubController.update);
-router.post('/staff/club/logo', requirePermissionKey('settings.club'), uploadRateLimiter, assertUploadContentLength(), upload.single('image'), async (req, res, next) => {
+router.post('/staff/club/logo', requirePermissionKey('settings.club'), uploadRateLimiter, assertUploadContentLength(), upload.single('image'), ensureTenantContextAfterMultipart, async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
@@ -266,7 +267,7 @@ router.put('/admin/email-settings', validateBody(updateEmailSettingsSchema), (re
   res.set('Link', '</api/admin/settings/module.notifications>; rel="successor-version"');
   return clubController.updateEmailSettings(req, res, next);
 });
-router.post('/admin/club/logo', requirePermissionKey('settings.club'), assertUploadContentLength(), upload.single('image'), async (req, res, next) => {
+router.post('/admin/club/logo', requirePermissionKey('settings.club'), assertUploadContentLength(), upload.single('image'), ensureTenantContextAfterMultipart, async (req, res, next) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Kein Bild hochgeladen' });
