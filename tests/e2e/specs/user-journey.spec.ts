@@ -256,6 +256,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   test('12 · Mandant DSGVO-konform löschen (Plattform)', async () => {
     await loginPlatformAdmin(page);
     await page.goto('/platform/mandanten');
+    await expect(page.getByRole('heading', { name: /mandanten/i })).toBeVisible({ timeout: 20_000 });
     await page.getByLabel('Suche').fill(state.slug);
     const tenantRow = page.getByRole('row').filter({
       has: page.getByRole('cell', { name: state.slug, exact: true }),
