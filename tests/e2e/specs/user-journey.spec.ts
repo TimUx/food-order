@@ -38,26 +38,26 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await expect(page.getByRole('textbox', { name: 'Organisation' })).toBeVisible({ timeout: 20_000 });
 
     await page.getByRole('textbox', { name: 'Organisation' }).fill(state.organization);
-    await page.getByLabel('Ansprechpartner').fill('QA Ansprechpartner');
-    await page.getByLabel('E-Mail', { exact: true }).fill(state.adminEmail);
-    await page.getByLabel('Straße').fill('Musterstraße 1');
-    await page.getByLabel('PLZ').fill('12345');
-    await page.getByLabel('Ort', { exact: true }).fill('Musterstadt');
-    await page.getByLabel(/gewünschte internetadresse/i).fill(state.slug);
-    await page.getByLabel(/warum wird festschmiede benötigt/i).fill(
+    await page.getByRole('textbox', { name: 'Ansprechpartner' }).fill('QA Ansprechpartner');
+    await page.getByRole('textbox', { name: 'E-Mail' }).fill(state.adminEmail);
+    await page.getByRole('textbox', { name: 'Straße' }).fill('Musterstraße 1');
+    await page.getByRole('textbox', { name: 'PLZ' }).fill('12345');
+    await page.getByRole('textbox', { name: 'Ort' }).fill('Musterstadt');
+    await page.getByRole('textbox', { name: /gewünschte internetadresse/i }).fill(state.slug);
+    await page.getByRole('textbox', { name: /warum wird festschmiede benötigt/i }).fill(
       'Wir organisieren jährlich ein Vereinsfest und benötigen eine digitale Bestelllösung für Speisen und Getränke.'
     );
-    await page.getByLabel(/welche funktionen sollen genutzt werden/i).fill(
+    await page.getByRole('textbox', { name: /welche funktionen sollen genutzt werden/i }).fill(
       'Online-Bestellung, Küchenmonitor, Abholung und Kassenbestellung vor Ort.'
     );
-    await page.getByLabel(/kostenlosen mandant bereitgestellt/i).fill(
+    await page.getByRole('textbox', { name: /kostenlosen mandant bereitgestellt/i }).fill(
       'Als gemeinnütziger Verein mit ehrenamtlichem Team benötigen wir eine kostenfreie Lösung für unser Sommerfest.'
     );
-    await page.getByLabel(/geplante nutzung/i).fill(
+    await page.getByRole('textbox', { name: /geplante nutzung/i }).fill(
       'Zwei Feste pro Jahr mit jeweils 200–400 Gästen und 3–5 Veranstaltungen im Vereinsheim.'
     );
-    await page.getByLabel(/datenschutzerklärung/i).check();
-    await page.getByLabel(/nutzungsbedingungen/i).check();
+    await page.getByRole('checkbox', { name: /datenschutzerklärung/i }).check();
+    await page.getByRole('checkbox', { name: /nutzungsbedingungen/i }).check();
 
     await page.waitForTimeout(3500);
     await page.getByRole('button', { name: /bewerbung absenden/i }).click();
