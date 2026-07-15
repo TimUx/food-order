@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.42 - 2026-07-15
+
+### Behoben
+
+- **CI Nutzerreise:** Dashboard-Schritt pollt die Bestellungen-Kachel statt auf eine bereits verpasste Stats-API-Response zu warten.
+
+---
+
 ## 2.4.41 - 2026-07-15
 
 ### Behoben

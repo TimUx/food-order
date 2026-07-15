@@ -1,6 +1,6 @@
 {
   "name": "festschmiede-frontend",
-  "version": "2.4.41",
+  "version": "2.4.42",
   "private": true,
   "type": "module",
   "scripts": {

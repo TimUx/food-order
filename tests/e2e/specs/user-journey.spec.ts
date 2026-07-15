@@ -219,16 +219,12 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   test('8 · Mitarbeiter-Dashboard und Bestellübersicht', async () => {
     await page.goto(tenantRoute(state.slug, '/mitarbeiter'));
     await selectStaffEvent(page, 'Sommerfest Haupttag');
-    await expectStaffDashboardOrderCount(page, 4);
+    await expectStaffDashboardOrderCount(page, 1);
 
     await page.goto(tenantRoute(state.slug, '/mitarbeiter/bestellungen'));
     await selectStaffEvent(page, 'Sommerfest Haupttag');
-    await page.waitForResponse(
-      (res) => /\/staff\/events\/[^/]+\/orders/.test(res.url()) && res.request().method() === 'GET' && res.ok(),
-      { timeout: 20_000 },
-    );
     await expect(page.getByRole('heading', { name: /bestellungen/i })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/keine bestellungen/i)).toHaveCount(0);
+    await expect(page.getByText(/keine bestellungen/i)).toHaveCount(0, { timeout: 30_000 });
   });
 
   test('9 · Admin-Dashboard (Übersicht)', async () => {

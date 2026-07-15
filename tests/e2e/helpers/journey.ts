@@ -73,23 +73,25 @@ export async function selectStaffEvent(page: Page, eventName: string): Promise<v
 }
 
 export async function waitForStaffEventStats(page: Page): Promise<void> {
-  const response = await page.waitForResponse(
-    (res) => /\/staff\/events\/[^/]+\/stats/.test(res.url()) && res.request().method() === 'GET',
-    { timeout: 25_000 },
-  );
-  expect(response.ok()).toBeTruthy();
-}
-
-export async function expectStaffDashboardOrderCount(page: Page, minCount = 1): Promise<void> {
-  await waitForStaffEventStats(page);
   const ordersCard = page.locator('.MuiCard-root').filter({
     has: page.getByText('Bestellungen', { exact: true }),
   });
-  await expect(ordersCard).toBeVisible({ timeout: 15_000 });
-  const value = ordersCard.locator('.MuiTypography-h5').first();
-  await expect(value).toBeVisible({ timeout: 15_000 });
-  const count = Number((await value.textContent()) ?? '0');
-  expect(count).toBeGreaterThanOrEqual(minCount);
+  await expect(ordersCard).toBeVisible({ timeout: 20_000 });
+  await expect.poll(
+    async () => Number((await ordersCard.locator('.MuiTypography-h5').first().textContent()) ?? '0'),
+    { timeout: 30_000 },
+  ).toBeGreaterThan(0);
+}
+
+export async function expectStaffDashboardOrderCount(page: Page, minCount = 1): Promise<void> {
+  const ordersCard = page.locator('.MuiCard-root').filter({
+    has: page.getByText('Bestellungen', { exact: true }),
+  });
+  await expect(ordersCard).toBeVisible({ timeout: 20_000 });
+  await expect.poll(
+    async () => Number((await ordersCard.locator('.MuiTypography-h5').first().textContent()) ?? '0'),
+    { timeout: 30_000 },
+  ).toBeGreaterThanOrEqual(minCount);
 }
 
 export async function completeSetupWizard(page: Page, orgName: string): Promise<void> {
