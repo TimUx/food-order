@@ -61,6 +61,17 @@ export const touchSquareActionSx: SxProps<Theme> = {
   },
 };
 
+export const compactTouchSquareActionSx: SxProps<Theme> = {
+  ...touchSquareActionSx,
+  minHeight: { xs: 88, sm: 112, md: 132 },
+  gap: { xs: 0.75, sm: 1 },
+  fontSize: { xs: '0.8rem', sm: '1rem', md: '1.1rem' },
+  borderRadius: 2,
+  '& .MuiSvgIcon-root': {
+    fontSize: { xs: 30, sm: 36, md: 42 },
+  },
+};
+
 export const touchIconButtonSx: SxProps<Theme> = {
   minWidth: TOUCH_MIN,
   minHeight: TOUCH_MIN,

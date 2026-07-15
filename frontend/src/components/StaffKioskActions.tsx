@@ -3,7 +3,7 @@ import DoneAllIcon from '@mui/icons-material/DoneAll';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { Link } from 'react-router-dom';
-import { touchSquareActionSx } from '@/theme/touch';
+import { compactTouchSquareActionSx } from '@/theme/touch';
 
 interface StaffKioskActionsProps {
   /** Max width of the button grid */
@@ -11,15 +11,15 @@ interface StaffKioskActionsProps {
 }
 
 /**
- * Große Touch-Buttons für Kassen-/Abholmodus und Rückkehr zum Mitarbeiterbereich.
+ * Große Touch-Buttons für Kassen-/Abholmodus und Rückkehr zum Service.
  */
-export function StaffKioskActions({ maxWidth = 720 }: StaffKioskActionsProps) {
+export function StaffKioskActions({ maxWidth = 560 }: StaffKioskActionsProps) {
   return (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' },
-        gap: 2,
+        gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))' },
+        gap: { xs: 1, sm: 1.5 },
         maxWidth,
         mx: 'auto',
         width: '100%',
@@ -30,7 +30,7 @@ export function StaffKioskActions({ maxWidth = 720 }: StaffKioskActionsProps) {
         to="/mitarbeiter/abholung"
         variant="contained"
         color="success"
-        sx={touchSquareActionSx}
+        sx={compactTouchSquareActionSx}
       >
         <DoneAllIcon />
         Abholung
@@ -40,7 +40,7 @@ export function StaffKioskActions({ maxWidth = 720 }: StaffKioskActionsProps) {
         to="/mitarbeiter/bestellung"
         variant="contained"
         color="primary"
-        sx={touchSquareActionSx}
+        sx={compactTouchSquareActionSx}
       >
         <AddShoppingCartIcon />
         Bestellung
@@ -50,10 +50,10 @@ export function StaffKioskActions({ maxWidth = 720 }: StaffKioskActionsProps) {
         to="/mitarbeiter"
         variant="outlined"
         color="inherit"
-        sx={touchSquareActionSx}
+        sx={compactTouchSquareActionSx}
       >
         <DashboardIcon />
-        Mitarbeiterbereich
+        Service
       </Button>
     </Box>
   );

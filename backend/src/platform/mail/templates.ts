@@ -72,7 +72,7 @@ export function renderMailTemplate(
           '',
           'Direkte Links:',
           context.adminUrl ? `Administration: ${context.adminUrl}` : '',
-          context.staffUrl ? `Mitarbeiterbereich: ${context.staffUrl}` : '',
+          context.staffUrl ? `Service: ${context.staffUrl}` : '',
           context.publicUrl ? `Öffentliche Bestellseite: ${context.publicUrl}` : '',
           context.statusUrl ? `Bestellstatus abfragen: ${context.statusUrl}` : '',
           '',
@@ -93,7 +93,7 @@ export function renderMailTemplate(
           <h3>Direkte Links</h3>
           <ul>
             ${context.adminUrl ? `<li><a href="${context.adminUrl}">Administration</a></li>` : ''}
-            ${context.staffUrl ? `<li><a href="${context.staffUrl}">Mitarbeiterbereich</a></li>` : ''}
+            ${context.staffUrl ? `<li><a href="${context.staffUrl}">Service</a></li>` : ''}
             ${context.publicUrl ? `<li><a href="${context.publicUrl}">Öffentliche Bestellseite</a></li>` : ''}
             ${context.statusUrl ? `<li><a href="${context.statusUrl}">Bestellstatus abfragen</a></li>` : ''}
           </ul>

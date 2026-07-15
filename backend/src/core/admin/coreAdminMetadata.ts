@@ -96,7 +96,7 @@ export const CORE_VOLUNTEER_DASHBOARD_PATHS = new Set([
 
 export const CORE_STAFF_LINK: AdminDashboardTile = {
   id: 'staff-area',
-  label: 'Mitarbeiterbereich',
+  label: 'Service',
   description: 'Küche, Abholung, Bestellungen',
   path: '/mitarbeiter',
   icon: 'Storefront',

@@ -107,6 +107,18 @@ export function OrderStatusPage() {
     prevStatus.current = order.status;
   }, [order?.status]);
 
+  const handleResetLookup = () => {
+    setOrder(null);
+    setLookupMode(true);
+    setVerifyMode(false);
+    setError('');
+    setOrderNumber('');
+    setLastName('');
+    setCancelError('');
+    setCancelDialogOpen(false);
+    window.history.replaceState(null, '', '/status');
+  };
+
   const handleLookup = async () => {
     if (!selectedEventId) {
       setError('Bitte wählen Sie eine Veranstaltung aus.');
@@ -390,7 +402,7 @@ export function OrderStatusPage() {
       </Paper>
 
       <Box sx={{ mt: 3, textAlign: 'center' }}>
-        <Button component={Link} to="/status" variant="outlined">
+        <Button variant="outlined" onClick={handleResetLookup}>
           Andere Bestellung abfragen
         </Button>
       </Box>

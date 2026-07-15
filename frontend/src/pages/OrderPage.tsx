@@ -301,12 +301,18 @@ export function OrderPage() {
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Grid container spacing={2}>
           {availableEvents.map((event) => (
-            <Grid key={event.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid key={event.id} size={{ xs: 6, sm: 6, md: 4 }}>
               <Button
                 variant="outlined"
                 onClick={() => handleSelectEvent(event.id)}
                 startIcon={<EventIcon />}
-                sx={touchSquareActionSx}
+                sx={{
+                  ...touchSquareActionSx,
+                  aspectRatio: { xs: 'auto', sm: '1 / 1' },
+                  minHeight: { xs: 112, sm: 150, md: 180 },
+                  p: { xs: 1.5, sm: 2 },
+                  '& .MuiSvgIcon-root': { fontSize: { xs: 28, sm: 42, md: 52 } },
+                }}
               >
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h6" fontWeight={800}>{event.name}</Typography>

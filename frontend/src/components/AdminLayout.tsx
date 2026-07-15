@@ -137,7 +137,7 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
           </ListItemButton>
           <ListItemButton component={Link} to="/mitarbeiter" onClick={() => setDrawerOpen(false)}>
             <ListItemIcon><StorefrontIcon /></ListItemIcon>
-            <ListItemText primary="Mitarbeiterbereich" />
+            <ListItemText primary="Service" />
           </ListItemButton>
           <ListItemButton onClick={() => { logout(); navigate('/admin/login'); }}>
             <ListItemIcon><LogoutIcon /></ListItemIcon>

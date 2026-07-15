@@ -158,7 +158,7 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
   const drawerContent = (
     <Box sx={{ width: DRAWER_WIDTH, pt: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Typography variant="h6" sx={{ px: 2, mb: 2, fontWeight: 700 }}>
-        Mitarbeiterbereich
+        Service
       </Typography>
       <List sx={{ flexGrow: 1 }}>
         {filteredNav.map((item) => (

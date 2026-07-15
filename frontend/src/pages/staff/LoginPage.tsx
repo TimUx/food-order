@@ -201,7 +201,7 @@ export function LoginPage() {
           {passwordlessOnly ? (
             'Melden Sie sich passwortlos per E-Mail an.'
           ) : isAdminLogin ? (
-            <>Mitarbeiter melden sich im <Link to="/mitarbeiter/login">Mitarbeiterbereich</Link> an.</>
+            <>Mitarbeiter melden sich im <Link to="/mitarbeiter/login">Service</Link> an.</>
           ) : (
             <>Administratoren können sich im <Link to="/admin/login">Admin-Bereich</Link> anmelden.</>
           )}
