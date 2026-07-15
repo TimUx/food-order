@@ -72,6 +72,26 @@ export async function selectStaffEvent(page: Page, eventName: string): Promise<v
   await expect(eventSelect).toContainText(eventName);
 }
 
+export async function waitForStaffEventStats(page: Page): Promise<void> {
+  const response = await page.waitForResponse(
+    (res) => /\/staff\/events\/[^/]+\/stats/.test(res.url()) && res.request().method() === 'GET',
+    { timeout: 25_000 },
+  );
+  expect(response.ok()).toBeTruthy();
+}
+
+export async function expectStaffDashboardOrderCount(page: Page, minCount = 1): Promise<void> {
+  await waitForStaffEventStats(page);
+  const ordersCard = page.locator('.MuiCard-root').filter({
+    has: page.getByText('Bestellungen', { exact: true }),
+  });
+  await expect(ordersCard).toBeVisible({ timeout: 15_000 });
+  const value = ordersCard.locator('.MuiTypography-h5').first();
+  await expect(value).toBeVisible({ timeout: 15_000 });
+  const count = Number((await value.textContent()) ?? '0');
+  expect(count).toBeGreaterThanOrEqual(minCount);
+}
+
 export async function completeSetupWizard(page: Page, orgName: string): Promise<void> {
   await expect(page).toHaveURL(/\/admin\/einrichtung/, { timeout: 20_000 });
 
