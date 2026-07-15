@@ -118,7 +118,10 @@ export async function completeSetupWizard(page: Page, orgName: string): Promise<
 
 function orderCard(page: Page, displayNumber: string) {
   const normalized = displayNumber.replace(/^#/, '');
-  return page.locator('.MuiCard-root').filter({ hasText: normalized });
+  // Exact "#001" — nicht "001" (matched sonst z. B. Uhrzeit+Menge "20:001×")
+  return page.locator('.MuiCard-root').filter({
+    has: page.getByText(`#${normalized}`, { exact: true }),
+  });
 }
 
 export async function readDisplayedPickupNumber(page: Page): Promise<string> {
