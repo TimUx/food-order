@@ -25,6 +25,7 @@ import {
   createEventSchema,
   updateEventSchema,
   updateClubSchema,
+  updateClubBrandColorSchema,
   createFoodItemSchema,
   updateFoodItemSchema,
   setFoodSoldOutSchema,
@@ -256,6 +257,7 @@ router.use('/admin', authenticate, loadUser, requireDelegatedAdmin());
 
 router.get('/admin/club', requireAnyStaffPermission('settings.club', 'team.manage'), clubController.get);
 router.put('/admin/club', requirePermissionKey('settings.club'), validateBody(updateClubSchema), clubController.update);
+router.put('/admin/club/brand-color', requirePermissionKey('settings.club'), validateBody(updateClubBrandColorSchema), clubController.updateBrandColor);
 /** @deprecated Nutze /api/admin/settings/module.notifications */
 router.get('/admin/email-settings', (req, res, next) => {
   res.set('Deprecation', 'true');

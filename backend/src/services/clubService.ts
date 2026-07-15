@@ -134,6 +134,25 @@ export const clubService = {
     return mapped;
   },
 
+  async updateBrandColor(brandColor: string) {
+    const { requireTenantId } = await import('../platform/tenant/tenantScope');
+    const { prisma } = await import('../config/database');
+    const { isAllowedTenantBrandColorId } = await import('../core/branding/tenantBrandPalette');
+    if (!isAllowedTenantBrandColorId(brandColor)) {
+      const { AppError } = await import('../middleware/errorHandler');
+      throw new AppError(400, 'Ungültige Primärfarbe');
+    }
+
+    const tenantId = requireTenantId();
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: { theme: brandColor },
+    });
+
+    emitClubUpdate(await this.getPublic());
+    return { theme: brandColor };
+  },
+
   async update(data: {
     clubName?: string;
     description?: string | null;

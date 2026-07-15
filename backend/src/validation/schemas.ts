@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isAllowedTenantBrandColorId } from '../core/branding/tenantBrandPalette';
 import {
   normalizeOptionalWebsite,
   normalizeTenantSubdomain,
@@ -176,6 +177,13 @@ export const updateClubSchema = z.object({
   orderFieldPhoneRequired: z.boolean().optional(),
   cancellationDeadlineHours: z.number().int().min(0, 'Mindestens 0').max(720, 'Maximal 720 Stunden').optional(),
   cancellationDeadlineUnit: z.enum(['hours', 'days']).optional(),
+});
+
+export const updateClubBrandColorSchema = z.object({
+  brandColor: z
+    .string()
+    .min(1)
+    .refine((value) => isAllowedTenantBrandColorId(value), 'Ungültige Primärfarbe'),
 });
 
 export const createFoodItemSchema = z.object({

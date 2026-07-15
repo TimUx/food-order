@@ -1,10 +1,12 @@
-import { Box, Button, Avatar, Alert, Chip, Stack, Typography } from '@mui/material';
+import { Box, Button, Alert, Chip, Stack, Typography } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import { useState, type ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClub } from '@/contexts/ClubContext';
-import { api, getImageUrl } from '@/services/api';
+import { useTenant } from '@/contexts/TenantProvider';
+import { ClubBrandColorPicker } from '@/components/ClubBrandColorPicker';
+import { ClubLogoImage } from '@/components/ClubLogoImage';
+import { api } from '@/services/api';
 
 function ClubLogoExtension() {
   const { token } = useAuth();
@@ -25,20 +27,12 @@ function ClubLogoExtension() {
     }
   };
 
-  const logoUrl = getImageUrl(club.logoUrl || undefined);
-
   return (
     <Box>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        {logoUrl ? (
-          <Avatar key={club.logoUrl ?? 'no-logo'} src={logoUrl} sx={{ width: 80, height: 80 }} />
-        ) : (
-          <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.main' }}>
-            <RestaurantMenuIcon fontSize="large" />
-          </Avatar>
-        )}
+        <ClubLogoImage logoUrl={club.logoUrl} alt={club.clubName} height={80} maxWidth={200} fallback="none" />
         <Button component="label" variant="outlined" startIcon={<PhotoCameraIcon />}>
           Logo hochladen
           <input
@@ -52,6 +46,50 @@ function ClubLogoExtension() {
           />
         </Button>
       </Box>
+      <Typography variant="body2" color="text.secondary">
+        Das Logo erscheint im öffentlichen Kopfbereich und auf der Kontaktseite, sofern hochgeladen.
+      </Typography>
+    </Box>
+  );
+}
+
+function ClubBrandColorExtension() {
+  const { token } = useAuth();
+  const { tenant, refresh } = useTenant();
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSelect = async (colorId: string) => {
+    if (!token || colorId === tenant.theme) return;
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      await api.updateClubBrandColor(token, colorId);
+      await refresh();
+      setSuccess('Primärfarbe gespeichert');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+      <ClubBrandColorPicker value={tenant.theme} onChange={(colorId) => void handleSelect(colorId)} disabled={saving} />
+    </Box>
+  );
+}
+
+function ClubBrandingExtension() {
+  return (
+    <Box sx={{ mb: 2 }}>
+      <ClubLogoExtension />
+      <ClubBrandColorExtension />
     </Box>
   );
 }
@@ -225,7 +263,7 @@ function PrinterTestExtension() {
 }
 
 export const SETTINGS_EXTENSIONS: Record<string, () => ReactNode> = {
-  'core.club': () => <ClubLogoExtension />,
+  'core.club': () => <ClubBrandingExtension />,
   'module.payment': () => <PaymentProviderTestExtension />,
   'module.notifications': () => <NotificationSmtpTestExtension />,
   'module.printer': () => <PrinterTestExtension />,

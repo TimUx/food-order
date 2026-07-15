@@ -3,6 +3,19 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.44 - 2026-07-15
+
+### Hinzugefügt
+
+- **Mandanten-Branding:** Primärfarbe unter Admin → Veranstalter → Branding — 24 vordefinierte Farben (8 Farbfamilien × 3 Helligkeitsstufen) mit gutem Kontrast für helle Schrift auf Buttons, Links und Header.
+- **Öffentliches Logo:** Vereinslogo im Kopfbereich der Bestellseite (statt FestSchmiede-Logo, nur wenn hochgeladen) und auf der Kontaktseite.
+
+### Behoben
+
+- **Öffentliches Logo:** Tenant-Daten werden mit Club-Einstellungen zusammengeführt, damit hochgeladene Logos auf öffentlichen Seiten zuverlässig erscheinen.
+
+---
+
 ## 2.4.42 - 2026-07-15
 
 ### Behoben

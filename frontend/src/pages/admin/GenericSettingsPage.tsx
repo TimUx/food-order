@@ -5,6 +5,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { AdminLayout } from '@/components/AdminLayout';
 import { DynamicSettingsForm } from '@/components/DynamicSettingsForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantProvider';
 import { api } from '@/services/api';
 import type { SettingsFormDefinition, SettingsFormGroup } from '@/types/settings';
 import { buildValuesPayload } from '@/types/settings';
@@ -19,6 +20,7 @@ export function GenericSettingsPage({ namespace: nsProp, title }: GenericSetting
   const { namespace: nsParam } = useParams<{ namespace: string }>();
   const namespace = decodeURIComponent(nsProp ?? nsParam ?? '');
   const { token } = useAuth();
+  const { refresh: refreshTenant } = useTenant();
   const [form, setForm] = useState<SettingsFormDefinition | null>(null);
   const [groups, setGroups] = useState<SettingsFormGroup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,9 @@ export function GenericSettingsPage({ namespace: nsProp, title }: GenericSetting
       await api.updateSettings(token, namespace, buildValuesPayload(groups));
       setSuccess('Einstellungen gespeichert');
       await load();
+      if (namespace === 'core.club') {
+        await refreshTenant();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen');
     } finally {

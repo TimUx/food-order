@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Box,
   Button,
   Paper,
@@ -8,11 +7,10 @@ import {
 } from '@mui/material';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Link } from 'react-router-dom';
+import { ClubLogoImage } from '@/components/ClubLogoImage';
 import { useClub } from '@/contexts/ClubContext';
-import { getImageUrl } from '@/services/api';
 import { touchButtonSx } from '@/theme/touch';
 
 export type PublicNoOrderReason = 'no-events' | 'no-menu' | 'unavailable';
@@ -54,7 +52,6 @@ export function PublicNoEventsNotice({
   onBack,
 }: PublicNoEventsNoticeProps) {
   const { club } = useClub();
-  const logoUrl = getImageUrl(club.logoUrl || undefined);
   const { title, body } = getMessage(reason, club.clubName, eventName);
 
   return (
@@ -79,33 +76,29 @@ export function PublicNoEventsNotice({
           </Box>
         )}
 
-        <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-          {logoUrl ? (
-            <Avatar src={logoUrl} alt={club.clubName} sx={{ width: 88, height: 88 }} />
-          ) : (
-            <Avatar sx={{ width: 88, height: 88, bgcolor: 'primary.main' }}>
-              <RestaurantMenuIcon sx={{ fontSize: 44 }} />
-            </Avatar>
-          )}
-          <Box
-            sx={{
-              position: 'absolute',
-              right: -6,
-              bottom: -6,
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              bgcolor: 'background.paper',
-              border: 2,
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <EventBusyIcon color="action" />
+        {club.logoUrl ? (
+          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+            <ClubLogoImage logoUrl={club.logoUrl} alt={club.clubName} height={88} maxWidth={220} fallback="none" />
+            <Box
+              sx={{
+                position: 'absolute',
+                right: -6,
+                bottom: -6,
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: 'background.paper',
+                border: 2,
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <EventBusyIcon color="action" />
+            </Box>
           </Box>
-        </Box>
+        ) : null}
 
         <Box>
           <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.2 }}>
