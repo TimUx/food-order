@@ -3,7 +3,7 @@ import {
   DEFAULT_TENANT_BRAND_COLOR_ID,
   isAllowedTenantBrandColorId,
   normalizeTenantBrandColorId,
-} from '../core/branding/tenantBrandPalette';
+} from './tenantBrandPalette';
 
 describe('tenantBrandPalette', () => {
   it('allows curated palette ids only', () => {
