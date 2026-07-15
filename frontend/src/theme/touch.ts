@@ -61,6 +61,20 @@ export const touchSquareActionSx: SxProps<Theme> = {
   },
 };
 
+export const eventSelectButtonSx: SxProps<Theme> = {
+  aspectRatio: '1 / 1',
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 0,
+  fontWeight: 800,
+  borderRadius: 3,
+  textTransform: 'none',
+  p: { xs: 0.75, sm: 1.25 },
+};
+
 export const compactTouchSquareActionSx: SxProps<Theme> = {
   ...touchSquareActionSx,
   minHeight: { xs: 88, sm: 112, md: 132 },
