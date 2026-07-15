@@ -3,6 +3,15 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.40 - 2026-07-15
+
+### Behoben
+
+- **Mitarbeiter Veranstaltungsauswahl:** Bei mehreren Events am selben Tag wird bevorzugt die einzige aktive Veranstaltung vorausgewählt (statt alphabetisch erste/inaktive) — Kasse und Bestellübersicht zeigen wieder Gerichte und Bestellungen.
+- **CI Nutzerreise:** E2E-Tests wählen die aktive Veranstaltung explizit im Header-Dropdown (Anpassung an zentrale Event-Auswahl aus v2.4.39).
+
+---
+
 ## 2.4.39 - 2026-07-14
 
 ### Behoben

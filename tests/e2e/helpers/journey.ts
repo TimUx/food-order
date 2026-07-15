@@ -61,6 +61,17 @@ export async function loginTenantStaff(page: Page, slug: string, username: strin
   await expect(page).toHaveURL(new RegExp(`/${slug}/mitarbeiter`), { timeout: 20_000 });
 }
 
+export async function selectStaffEvent(page: Page, eventName: string): Promise<void> {
+  const eventSelect = page.getByRole('combobox', { name: /veranstaltung/i }).first();
+  await expect(eventSelect).toBeVisible({ timeout: 20_000 });
+  const current = (await eventSelect.textContent()) ?? '';
+  if (!new RegExp(eventName, 'i').test(current)) {
+    await eventSelect.click();
+    await page.getByRole('option', { name: new RegExp(eventName, 'i') }).click();
+  }
+  await expect(eventSelect).toContainText(eventName);
+}
+
 export async function completeSetupWizard(page: Page, orgName: string): Promise<void> {
   await expect(page).toHaveURL(/\/admin\/einrichtung/, { timeout: 20_000 });
 
@@ -177,7 +188,7 @@ export async function confirmPickup(
 
   await expect(page.getByLabel('Abholnummer')).toBeEnabled({ timeout: 15_000 });
 
-  const eventSelect = page.getByRole('combobox', { name: /veranstaltung/i });
+  const eventSelect = page.getByRole('combobox', { name: /veranstaltung/i }).first();
   if (!new RegExp(eventName, 'i').test((await eventSelect.textContent()) ?? '')) {
     await eventSelect.click();
     await page.getByRole('option', { name: new RegExp(eventName, 'i') }).click();

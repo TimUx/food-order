@@ -37,3 +37,25 @@ export function resolveDefaultEventId(events: PublicEvent[]): string | null {
 export function resolvePreferredEventId(events: PublicEvent[]): string {
   return resolveDefaultEventId(events) ?? findTodayEvents(events)[0]?.id ?? '';
 }
+
+function isStaffSelectableEvent(event: Event): boolean {
+  return event.isActive && !event.ordersClosed;
+}
+
+/** Bevorzugt aktive, offene Veranstaltungen — wichtig wenn mehrere Events am selben Tag existieren. */
+export function resolvePreferredStaffEventId(events: Event[]): string {
+  if (events.length === 0) return '';
+  const selectable = events.filter(isStaffSelectableEvent);
+  if (selectable.length === 1) return selectable[0].id;
+
+  const today = new Date().toISOString().split('T')[0];
+  const todaySelectable = selectable.filter((event) => eventDateKey(event.date) === today);
+  if (todaySelectable.length === 1) return todaySelectable[0].id;
+
+  const defaultId = resolveDefaultEventId(events.map(eventToPublicEvent));
+  if (defaultId && selectable.some((event) => event.id === defaultId)) {
+    return defaultId;
+  }
+
+  return todaySelectable[0]?.id ?? selectable[0]?.id ?? '';
+}

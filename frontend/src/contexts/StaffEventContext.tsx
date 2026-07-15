@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouting } from '@/contexts/RoutingProvider';
 import { api } from '@/services/api';
 import type { Event, PublicEvent } from '@/types';
-import { eventToPublicEvent, resolvePreferredEventId } from '@/utils/eventSelection';
+import { eventToPublicEvent, resolvePreferredStaffEventId } from '@/utils/eventSelection';
 import { readScopedItem, writeScopedItem } from '@/utils/storageScope';
 
 const STORAGE_KEY = 'staff_selected_event';
@@ -56,7 +56,7 @@ export function StaffEventProvider({ children }: { children: ReactNode }) {
 
         const stored = readScopedItem(STORAGE_KEY, routing.scope, routing.tenantSlug);
         const storedValid = stored && mapped.some((event) => event.id === stored);
-        const nextId = storedValid ? stored! : resolvePreferredEventId(mapped);
+        const nextId = storedValid ? stored! : resolvePreferredStaffEventId(loadedEvents);
         setSelectedEventIdState(nextId);
         if (nextId && routing.scope === 'tenant') {
           writeScopedItem(STORAGE_KEY, routing.scope, routing.tenantSlug, nextId);

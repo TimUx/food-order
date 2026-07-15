@@ -12,6 +12,7 @@ import {
   loginTenantStaff,
   releaseOnlineOrderToKitchen,
   STAFF_PASSWORD,
+  selectStaffEvent,
   submitPublicOrder,
   tenantRoute,
 } from '../helpers/journey';
@@ -193,6 +194,8 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await loginTenantStaff(page, state.slug, 'kasse1', STAFF_PASSWORD);
     await page.goto(tenantRoute(state.slug, '/mitarbeiter/bestellung'));
     await expect(page.getByText(/bestellung vor ort/i)).toBeVisible({ timeout: 20_000 });
+    await selectStaffEvent(page, 'Sommerfest Haupttag');
+    await expect(page.getByRole('button', { name: /menge erhöhen/i }).first()).toBeVisible({ timeout: 20_000 });
     await page.getByRole('button', { name: /menge erhöhen/i }).first().click();
     const [cashierResponse] = await Promise.all([
       page.waitForResponse(
@@ -213,6 +216,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   });
 
   test('8 · Mitarbeiter-Dashboard und Bestellübersicht', async () => {
+    await selectStaffEvent(page, 'Sommerfest Haupttag');
     await page.goto(tenantRoute(state.slug, '/mitarbeiter'));
     await expect(page.getByText(/bestellungen/i).first()).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/[1-9]/).first()).toBeVisible();
@@ -235,6 +239,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
 
   test('10 · Küche: Freigabe und Fertigstellung', async () => {
     await loginTenantStaff(page, state.slug, 'kasse1', STAFF_PASSWORD);
+    await selectStaffEvent(page, 'Sommerfest Haupttag');
 
     await page.goto(tenantRoute(state.slug, '/mitarbeiter/bestellungen'));
     await releaseOnlineOrderToKitchen(page, state.onlineOrderNumber);
@@ -249,6 +254,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await loginTenantStaff(page, state.slug, 'kasse1', STAFF_PASSWORD);
     await page.goto(tenantRoute(state.slug, '/mitarbeiter/abholung'));
     await expect(page.getByRole('heading', { name: /abholung bestätigen/i })).toBeVisible({ timeout: 20_000 });
+    await selectStaffEvent(page, 'Sommerfest Haupttag');
     await expect(page.getByLabel('Abholnummer')).toBeEnabled({ timeout: 15_000 });
 
     await confirmPickup(page, { orderNumber: state.onlineOrderNum, lastName: state.onlineCustomerLastName });
