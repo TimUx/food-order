@@ -67,7 +67,7 @@ export const clubSettingsSchema: SettingsSchemaDefinition = {
       group: 'branding',
       label: 'Logo-URL',
       type: 'url',
-      helpText: 'Logo wird separat per Upload gesetzt; URL nur zur Anzeige',
+      helpText: 'Wird nach Upload automatisch gesetzt',
     },
   ],
 };

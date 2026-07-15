@@ -4,7 +4,6 @@ import {
   Stack,
   Link as MuiLink,
   Box,
-  Avatar,
   Divider,
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
@@ -12,16 +11,14 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LanguageIcon from '@mui/icons-material/Language';
 import PersonIcon from '@mui/icons-material/Person';
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import { Link } from 'react-router-dom';
 import { PublicLayout } from '@/components/PublicLayout';
+import { ClubLogoImage } from '@/components/ClubLogoImage';
 import { useClub } from '@/contexts/ClubContext';
-import { getImageUrl } from '@/services/api';
 import { Button } from '@mui/material';
 
 export function ContactPage() {
   const { club } = useClub();
-  const logoUrl = getImageUrl(club.logoUrl || undefined);
 
   return (
     <PublicLayout>
@@ -31,12 +28,14 @@ export function ContactPage() {
 
       <Paper sx={{ p: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          {logoUrl ? (
-            <Avatar src={logoUrl} alt={club.clubName} sx={{ width: 64, height: 64 }} />
-          ) : (
-            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main' }}>
-              <RestaurantMenuIcon fontSize="large" />
-            </Avatar>
+          {club.logoUrl && (
+            <ClubLogoImage
+              logoUrl={club.logoUrl}
+              alt={club.clubName}
+              height={72}
+              maxWidth={220}
+              fallback="none"
+            />
           )}
           <Box>
             <Typography variant="h5" fontWeight={700}>{club.clubName}</Typography>

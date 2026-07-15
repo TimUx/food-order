@@ -392,6 +392,8 @@ export const api = {
     }
     return res.json() as Promise<import('@/types/club').ClubSettings>;
   },
+  updateClubBrandColor: (token: string, brandColor: string) =>
+    request<{ theme: string }>('/admin/club/brand-color', { method: 'PUT', body: JSON.stringify({ brandColor }) }, token),
 
   getUsers: (token: string) => request<User[]>('/admin/users', {}, token),
   createUser: (token: string, data: {

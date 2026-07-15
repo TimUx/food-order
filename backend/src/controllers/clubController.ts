@@ -59,4 +59,13 @@ export const clubController = {
       next(err);
     }
   },
+
+  async updateBrandColor(req: { body: { brandColor: string } }, res: Response, next: NextFunction) {
+    try {
+      const result = await clubService.updateBrandColor(req.body.brandColor);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
 };

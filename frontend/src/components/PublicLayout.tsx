@@ -5,17 +5,16 @@ import {
   IconButton,
   Box,
   Container,
-  Avatar,
   Button,
 } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import SearchIcon from '@mui/icons-material/Search';
-import { FestSchmiedeLogo } from '@/components/FestSchmiedeLogo';
+import { ClubLogoImage } from '@/components/ClubLogoImage';
 import { useThemeMode } from '@/contexts/ThemeContext';
 import { useClub } from '@/contexts/ClubContext';
 import { Link } from 'react-router-dom';
-import { api, getImageUrl } from '@/services/api';
+import { api } from '@/services/api';
 import { useEffect, useState } from 'react';
 import type { PublicLegalLink } from '@/types/legal';
 
@@ -29,7 +28,6 @@ interface PublicLayoutProps {
 export function PublicLayout({ children, fullWidth = false, fillHeight = false }: PublicLayoutProps) {
   const { mode, toggleMode } = useThemeMode();
   const { club } = useClub();
-  const logoUrl = getImageUrl(club.logoUrl || undefined);
   const [legalLinks, setLegalLinks] = useState<PublicLegalLink[]>([]);
 
   useEffect(() => {
@@ -55,11 +53,15 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
     >
       <AppBar position="fixed" elevation={1}>
         <Toolbar>
-          {logoUrl ? (
-            <Avatar src={logoUrl} alt={club.clubName} sx={{ width: 48, height: 48, mr: 1.5 }} />
-          ) : (
-            <FestSchmiedeLogo size="header" variant="onPrimary" sx={{ mr: 1.5 }} />
-          )}
+          <ClubLogoImage
+            logoUrl={club.logoUrl}
+            alt={club.clubName}
+            height={48}
+            maxWidth={180}
+            fallback="festschmiede"
+            festSchmiedeVariant="onPrimary"
+          />
+          <Box sx={{ width: 12, flexShrink: 0 }} />
           <Typography
             variant="h6"
             component={Link}

@@ -1,9 +1,26 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { TenantPublicData, DEFAULT_TENANT } from '@/types/tenant';
+import type { ClubSettings } from '@/types/club';
 import { api } from '@/services/api';
 import { subscribeTenantUpdates } from '@/services/realtime/channels';
 import { useRouting } from '@/contexts/RoutingProvider';
 import { realtimeService } from '@/services/realtime';
+
+function mergeTenantWithClub(tenantData: TenantPublicData, clubData: ClubSettings | null): TenantPublicData {
+  if (!clubData) return { ...DEFAULT_TENANT, ...tenantData };
+  return {
+    ...DEFAULT_TENANT,
+    ...tenantData,
+    name: clubData.clubName || tenantData.name,
+    logoUrl: clubData.logoUrl ?? tenantData.logoUrl ?? null,
+    description: clubData.description ?? tenantData.description ?? null,
+    contactName: clubData.contactName ?? tenantData.contactName ?? null,
+    email: clubData.email ?? tenantData.email ?? null,
+    phone: clubData.phone ?? tenantData.phone ?? null,
+    address: clubData.address ?? tenantData.address ?? null,
+    website: clubData.website ?? tenantData.website ?? null,
+  };
+}
 
 interface TenantContextType {
   tenant: TenantPublicData;
@@ -20,7 +37,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (routing.scope !== 'tenant') {
       setLoading(false);
       return;
@@ -28,13 +45,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
     setError(null);
     try {
-      const data = await api.getTenant();
-      setTenant({ ...DEFAULT_TENANT, ...data });
+      const [tenantData, clubData] = await Promise.all([
+        api.getTenant(),
+        api.getClub().catch(() => null),
+      ]);
+      setTenant(mergeTenantWithClub(tenantData, clubData));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Veranstalter konnte nicht geladen werden');
       setTenant(DEFAULT_TENANT);
     }
-  };
+  }, [routing.scope]);
 
   useEffect(() => {
     if (routing.scope !== 'tenant') {
@@ -50,7 +70,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     realtimeService.connect();
 
     const unsub = subscribeTenantUpdates((data) => {
-      setTenant((prev) => ({ ...prev, ...data }));
+      void api.getClub()
+        .then((clubData) => setTenant(mergeTenantWithClub(data, clubData)))
+        .catch(() => setTenant((prev) => ({ ...prev, ...data })));
     });
 
     return () => {
