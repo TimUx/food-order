@@ -42,6 +42,7 @@ export const updateTenantProfileSchema = z.object({
   username: z.string().min(3).max(32).optional().nullable(),
   passwordEnabled: z.boolean().optional(),
   magicLinkEnabled: z.boolean().optional(),
+  notificationEmailsEnabled: z.boolean().optional(),
   currentPassword: z.string().min(1).optional(),
   newPassword: z.string().min(8, 'Mindestens 8 Zeichen').optional(),
 }).superRefine((data, ctx) => {
@@ -128,6 +129,7 @@ export const createUserSchema = z.object({
   permissions: z.array(z.string()).optional(),
   passwordEnabled: z.boolean().optional(),
   magicLinkEnabled: z.boolean().optional(),
+  notificationEmailsEnabled: z.boolean().optional(),
 });
 
 export const updateUserPermissionsSchema = z.object({
@@ -146,6 +148,7 @@ export const updateUserSchema = z.object({
   active: z.boolean().optional(),
   passwordEnabled: z.boolean().optional(),
   magicLinkEnabled: z.boolean().optional(),
+  notificationEmailsEnabled: z.boolean().optional(),
 });
 
 export const createEventSchema = z.object({

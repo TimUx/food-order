@@ -3,6 +3,18 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.47 - 2026-07-15
+
+### Hinzugefügt
+
+- **Admin-Benachrichtigungen:** Mandanten-Admins können per Opt-in E-Mail-Infos zu neuen Bestellungen, Stornierungen und weiteren Ereignissen erhalten — im eigenen Profil oder zentral in der Team-Verwaltung.
+
+### Geändert
+
+- **Admin-Bereich:** Speisen, Gerichte und Menü heißen durchgängig „Speisen & Getränke“; Katalogeinträge sind neutral formuliert (nicht nur „Gerichte“ oder Essen).
+
+---
+
 ## 2.4.46 - 2026-07-15
 
 ### Behoben

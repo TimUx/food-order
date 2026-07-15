@@ -37,6 +37,7 @@ async function buildUserResponse(user: TenantUser) {
     roleTemplates: parseStoredRoleTemplates(user),
     passwordEnabled: user.passwordEnabled,
     magicLinkEnabled: user.magicLinkEnabled,
+    notificationEmailsEnabled: user.notificationEmailsEnabled,
   };
 }
 
@@ -234,6 +235,7 @@ export const authService = {
       username?: string;
       passwordEnabled?: boolean;
       magicLinkEnabled?: boolean;
+      notificationEmailsEnabled?: boolean;
       currentPassword?: string;
       newPassword?: string;
     }
@@ -250,9 +252,15 @@ export const authService = {
     const nextUsername = data.username !== undefined ? (data.username.trim().toLowerCase() || null) : user.username;
     const nextPasswordEnabled = data.passwordEnabled ?? user.passwordEnabled;
     const nextMagicLinkEnabled = data.magicLinkEnabled ?? user.magicLinkEnabled;
+    const nextNotificationEmailsEnabled =
+      data.notificationEmailsEnabled ?? user.notificationEmailsEnabled;
 
     if (!nextEmail?.trim()) {
       throw new AppError(400, 'Administratoren benötigen eine E-Mail-Adresse');
+    }
+
+    if (nextNotificationEmailsEnabled && !nextEmail.trim()) {
+      throw new AppError(400, 'E-Mail-Benachrichtigungen erfordern eine E-Mail-Adresse');
     }
 
     if (nextUsername) {
@@ -301,6 +309,7 @@ export const authService = {
       username: nextUsername,
       passwordEnabled: nextPasswordEnabled,
       magicLinkEnabled: nextMagicLinkEnabled,
+      notificationEmailsEnabled: nextNotificationEmailsEnabled,
       passwordHash: nextPasswordHash,
     });
 

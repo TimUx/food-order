@@ -23,6 +23,7 @@ export interface User {
   active?: boolean;
   passwordEnabled?: boolean;
   magicLinkEnabled?: boolean;
+  notificationEmailsEnabled?: boolean;
   createdAt?: string;
 }
 

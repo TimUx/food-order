@@ -26,6 +26,7 @@ import {
   FormGroup,
   FormLabel,
   Checkbox,
+  Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -65,7 +66,7 @@ const TEMPLATE_LABELS: Record<string, string> = {
   kueche: 'Küche',
   abholung: 'Abholung',
   kasse: 'Kasse',
-  speisenpflege: 'Speisenpflege',
+  speisenpflege: 'Speisen & Getränke',
   finanzen: 'Finanzen',
   rechtliches: 'Rechtliches',
 };
@@ -157,6 +158,7 @@ export function UsersPage() {
   const [form, setForm] = useState<UserForm>(emptyForm);
   const [selectedTemplates, setSelectedTemplates] = useState<RoleTemplateId[]>(['kueche']);
   const [saving, setSaving] = useState(false);
+  const [togglingNotificationId, setTogglingNotificationId] = useState<string | null>(null);
 
   const loadUsers = () => {
     if (!token) return;
@@ -289,6 +291,20 @@ export function UsersPage() {
     }
   };
 
+  const handleNotificationToggle = async (user: User, enabled: boolean) => {
+    if (!token || user.role !== 'ADMIN') return;
+    setTogglingNotificationId(user.id);
+    setError('');
+    try {
+      const updated = await api.updateUser(token, user.id, { notificationEmailsEnabled: enabled });
+      setUsers((prev) => prev.map((entry) => (entry.id === user.id ? updated : entry)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Einstellung konnte nicht gespeichert werden');
+    } finally {
+      setTogglingNotificationId(null);
+    }
+  };
+
   const handleSavePermissions = async () => {
     if (!token || !permUserId) return;
     if (selectedTemplates.length === 0) {
@@ -337,6 +353,11 @@ export function UsersPage() {
               <TableCell>E-Mail</TableCell>
               <TableCell>Rolle</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell align="center" sx={{ width: 120 }}>
+                <Tooltip title="E-Mail-Benachrichtigungen zu Bestellungen, Stornierungen und Zahlungen (nur Administratoren)">
+                  <span>E-Mail-Info</span>
+                </Tooltip>
+              </TableCell>
               <TableCell align="right">Aktionen</TableCell>
             </TableRow>
           </TableHead>
@@ -359,6 +380,22 @@ export function UsersPage() {
                     size="small"
                     color={user.active !== false ? 'success' : 'default'}
                   />
+                </TableCell>
+                <TableCell align="center">
+                  {user.role === 'ADMIN' ? (
+                    <Checkbox
+                      checked={Boolean(user.notificationEmailsEnabled)}
+                      disabled={
+                        togglingNotificationId === user.id
+                        || user.active === false
+                        || !user.email?.trim()
+                      }
+                      onChange={(e) => void handleNotificationToggle(user, e.target.checked)}
+                      inputProps={{ 'aria-label': `E-Mail-Benachrichtigungen für ${user.firstName} ${user.lastName}` }}
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.disabled">—</Typography>
+                  )}
                 </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={1} justifyContent="flex-end">

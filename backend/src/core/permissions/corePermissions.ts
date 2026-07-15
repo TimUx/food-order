@@ -4,8 +4,8 @@ import type { ModulePermissionDefinition } from '../../platform/types';
 export const CORE_PERMISSION_DEFINITIONS: ModulePermissionDefinition[] = [
   { key: 'team.view', description: 'Team einsehen' },
   { key: 'team.manage', description: 'Team verwalten' },
-  { key: 'food.view', description: 'Speisen einsehen' },
-  { key: 'food.edit', description: 'Speisen bearbeiten' },
+  { key: 'food.view', description: 'Speisen & Getränke einsehen' },
+  { key: 'food.edit', description: 'Speisen & Getränke bearbeiten' },
   { key: 'events.manage', description: 'Veranstaltungen verwalten' },
   { key: 'orders.view', description: 'Bestellungen einsehen' },
   { key: 'orders.manage', description: 'Bestellungen bearbeiten (Kasse)' },

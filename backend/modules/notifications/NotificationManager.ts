@@ -20,7 +20,9 @@ import {
   buildOrderPaidMessage,
   buildPaymentFailedMessage,
   buildPaymentRefundedMessage,
+  buildAdminPushNotification,
 } from './services/MessageTemplateService';
+import { getTenantAdminNotificationEmails } from './services/adminNotificationRecipients';
 
 export type OrderHookPayload = {
   id: string;
@@ -241,12 +243,78 @@ class NotificationManager {
     await Promise.allSettled(tasks);
   }
 
+  private async dispatchAdminEmails(
+    context: FeatureContext,
+    event: NotificationEventType,
+    message: Pick<NotificationMessage, 'title' | 'body' | 'html' | 'priority'>
+  ): Promise<void> {
+    const config = await this.resolveConfig(context);
+    if (!isChannelEnabledForEvent(config, event, 'email')) return;
+
+    const emailChannel = notificationRegistry.get('email');
+    if (!emailChannel?.isConfigured(config)) return;
+
+    const recipients = await getTenantAdminNotificationEmails();
+    if (!recipients.length) return;
+
+    const tenantId = requireTenantId();
+
+    await Promise.allSettled(
+      recipients.map(async (recipientEmail) => {
+        const result = await emailChannel.send(config, {
+          ...message,
+          recipientEmail,
+        });
+
+        await notificationDeliveryRepository.log({
+          eventType: event,
+          channelId: 'email',
+          recipient: recipientEmail,
+          status: result.ok ? 'sent' : 'failed',
+          errorMessage: result.ok ? undefined : result.error,
+          smtpSource: config.smtp.source,
+        });
+
+        if (result.ok) {
+          logger.info(`Admin-Benachrichtigung [${event}/email]`, {
+            tenant_id: tenantId,
+            recipient: recipientEmail,
+          });
+        } else {
+          logger.warn(`Admin-Benachrichtigung fehlgeschlagen [${event}/email]`, {
+            tenant_id: tenantId,
+            recipient: recipientEmail,
+            error: result.error,
+          });
+        }
+      })
+    );
+  }
+
   async handleOrderCreated(context: FeatureContext, payload: OrderHookPayload): Promise<void> {
+    const club = await loadClubContact(context);
+    const config = await this.resolveConfig(context);
+
+    const adminMessage = buildAdminPushNotification(
+      'orderCreated',
+      {
+        displayNumber: payload.displayNumber,
+        clubName: club.clubName,
+        totalPrice: formatPrice(payload.totalPrice),
+        eventDateLabel: payload.eventDateLabel ?? '',
+      },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'orderCreated', {
+        ...adminMessage,
+        priority: 'high',
+      });
+    }
+
     const email = payload.customer?.email?.trim();
     if (!email) return;
 
-    const club = await loadClubContact(context);
-    const config = await this.resolveConfig(context);
     const template = await buildOrderConfirmationMessage(
       toOrderEmailData(payload),
       club,
@@ -261,12 +329,30 @@ class NotificationManager {
   }
 
   async handleOrderCancelled(context: FeatureContext, payload: OrderHookPayload): Promise<void> {
+    const club = await loadClubContact(context);
+    const config = await this.resolveConfig(context);
+
+    const adminMessage = buildAdminPushNotification(
+      'orderCancelled',
+      {
+        displayNumber: payload.displayNumber,
+        clubName: club.clubName,
+        totalPrice: formatPrice(payload.totalPrice),
+        eventDateLabel: payload.eventDateLabel ?? '',
+      },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'orderCancelled', {
+        ...adminMessage,
+        priority: 'normal',
+      });
+    }
+
     if (payload.source !== 'ONLINE') return;
     const email = payload.customer?.email?.trim();
     if (!email) return;
 
-    const club = await loadClubContact(context);
-    const config = await this.resolveConfig(context);
     const template = await buildOrderCancellationMessage(
       toOrderEmailData(payload),
       club,
@@ -283,6 +369,24 @@ class NotificationManager {
 
   async handleOrderPaid(context: FeatureContext, payload: OrderHookPayload): Promise<void> {
     const club = await loadClubContact(context);
+    const config = await this.resolveConfig(context);
+
+    const adminMessage = buildAdminPushNotification(
+      'orderPaid',
+      {
+        displayNumber: payload.displayNumber,
+        clubName: club.clubName,
+        totalPrice: formatPrice(payload.totalPrice),
+      },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'orderPaid', {
+        ...adminMessage,
+        priority: 'high',
+      });
+    }
+
     const template = buildOrderPaidMessage(toOrderEmailData(payload), club);
     await this.dispatch(context, 'orderPaid', {
       ...template,
@@ -292,6 +396,23 @@ class NotificationManager {
   }
 
   async handleKitchenCompleted(context: FeatureContext, payload: OrderHookPayload): Promise<void> {
+    const config = await this.resolveConfig(context);
+    const adminMessage = buildAdminPushNotification(
+      'kitchenCompleted',
+      {
+        displayNumber: payload.displayNumber,
+        totalPrice: formatPrice(payload.totalPrice),
+        eventDateLabel: payload.eventDateLabel ? `Veranstaltung: ${payload.eventDateLabel}` : '',
+      },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'kitchenCompleted', {
+        ...adminMessage,
+        priority: 'high',
+      });
+    }
+
     const template = buildKitchenCompletedMessage({
       displayNumber: payload.displayNumber,
       totalPrice: payload.totalPrice,
@@ -322,6 +443,22 @@ class NotificationManager {
       config,
       orderData?.order
     );
+
+    const adminMessage = buildAdminPushNotification(
+      'paymentFailed',
+      {
+        displayNumber,
+        reason: payload.reason?.trim() || 'Unbekannter Fehler',
+      },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'paymentFailed', {
+        ...adminMessage,
+        priority: 'high',
+      });
+    }
+
     await this.dispatch(context, 'paymentFailed', {
       ...template,
       recipientEmail: orderData?.recipientEmail,
@@ -331,10 +468,29 @@ class NotificationManager {
 
   async handlePaymentRefunded(context: FeatureContext, payload: PaymentRefundedHookPayload): Promise<void> {
     const club = await loadClubContact(context);
+    const config = await this.resolveConfig(context);
     const displayNumber = payload.transactionId.slice(-8);
+    const amount = formatPrice((payload.amountCents ?? 0) / 100);
+
+    const adminMessage = buildAdminPushNotification(
+      'paymentRefunded',
+      {
+        displayNumber,
+        amount,
+        clubName: club.clubName,
+      },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'paymentRefunded', {
+        ...adminMessage,
+        priority: 'normal',
+      });
+    }
+
     const template = buildPaymentRefundedMessage({
       displayNumber,
-      amount: formatPrice((payload.amountCents ?? 0) / 100),
+      amount,
       clubName: club.clubName,
     });
     await this.dispatch(context, 'paymentRefunded', {
@@ -345,7 +501,21 @@ class NotificationManager {
 
   async handleModuleActivated(context: FeatureContext, payload: ModuleHookPayload): Promise<void> {
     const club = await loadClubContact(context);
+    const config = await this.resolveConfig(context);
     const moduleLabel = MODULE_LABELS[payload.moduleId] ?? payload.moduleId;
+
+    const adminMessage = buildAdminPushNotification(
+      'moduleActivated',
+      { moduleLabel, clubName: club.clubName },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'moduleActivated', {
+        ...adminMessage,
+        priority: 'low',
+      });
+    }
+
     const template = buildModuleActivatedMessage({ moduleLabel, clubName: club.clubName });
     await this.dispatch(context, 'moduleActivated', {
       ...template,
@@ -355,7 +525,21 @@ class NotificationManager {
 
   async handleModuleDeactivated(context: FeatureContext, payload: ModuleHookPayload): Promise<void> {
     const club = await loadClubContact(context);
+    const config = await this.resolveConfig(context);
     const moduleLabel = MODULE_LABELS[payload.moduleId] ?? payload.moduleId;
+
+    const adminMessage = buildAdminPushNotification(
+      'moduleDeactivated',
+      { moduleLabel, clubName: club.clubName },
+      config
+    );
+    if (adminMessage) {
+      await this.dispatchAdminEmails(context, 'moduleDeactivated', {
+        ...adminMessage,
+        priority: 'low',
+      });
+    }
+
     const template = buildModuleDeactivatedMessage({ moduleLabel, clubName: club.clubName });
     await this.dispatch(context, 'moduleDeactivated', {
       ...template,

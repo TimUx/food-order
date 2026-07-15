@@ -112,9 +112,9 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await expect(page.getByText(/einstellungen|übersicht/i).first()).toBeVisible({ timeout: 20_000 });
   });
 
-  test('4 · Veranstaltungen und Gerichte anlegen (Admin)', async () => {
+  test('4 · Veranstaltungen und Speisen & Getränke anlegen (Admin)', async () => {
     await page.goto(tenantRoute(state.slug, '/admin/speisen'));
-    await expect(page.getByRole('heading', { name: 'Gerichte verwalten' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: 'Speisen & Getränke verwalten' })).toBeVisible({ timeout: 30_000 });
 
     const dishes = [
       { name: 'Bratwurst', price: '4.50' },
@@ -123,7 +123,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
       { name: 'Apfelschorle', price: '2.50' },
     ];
     for (const dish of dishes) {
-      await page.getByRole('button', { name: /neues gericht/i }).click();
+      await page.getByRole('button', { name: /neuer eintrag/i }).click();
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible({ timeout: 10_000 });
       await dialog.getByRole('textbox', { name: 'Name' }).fill(dish.name);
@@ -154,8 +154,8 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     }
 
     const activeCard = page.locator('.MuiCard-root').filter({ hasText: 'Sommerfest Haupttag' });
-    await activeCard.getByRole('button', { name: /^speisen$/i }).click();
-    const foodDialog = page.getByRole('dialog').filter({ hasText: /Speisen für Sommerfest Haupttag/i });
+    await activeCard.getByRole('button', { name: /speisen & getränke/i }).click();
+    const foodDialog = page.getByRole('dialog').filter({ hasText: /Speisen & Getränke für Sommerfest Haupttag/i });
     await expect(foodDialog).toBeVisible({ timeout: 10_000 });
     await expect(foodDialog.getByText(/\d+ von \d+ ausgewählt/)).toBeVisible({ timeout: 15_000 });
     for (const dish of dishes) {

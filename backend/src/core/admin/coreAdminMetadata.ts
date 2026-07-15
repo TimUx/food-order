@@ -30,8 +30,8 @@ export const CORE_BUILTIN_PAGES: AdminPageDefinition[] = [
   {
     id: 'core-food-items',
     path: '/admin/speisen',
-    label: 'Speisen',
-    description: 'Speisekarte pflegen',
+    label: 'Speisen & Getränke',
+    description: 'Katalog für Speisen und Getränke pflegen',
     icon: 'RestaurantMenu',
     pageType: 'builtin',
     componentId: 'core.food-items',

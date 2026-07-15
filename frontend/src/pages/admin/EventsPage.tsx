@@ -115,7 +115,7 @@ export function EventsPage() {
       const assignments = await api.getEventFoodAssignments(token, event.id);
       setFoodAssignments(assignments);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Speisen konnten nicht geladen werden');
+      setError(err instanceof Error ? err.message : 'Zuordnungen konnten nicht geladen werden');
     } finally {
       setFoodLoading(false);
     }
@@ -162,7 +162,7 @@ export function EventsPage() {
   const handleDelete = async (event: Event) => {
     if (!token) return;
     const confirmed = confirm(
-      `Veranstaltung „${event.name}“ wirklich löschen?\n\nSpeisen-Zuordnungen werden entfernt. Nicht möglich, wenn bereits Bestellungen existieren.`
+      `Veranstaltung „${event.name}“ wirklich löschen?\n\nZuordnungen für Speisen & Getränke werden entfernt. Nicht möglich, wenn bereits Bestellungen existieren.`
     );
     if (!confirmed) return;
     setError('');
@@ -222,7 +222,7 @@ export function EventsPage() {
               </CardContent>
               <CardActions>
                 <Button size="small" startIcon={<EditIcon />} onClick={() => openEdit(event)}>Bearbeiten</Button>
-                <Button size="small" startIcon={<RestaurantMenuIcon />} onClick={() => void openFoodAssignments(event)}>Speisen</Button>
+                <Button size="small" startIcon={<RestaurantMenuIcon />} onClick={() => void openFoodAssignments(event)}>Speisen & Getränke</Button>
                 <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => void handleDelete(event)}>
                   Löschen
                 </Button>
@@ -255,11 +255,11 @@ export function EventsPage() {
 
       <Dialog open={foodDialogOpen} onClose={() => setFoodDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          Speisen für {foodEvent?.name}
+          Speisen & Getränke für {foodEvent?.name}
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Wählen Sie die Gerichte aus dem Katalog, die bei dieser Veranstaltung angeboten werden sollen.
+            Wählen Sie die Einträge aus dem Katalog, die bei dieser Veranstaltung angeboten werden sollen.
           </Typography>
           {foodLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -267,7 +267,7 @@ export function EventsPage() {
             </Box>
           ) : foodAssignments.length === 0 ? (
             <Alert severity="info">
-              Noch keine Gerichte im Katalog. Legen Sie zuerst Speisen unter Speisenverwaltung an.
+              Noch keine Einträge im Katalog. Legen Sie zuerst Speisen & Getränke im Katalog an.
             </Alert>
           ) : (
             <List dense disablePadding>

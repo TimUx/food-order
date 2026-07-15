@@ -55,7 +55,7 @@ describe('foodItemService.delete', () => {
     await expect(foodItemService.delete('food-1')).rejects.toEqual(
       new AppError(
         409,
-        'Das Gericht kann nicht gelöscht werden, weil es bereits in Bestellungen vorkommt. Deaktivieren Sie es stattdessen.',
+        'Der Katalogeintrag kann nicht gelöscht werden, weil er bereits in Bestellungen vorkommt. Deaktivieren Sie ihn stattdessen.',
         'FOOD_ITEM_IN_USE'
       )
     );

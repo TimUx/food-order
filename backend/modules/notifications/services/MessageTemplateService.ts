@@ -1,7 +1,7 @@
 import { getLegalContentRegistry } from '../../../src/core/extensionPoints';
 import { formatPrice } from '../../../src/utils/helpers';
 import type { ClubContactData, OrderEmailData } from '../../../src/platform/extension-points/NotificationService';
-import type { NotificationConfig } from '../config';
+import type { NotificationConfig, NotificationEventType } from '../config';
 import { legalNotices, notificationTemplates } from '../templates/de';
 import { renderTemplate } from '../templates/render';
 import type { NotificationLocale } from '../templates/types';
@@ -330,5 +330,40 @@ export function buildChannelTestMessage(clubName: string) {
   return {
     title: renderTemplate(t.channelTest.title, vars),
     body: renderTemplate(t.channelTest.body, vars),
+  };
+}
+
+const ADMIN_PUSH_EVENTS = new Set<NotificationEventType>([
+  'orderCreated',
+  'orderCancelled',
+  'orderPaid',
+  'kitchenCompleted',
+  'paymentFailed',
+  'paymentRefunded',
+  'moduleActivated',
+  'moduleDeactivated',
+]);
+
+/** Kurznachricht für Admin-E-Mails (Push-Vorlagen). */
+export function buildAdminPushNotification(
+  event: NotificationEventType,
+  vars: Record<string, string | number | undefined>,
+  config?: NotificationConfig
+): { title: string; body: string } | null {
+  if (!ADMIN_PUSH_EVENTS.has(event)) return null;
+
+  const t = getTemplates(DEFAULT_LOCALE, config);
+  const template = t[event as keyof typeof t];
+  if (!template || typeof template !== 'object' || !('pushTitle' in template)) {
+    return null;
+  }
+
+  const normalized = Object.fromEntries(
+    Object.entries(vars).map(([key, value]) => [key, String(value ?? '')])
+  ) as Record<string, string>;
+
+  return {
+    title: renderTemplate(template.pushTitle, normalized),
+    body: renderTemplate(template.pushBody, normalized),
   };
 }

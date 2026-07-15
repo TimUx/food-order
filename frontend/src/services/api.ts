@@ -198,6 +198,7 @@ export const api = {
     username?: string | null;
     passwordEnabled?: boolean;
     magicLinkEnabled?: boolean;
+    notificationEmailsEnabled?: boolean;
     currentPassword?: string;
     newPassword?: string;
   }) => request<User>('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }, token),
@@ -407,6 +408,7 @@ export const api = {
     roleTemplates?: import('@/types').RoleTemplateId[];
     passwordEnabled?: boolean;
     magicLinkEnabled?: boolean;
+    notificationEmailsEnabled?: boolean;
   }) => request<User>('/admin/users', { method: 'POST', body: JSON.stringify(data) }, token),
   updateUser: (token: string, id: string, data: {
     email?: string | null;
@@ -418,6 +420,7 @@ export const api = {
     active?: boolean;
     passwordEnabled?: boolean;
     magicLinkEnabled?: boolean;
+    notificationEmailsEnabled?: boolean;
   }) => request<User>(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
 
   getModules: (token: string) =>

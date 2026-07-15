@@ -58,7 +58,7 @@ export const foodItemService = {
     const validIds = new Set(catalog.map((item) => item.id));
     for (const id of foodItemIds) {
       if (!validIds.has(id)) {
-        throw new AppError(400, 'Ungültiges Gericht');
+        throw new AppError(400, 'Ungültiger Katalogeintrag');
       }
     }
     await foodItemRepository.setEventAssignments(eventId, foodItemIds);
@@ -89,7 +89,7 @@ export const foodItemService = {
 
   async getById(id: string) {
     const item = await foodItemRepository.findById(id);
-    if (!item) throw new AppError(404, 'Gericht nicht gefunden');
+    if (!item) throw new AppError(404, 'Katalogeintrag nicht gefunden');
     return mapCatalogItem(item);
   },
 
@@ -159,7 +159,7 @@ export const foodItemService = {
     if (orderReferences > 0) {
       throw new AppError(
         409,
-        'Das Gericht kann nicht gelöscht werden, weil es bereits in Bestellungen vorkommt. Deaktivieren Sie es stattdessen.',
+        'Der Katalogeintrag kann nicht gelöscht werden, weil er bereits in Bestellungen vorkommt. Deaktivieren Sie ihn stattdessen.',
         'FOOD_ITEM_IN_USE'
       );
     }

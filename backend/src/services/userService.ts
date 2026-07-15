@@ -27,6 +27,7 @@ function mapUser(user: {
   active: boolean;
   passwordEnabled: boolean;
   magicLinkEnabled: boolean;
+  notificationEmailsEnabled?: boolean;
   roleTemplate?: string | null;
   roleTemplates?: unknown;
   permissions?: unknown;
@@ -46,6 +47,7 @@ function mapUser(user: {
     permissions: resolveUserPermissions(user),
     passwordEnabled: user.passwordEnabled,
     magicLinkEnabled: user.magicLinkEnabled,
+    notificationEmailsEnabled: user.notificationEmailsEnabled ?? false,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -68,6 +70,7 @@ export const userService = {
     permissions?: string[];
     passwordEnabled?: boolean;
     magicLinkEnabled?: boolean;
+    notificationEmailsEnabled?: boolean;
   }) {
     const email = normalizeUserEmail(data.email);
     const username = normalizeUserUsername(data.username);
@@ -131,6 +134,8 @@ export const userService = {
       passwordHash,
       passwordEnabled,
       magicLinkEnabled,
+      notificationEmailsEnabled:
+        data.role === 'ADMIN' ? Boolean(data.notificationEmailsEnabled) : false,
       firstName: data.firstName.trim(),
       lastName: data.lastName.trim(),
       roleId: role.id,
@@ -153,6 +158,7 @@ export const userService = {
       active?: boolean;
       passwordEnabled?: boolean;
       magicLinkEnabled?: boolean;
+      notificationEmailsEnabled?: boolean;
     },
     currentUserId: string
   ) {
@@ -164,11 +170,19 @@ export const userService = {
     const nextUsername = data.username !== undefined ? normalizeUserUsername(data.username) : user.username;
     const nextPasswordEnabled = data.passwordEnabled ?? user.passwordEnabled;
     const nextMagicLinkEnabled = data.magicLinkEnabled ?? user.magicLinkEnabled;
+    const nextNotificationEmailsEnabled =
+      nextRole === 'ADMIN'
+        ? (data.notificationEmailsEnabled ?? user.notificationEmailsEnabled)
+        : false;
 
     if (nextRole === 'ADMIN') {
       validateAdminIdentity(nextEmail, nextUsername);
     } else {
       validateStaffIdentity(nextEmail, nextUsername);
+    }
+
+    if (nextNotificationEmailsEnabled && !nextEmail?.trim()) {
+      throw new AppError(400, 'E-Mail-Benachrichtigungen erfordern eine E-Mail-Adresse');
     }
 
     if (nextEmail && nextEmail !== user.email) {
@@ -217,6 +231,7 @@ export const userService = {
     if (data.active !== undefined) updateData.active = data.active;
     updateData.passwordEnabled = nextPasswordEnabled;
     updateData.magicLinkEnabled = nextMagicLinkEnabled;
+    updateData.notificationEmailsEnabled = nextNotificationEmailsEnabled;
     updateData.passwordHash = nextPasswordHash;
     if (data.role && data.role !== user.role.name) {
       const role = await ensureSystemRole(data.role);

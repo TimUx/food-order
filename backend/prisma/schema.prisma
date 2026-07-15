@@ -185,6 +185,8 @@ model User {
   passwordHash      String?          @map("password_hash")
   passwordEnabled   Boolean          @default(false) @map("password_enabled")
   magicLinkEnabled  Boolean          @default(true) @map("magic_link_enabled")
+  /// Admin erhält E-Mail-Benachrichtigungen (Bestellungen, Stornierungen, …) für diesen Mandanten
+  notificationEmailsEnabled Boolean  @default(false) @map("notification_emails_enabled")
   firstName         String
   lastName          String
   active            Boolean          @default(true)

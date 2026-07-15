@@ -37,8 +37,8 @@ export const TENANT_ROLE_TEMPLATES: TenantRoleTemplate[] = [
   },
   {
     id: 'speisenpflege',
-    label: 'Speisenpflege',
-    description: 'Speisekarte und Veranstaltungen pflegen',
+    label: 'Speisen & Getränke',
+    description: 'Katalog Speisen & Getränke und Veranstaltungen pflegen',
     permissions: ['food.view', 'food.edit', 'events.manage'],
   },
   {

@@ -23,6 +23,7 @@ export function AdminProfilePage() {
   const [username, setUsername] = useState('');
   const [passwordEnabled, setPasswordEnabled] = useState(false);
   const [magicLinkEnabled, setMagicLinkEnabled] = useState(true);
+  const [notificationEmailsEnabled, setNotificationEmailsEnabled] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,6 +38,7 @@ export function AdminProfilePage() {
     setUsername(user.username ?? '');
     setPasswordEnabled(user.passwordEnabled ?? false);
     setMagicLinkEnabled(user.magicLinkEnabled ?? true);
+    setNotificationEmailsEnabled(user.notificationEmailsEnabled ?? false);
   }, [user]);
 
   const save = async () => {
@@ -60,6 +62,7 @@ export function AdminProfilePage() {
         username: username.trim() || null,
         passwordEnabled,
         magicLinkEnabled,
+        notificationEmailsEnabled,
         ...(currentPassword ? { currentPassword } : {}),
         ...(newPassword ? { newPassword } : {}),
       });
@@ -113,6 +116,27 @@ export function AdminProfilePage() {
           control={<Switch checked={passwordEnabled} onChange={(e) => setPasswordEnabled(e.target.checked)} />}
           label="Passwort-Anmeldung"
         />
+
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="subtitle1" fontWeight={600}>Benachrichtigungen</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          E-Mails zu Bestellungen, Stornierungen, Zahlungen und weiteren Ereignissen dieses Mandanten.
+        </Typography>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={notificationEmailsEnabled}
+              onChange={(e) => setNotificationEmailsEnabled(e.target.checked)}
+              disabled={!email.trim()}
+            />
+          }
+          label="E-Mail-Benachrichtigungen erhalten"
+        />
+        {!email.trim() && (
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -0.5 }}>
+            Bitte zuerst eine E-Mail-Adresse hinterlegen.
+          </Typography>
+        )}
 
         {passwordEnabled && (
           <>

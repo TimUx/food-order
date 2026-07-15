@@ -64,7 +64,7 @@ export function FoodItemsPage() {
       setItems(data);
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Speisen konnten nicht geladen werden');
+      setError(err instanceof Error ? err.message : 'Katalog konnte nicht geladen werden');
     }
   }, [token]);
 
@@ -118,7 +118,7 @@ export function FoodItemsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token || !confirm('Gericht wirklich löschen? Es wird von allen Veranstaltungen entfernt.')) return;
+    if (!token || !confirm('Eintrag wirklich löschen? Er wird von allen Veranstaltungen entfernt.')) return;
     try {
       await api.deleteFoodItem(token, id);
       loadItems();
@@ -139,7 +139,7 @@ export function FoodItemsPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Speisenverwaltung">
+      <AdminLayout title="Speisen & Getränke">
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
         </Box>
@@ -148,22 +148,22 @@ export function FoodItemsPage() {
   }
 
   return (
-    <AdminLayout title="Speisenverwaltung" fullWidth>
+    <AdminLayout title="Speisen & Getränke" fullWidth>
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
 
       <Alert severity="info" sx={{ mb: 2 }}>
-        Hier verwalten Sie den mandantenweiten Speisenkatalog – unabhängig davon, ob bereits Veranstaltungen angelegt sind.
-        Welche Gerichte bei einer Veranstaltung angeboten werden, wählen Sie unter{' '}
+        Hier verwalten Sie den mandantenweiten Katalog für Speisen und Getränke – unabhängig davon, ob bereits Veranstaltungen angelegt sind.
+        Welche Einträge bei einer Veranstaltung angeboten werden, wählen Sie unter{' '}
         <Button component={Link} to="/admin/veranstaltungen" size="small" sx={{ verticalAlign: 'baseline', p: 0, minWidth: 0 }}>
-          Veranstaltungen → Speisen
+          Veranstaltungen → Speisen & Getränke
         </Button>
         .
       </Alert>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5" fontWeight={700}>Gerichte verwalten</Typography>
+        <Typography variant="h5" fontWeight={700}>Speisen & Getränke verwalten</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          Neues Gericht
+          Neuer Eintrag
         </Button>
       </Box>
 
@@ -183,10 +183,10 @@ export function FoodItemsPage() {
             <TableRow>
               <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
                 <Typography variant="body1" color="text.secondary" gutterBottom>
-                  Noch keine Gerichte im Katalog.
+                  Noch keine Einträge im Katalog.
                 </Typography>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} sx={{ mt: 1 }}>
-                  Erstes Gericht anlegen
+                  Ersten Eintrag anlegen
                 </Button>
               </TableCell>
             </TableRow>
@@ -225,7 +225,7 @@ export function FoodItemsPage() {
       </Table>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editing ? 'Gericht bearbeiten' : 'Neues Gericht'}</DialogTitle>
+        <DialogTitle>{editing ? 'Eintrag bearbeiten' : 'Neuer Eintrag'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField label="Name" fullWidth required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />

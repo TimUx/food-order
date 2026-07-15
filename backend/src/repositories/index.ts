@@ -64,6 +64,17 @@ export const userRepository = {
     prisma.user.count({
       where: tenantWhere({ active: true, role: { name: RoleName.ADMIN } }),
     }),
+
+  findAdminNotificationSubscribers: () =>
+    prisma.user.findMany({
+      where: tenantWhere({
+        active: true,
+        notificationEmailsEnabled: true,
+        email: { not: null },
+        role: { name: RoleName.ADMIN },
+      }),
+      select: { email: true },
+    }),
 };
 
 export const eventRepository = {

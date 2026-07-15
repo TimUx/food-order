@@ -397,7 +397,7 @@ const mockOrderSettingsForm = {
 const mockAdminPages = [
   { id: 'admin-dashboard', path: '/admin', label: 'Übersicht', description: 'Administrationsübersicht', icon: 'Dashboard', pageType: 'dashboard', sortOrder: 0, source: 'core' as const },
   { id: 'core-events', path: '/admin/veranstaltungen', label: 'Veranstaltungen', description: 'Veranstaltungen anlegen und aktivieren', icon: 'Event', pageType: 'builtin', componentId: 'core.events', sortOrder: 10, source: 'core' as const },
-  { id: 'core-food-items', path: '/admin/speisen', label: 'Speisen', description: 'Speisekarte pflegen', icon: 'RestaurantMenu', pageType: 'builtin', componentId: 'core.food-items', sortOrder: 20, source: 'core' as const },
+  { id: 'core-food-items', path: '/admin/speisen', label: 'Speisen & Getränke', description: 'Katalog für Speisen und Getränke pflegen', icon: 'RestaurantMenu', pageType: 'builtin', componentId: 'core.food-items', sortOrder: 20, source: 'core' as const },
   { id: 'core-users', path: '/admin/benutzer', label: 'Team', description: 'Mitarbeiter und Administratoren', icon: 'People', pageType: 'builtin', componentId: 'core.users', sortOrder: 25, source: 'core' as const },
   { id: 'core-modules', path: '/admin/module', label: 'Funktionen', description: 'Zahlung, Benachrichtigungen und Druck', icon: 'Extension', pageType: 'modules', componentId: 'core.modules', sortOrder: 30, source: 'core' as const },
   { id: 'payment-admin', path: '/admin/payment', label: 'Online-Zahlung', description: 'Zahlungsanbieter, Transaktionen und Statistiken', icon: 'Payment', pageType: 'report', componentId: 'payment.admin', sortOrder: 35, source: 'module' as const, moduleId: 'payment', requiredPermission: 'payment.view' },
@@ -411,7 +411,7 @@ const mockAdminUi = {
   navigation: [
     { id: 'admin-dashboard', label: 'Übersicht', path: '/admin', icon: 'Dashboard', sortOrder: 0, source: 'core' },
     { id: 'core-events', label: 'Veranstaltungen', path: '/admin/veranstaltungen', icon: 'Event', sortOrder: 10, source: 'core' },
-    { id: 'core-food-items', label: 'Speisen', path: '/admin/speisen', icon: 'RestaurantMenu', sortOrder: 20, source: 'core' },
+    { id: 'core-food-items', label: 'Speisen & Getränke', path: '/admin/speisen', icon: 'RestaurantMenu', sortOrder: 20, source: 'core' },
     { id: 'core-users', label: 'Team', path: '/admin/benutzer', icon: 'People', sortOrder: 25, source: 'core' },
     { id: 'core-modules', label: 'Funktionen', path: '/admin/module', icon: 'Extension', sortOrder: 30, source: 'core' },
     { id: 'settings-core-club', label: 'Veranstalter', path: '/admin/verein', icon: 'Settings', parentId: 'settings', sortOrder: 1, source: 'core' },
