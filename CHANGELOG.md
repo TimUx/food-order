@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.46 - 2026-07-15
+
+### Behoben
+
+- **Veranstaltungsauswahl:** Icon, Titel und Datum werden im Event-Button horizontal und vertikal zentriert dargestellt.
+
+---
+
 ## 2.4.45 - 2026-07-15
 
 ### Behoben

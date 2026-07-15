@@ -29,7 +29,7 @@ import { FoodItem, Order, PublicEvent } from '@/types';
 import { OrderFieldConfig, DEFAULT_ORDER_FIELD_CONFIG } from '@/types/club';
 import type { PaymentChoiceId, PaymentMethodsResponse } from '@/types/payment';
 import { buildPaymentSelection, isOnlineChoice, getPaymentOptionLabel } from '@/utils/paymentSelection';
-import { touchFieldSx, touchButtonSx, touchSquareActionSx } from '@/theme/touch';
+import { touchFieldSx, touchButtonSx, eventSelectButtonSx } from '@/theme/touch';
 
 function fieldLabel(name: string, required: boolean): string {
   return required ? `${name} *` : `${name} (optional)`;
@@ -318,16 +318,7 @@ export function OrderPage() {
               <Button
                 variant="outlined"
                 onClick={() => handleSelectEvent(event.id)}
-                sx={{
-                  ...touchSquareActionSx,
-                  aspectRatio: '1 / 1',
-                  minHeight: 'unset',
-                  height: 'auto',
-                  gap: 0,
-                  justifyContent: 'flex-start',
-                  p: { xs: 0.75, sm: 1.25 },
-                  pt: { xs: 1, sm: 1.25 },
-                }}
+                sx={eventSelectButtonSx}
               >
                 <Box
                   sx={{
@@ -337,6 +328,7 @@ export function OrderPage() {
                     justifyContent: 'center',
                     gap: 0.25,
                     width: '100%',
+                    height: '100%',
                     textAlign: 'center',
                     px: 0.5,
                   }}
