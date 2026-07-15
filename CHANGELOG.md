@@ -3,6 +3,15 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.4.45 - 2026-07-15
+
+### Behoben
+
+- **Mobile Bestellseite:** Kompakter Kopfbereich, Gerichte im 2-Spalten-Grid, fixierter „Weiter“-Footer am unteren Bildschirmrand.
+- **Mobile Veranstaltungsauswahl:** Quadratische Event-Karten mit kalender-Icon ohne übermäßigen Abstand nach oben.
+
+---
+
 ## 2.4.44 - 2026-07-15
 
 ### Hinzugefügt

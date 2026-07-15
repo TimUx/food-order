@@ -23,9 +23,16 @@ interface PublicLayoutProps {
   fullWidth?: boolean;
   /** Kind füllt die verbleibende Viewport-Höhe (z. B. für scrollbare Bereiche mit Footer) */
   fillHeight?: boolean;
+  /** Rechtlicher Seiten-Footer ausblenden (z. B. Bestellflow mit fixiertem Aktions-Footer) */
+  hideFooter?: boolean;
 }
 
-export function PublicLayout({ children, fullWidth = false, fillHeight = false }: PublicLayoutProps) {
+export function PublicLayout({
+  children,
+  fullWidth = false,
+  fillHeight = false,
+  hideFooter = false,
+}: PublicLayoutProps) {
   const { mode, toggleMode } = useThemeMode();
   const { club } = useClub();
   const [legalLinks, setLegalLinks] = useState<PublicLegalLink[]>([]);
@@ -101,8 +108,8 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
         maxWidth={fullWidth ? false : 'md'}
         sx={{
           flexGrow: 1,
-          py: 3,
-          px: { xs: 2, sm: 3 },
+          py: fillHeight ? { xs: 1.5, sm: 2 } : 3,
+          px: { xs: fillHeight ? 1.5 : 2, sm: 3 },
           ...(fillHeight && {
             display: 'flex',
             flexDirection: 'column',
@@ -112,6 +119,7 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
       >
         {children}
       </Container>
+      {!hideFooter && (
       <Box component="footer" sx={{ px: 2, py: 2, borderTop: 1, borderColor: 'divider' }}>
         <Container maxWidth="md">
           {legalLinks.length > 0 && (
@@ -130,6 +138,7 @@ export function PublicLayout({ children, fullWidth = false, fillHeight = false }
           )}
         </Container>
       </Box>
+      )}
     </Box>
   );
 }

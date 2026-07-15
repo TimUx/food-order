@@ -7,7 +7,7 @@ interface QuantitySelectorProps {
   onChange: (value: number) => void;
   min?: number;
   max?: number;
-  size?: 'small' | 'large' | 'touch';
+  size?: 'small' | 'large' | 'touch' | 'compact';
 }
 
 export function QuantitySelector({
@@ -18,12 +18,13 @@ export function QuantitySelector({
   size = 'large',
 }: QuantitySelectorProps) {
   const isTouch = size === 'touch';
+  const isCompact = size === 'compact';
   const isLarge = size === 'large' || isTouch;
-  const buttonSize = isTouch ? 56 : isLarge ? 48 : 36;
-  const fontSize = isTouch ? '1.75rem' : isLarge ? '1.5rem' : '1.1rem';
+  const buttonSize = isTouch ? 56 : isCompact ? 36 : isLarge ? 48 : 36;
+  const fontSize = isTouch ? '1.75rem' : isCompact ? '1.1rem' : isLarge ? '1.5rem' : '1.1rem';
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: isTouch ? 1.5 : 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: isTouch ? 1.5 : isCompact ? 0.75 : 1 }}>
       <IconButton
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={value <= min}
@@ -36,11 +37,16 @@ export function QuantitySelector({
           borderRadius: 2,
         }}
       >
-        <RemoveIcon fontSize={isTouch ? 'large' : 'medium'} />
+        <RemoveIcon fontSize={isTouch ? 'large' : isCompact ? 'small' : 'medium'} />
       </IconButton>
       <Typography
         variant={isLarge ? 'h5' : 'h6'}
-        sx={{ minWidth: isTouch ? 48 : 40, textAlign: 'center', fontWeight: 700, fontSize }}
+        sx={{
+          minWidth: isTouch ? 48 : isCompact ? 28 : 40,
+          textAlign: 'center',
+          fontWeight: 700,
+          fontSize,
+        }}
         aria-live="polite"
       >
         {value}
@@ -57,7 +63,7 @@ export function QuantitySelector({
           borderRadius: 2,
         }}
       >
-        <AddIcon fontSize={isTouch ? 'large' : 'medium'} />
+        <AddIcon fontSize={isTouch ? 'large' : isCompact ? 'small' : 'medium'} />
       </IconButton>
     </Box>
   );
