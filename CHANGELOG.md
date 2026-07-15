@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.5.2 - 2026-07-15
+
+### Behoben
+
+- **CI/E2E:** Küchen-Locator matcht die Abholnummer exakt (`#001`), statt Teilstrings in Uhrzeit/Mengentext (z. B. `20:00` + `1×`) — Release Validation und Image-Build laufen wieder durch.
+
+---
+
 ## 2.5.1 - 2026-07-15
 
 ### Behoben
