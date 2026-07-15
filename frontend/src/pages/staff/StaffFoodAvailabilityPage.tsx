@@ -145,7 +145,7 @@ export function StaffFoodAvailabilityPage() {
 
           {items.length === 0 && (
             <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
-              Für diese Veranstaltung sind noch keine Speisen zugeordnet.
+              Für diese Veranstaltung sind noch keine Speisen & Getränke zugeordnet.
             </Typography>
           )}
         </>
