@@ -193,7 +193,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
 
   test('7 · Bestellungen vor Ort (Kasse)', async () => {
     await loginTenantStaff(page, state.slug, 'kasse1', STAFF_PASSWORD);
-    await page.goto(tenantRoute(state.slug, '/mitarbeiter/bestellung'));
+    await page.goto(tenantRoute(state.slug, '/service/bestellung'));
     await expect(page.getByText(/bestellung vor ort/i)).toBeVisible({ timeout: 20_000 });
     await selectStaffEvent(page, 'Sommerfest Haupttag');
     await expect(page.getByRole('button', { name: /menge erhöhen/i }).first()).toBeVisible({ timeout: 20_000 });
@@ -217,11 +217,11 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
   });
 
   test('8 · Mitarbeiter-Dashboard und Bestellübersicht', async () => {
-    await page.goto(tenantRoute(state.slug, '/mitarbeiter'));
+    await page.goto(tenantRoute(state.slug, '/service'));
     await selectStaffEvent(page, 'Sommerfest Haupttag');
     await expectStaffDashboardOrderCount(page, 1);
 
-    await page.goto(tenantRoute(state.slug, '/mitarbeiter/bestellungen'));
+    await page.goto(tenantRoute(state.slug, '/service/bestellungen'));
     await selectStaffEvent(page, 'Sommerfest Haupttag');
     await expect(page.getByRole('heading', { name: /bestellungen/i })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/keine bestellungen/i)).toHaveCount(0, { timeout: 30_000 });
@@ -242,10 +242,10 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
     await loginTenantStaff(page, state.slug, 'kasse1', STAFF_PASSWORD);
     await selectStaffEvent(page, 'Sommerfest Haupttag');
 
-    await page.goto(tenantRoute(state.slug, '/mitarbeiter/bestellungen'));
+    await page.goto(tenantRoute(state.slug, '/service/bestellungen'));
     await releaseOnlineOrderToKitchen(page, state.onlineOrderNumber);
 
-    await page.goto(tenantRoute(state.slug, '/mitarbeiter/kueche'));
+    await page.goto(tenantRoute(state.slug, '/service/kueche'));
     await expect(page.getByText(/aktive bestellungen/i)).toBeVisible({ timeout: 20_000 });
     await advanceOrderToReadyInKitchen(page, state.onlineOrderNumber);
     await advanceOrderToReadyInKitchen(page, state.cashierOrderNumber);
@@ -253,7 +253,7 @@ test.describe('FestSchmiede Nutzerreise (End-to-End)', () => {
 
   test('11 · Abholung bestätigen', async () => {
     await loginTenantStaff(page, state.slug, 'kasse1', STAFF_PASSWORD);
-    await page.goto(tenantRoute(state.slug, '/mitarbeiter/abholung'));
+    await page.goto(tenantRoute(state.slug, '/service/abholung'));
     await expect(page.getByRole('heading', { name: /abholung bestätigen/i })).toBeVisible({ timeout: 20_000 });
     await selectStaffEvent(page, 'Sommerfest Haupttag');
     await expect(page.getByLabel('Abholnummer')).toBeEnabled({ timeout: 15_000 });

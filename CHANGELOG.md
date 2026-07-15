@@ -63,7 +63,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 - **Bild-Upload (Speisen/Logo):** Mandanten-Kontext geht bei Multipart-Uploads (Multer) nicht mehr verloren — Uploads schlagen nicht mehr mit „Kein Veranstalter-Kontext“ fehl.
 - **Admin Speisen:** Klarere Katalog-Verwaltung unabhängig von Veranstaltungen; verbesserter Ladezustand und Leeranzeige.
-- **Mitarbeiter Verfügbarkeit:** Veranstaltungsauswahl statt Abhängigkeit von einer einzelnen aktiven Veranstaltung (`/mitarbeiter/speisen`).
+- **Mitarbeiter Verfügbarkeit:** Veranstaltungsauswahl statt Abhängigkeit von einer einzelnen aktiven Veranstaltung (`/service/speisen`).
 
 ---
 

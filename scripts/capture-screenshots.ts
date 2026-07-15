@@ -436,7 +436,7 @@ const mockAdminUi = {
       id: 'staff-area',
       label: 'Mitarbeiterbereich',
       description: 'Küche, Abholung, Bestellungen',
-      path: '/mitarbeiter',
+      path: '/service',
       icon: 'Storefront',
       sortOrder: 1000,
       source: 'core' as const,
@@ -716,8 +716,8 @@ function adminPathFromSpec(url: string): string {
 async function waitForPageReady(page: Page, spec: PageSpec) {
   if (!spec.auth) return;
 
-  if (spec.url.startsWith('/mitarbeiter')) {
-    await page.waitForURL(/\/mitarbeiter(?!\/login)/, { timeout: 30000 });
+  if (spec.url.startsWith('/service')) {
+    await page.waitForURL(/\/service(?!\/login)/, { timeout: 30000 });
     await page.waitForFunction(() => document.body.innerText.trim().length > 80, { timeout: 30000 });
     return;
   }
@@ -893,12 +893,12 @@ async function main() {
       },
     },
     { name: '04-abholboard-monitor', url: '/abholboard' },
-    { name: '05-mitarbeiter-login', url: '/mitarbeiter/login' },
-    { name: '06-dashboard', url: '/mitarbeiter', auth: true },
-    { name: '07-kuechenansicht-tablet', url: '/mitarbeiter/kueche', auth: true },
+    { name: '05-mitarbeiter-login', url: '/service/login' },
+    { name: '06-dashboard', url: '/service', auth: true },
+    { name: '07-kuechenansicht-tablet', url: '/service/kueche', auth: true },
     {
       name: '08-abholung',
-      url: '/mitarbeiter/abholung',
+      url: '/service/abholung',
       auth: true,
       prepare: async (page) => {
         await page.getByLabel('Abholnummer').fill('43');
@@ -909,14 +909,14 @@ async function main() {
     },
     {
       name: '09-bestellung',
-      url: '/mitarbeiter/bestellung',
+      url: '/service/bestellung',
       auth: true,
       prepare: async (page) => {
         await page.locator('button[aria-label="Menge erhöhen"]').first().click();
         await page.locator('button[aria-label="Menge erhöhen"]').nth(2).click();
       },
     },
-    { name: '10-bestellungen', url: '/mitarbeiter/bestellungen', auth: true },
+    { name: '10-bestellungen', url: '/service/bestellungen', auth: true },
     { name: '11-speisenverwaltung', url: '/admin/speisen', auth: true },
     { name: '12-veranstaltungen', url: '/admin/veranstaltungen', auth: true },
     { name: '13-vereinseinstellungen', url: '/admin/verein', auth: true },

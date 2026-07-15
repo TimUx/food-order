@@ -243,7 +243,7 @@ export const tenantSetupService = {
         tenantName: finalData.organization?.name ?? tenant?.name,
         recipientName: admin.firstName,
         adminUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/admin', proto) : `${base}/admin`,
-        staffUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/mitarbeiter', proto) : `${base}/mitarbeiter`,
+        staffUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/service', proto) : `${base}/service`,
         publicUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/public', proto) : `${base}/public`,
         statusUrl: slug ? platformDomainService.buildTenantUrl(domains, slug, '/status', proto) : `${base}/status`,
       }, tenantId);

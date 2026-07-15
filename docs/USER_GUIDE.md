@@ -17,7 +17,7 @@ Anleitung für Mitarbeiter in Küche, Abholung und Service – ohne Administrato
 
 ## Anmeldung
 
-1. Öffnen Sie die Adresse Ihres Vereins, z. B. `https://bestellung.ihr-verein.de/mitarbeiter/login`
+1. Öffnen Sie die Adresse Ihres Vereins, z. B. `https://bestellung.ihr-verein.de/service/login`
 2. Geben Sie E-Mail und Passwort ein
 3. Tippen Sie auf **Anmelden**
 
@@ -27,8 +27,8 @@ Anleitung für Mitarbeiter in Küche, Abholung und Service – ohne Administrato
 
 | Vorlage | E-Mail | Passwort | Login |
 |---------|--------|----------|-------|
-| Küche | kueche@verein.local | staff123 | `/mitarbeiter/login` |
-| Kasse | kasse@verein.local | staff123 | `/mitarbeiter/login` |
+| Küche | kueche@verein.local | staff123 | `/service/login` |
+| Kasse | kasse@verein.local | staff123 | `/service/login` |
 
 Ihr Vorstand weist Ihnen eine **Rollenvorlage** zu (Küche, Abholung, Kasse …). Sie sehen nur die Bereiche, die zu Ihrer Aufgabe passen.
 
@@ -61,7 +61,7 @@ Nach der Anmeldung sehen Sie das **Dashboard** mit aktuellen Zahlen:
 
 ## Küchenansicht
 
-**Adresse:** `/mitarbeiter/kueche`
+**Adresse:** `/service/kueche`
 
 Optimiert für Tablets mit großen Buttons.
 
@@ -86,7 +86,7 @@ Optional einschaltbar:
 
 ## Abholung
 
-**Adresse:** `/mitarbeiter/abholung`
+**Adresse:** `/service/abholung`
 
 Hier bestätigen Sie, dass ein Kunde seine Bestellung abgeholt hat.
 
@@ -116,7 +116,7 @@ Hier bestätigen Sie, dass ein Kunde seine Bestellung abgeholt hat.
 
 ## Bestellung vor Ort
 
-**Adresse:** `/mitarbeiter/bestellung`
+**Adresse:** `/service/bestellung`
 
 Für Bestellungen **vor Ort** ohne Kundendaten (kein Name nötig).
 
@@ -137,7 +137,7 @@ Ohne gewählte Veranstaltung ist keine Bestellung möglich.
 
 ## Bestellungen verwalten
 
-**Adresse:** `/mitarbeiter/bestellungen`
+**Adresse:** `/service/bestellungen`
 
 ![Bestellungen](screenshots/10-bestellungen.png)
 

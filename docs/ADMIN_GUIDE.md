@@ -138,7 +138,7 @@ Alle drei Dienste (`postgres`, `backend`, `frontend`) sollten den Status **runni
 | Bestellseite | http://localhost:5173/ | Kundenbestellungen |
 | Kontakt | http://localhost:5173/kontakt | Vereinskontakt |
 | Abholboard | http://localhost:5173/abholboard | Monitor-Anzeige |
-| Mitarbeiter-Login | http://localhost:5173/mitarbeiter/login | Admin- und Mitarbeiterbereich |
+| Mitarbeiter-Login | http://localhost:5173/service/login | Admin- und Mitarbeiterbereich |
 | API (intern) | http://localhost:3001/api/health | Gesundheitscheck |
 
 ### Docker-Images aus der Registry (optional)
@@ -534,7 +534,7 @@ sudo systemctl reload caddy
 2. Melden Sie sich mit den **von Ihnen vergebenen** Admin-Zugangsdaten an (nach dem ersten Seed Passwörter ändern — Demo-Zugänge nur für Entwicklung, siehe [Developer Guide](DEVELOPER_GUIDE.md#test-zugangsdaten))
 3. Nach dem Login gelangen Sie zur Admin-Übersicht
 
-> **Wichtig:** Ändern Sie alle Standard-Passwörter vor dem produktiven Einsatz! Mitarbeiter melden sich unter `/mitarbeiter/login` an.
+> **Wichtig:** Ändern Sie alle Standard-Passwörter vor dem produktiven Einsatz! Mitarbeiter melden sich unter `/service/login` an.
 
 ![Admin-Login](screenshots/15-admin-login.png)
 
@@ -610,7 +610,7 @@ Der **Administrationsbereich** (`/admin`) ist vom Mitarbeiterbereich getrennt un
 
 Legacy-Weiterleitungen: `/admin/email` → Benachrichtigungen · `/admin/module/payment` → `/admin/payment`
 
-Der **Mitarbeiterbereich** (`/mitarbeiter`) bleibt für den operativen Betrieb: Dashboard, Küche, Abholung, Bestellung, Bestellübersicht.
+Der **Mitarbeiterbereich** (`/service`) bleibt für den operativen Betrieb: Dashboard, Küche, Abholung, Bestellung, Bestellübersicht.
 
 ![Admin-Übersicht](screenshots/16-admin-uebersicht.png)
 
@@ -724,7 +724,7 @@ Eine aktive Veranstaltung nimmt Bestellungen entgegen, wenn zusätzlich gilt:
 | Schalter | Bedeutung |
 |----------|-----------|
 | **Onlinebestellungen aktiv** | Gäste können online vorbestellen (sofern im Katalog zugeordnete Speisen existieren) |
-| **Bestellung vor Ort aktiv** | Kassenbereich `/mitarbeiter/bestellung` |
+| **Bestellung vor Ort aktiv** | Kassenbereich `/service/bestellung` |
 | **Bestellungen geschlossen** | Aus = Bestellungen möglich; Ein = komplett geschlossen |
 
 ### Speisen je Veranstaltung zuordnen
@@ -844,8 +844,8 @@ Neu → In Bearbeitung → Fertig → Abgeholt
 
 | Typ | Bereich | Beschreibung |
 |-----|---------|--------------|
-| **Administrator** | `/admin` + `/mitarbeiter` | Vollzugriff auf Veranstalter, Team, Veranstaltungen, Funktionen |
-| **Mitarbeiter (Vorlage)** | `/mitarbeiter` und ggf. eingeschränkter `/admin` | Fachliche Vorlage bestimmt die Rechte |
+| **Administrator** | `/admin` + `/service` | Vollzugriff auf Veranstalter, Team, Veranstaltungen, Funktionen |
+| **Mitarbeiter (Vorlage)** | `/service` und ggf. eingeschränkter `/admin` | Fachliche Vorlage bestimmt die Rechte |
 
 ### Rollenvorlagen
 
@@ -1065,9 +1065,9 @@ Das Abholboard (`/abholboard`) ist für Fernseher oder Monitore gedacht.
 
 - [ ] Richtige Veranstaltung ist **aktiviert**
 - [ ] Online- und Kassenbestellungen nach Bedarf **aktiviert**
-- [ ] Küchen-Tablet zeigt `/mitarbeiter/kueche`
-- [ ] Abholung zeigt `/mitarbeiter/abholung`
-- [ ] Bestellung vor Ort unter `/mitarbeiter/bestellung`
+- [ ] Küchen-Tablet zeigt `/service/kueche`
+- [ ] Abholung zeigt `/service/abholung`
+- [ ] Bestellung vor Ort unter `/service/bestellung`
 - [ ] Abholboard auf Monitor: `/abholboard`
 - [ ] Alle Vorbestellungen sind in der Küchenansicht sichtbar
 - [ ] Testbestellung durchgeführt

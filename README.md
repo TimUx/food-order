@@ -35,7 +35,7 @@ Oder nach Git-Clone: `./install.sh` — Details in der [Installationsanleitung](
 | Dienst | URL (lokal, Mandant `default`) |
 |--------|--------------------------------|
 | Bestellseite | http://localhost:5173/default/public |
-| Mitarbeiter | http://localhost:5173/default/mitarbeiter/login |
+| Mitarbeiter | http://localhost:5173/default/service/login |
 | Admin | http://localhost:5173/default/admin/login |
 | Plattform | http://localhost:5173/platform/login |
 

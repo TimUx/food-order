@@ -54,9 +54,9 @@ Kurzfassung — ausführlich in [OPERATIONS.md](OPERATIONS.md#vor-dem-sommerfest
 | Wer | Wo im Browser | Aufgabe |
 |-----|----------------|---------|
 | Gäste | Startseite `/` | Bestellen |
-| Küche | `/mitarbeiter/kueche` | Gerichte abarbeiten |
-| Abholung | `/mitarbeiter/abholung` | Nummer eingeben, aushändigen |
-| Kasse (optional) | `/mitarbeiter/bestellung` | Bestellung vor Ort |
+| Küche | `/service/kueche` | Gerichte abarbeiten |
+| Abholung | `/service/abholung` | Nummer eingeben, aushändigen |
+| Kasse (optional) | `/service/bestellung` | Bestellung vor Ort |
 | Monitor | `/abholboard` | Fertige Nummern groß anzeigen (Veranstaltung wählen, wenn mehrere aktiv) |
 
 **Tipp:** Lesezeichen auf den Tablets anlegen — dann finden Helfer die Seiten sofort.

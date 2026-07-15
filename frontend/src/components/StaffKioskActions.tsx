@@ -27,7 +27,7 @@ export function StaffKioskActions({ maxWidth = 560 }: StaffKioskActionsProps) {
     >
       <Button
         component={Link}
-        to="/mitarbeiter/abholung"
+        to="/service/abholung"
         variant="contained"
         color="success"
         sx={compactTouchSquareActionSx}
@@ -37,7 +37,7 @@ export function StaffKioskActions({ maxWidth = 560 }: StaffKioskActionsProps) {
       </Button>
       <Button
         component={Link}
-        to="/mitarbeiter/bestellung"
+        to="/service/bestellung"
         variant="contained"
         color="primary"
         sx={compactTouchSquareActionSx}
@@ -47,7 +47,7 @@ export function StaffKioskActions({ maxWidth = 560 }: StaffKioskActionsProps) {
       </Button>
       <Button
         component={Link}
-        to="/mitarbeiter"
+        to="/service"
         variant="outlined"
         color="inherit"
         sx={compactTouchSquareActionSx}

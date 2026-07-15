@@ -77,23 +77,23 @@ test.describe('Bestellablauf', () => {
 
 test.describe('Küche & Abholung', () => {
   test('Küchenmonitor und Abholung', async ({ page }) => {
-    await page.goto(tenantPath('/mitarbeiter/login'));
+    await page.goto(tenantPath('/service/login'));
     await page.getByLabel('Benutzername oder E-Mail').fill(kitchen.email);
     await page.getByLabel('Passwort').fill(kitchen.password);
     await page.getByRole('button', { name: /anmelden/i }).click();
-    await expect(page).toHaveURL(/\/mitarbeiter\/?$/, { timeout: 15_000 });
-    await page.goto(tenantPath('/mitarbeiter/kueche'));
-    await expect(page).toHaveURL(/\/mitarbeiter\/kueche/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/service\/?$/, { timeout: 15_000 });
+    await page.goto(tenantPath('/service/kueche'));
+    await expect(page).toHaveURL(/\/service\/kueche/, { timeout: 15_000 });
     await expect(page.getByText(/aktive bestellungen|keine bestellungen/i).first()).toBeVisible({ timeout: 30_000 });
-    await page.goto(tenantPath('/mitarbeiter/abholung'));
-    await expect(page).toHaveURL(/\/mitarbeiter\/abholung/, { timeout: 15_000 });
+    await page.goto(tenantPath('/service/abholung'));
+    await expect(page).toHaveURL(/\/service\/abholung/, { timeout: 15_000 });
     await expect(page.getByRole('heading', { name: /abholung bestätigen/i })).toBeVisible({ timeout: 30_000 });
   });
 });
 
 test.describe('Logout', () => {
   test('Mitarbeiter abmelden', async ({ page }) => {
-    await page.goto(tenantPath('/mitarbeiter/login'));
+    await page.goto(tenantPath('/service/login'));
     await page.getByLabel('Benutzername oder E-Mail').fill(kitchen.email);
     await page.getByLabel('Passwort').fill(kitchen.password);
     await page.getByRole('button', { name: /anmelden/i }).click();

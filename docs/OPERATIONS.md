@@ -28,9 +28,9 @@ Ausführlichere Admin-Themen: [Admin Guide](ADMIN_GUIDE.md) · Einführung ohne 
 ## Am Veranstaltungstag
 
 1. Morgens: `docker compose ps` und Health-Check.
-2. Küche: Tablet auf `/mitarbeiter/kueche` — Lautstärke/Bildschirm an.
-3. Abholung: `/mitarbeiter/abholung` bereit halten.
-4. Bei Bedarf: Kasse `/mitarbeiter/bestellung` für Bestellungen vor Ort.
+2. Küche: Tablet auf `/service/kueche` — Lautstärke/Bildschirm an.
+3. Abholung: `/service/abholung` bereit halten.
+4. Bei Bedarf: Kasse `/service/bestellung` für Bestellungen vor Ort.
 5. **WLAN-Probleme?** Seite neu laden; Bestellungen bleiben in der Datenbank.
 6. **Kein Panik bei Updates** — Am Veranstaltungstag **kein** `docker compose pull` / Update durchführen.
 

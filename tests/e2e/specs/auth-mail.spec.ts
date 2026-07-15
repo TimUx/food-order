@@ -9,7 +9,7 @@ test.describe('Authentication', () => {
   });
 
   test('staff login page loads', async ({ page }) => {
-    await page.goto(tenantPath('/mitarbeiter/login'));
+    await page.goto(tenantPath('/service/login'));
     await expect(page.getByLabel('Benutzername oder E-Mail')).toBeVisible();
   });
 });

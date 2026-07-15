@@ -91,14 +91,14 @@ export const CORE_VOLUNTEER_DASHBOARD_PATHS = new Set([
   '/admin/verein',
   '/admin/bestellung',
   '/admin/settings/module.notifications',
-  '/mitarbeiter',
+  '/service',
 ]);
 
 export const CORE_STAFF_LINK: AdminDashboardTile = {
   id: 'staff-area',
   label: 'Service',
   description: 'Küche, Abholung, Bestellungen',
-  path: '/mitarbeiter',
+  path: '/service',
   icon: 'Storefront',
   sortOrder: 1000,
   source: 'core',

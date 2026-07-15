@@ -39,7 +39,7 @@ const TENANT_PATH_SEGMENTS = new Set([
   'recht',
   'status',
   'abholboard',
-  'mitarbeiter',
+  'service',
   'admin',
   'platform',
   'impressum',
