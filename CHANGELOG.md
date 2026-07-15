@@ -3,6 +3,20 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.5.0 - 2026-07-15
+
+### Hinzugefügt
+
+- **Service → Abholboard:** Direkter Menüeintrag zum öffentlichen Abholnummern-Monitor.
+- **Dokumentation & Screenshots:** Neue Ansichten erfasst (Verfügbarkeit, Admin-Profil, Einrichtungsassistent, Payment-Zahlungsarten, Legal-Einstellungen); bestehende Screenshots und Guides auf den UI-Stand 2.4.x/2.5 gebracht.
+
+### Geändert
+
+- **Update-Prozess:** `./install.sh --update` aktualisiert zuerst den Installer-Bootstrap vom Release und führt danach das Anwendungs-Update mit dem frischen Installer aus.
+- **Landingpage:** Screenshot-Galerie zeigt aktuelle Bestellseite, Service und Verfügbarkeit.
+
+---
+
 ## 2.4.47 - 2026-07-15
 
 ### Hinzugefügt
