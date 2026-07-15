@@ -148,7 +148,7 @@ Bei **Upgrade** und **Migration** erstellt der Installer vor dem Container-Start
 Für Updates und Wartung ohne Wizard:
 
 ```bash
-./install.sh --update      # Backup, Migration, Health, Rollback bei Fehler
+./install.sh --update      # Bootstrap → Backup, Migration, Health, Rollback
 ./install.sh --validate    # Voraussetzungen prüfen (keine Änderungen)
 ./install.sh --backup      # Nur Datenbank-Backup
 ./install.sh --repair      # Neustart + Health

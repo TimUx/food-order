@@ -61,7 +61,7 @@ Optionen:
   -d, --dir PATH   Installationsverzeichnis (siehe oben)
   -v, --version    Installer-Version anzeigen
   --bootstrap-only Nur Plattform-Dateien herunterladen
-  --update         Geführtes Update (Backup, Migration, Health, Rollback)
+  --update         Geführtes Update (zuerst Installer-Bootstrap, dann App: Backup, Migration, Health, Rollback)
   --repair         Reparatur (Neustart + Health)
   --backup         Nur Datenbank-Backup
   --validate       Update-Voraussetzungen prüfen (ohne Änderungen)
@@ -286,6 +286,7 @@ _should_refresh_installation() {
 _refresh_installer_for_update() {
   local install_dir="$1"
   local ref="${FESTSCHMIEDE_REF:-}"
+  local before="" after=""
 
   if [[ -z "$ref" && -n "${IMAGE_TAG:-}" ]]; then
     ref="${IMAGE_TAG}"
@@ -295,9 +296,41 @@ _refresh_installer_for_update() {
   fi
 
   export FESTSCHMIEDE_REF="$ref"
-  _log "Aktualisiere Installer-Dateien von GitHub (${ref})..."
+  before="$(_installed_installer_version "$install_dir" 2>/dev/null || echo unbekannt)"
+  _log "Phase 1/2: Installer-Bootstrap aktualisieren (GitHub ${ref})..."
+  if [[ -n "$before" && "$before" != "unbekannt" ]]; then
+    _log "  Aktuelle Installer-Version: v${before}"
+  fi
   _bootstrap_download "$install_dir"
   _bootstrap_verify "$install_dir"
+  after="$(_installed_installer_version "$install_dir" 2>/dev/null || echo unbekannt)"
+  _log "  Installer-Bootstrap bereit: v${after}"
+}
+
+# Nach Bootstrap-Aktualisierung erneut mit dem frischen install.sh starten (Phase 2).
+_reexec_after_bootstrap() {
+  local install_dir="$1"
+  shift
+  local script="${install_dir}/install.sh"
+
+  [[ -x "$script" ]] || { _err "Frisches install.sh fehlt: ${script}"; exit 1; }
+
+  _log "Phase 2/2: Anwendung aktualisieren (mit frischem Installer)..."
+  export FESTSCHMIEDE_BOOTSTRAP_DONE=1
+  export FESTSCHMIEDE_INSTALL_DIR="${install_dir}"
+  export FESTSCHMIEDE_INSTALL_DIR_EXPLICIT=1
+  export FESTSCHMIEDE_ONLINE_INSTALL=1
+  exec env \
+    FESTSCHMIEDE_BOOTSTRAP_DONE=1 \
+    FESTSCHMIEDE_INSTALL_DIR="$install_dir" \
+    FESTSCHMIEDE_INSTALL_DIR_EXPLICIT=1 \
+    "$script" "$@"
+}
+
+_guided_needs_bootstrap_first() {
+  [[ "${FESTSCHMIEDE_GUIDED_OP:-}" == "update" || "${FESTSCHMIEDE_GUIDED_OP:-}" == "repair" ]] || return 1
+  [[ "${FESTSCHMIEDE_BOOTSTRAP_DONE:-}" == "1" ]] && return 1
+  return 0
 }
 
 _refresh_installer_if_needed() {
@@ -381,7 +414,7 @@ main() {
   local_root="$(_resolve_local_root 2>/dev/null || true)"
 
   if [[ -n "$local_root" ]]; then
-    # Lokaler Modus: aus Git-Clone
+    # Lokaler Modus: aus Git-Clone oder bestehender Deployment-Installation
     local target
     target="$(_resolve_target_dir "$local_root")"
     _log "Lokale Installation aus: ${local_root}"
@@ -393,11 +426,14 @@ main() {
       _log "Bootstrap abgeschlossen (lokal)"
       exit 0
     fi
-    if [[ -n "${FESTSCHMIEDE_GUIDED_OP:-}" ]]; then
-      if [[ "${FESTSCHMIEDE_GUIDED_OP}" == "update" || "${FESTSCHMIEDE_GUIDED_OP}" == "repair" ]]; then
-        _refresh_installer_for_update "$target"
+    if _guided_needs_bootstrap_first; then
+      # Kein GitHub-Download über ein Checkout legen — dort gilt git pull.
+      if [[ -d "${target}/.git" ]]; then
+        _log "Phase 1/2: Git-Repository erkannt — Installer bleibt lokal (ggf. git pull)."
+        _log "Phase 2/2: Anwendung aktualisieren..."
       else
-        _refresh_installer_if_needed "$target"
+        _refresh_installer_for_update "$target"
+        _reexec_after_bootstrap "$target" "${guided_args[@]}"
       fi
     fi
     _run_installer "$target" "${guided_args[@]}"
@@ -419,9 +455,10 @@ main() {
     else
       _log "Bestehende Installation gefunden"
     fi
-    if [[ "${FESTSCHMIEDE_GUIDED_OP:-}" == "update" || "${FESTSCHMIEDE_GUIDED_OP:-}" == "repair" ]]; then
+    if _guided_needs_bootstrap_first; then
       _refresh_installer_for_update "$target"
-    elif _should_refresh_installation "$target"; then
+      _reexec_after_bootstrap "$target" "${guided_args[@]}"
+    elif [[ "${FESTSCHMIEDE_BOOTSTRAP_DONE:-}" != "1" ]] && _should_refresh_installation "$target"; then
       _refresh_installer_if_needed "$target"
     fi
   else
@@ -434,6 +471,10 @@ main() {
     _log "Bootstrap abgeschlossen. Assistent starten mit:"
     _log "  ${target}/install.sh"
     exit 0
+  fi
+
+  if [[ "${FESTSCHMIEDE_BOOTSTRAP_DONE:-}" == "1" ]]; then
+    _log "Installer-Bootstrap bereits aktualisiert — starte Anwendungs-Update..."
   fi
 
   _run_installer "$target" "${guided_args[@]}"

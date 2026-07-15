@@ -74,6 +74,23 @@ detected=$(grep -E '^INSTALLER_VERSION=' "$TMP_VER/installer/lib/common.sh" | cu
   && pass "installed version detect" || fail "installed version detect"
 rm -rf "$TMP_VER"
 
+# Phase-Hinweis in Hilfe
+"${ROOT}/install.sh" --help 2>&1 | grep -q 'Installer-Bootstrap' \
+  && pass "--update mentions bootstrap" || fail "--update mentions bootstrap"
+
+# Re-exec-Flag: mit FESTSCHMIEDE_BOOTSTRAP_DONE=1 keinen zweiten Bootstrap erzwingen
+# (nur Parsing / Hilfe; voller Update braucht Docker)
+grep -q 'FESTSCHMIEDE_BOOTSTRAP_DONE' "${ROOT}/install.sh" \
+  && pass "bootstrap re-exec flag" || fail "bootstrap re-exec flag"
+grep -q '_reexec_after_bootstrap' "${ROOT}/install.sh" \
+  && pass "bootstrap re-exec helper" || fail "bootstrap re-exec helper"
+grep -q 'Phase 1/2: Installer-Bootstrap' "${ROOT}/install.sh" \
+  && pass "bootstrap phase log" || fail "bootstrap phase log"
+
+# installer/install.sh leitet Update ohne Bootstrap an Root-install.sh weiter
+grep -q 'FESTSCHMIEDE_BOOTSTRAP_DONE' "${ROOT}/installer/install.sh" \
+  && pass "installer delegates bootstrap" || fail "installer delegates bootstrap"
+
 # Bootstrap-only mit temp dir (echter Download – optional, nur wenn Netzwerk)
 if [[ "${FESTSCHMIEDE_TEST_ONLINE:-}" == "1" ]]; then
   TMPDIR=$(mktemp -d)

@@ -55,7 +55,7 @@ FestSchmiede Installations-Assistent v${INSTALLER_VERSION}
 
 Verwendung:
   ./installer/install.sh              Vollständiger Wizard (Neuinstallation/Upgrade)
-  ./installer/install.sh --update     Geführtes Update (Backup → Migration → Health)
+  ./installer/install.sh --update     Geführtes Update (Bootstrap → Backup → Migration → Health)
   ./installer/install.sh --repair     Reparatur (Neustart + Health)
   ./installer/install.sh --backup     Nur Datenbank-Backup
   ./installer/install.sh --validate   Prüft Update-Voraussetzungen (ohne Änderungen)
@@ -75,6 +75,16 @@ EOF
 
 run_guided_mode() {
   local mode="$1"
+
+  # Update/Repair immer über Root-install.sh, damit zuerst der Bootstrap kommt.
+  if [[ "$mode" == "update" || "$mode" == "repair" ]]; then
+    if [[ "${FESTSCHMIEDE_BOOTSTRAP_DONE:-}" != "1" && -x "${INSTALL_DIR}/install.sh" && ! -d "${INSTALL_DIR}/.git" ]]; then
+      log_info "Starte Update über Installations-Bootstrap (Phase 1: Installer, dann Anwendung)..."
+      exec env FESTSCHMIEDE_INSTALL_DIR="$INSTALL_DIR" FESTSCHMIEDE_INSTALL_DIR_EXPLICIT=1 \
+        "${INSTALL_DIR}/install.sh" --"${mode}"
+    fi
+  fi
+
   log_info "=== Geführter Modus: $mode ==="
   load_existing_env
   load_secrets_from_env

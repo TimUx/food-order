@@ -186,13 +186,16 @@ run_guided_update() {
   generate_env_file
   build_compose_files
 
-  _ops_progress "Schritt 1/5: Konfigurations-Backup..."
+  _ops_progress "Schritt 1/6: Installer-Bootstrap (bereits aktualisiert)..."
+  log_info "Installer-Version: ${INSTALLER_VERSION} (Bootstrap Phase 1 abgeschlossen)"
+
+  _ops_progress "Schritt 2/6: Konfigurations-Backup..."
   create_pre_install_backup
 
-  _ops_progress "Schritt 2/5: Datenbank-Backup..."
+  _ops_progress "Schritt 3/6: Datenbank-Backup..."
   run_database_backup || return $?
 
-  _ops_progress "Schritt 3/5: Neue Images laden..."
+  _ops_progress "Schritt 4/6: Neue Images laden..."
   apply_shell_env_overrides
   log_info "Verwende Image-Tag: ${CFG[IMAGE_TAG]} (Prefix: ${CFG[GHCR_IMAGE_PREFIX]})"
   generate_deployment_config
@@ -202,7 +205,7 @@ run_guided_update() {
     compose_pull || { installer_fail docker_pull; return "$EXIT_DOCKER"; }
   fi
 
-  _ops_progress "Schritt 4/5: Services starten (Migration)..."
+  _ops_progress "Schritt 5/6: Services starten (Migration)..."
   if deployment_uses_swarm; then
     stack_deploy || { installer_fail docker_up; perform_update_rollback docker; return "$EXIT_DOCKER"; }
   else
@@ -211,7 +214,7 @@ run_guided_update() {
 
   wait_for_migration || { perform_update_rollback migration; return "$EXIT_MIGRATION"; }
 
-  _ops_progress "Schritt 5/5: Health-Check..."
+  _ops_progress "Schritt 6/6: Health-Check..."
   if ! verify_health_strict 180; then
     perform_update_rollback health
     return "$EXIT_HEALTH"
