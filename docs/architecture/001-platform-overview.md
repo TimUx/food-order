@@ -41,7 +41,7 @@ Vereine benötigen eine einfache, touch-optimierte Lösung für Veranstaltungsta
 | Bereich | Zielgruppe | Technologie |
 |---------|------------|-------------|
 | Öffentlich | Endkunden | React, `/`, `/status`, `/abholboard` |
-| Mitarbeiter | Küche, Abholung, Service | React, `/mitarbeiter/*` |
+| Mitarbeiter | Küche, Abholung, Service | React, `/service/*` |
 | Administration | Vereins-Admins | React, `/admin/*` |
 | API | Alle Clients | Express `/api/*` |
 | Module | Erweiterungen | `backend/modules/*` im Docker-Image |

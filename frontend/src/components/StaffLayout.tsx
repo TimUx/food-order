@@ -46,9 +46,9 @@ import type { ConnectionState } from '@/services/realtime';
 const DRAWER_WIDTH = 260;
 
 const FOCUS_MODE_PATHS = [
-  '/mitarbeiter/kueche',
-  '/mitarbeiter/abholung',
-  '/mitarbeiter/bestellung',
+  '/service/kueche',
+  '/service/abholung',
+  '/service/bestellung',
 ];
 
 const navItems: Array<{
@@ -58,22 +58,22 @@ const navItems: Array<{
   permissions?: string[];
 }> = [
   {
-    path: '/mitarbeiter',
+    path: '/service',
     label: 'Dashboard',
     icon: <DashboardIcon />,
     permissions: ['orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'],
   },
   {
-    path: '/mitarbeiter/bestellungen',
+    path: '/service/bestellungen',
     label: 'Bestellungen',
     icon: <ReceiptLongIcon />,
     permissions: ['orders.view', 'orders.kitchen', 'orders.manage', 'orders.pickup'],
   },
-  { path: '/mitarbeiter/kueche', label: 'Küche', icon: <KitchenIcon />, permissions: ['orders.kitchen'] },
-  { path: '/mitarbeiter/abholung', label: 'Abholung', icon: <DoneAllIcon />, permissions: ['orders.pickup'] },
-  { path: '/mitarbeiter/bestellung', label: 'Bestellung', icon: <AddShoppingCartIcon />, permissions: ['orders.manage'] },
+  { path: '/service/kueche', label: 'Küche', icon: <KitchenIcon />, permissions: ['orders.kitchen'] },
+  { path: '/service/abholung', label: 'Abholung', icon: <DoneAllIcon />, permissions: ['orders.pickup'] },
+  { path: '/service/bestellung', label: 'Bestellung', icon: <AddShoppingCartIcon />, permissions: ['orders.manage'] },
   {
-    path: '/mitarbeiter/speisen',
+    path: '/service/speisen',
     label: 'Verfügbarkeit',
     icon: <RestaurantMenuIcon />,
     permissions: ['food.edit', 'orders.kitchen', 'orders.manage'],
@@ -179,7 +179,7 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
             <ListItemText primary="Administration" />
           </ListItemButton>
         )}
-        <ListItemButton onClick={() => { logout(); navigate('/mitarbeiter/login'); }}>
+        <ListItemButton onClick={() => { logout(); navigate('/service/login'); }}>
           <ListItemIcon><LogoutIcon /></ListItemIcon>
           <ListItemText primary="Abmelden" />
         </ListItemButton>
@@ -236,7 +236,7 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
               <>
                 <Button
                   component={Link}
-                  to="/mitarbeiter"
+                  to="/service"
                   variant="outlined"
                   size="small"
                   startIcon={<DashboardIcon />}
@@ -246,7 +246,7 @@ export function StaffLayout({ children, title, fullWidth = false }: StaffLayoutP
                 </Button>
                 <IconButton
                   component={Link}
-                  to="/mitarbeiter"
+                  to="/service"
                   aria-label="Zur Übersicht"
                   sx={{ mr: 1, display: { xs: 'inline-flex', sm: 'none' } }}
                 >
@@ -334,6 +334,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) return null;
-  if (!user) return <Navigate to="/mitarbeiter/login" replace />;
+  if (!user) return <Navigate to="/service/login" replace />;
   return <>{children}</>;
 }

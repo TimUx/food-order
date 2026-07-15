@@ -54,11 +54,11 @@ export async function loginTenantAdmin(page: Page, slug: string, email: string, 
 }
 
 export async function loginTenantStaff(page: Page, slug: string, username: string, password: string): Promise<void> {
-  await page.goto(tenantRoute(slug, '/mitarbeiter/login'));
+  await page.goto(tenantRoute(slug, '/service/login'));
   await page.getByLabel('Benutzername oder E-Mail').fill(username);
   await page.getByLabel('Passwort').fill(password);
   await page.getByRole('button', { name: /anmelden/i }).click();
-  await expect(page).toHaveURL(new RegExp(`/${slug}/mitarbeiter`), { timeout: 20_000 });
+  await expect(page).toHaveURL(new RegExp(`/${slug}/service`), { timeout: 20_000 });
 }
 
 export async function selectStaffEvent(page: Page, eventName: string): Promise<void> {

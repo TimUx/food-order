@@ -29,7 +29,7 @@ describe('mail templates', () => {
       tenantName: 'SV Test',
       adminUrl: 'https://example.test/admin',
       publicUrl: 'https://example.test/public',
-      staffUrl: 'https://example.test/mitarbeiter',
+      staffUrl: 'https://example.test/service',
       statusUrl: 'https://example.test/status',
     });
     expect(result.subject).toContain('Willkommen');

@@ -47,7 +47,7 @@ const NON_TENANT_PATH_SEGMENTS = new Set([
   'platform',
   'socket.io',
   'admin',
-  'mitarbeiter',
+  'service',
   'public',
   'screenshots',
 ]);

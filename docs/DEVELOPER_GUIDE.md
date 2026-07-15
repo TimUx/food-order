@@ -563,7 +563,7 @@ Optionale Repository-Variablen für den Frontend-Build:
 | Bereich | Prefix | Beispiele |
 |---------|--------|-----------|
 | Öffentlich | `/` | Bestellseite, `/kontakt`, `/abholboard` |
-| Mitarbeiter | `/mitarbeiter` | Küche, Abholung, Bestellungen |
+| Mitarbeiter | `/service` | Küche, Abholung, Bestellungen |
 | Administration | `/admin` | Verein, Benutzer, Veranstaltungen, Module, Payment |
 | API Admin | `/api/admin` | `/users`, `/club`, `/modules` |
 | API Module | `/api/modules/features/{id}` | Modul-Routen (nur wenn aktiviert) |

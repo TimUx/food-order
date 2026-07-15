@@ -98,7 +98,7 @@ Standardmäßig aktiv (`PlatformSettings.pathPrefixRoutingEnabled = true`).
 
 ### Unbekannte Mandanten-Pfade
 
-Wenn der erste Pfadsegment wie ein Mandanten-Slug aussieht, der zweite ein Mandanten-Routen-Segment ist (`public`, `admin`, `mitarbeiter`, `api`, …) und kein Mandant existiert:
+Wenn der erste Pfadsegment wie ein Mandanten-Slug aussieht, der zweite ein Mandanten-Routen-Segment ist (`public`, `admin`, `service`, `api`, …) und kein Mandant existiert:
 
 - `GET /api/public/routing-config?frontendPath=/{slug}/public` → `scope: "unknown"`
 - Frontend zeigt `TenantNotFoundPage` („Veranstalter nicht gefunden“)
@@ -119,7 +119,7 @@ Der Resolver validiert den Host **vor** dem Lookup:
 |-------|--------------|
 | Kein Host-Parsing | `TenantProvider` lädt Daten vom Backend |
 | Dynamisches `basename` | Nur bei URL-Prefix-Modus |
-| Gleiche Routen pro Mandant | `/`, `/admin`, `/mitarbeiter` – Kontext kommt vom Resolver |
+| Gleiche Routen pro Mandant | `/`, `/admin`, `/service` – Kontext kommt vom Resolver |
 
 ```
 Mandant (Subdomain):

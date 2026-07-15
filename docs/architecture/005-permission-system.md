@@ -32,7 +32,7 @@ Role
 
 ### Rollen-Matrix (Ist)
 
-| Rolle | `/admin/*` | `/mitarbeiter/*` | Modul-Admin-APIs |
+| Rolle | `/admin/*` | `/service/*` | Modul-Admin-APIs |
 |-------|------------|------------------|------------------|
 | ADMIN | ja | ja | ja (Superuser) |
 | STAFF | nein | ja | nur mit zugewiesenen Permissions auf Modul-Routen |

@@ -42,8 +42,8 @@ export function LoginPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { routing } = useRouting();
   const isAdminLogin = location.pathname.startsWith('/admin');
-  const loginPath = isAdminLogin ? '/admin/login' : '/mitarbeiter/login';
-  const redirectPath = isAdminLogin ? '/admin' : '/mitarbeiter';
+  const loginPath = isAdminLogin ? '/admin/login' : '/service/login';
+  const redirectPath = isAdminLogin ? '/admin' : '/service';
   const resetToken = searchParams.get('resetToken');
 
   useEffect(() => {
@@ -201,7 +201,7 @@ export function LoginPage() {
           {passwordlessOnly ? (
             'Melden Sie sich passwortlos per E-Mail an.'
           ) : isAdminLogin ? (
-            <>Mitarbeiter melden sich im <Link to="/mitarbeiter/login">Service</Link> an.</>
+            <>Mitarbeiter melden sich im <Link to="/service/login">Service</Link> an.</>
           ) : (
             <>Administratoren können sich im <Link to="/admin/login">Admin-Bereich</Link> anmelden.</>
           )}

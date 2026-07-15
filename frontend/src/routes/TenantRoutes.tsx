@@ -76,8 +76,8 @@ export function TenantRoutes() {
         <Route path="/status/:lookupToken" element={<OrderStatusPage />} />
         <Route path="/abholboard" element={<Lazy><PickupBoardPage /></Lazy>} />
 
-        <Route path="/mitarbeiter/login" element={<Lazy><LoginPage /></Lazy>} />
-        <Route path="/mitarbeiter" element={<StaffArea />}>
+        <Route path="/service/login" element={<Lazy><LoginPage /></Lazy>} />
+        <Route path="/service" element={<StaffArea />}>
           <Route index element={<Lazy><DashboardPage /></Lazy>} />
           <Route path="bestellungen" element={<Lazy><OrdersPage /></Lazy>} />
           <Route path="kueche" element={<Lazy><KitchenPage /></Lazy>} />
@@ -97,10 +97,10 @@ export function TenantRoutes() {
           <Route key={slug} path={`/${slug}`} element={<Navigate to={`/recht/${slug}`} replace />} />
         ))}
 
-        <Route path="/mitarbeiter/kasse" element={<Navigate to="/mitarbeiter/abholung" replace />} />
-        <Route path="/mitarbeiter/lokale-kasse" element={<Navigate to="/mitarbeiter/bestellung" replace />} />
-        <Route path="/mitarbeiter/verein" element={<Navigate to="/admin/verein" replace />} />
-        <Route path="/mitarbeiter/veranstaltungen" element={<Navigate to="/admin/veranstaltungen" replace />} />
+        <Route path="/service/kasse" element={<Navigate to="/service/abholung" replace />} />
+        <Route path="/service/lokale-kasse" element={<Navigate to="/service/bestellung" replace />} />
+        <Route path="/service/verein" element={<Navigate to="/admin/verein" replace />} />
+        <Route path="/service/veranstaltungen" element={<Navigate to="/admin/veranstaltungen" replace />} />
 
         <Route path="*" element={<TenantNotFoundPage />} />
       </Routes>

@@ -135,7 +135,7 @@ export function AdminLayout({ children, title, fullWidth = false }: AdminLayoutP
             <ListItemIcon><PersonIcon /></ListItemIcon>
             <ListItemText primary="Mein Profil" />
           </ListItemButton>
-          <ListItemButton component={Link} to="/mitarbeiter" onClick={() => setDrawerOpen(false)}>
+          <ListItemButton component={Link} to="/service" onClick={() => setDrawerOpen(false)}>
             <ListItemIcon><StorefrontIcon /></ListItemIcon>
             <ListItemText primary="Service" />
           </ListItemButton>
@@ -206,6 +206,6 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) return null;
   if (!user) return <Navigate to="/admin/login" replace />;
-  if (!hasDelegatedAdminAccess(user)) return <Navigate to="/mitarbeiter" replace />;
+  if (!hasDelegatedAdminAccess(user)) return <Navigate to="/service" replace />;
   return <>{children}</>;
 }
