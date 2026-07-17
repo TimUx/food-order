@@ -3,6 +3,14 @@
 Alle wesentlichen Aenderungen an **FestSchmiede** werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
+## 2.5.5 - 2026-07-17
+
+### Geändert
+
+- **FAQ (www):** Fragen sind in thematische Kategorien gegliedert (Produkt, Kosten, Mandant, Bestellablauf, Zahlung, Helfer, Technik, Datenschutz) mit Sprungnavigation.
+
+---
+
 ## 2.5.4 - 2026-07-17
 
 ### Hinzugefügt

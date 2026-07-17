@@ -4,6 +4,8 @@ export type {
   SeoLandingPage,
   SeoCluster,
   SeoStaticPage,
+  FaqCategory,
+  FaqCategoryId,
 } from './types';
 
 export {
@@ -16,5 +18,5 @@ export {
   buildSitemapXml,
 } from './seoLandingPages';
 
-export { SEO_GLOBAL_FAQS } from './globalFaqs';
+export { SEO_GLOBAL_FAQS, FAQ_CATEGORIES } from './globalFaqs';
 export { SEO_STATIC_PAGES } from './staticPages';
